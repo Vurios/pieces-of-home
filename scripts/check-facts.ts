@@ -13,7 +13,7 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const FACTS_PATH = join(root, "src", "data", "facts.json");
 
 // Everything a player can read: content data, UI, game code, strings and the entry page.
-const SCAN_DIRS = ["src/content", "src/ui", "src/game", "src/audio", "src/data"];
+const SCAN_DIRS = ["src/content", "src/ui", "src/game", "src/audio", "src/data", "src/boot", "scripts/vite"];
 const SCAN_FILES = ["index.html", "src/main.ts"];
 const SCAN_EXTENSIONS = new Set([".ts", ".svelte", ".json", ".html", ".md"]);
 

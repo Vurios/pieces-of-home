@@ -8,6 +8,8 @@ import data from "../data/facts.json";
 export interface FactEntry {
   id: string;
   kid: string;
+  /** A few words for tight spots such as the loader list. */
+  short?: string;
   deeper: string;
   value: string;
   date: string | null;

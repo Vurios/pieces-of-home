@@ -8,6 +8,7 @@
 export interface Fact {
   id: string;
   kid: string;
+  short?: string;
   deeper: string;
   value: string;
   date: string | null;
@@ -58,6 +59,7 @@ export function checkFacts(facts: Fact[], files: ContentFile[]): FactReport {
 
     if (fact.kid.trim().length === 0) errors.push(`Fact "${fact.id}" has no kid wording.`);
     if (fact.kid.includes("—")) errors.push(`Fact "${fact.id}" uses an em dash in its kid wording.`);
+    if (fact.short?.includes("—")) errors.push(`Fact "${fact.id}" uses an em dash in its short wording.`);
     if (fact.status !== "checked" && fact.status !== "verify") {
       errors.push(`Fact "${fact.id}" has an unknown status "${String(fact.status)}".`);
     }

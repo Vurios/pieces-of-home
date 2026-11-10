@@ -22,7 +22,8 @@
       "sourceUrl": "https://www.jpl.nasa.gov/news/earth-moon-system",
       "status": "checked",
       "checkedOn": null,
-      "note": ""
+      "note": "",
+      "short": "100 little mirrors at Tranquility Base."
     },
     {
       "id": "a11-lrrr-nopower",
@@ -394,7 +395,8 @@
       "sourceUrl": "https://www.jpl.nasa.gov/news/nasas-ingenuity-mars-helicopter-team-says-goodbye-for-now",
       "status": "checked",
       "checkedOn": null,
-      "note": ""
+      "note": "",
+      "short": "Ingenuity, saving notes."
     },
     {
       "id": "ing-daily",
@@ -490,7 +492,8 @@
       "sourceUrl": "https://earthsky.org/space/voyager-1-1-light-day-from-earth-november-17-18-2026/",
       "status": "checked",
       "checkedOn": null,
-      "note": "Secondary sources. Also IFLScience (confirmed with the Voyager team): https://iflscience.com/its-official-voyager-1-will-cross-the-1-light-day-threshold-on-november-18-2026-82733 . Find the NASA/JPL primary page."
+      "note": "Secondary sources. Also IFLScience (confirmed with the Voyager team): https://iflscience.com/its-official-voyager-1-will-cross-the-1-light-day-threshold-on-november-18-2026-82733 . Find the NASA/JPL primary page.",
+      "short": "Voyager 1, still sending."
     },
     {
       "id": "v2-light-day",
