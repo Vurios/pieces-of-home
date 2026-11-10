@@ -124,7 +124,8 @@ export function createHome(ctx: WorldContext): World {
   colliders.push(...buildMeadow(b, terrain, quality.particles));
   colliders.push(...scatterNature(b, terrain, quality.particles, trees));
 
-  for (const mesh of b.build(workshopMaterials(toon), { castShadow: quality.shadowMap > 0, receiveShadow: true })) root.add(mesh);
+  const materials = workshopMaterials(toon);
+  for (const mesh of b.build(materials, { castShadow: quality.shadowMap > 0, receiveShadow: true })) root.add(mesh);
 
   // The shed's moving parts live in the shed's own frame.
   const shedFrame = new Group();
@@ -170,8 +171,9 @@ export function createHome(ctx: WorldContext): World {
   porchLight.position.copy(house.porchLight);
   root.add(porchLight);
   // Cool dusk light falls in through the workshop window, so the room is not one note of amber.
+  let windowLight: PointLight | null = null;
   if (quality.tier !== "low") {
-    const windowLight = new PointLight("#8FA3D9", 2.4, 5.5, 1.5);
+    windowLight = new PointLight("#8FA3D9", 2.4, 5.5, 1.5);
     windowLight.position.copy(local(SITES.shed, SHED.halfWidth - 0.6, 1.7, -0.2));
     root.add(windowLight);
   }
@@ -366,6 +368,37 @@ export function createHome(ctx: WorldContext): World {
     // Dusk haze on the far curve. Starts past the play area so nearby color stays clean.
     fog: { color: "#C79390", near: -3, far: 22 },
     spawn: { dir: spawnDir, forward: spawnForward },
+    intro: {
+      lamp: shop.lampBulb.clone(),
+      // A dolly back from Dad's lamp along one straight line, out through the
+      // open door with the lamp still centered, then up and over the planet.
+      path: [
+        local(SITES.shed, -1.14, 1.53, 0.0),
+        local(SITES.shed, -0.66, 1.54, 1.07),
+        local(SITES.shed, 0.01, 1.56, 2.63),
+        local(SITES.shed, 0.76, 1.6, 4.37),
+        local(SITES.shed, 1.6, 4.2, 8.0),
+      ],
+      final: {
+        position: latLonToDir(-24, 8).multiplyScalar(HOME_RADIUS + 33),
+        // Aimed above the planet so its top sits just under the middle of the screen, leaving the sky for the title.
+        target: latLonToDir(25.6, 8).multiplyScalar(HOME_RADIUS * 1.03),
+        up: latLonToDir(16, 10),
+      },
+    },
+    anchor(id: string) {
+      if (id === "mom") return mom.root.position.clone().addScaledVector(SITES.house.dir, 1.35);
+      if (id === "lamp") return shop.lampBulb.clone();
+      return null;
+    },
+    setPower(level: number) {
+      // Windows and lamp glass glow brighter; the porch and window lights follow.
+      const t = Math.max(0, Math.min(1, level));
+      const glow = materials.glow as { color?: Color } | undefined;
+      glow?.color?.setScalar(0.38 + 0.62 * t);
+      porchLight.intensity = 5 * t;
+      if (windowLight) windowLight.intensity = 2.4 * (0.4 + 0.6 * t);
+    },
     bookmarks,
     surfaceAt,
     cameraHint(player) {

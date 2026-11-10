@@ -70,6 +70,21 @@ export interface GameEvents {
   "input:device": { device: InputDevice };
   "quality:change": { tier: QualityTier; auto: boolean };
   "milo:stage": { stage: number };
+  /** A title letter landed. `index` counts letters in reading order. */
+  "title:note": { index: number };
+  /** Every title letter is down and the chain can be pulled. */
+  "title:ready": Record<string, never>;
+  "title:pulled": Record<string, never>;
+  /** The camera reached the player after the title. */
+  "title:done": Record<string, never>;
+  /** Someone speaks. `at` is a world position for the bubble, or null for a caption only. */
+  say: { speaker: string; name: string; text: string; at: [number, number, number] | null; recording?: boolean };
+  /** A small paper note at the edge of the screen. */
+  toast: { text: string };
+  /** A chapter or beat is complete. Two short lines for the big ink stamp. */
+  stamp: { id: string; lines: [string, string] };
+  emote: { id: string };
+  "photo:taken": { count: number };
   "debug:stats": { fps: number; calls: number; triangles: number; geometries: number; textures: number; tier: QualityTier };
 }
 

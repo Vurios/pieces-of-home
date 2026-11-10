@@ -1,5 +1,6 @@
 import {
   Fog,
+  type LoadingManager,
   PCFShadowMap,
   PerspectiveCamera,
   Scene,
@@ -24,6 +25,7 @@ import { FollowCamera } from "./world/camera";
 import { PlayerController } from "./world/controller";
 import { InteractionSystem } from "./world/interaction";
 import { projectOnTangent } from "./world/sphere";
+import { TitleSequence } from "./title/title";
 import { WORLDS } from "./worlds/registry";
 import type { Bookmark, World, WorldContext } from "./worlds/types";
 
@@ -33,7 +35,11 @@ export interface EngineOptions {
   debug: boolean;
   /** Fixed camera view for screenshots, from the world's bookmarks. */
   shot: string | null;
+  /** Tracks texture loading for the loader's progress. */
+  loading?: LoadingManager;
 }
+
+export type EngineMode = "title" | "play";
 
 /**
  * The game engine: renderer, frame loop, the current world, the player, the
@@ -48,6 +54,13 @@ export class Engine {
   quality: QualitySettings;
   autoQuality: boolean;
   world: World | null = null;
+  /** "title" while the opening plays; the player cannot move. */
+  mode: EngineMode = "play";
+  /** True while the notebook, settings or a menu is open: the world keeps living, the player stands still. */
+  paused = false;
+  private title: TitleSequence | null = null;
+  private motionPreference: boolean | null = null;
+  private systemReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   private renderer: WebGLRenderer;
   private scene = new Scene();
@@ -63,7 +76,7 @@ export class Engine {
   private puffs: Puffs;
   private timer = new Timer();
   private watchdog = new FrameWatchdog();
-  private textureLoader = new TextureLoader();
+  private textureLoader: TextureLoader;
   private reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   private bookmark: Bookmark | null = null;
   private statsTime = 0;
@@ -93,6 +106,7 @@ export class Engine {
     private options: EngineOptions,
   ) {
     this.renderer = renderer;
+    this.textureLoader = new TextureLoader(options.loading);
     renderer.outputColorSpace = SRGBColorSpace;
     renderer.info.autoReset = false;
 
@@ -133,10 +147,102 @@ export class Engine {
     window.addEventListener("resize", this.resize);
     document.addEventListener("visibilitychange", this.onVisibility);
     window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", (event) => {
-      this.reducedMotion = event.matches;
-      this.post.setReducedMotion(event.matches);
+      this.systemReducedMotion = event.matches;
+      this.applyMotion();
     });
     this.resize();
+  }
+
+  /** Settings: true or false forces reduced motion; null follows the system. */
+  setReducedMotion(preference: boolean | null): void {
+    this.motionPreference = preference;
+    this.applyMotion();
+  }
+
+  get motionReduced(): boolean {
+    return this.reducedMotion;
+  }
+
+  private applyMotion(): void {
+    this.reducedMotion = this.motionPreference ?? this.systemReducedMotion;
+    this.post.setReducedMotion(this.reducedMotion);
+  }
+
+  /**
+   * Starts the opening: the camera flies from the lamp to the title and the
+   * letters drop in. Returns false if the world has no intro.
+   */
+  startTitle(): boolean {
+    const intro = this.world?.intro;
+    if (!intro) return false;
+    this.title?.dispose();
+    this.title = new TitleSequence(this.toon, intro, this.bus, this.reducedMotion);
+    this.scene.add(this.title.root);
+    this.mode = "title";
+    this.world?.setPower(0.2);
+    return true;
+  }
+
+  /** Starts the flight. Until then the camera waits on the lamp, behind the loading page. */
+  playTitle(): void {
+    this.title?.play();
+  }
+
+  /** Skips the flight and the falling letters. */
+  skipTitle(): void {
+    this.title?.skip();
+  }
+
+  titleDrag(amount: number): void {
+    this.title?.drag(amount);
+  }
+
+  titleRelease(): void {
+    this.title?.release();
+  }
+
+  /** Pulls the chain: the bulb blazes and the windows light up. */
+  titleBegin(): void {
+    this.title?.begin();
+  }
+
+  /** Flies down to the player and hands over control. */
+  leaveTitle(): void {
+    if (!this.title) {
+      this.mode = "play";
+      return;
+    }
+    this.follow.snap(this.player);
+    this.title.leave(this.camera);
+  }
+
+  /** Where the title's BEGIN tag is on screen, in CSS pixels. */
+  titleTag(): { x: number; y: number; visible: boolean } | null {
+    return this.title ? this.title.tagScreen(this.camera, window.innerWidth, window.innerHeight) : null;
+  }
+
+  get titlePhase(): string | null {
+    return this.title?.phase ?? null;
+  }
+
+  /** A world point on screen, in CSS pixels. `visible` is false behind the camera or off screen. */
+  project(point: Vector3): { x: number; y: number; visible: boolean } {
+    const p = this.scratch.copy(point).project(this.camera);
+    const x = (p.x * 0.5 + 0.5) * window.innerWidth;
+    const y = (-p.y * 0.5 + 0.5) * window.innerHeight;
+    return { x, y, visible: p.z < 1 && p.z > -1 && x > -40 && y > -40 && x < window.innerWidth + 40 && y < window.innerHeight + 40 };
+  }
+
+  /** The player's head in world space, for speech bubbles. */
+  playerHead(): Vector3 {
+    return this.player.position.clone().addScaledVector(this.player.up, 1.5);
+  }
+
+  /** The canvas as an image, for photo mode. Renders a fresh frame first so the buffer is full. */
+  snapshot(type = "image/jpeg", quality = 0.85): string {
+    // The drawing buffer clears after each frame, so draw one now and read it before it does.
+    this.post.render(this.scene, this.camera, this.elapsed);
+    return this.renderer.domElement.toDataURL(type, quality);
   }
 
   private applyRendererQuality(): void {
@@ -276,7 +382,8 @@ export class Engine {
 
     const input = this.input.read();
     const shot = this.bookmark;
-    if (shot) {
+    const titling = this.mode === "title" && this.title !== null;
+    if (shot || titling || this.paused) {
       // Screenshot mode: nobody moves.
       input.moveX = 0;
       input.moveY = 0;
@@ -311,6 +418,17 @@ export class Engine {
       this.camera.position.copy(shot.camera.position);
       this.camera.up.copy(shot.camera.target).normalize();
       this.camera.lookAt(shot.camera.target);
+    } else if (titling && this.title) {
+      if (this.title.phase === "leaving") {
+        this.follow.update(dt, this.player, input, world.terrain, world.cameraColliders, world.cameraHint(this.player));
+      }
+      this.title.update(dt, this.camera);
+      if (this.title.phase === "done") {
+        this.title.dispose();
+        this.title = null;
+        this.mode = "play";
+        this.bus.emit("title:done", {});
+      }
     } else {
       this.follow.update(dt, this.player, input, world.terrain, world.cameraColliders, world.cameraHint(this.player));
     }
@@ -328,7 +446,8 @@ export class Engine {
     world.fill.position.copy(up);
     this.sky?.setGlowDirection(this.sunDir);
     // A fixed shot from orbit uses the lens up, so the sky still shows its horizon glow and stars.
-    const skyUp = shot?.camera ? this.scratch.setFromMatrixColumn(this.camera.matrixWorld, 1).normalize() : up;
+    this.camera.updateMatrixWorld();
+    const skyUp = shot?.camera || titling ? this.scratch.setFromMatrixColumn(this.camera.matrixWorld, 1).normalize() : up;
     this.sky?.update(this.camera.position, skyUp, this.elapsed);
 
     // Haze sits on the far curve: fog distances count from the horizon, so close ground stays clean from any height.
@@ -340,11 +459,12 @@ export class Engine {
       this.scene.fog.far = horizon + world.fog.far;
     }
 
-    this.arrow.update(dt, this.player.position, up, shot ? null : world.objective(), this.reducedMotion);
+    this.arrow.update(dt, this.player.position, up, shot || titling ? null : world.objective(), this.reducedMotion);
     this.puffs.update(dt);
 
     // Keep the sharp band of the tilt-shift on the player.
-    this.scratch.copy(this.player.position).addScaledVector(up, 0.6).project(this.camera);
+    if (titling && this.title && this.title.phase !== "leaving") this.scratch.copy(this.title.focusPoint()).project(this.camera);
+    else this.scratch.copy(this.player.position).addScaledVector(up, 0.6).project(this.camera);
     this.post.focus = Math.max(0.12, Math.min(0.88, this.scratch.y * 0.5 + 0.5));
     this.post.render(this.scene, this.camera, this.elapsed);
 
@@ -356,7 +476,7 @@ export class Engine {
       this.saveTimer -= dt;
       if (this.saveTimer <= 0) writeStorage(SAVE_KEY, this.store.serialize());
     }
-    if (this.autoQuality && !this.bookmark && this.quality.tier !== "low" && this.watchdog.update(dt)) {
+    if (this.autoQuality && !this.bookmark && this.mode === "play" && this.quality.tier !== "low" && this.watchdog.update(dt)) {
       this.changeTier(lowerTier(this.quality.tier), true);
     }
     this.frames += 1;
@@ -384,6 +504,8 @@ export class Engine {
       state: () => this.store.value,
       player: () => ({ position: this.player.position.toArray(), grounded: this.player.grounded }),
       tier: () => this.quality.tier,
+      mode: () => this.mode,
+      titlePhase: () => this.title?.phase ?? null,
       /** The heaviest meshes in the scene, for budgeting. */
       heavy: () => {
         const rows: [string, number][] = [];

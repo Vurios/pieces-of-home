@@ -1,4 +1,21 @@
-import { Group, type Material, Mesh, MeshToonMaterial, Object3D, SRGBColorSpace, SphereGeometry, type Texture, Vector3 } from "three";
+import {
+  AdditiveBlending,
+  CanvasTexture,
+  Euler,
+  Group,
+  type Material,
+  type Matrix4,
+  Mesh,
+  MeshBasicMaterial,
+  MeshToonMaterial,
+  Object3D,
+  PlaneGeometry,
+  Quaternion,
+  SRGBColorSpace,
+  SphereGeometry,
+  type Texture,
+  Vector3,
+} from "three";
 import { factCoords, fact } from "../../../content/facts";
 import { box, cone, cylinder, sphere, torus } from "../../actors/parts";
 import { Batcher, type Layer } from "../../render/kit";
@@ -227,17 +244,31 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
 
   // ---- On the bench ----
   // Dad's lamp: the one that turns itself on every evening.
+  // A hinged desk lamp: weighted base, twin lower arm, elbow, a green enamel
+  // shade with a brass rim, and a bulb that peeks out of the mouth. The bulb
+  // and the warm inside of the shade are their own meshes so they stay lit
+  // while the rest of the planet's lights are still off on the title.
   const lampX = -2.25;
-  b.place(cylinder(16), C.ink, v(lampX, BENCH_Y + 0.025, BENCH_Z - 0.1), [0, 0, 0], [0.16, 0.05, 0.16], m);
-  b.place(cylinder(8), C.brass, v(lampX, BENCH_Y + 0.28, BENCH_Z - 0.15), [0.25, 0, 0], [0.02, 0.5, 0.02], m);
-  b.place(sphere("low"), C.ink, v(lampX, BENCH_Y + 0.52, BENCH_Z - 0.09), [0, 0, 0], 0.035, m);
-  b.place(cylinder(8), C.brass, v(lampX + 0.1, BENCH_Y + 0.6, BENCH_Z + 0.05), [0, 0, -1.1], [0.02, 0.26, 0.02], m);
-  b.place(cylinder(18, 0.4, true), C.brass, v(lampX + 0.24, BENCH_Y + 0.6, BENCH_Z + 0.08), [0, 0, 2.3], [0.13, 0.17, 0.13], m);
-  const lampBulbLocal = new Vector3(lampX + 0.3, BENCH_Y + 0.54, BENCH_Z + 0.08);
-  b.place(sphere("low"), "#FFF0C4", [lampBulbLocal.x, lampBulbLocal.y, lampBulbLocal.z], [0, 0, 0], 0.055, m, "glow");
-  // The pull switch.
-  b.place(cylinder(6), C.ink, v(lampX + 0.32, BENCH_Y + 0.42, BENCH_Z + 0.08), [0, 0, 0], [0.004, 0.18, 0.004], m);
-  b.place(sphere("low"), C.brass, v(lampX + 0.32, BENCH_Y + 0.33, BENCH_Z + 0.08), [0, 0, 0], 0.014, m);
+  const z0 = BENCH_Z - 0.1;
+  const baseTop = new Vector3(lampX, BENCH_Y + 0.08, z0);
+  const elbow = new Vector3(lampX - 0.05, BENCH_Y + 0.52, z0 - 0.06);
+  const head = new Vector3(lampX + 0.24, BENCH_Y + 0.66, z0 + 0.12);
+  const aim = new Vector3(0.5, -0.78, 0.38).normalize();
+  b.place(cylinder(20), C.ink, v(lampX, BENCH_Y + 0.024, z0), [0, 0, 0], [0.15, 0.048, 0.15], m);
+  b.place(cylinder(16), C.brass, v(lampX, BENCH_Y + 0.062, z0), [0, 0, 0], [0.05, 0.03, 0.05], m);
+  for (const dx of [-0.022, 0.022]) rod(b, baseTop.clone().setX(baseTop.x + dx), elbow.clone().setX(elbow.x + dx), 0.011, LAMP_BRASS, m);
+  b.place(sphere("low"), C.ink, [elbow.x, elbow.y, elbow.z], [0, 0, 0], 0.034, m);
+  rod(b, elbow, head, 0.013, LAMP_BRASS, m);
+  b.place(sphere("low"), C.ink, [head.x, head.y, head.z], [0, 0, 0], 0.03, m);
+  const shadeCenter = head.clone().addScaledVector(aim, 0.07);
+  b.place(cylinder(20, 0.42), "#2C5848", [shadeCenter.x, shadeCenter.y, shadeCenter.z], alignTo(UP, aim.clone().negate()), [0.13, 0.17, 0.13], m);
+  const mouth = head.clone().addScaledVector(aim, 0.155);
+  b.place(torus(0.16), LAMP_BRASS, [mouth.x, mouth.y, mouth.z], alignTo(FORWARD, aim), 0.13, m);
+  const lampBulbLocal = mouth.clone().addScaledVector(aim, 0.012);
+  // The pull switch hangs from the rim.
+  const rimLow = mouth.clone().add(new Vector3(0.1, -0.02, 0.02));
+  b.place(cylinder(6), C.ink, [rimLow.x, rimLow.y - 0.08, rimLow.z], [0, 0, 0], [0.004, 0.16, 0.004], m);
+  b.place(sphere("low"), C.brass, [rimLow.x, rimLow.y - 0.165, rimLow.z], [0, 0, 0], 0.014, m);
 
   // The notebook, open, with a pencil.
   b.place(box(0.01), C.clay, v(-1.45, BENCH_Y + 0.015, BENCH_Z + 0.1), [0, 0.12, 0], [0.62, 0.03, 0.42], m);
@@ -253,6 +284,30 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
   // Four glass domes, each with one of Dad's little worlds inside.
   const glass: Object3D[] = [];
   const glassMaterial = toon.glass("#FFF6E0");
+
+  // The lamp's lit parts: the warm inside of the shade, the bulb, a soft halo
+  // and a pool of light on the bench. Unlit, so they glow at any power level.
+  const quaternion = new Quaternion().setFromRotationMatrix(m);
+  const lit = (mesh: Mesh, local: Vector3, order: number): void => {
+    mesh.position.copy(local.clone().applyMatrix4(m));
+    mesh.quaternion.premultiply(quaternion);
+    mesh.renderOrder = order;
+    glass.push(mesh);
+  };
+  const inner = new Mesh(cylinder(20), new MeshBasicMaterial({ color: "#FFE2AE" }));
+  inner.scale.set(0.118, 0.004, 0.118);
+  inner.quaternion.setFromEuler(new Euler(...alignTo(UP, aim)));
+  lit(inner, mouth.clone().addScaledVector(aim, -0.004), 0);
+  const bulb = new Mesh(sphere("mid"), new MeshBasicMaterial({ color: "#FFF4D6" }));
+  bulb.scale.setScalar(0.05);
+  lit(bulb, lampBulbLocal, 0);
+  const halo = new Mesh(sphere("mid"), new MeshBasicMaterial({ color: "#FFB65C", transparent: true, opacity: 0.22, blending: AdditiveBlending, depthWrite: false }));
+  halo.scale.setScalar(0.13);
+  lit(halo, lampBulbLocal, 9);
+  const pool = new Mesh(new PlaneGeometry(1, 1), new MeshBasicMaterial({ map: poolTexture(), transparent: true, opacity: 0.55, blending: AdditiveBlending, depthWrite: false }));
+  pool.scale.set(0.9, 0.7, 1);
+  pool.quaternion.setFromEuler(new Euler(-Math.PI / 2, 0, 0));
+  lit(pool, new Vector3(lampBulbLocal.x + 0.2, BENCH_Y + 0.004, lampBulbLocal.z + 0.12), 7);
   const domeGeometry = new SphereGeometry(0.24, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2);
   const worlds: { x: number; ground: string; detail: (x: number, y: number, z: number) => void }[] = [
     {
@@ -465,6 +520,42 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
 
 function materials(toon: ToonLibrary): Partial<Record<Layer, Material>> {
   return { solid: toon.toon({ vertexColors: true, paint: 0.14 }), glow: toon.glow("#ffffff", true), foliage: toon.toon({ vertexColors: true, paint: 0.14, sway: true }) };
+}
+
+/** The lamp sits right under its own bulb, so its brass is mixed darker to keep it from washing out. */
+const LAMP_BRASS = "#A97A33";
+const UP = new Vector3(0, 1, 0);
+const FORWARD = new Vector3(0, 0, 1);
+
+/** Euler angles that turn `from` onto `to`. */
+function alignTo(from: Vector3, to: Vector3): [number, number, number] {
+  const e = new Euler().setFromQuaternion(new Quaternion().setFromUnitVectors(from, to.clone().normalize()));
+  return [e.x, e.y, e.z];
+}
+
+/** A round rod between two points. */
+function rod(b: Batcher, from: Vector3, to: Vector3, radius: number, color: string, m: Matrix4): void {
+  const dir = to.clone().sub(from);
+  const mid = from.clone().add(to).multiplyScalar(0.5);
+  b.place(cylinder(8), color, [mid.x, mid.y, mid.z], alignTo(UP, dir), [radius, dir.length(), radius], m);
+}
+
+let poolMap: CanvasTexture | null = null;
+/** A soft round falloff for the lamp's pool of light. */
+function poolTexture(): CanvasTexture {
+  if (poolMap) return poolMap;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 64;
+  const c = canvas.getContext("2d")!;
+  const g = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+  g.addColorStop(0, "rgba(255,190,110,1)");
+  g.addColorStop(0.5, "rgba(255,170,90,0.45)");
+  g.addColorStop(1, "rgba(255,160,80,0)");
+  c.fillStyle = g;
+  c.fillRect(0, 0, 64, 64);
+  poolMap = new CanvasTexture(canvas);
+  poolMap.colorSpace = SRGBColorSpace;
+  return poolMap;
 }
 
 let jarGeometry: SphereGeometry | null = null;

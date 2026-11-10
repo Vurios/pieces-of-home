@@ -5,6 +5,7 @@ import type { StateStore } from "../core/state";
 import type { LookSpec } from "../render/post";
 import type { SkySpec } from "../render/sky";
 import type { ToonLibrary } from "../render/toon";
+import type { IntroSpec } from "../title/title";
 import type { CameraHint } from "../world/camera";
 import type { ColliderGroup } from "../world/colliders";
 import type { PlayerController } from "../world/controller";
@@ -61,6 +62,12 @@ export interface World {
    */
   fog: { color: string; near: number; far: number } | null;
   spawn: { dir: Vector3; forward: Vector3 };
+  /** The title flight for this world, or null. Only Home has one. */
+  intro: IntroSpec | null;
+  /** Lamps and windows, 0 dark to 1 fully lit. The title lights them when the chain is pulled. */
+  setPower(level: number): void;
+  /** A named point for speech bubbles, for example "mom" or "lamp". */
+  anchor(id: string): Vector3 | null;
   bookmarks: Record<string, Bookmark>;
   surfaceAt(dir: Vector3, onPlatform: boolean): string;
   cameraHint(player: PlayerController): CameraHint | null;
