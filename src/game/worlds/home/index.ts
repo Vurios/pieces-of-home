@@ -1,18 +1,20 @@
-import { Color, DirectionalLight, Group, HemisphereLight, Mesh, PointLight, Vector3 } from "three";
+import { Color, DirectionalLight, Group, HemisphereLight, Matrix4, Mesh, PointLight, Vector3 } from "three";
 import { Character, type KidId } from "../../actors/character";
 import { Milo } from "../../actors/milo";
+import { Mom } from "../../actors/mom";
 import { createEnvelope } from "../../actors/props";
 import { Batcher } from "../../render/kit";
-import { Floaters } from "../../render/particles";
+import { Floaters, Smoke } from "../../render/particles";
 import { type ColliderGroup, createColliderGroup } from "../../world/colliders";
 import { fbm3 } from "../../world/noise";
 import { angleBetween, damp, headingToTangent, latLonToDir, surfaceMatrix } from "../../world/sphere";
 import { Terrain, buildPlanetGeometry } from "../../world/terrain";
 import type { Bookmark, FrameInfo, World, WorldContext } from "../types";
-import { C, buildDish, buildHouse, buildLampPost, buildMailbox, buildTelescope } from "./buildings";
+import { C, buildDish, buildHouse, buildLampPost, buildMailbox } from "./buildings";
 import { HILL, HILL_TOP, HOME_RADIUS, MAILBOX, PATH_HALF_WIDTH, POND, SITES, TERRAIN, local, site } from "./layout";
-import { buildGarden, buildMeadow, buildPond, groundMatrix, pathDistance, scatterNature } from "./nature";
+import { buildGarden, buildMeadow, buildPond, groundMatrix, pathDistance, planTrees, scatterNature, treeShade } from "./nature";
 import { SHED, buildWorkshop, workshopMaterials } from "./workshop";
+import { buildGardenYard, buildHilltop, buildHouseYard, buildShedYard, buildSolarPanel } from "./yard";
 
 export const LETTER_TO_THE_LAMP = "to-the-lamp";
 
@@ -33,6 +35,9 @@ export function createHome(ctx: WorldContext): World {
   const shedDir = SITES.shed.dir;
 
   // ---- The planet ----
+  // Trees are planned first so the grass can darken under each one.
+  const trees = planTrees(quality.particles);
+  const shade = treeShade(trees);
   const planetGeometry = buildPlanetGeometry(terrain, quality.terrainDetail, (dir, _r, normal, out) => {
     const n = fbm3(dir.x * 5, dir.y * 5, dir.z * 5, 2, 3);
     const fine = fbm3(dir.x * 19, dir.y * 19, dir.z * 19, 2, 5);
@@ -51,12 +56,21 @@ export function createHome(ctx: WorldContext): World {
     const pond = angleBetween(dir, POND) * HOME_RADIUS;
     if (pond < 2.9) out.lerp(MUD, Math.min(1, (2.9 - pond) / 0.6));
 
+    // Soft shade under trees, painted in so it shows even without shadow maps.
+    for (const spot of shade) {
+      const d = angleBetween(dir, spot.dir) * HOME_RADIUS;
+      if (d < spot.radius) {
+        const t = 1 - d / spot.radius;
+        out.multiplyScalar(1 - spot.strength * t * t * (3 - 2 * t));
+      }
+    }
+
     // Slopes a touch darker, so hills read.
     const slope = 1 - Math.max(0, normal.dot(dir));
     out.multiplyScalar(1 - Math.min(0.25, slope * 2.2));
   });
   // Little rim light on the ground: a bright edge round the whole planet reads as an outline.
-  const planet = new Mesh(planetGeometry, toon.toon({ vertexColors: true, paint: 0.09, rim: 0.2 }));
+  const planet = new Mesh(planetGeometry, toon.toon({ vertexColors: true, paint: 0.09, rim: 0.2, nearFade: false }));
   planet.name = "planet";
   planet.receiveShadow = true;
   root.add(planet);
@@ -90,11 +104,16 @@ export function createHome(ctx: WorldContext): World {
   colliders.push(dishGroup);
   cameraColliders.push(dishGroup);
 
-  const scopeMatrix = groundMatrix(terrain, HILL_TOP, 20, 0.02);
-  colliders.push(createColliderGroup(scopeMatrix, buildTelescope(b, { dir: HILL_TOP, forward: new Vector3(), origin: new Vector3(), matrix: scopeMatrix })));
+  colliders.push(...buildHilltop(b, terrain, HILL_TOP));
+
+  // The lived-in layer around each building.
+  colliders.push(createColliderGroup(SITES.house.matrix, buildHouseYard(b, SITES.house)));
+  colliders.push(createColliderGroup(SITES.shed.matrix, buildShedYard(b, SITES.shed, terrain)));
+  colliders.push(createColliderGroup(SITES.garden.matrix, buildGardenYard(b, SITES.garden)));
+  colliders.push(createColliderGroup(SITES.dish.matrix, buildSolarPanel(b, SITES.dish)));
 
   // Lamp posts along the paths. The one by the workshop is placed in the shed's own frame, outside its door.
-  const lampDirs = [latLonToDir(-2.2, 1.6), latLonToDir(3.5, -9), latLonToDir(18, 3), local(SITES.shed, 2.6, 0, 5.4).normalize()];
+  const lampDirs = [latLonToDir(-2.2, 1.6), latLonToDir(18, 3), local(SITES.shed, 2.6, 0, 5.4).normalize()];
   for (const dir of lampDirs) {
     const m = groundMatrix(terrain, dir, 0, 0.02);
     colliders.push(createColliderGroup(m, buildLampPost(b, { dir, forward: new Vector3(), origin: new Vector3(), matrix: m })));
@@ -102,8 +121,8 @@ export function createHome(ctx: WorldContext): World {
 
   colliders.push(createColliderGroup(SITES.garden.matrix, buildGarden(b, SITES.garden)));
   buildPond(b, terrain);
-  colliders.push(...buildMeadow(b, terrain));
-  colliders.push(...scatterNature(b, terrain, quality.particles));
+  colliders.push(...buildMeadow(b, terrain, quality.particles));
+  colliders.push(...scatterNature(b, terrain, quality.particles, trees));
 
   for (const mesh of b.build(workshopMaterials(toon), { castShadow: quality.shadowMap > 0, receiveShadow: true })) root.add(mesh);
 
@@ -176,6 +195,12 @@ export function createHome(ctx: WorldContext): World {
     return kid;
   });
 
+  // ---- Mom waits on the porch bench with a cup of tea ----
+  const mom = new Mom(toon);
+  mom.root.matrix.copy(SITES.house.matrix).multiply(new Matrix4().makeTranslation(1.0, 0.66, 2.02));
+  mom.root.matrix.decompose(mom.root.position, mom.root.quaternion, mom.root.scale);
+  root.add(mom.root);
+
   // ---- The first letter waits in the mailbox ----
   const waitingLetter = createEnvelope(toon);
   const letterSpot = new Vector3(0, 1.32, 0.3).applyMatrix4(mailboxMatrix);
@@ -200,6 +225,10 @@ export function createHome(ctx: WorldContext): World {
     seed: 12,
   });
   for (const f of [motes, fireflies, hillFlies]) root.add(f.points);
+  // A thread of smoke from the chimney: someone is home.
+  const chimney = local(SITES.house, 1.05, 2.55 + 2.25, -0.7);
+  const smoke = new Smoke(chimney, chimney.clone().normalize(), Math.round(7 + 5 * quality.particles), "#E9DCCB");
+  root.add(smoke.points);
 
   // ---- Interactions (Phase 02 uses them to prove the systems; Phase 05 writes the story) ----
   const { store, interactions, bus } = ctx;
@@ -247,10 +276,32 @@ export function createHome(ctx: WorldContext): World {
   const spawnGround = terrain.pointAt(spawnDir);
   const inShed = (x: number, z: number): Vector3 => local(SITES.shed, x, 0, z).normalize();
   const shedForward = SITES.shed.forward.clone().negate();
+  // Gameplay views: the normal follow camera, standing in a few places around the yard.
+  const standAt = (dir: Vector3, heading: number): Bookmark => ({ player: { dir: dir.clone().normalize(), forward: headingToTangent(dir.clone().normalize(), heading) }, camera: null });
+  const toward = (from: Vector3, to: Vector3): number => {
+    const north = headingToTangent(from, 0);
+    const east = headingToTangent(from, 90);
+    const d = to.clone().sub(from);
+    return (Math.atan2(d.dot(east), d.dot(north)) * 180) / Math.PI;
+  };
+  const yardSpot = latLonToDir(-3, -4);
+  const gardenSpot = latLonToDir(-8, -5);
+  const shedSpot = local(SITES.shed, 0.6, 0, 7.2).normalize();
+  const hillSpot = latLonToDir(HILL.lat - 7, HILL.lon - 1);
+  const meadowSpot = latLonToDir(-17, 4);
   const bookmarks: Record<string, Bookmark> = {
+    "play-yard": standAt(yardSpot, toward(yardSpot, SITES.house.dir)),
+    "play-garden": standAt(gardenSpot, toward(gardenSpot, SITES.garden.dir)),
+    "play-shed": standAt(shedSpot, toward(shedSpot, SITES.shed.dir)),
+    "play-hill": standAt(hillSpot, toward(hillSpot, HILL_TOP)),
+    "play-meadow": standAt(meadowSpot, toward(meadowSpot, latLonToDir(-27, -4))),
     wide: {
       player: { dir: spawnDir, forward: spawnForward },
       camera: { position: latLonToDir(-22, 12).multiplyScalar(HOME_RADIUS + 31), target: wideTarget.clone().multiplyScalar(0.5) },
+    },
+    mom: {
+      player: { dir: local(SITES.house, -0.6, 0, 4.6).normalize(), forward: SITES.house.forward.clone().negate() },
+      camera: { position: local(SITES.house, 0.2, 1.5, 4.4), target: local(SITES.house, 1.0, 1.05, 2.0) },
     },
     porch: {
       player: { dir: local(SITES.house, 0.3, 0, 4.4).normalize(), forward: SITES.house.forward.clone().negate() },
@@ -312,6 +363,8 @@ export function createHome(ctx: WorldContext): World {
     sunHeight: 0.32,
     sunToward: new Vector3(1, 0.2, -0.4),
     dustColor: "#D8C3A0",
+    // Dusk haze on the far curve. Starts past the play area so nearby color stays clean.
+    fog: { color: "#C79390", near: -3, far: 22 },
     spawn: { dir: spawnDir, forward: spawnForward },
     bookmarks,
     surfaceAt,
@@ -362,21 +415,27 @@ export function createHome(ctx: WorldContext): World {
 
       const toMilo = feet.distanceTo(milo.root.position);
       milo.update(dt, Math.max(0, 1 - toMilo / 3), frame.reducedMotion);
+      const head = feet.clone().addScaledVector(frame.player.up, 1.0);
+      mom.update(dt, head, frame.reducedMotion);
       for (const kid of friends) {
+        kid.lookAt(inside && kid.root.position.distanceTo(feet) < 4.5 ? head : null);
         kid.update(dt, { pace: 0, running: false, grounded: true, verticalSpeed: 0, sinceLanding: 10, landingSpeed: 0, carrying: false }, frame.reducedMotion);
       }
       motes.update(dt, frame.reducedMotion);
       fireflies.update(dt, frame.reducedMotion);
       hillFlies.update(dt, frame.reducedMotion);
+      smoke.update(dt, frame.reducedMotion);
       // The lamp breathes a little, like a real filament.
       lampLight.intensity = 5.5 + (frame.reducedMotion ? 0 : Math.sin(frame.time * 3.1) * 0.2);
     },
     resize(height: number) {
       pixelHeight = height;
       for (const f of [motes, fireflies, hillFlies]) f.setScale(pixelHeight);
+      smoke.setScale(pixelHeight);
     },
     dispose() {
       for (const f of [motes, fireflies, hillFlies]) f.dispose();
+      smoke.dispose();
       planetGeometry.dispose();
       root.traverse((o) => {
         if (o instanceof Mesh && o.name.startsWith("batch")) o.geometry.dispose();

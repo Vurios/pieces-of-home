@@ -10,15 +10,15 @@ There is no deadline. The full scope in the Game Bible gets built: P0, then P1, 
 
 ## State summary (2026-11-11)
 
-Phases 01 and 02 are done. The live site is a walkable Home planet at dusk: the house and porch, Mom's garden, the mailbox, Dad's workshop (it opens like a dollhouse when you step in), the workbench with Milo (stage 0), the notebook, Dad's lamp, four glass domes and two NASA-map globes with sourced landing pins, a meadow, a dish and a telescope on the hill. Remi walks, runs and jumps; Nori, Lumi and Theo wait in the workshop. A placeholder letter loop (take the letter from the mailbox, give it to the lamp) proves the interaction and carry systems. The paper arrow points to the next goal. The loader, title and notebook UI are still placeholders (Phase 03).
+Phases 01 and 02 are done, plus a world and character pass (`DECISIONS.md` #21). The live site is a walkable Home planet at dusk: the house and porch, Mom's garden, the mailbox, Dad's workshop (it opens like a dollhouse when you step in), the workbench with Milo (stage 0), Mom on the porch with her tea, the notebook, Dad's lamp, four glass domes and two NASA-map globes with sourced landing pins, a meadow, a dish and a telescope on the hill. Remi walks, runs and jumps; Nori, Lumi and Theo wait in the workshop. A placeholder letter loop (take the letter from the mailbox, give it to the lamp) proves the interaction and carry systems. The paper arrow points to the next goal. The loader, title and notebook UI are still placeholders (Phase 03).
 
 Things a new session should know:
 
 - `npm run dev` runs Vite with the real Workers runtime on port 5173. `npm run typecheck` regenerates Worker types first.
 - Skills are git-ignored. After a fresh clone run `npx skills experimental_install` to restore them from `skills-lock.json` (`DECISIONS.md` #9).
 - Co-op is solo by default. Add `?room=some-code` to open a room socket. The page mirrors state on `<html data-net data-players data-stage data-tier>` for tests.
-- URL switches: `?quality=low|medium|high`, `?shot=wide|porch|workshop|bench|character` (fixed camera bookmarks), `?debug` (fps overlay, always on in dev), `?test` (exposes `window.__poh`).
-- Screenshots: `npx tsx scripts/screens.ts <folder>` with the dev server running. Latest set is in `docs/screens/phase02/`.
+- URL switches: `?quality=low|medium|high`, `?shot=wide|porch|mom|workshop|bench|character` (fixed camera bookmarks) or `?shot=play-yard|play-garden|play-shed|play-hill|play-meadow` (player placed, normal camera), `?debug` (fps overlay, always on in dev), `?test` (exposes `window.__poh`).
+- Screenshots: `npx tsx scripts/screens.ts <folder> [shots] [url] [quality] [desktop]` with the dev server running. Latest set is in `docs/screens/pass3/` (desktop only, at the team's request).
 - Playwright runs with 2 workers, and walk tests use the Low tier (`DECISIONS.md` #8, #18).
 - NASA models: `npx tsx scripts/assets/nasa-models.ts build` (output to `.cache/` until a phase ships one).
 - Facts: 52 (30 checked, 22 verify). Location facts carry `lat`/`lon`. Opening every source and filling `checkedOn` is the first job of Phase 05.
@@ -66,6 +66,17 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - Wide shot: tune for the title sequence (Phase 03 sets the real title camera)
 - Remi's backpack and Theo's goggles could read even stronger; revisit with the title close-ups
 - Hand-drawn labels on Dad's tags, the crates and the workshop sign (needs the type system from Phase 03)
+
+## World and character pass (between Phases 02 and 03)
+
+- [x] Wind sway layer, no-shadow detail layer, horizon fog, near-camera dither fade, chimney smoke
+- [x] Yard and story props around the house, workshop, garden, dish and hill (`worlds/home/yard.ts`)
+- [x] Trees, grass, flowers and rocks reworked; shade painted under trees
+- [x] Kids: faces, hands, shoes, Remi's hair and swinging backpack, friends look at the player
+- [x] Mom on the porch (sips, watches, waves)
+- [x] Characters merged per joint: 118 calls on Low, 223 on High
+- [x] Desktop review passes saved in `docs/screens/pass3/`
+- [x] Typecheck, 32 unit tests, 12 Playwright tests pass
 
 ## Phase 03: Loading screen, title sequence and the notebook UI
 

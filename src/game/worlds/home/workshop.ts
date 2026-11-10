@@ -463,8 +463,8 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
   };
 }
 
-function materials(toon: ToonLibrary): Record<Layer, Material> {
-  return { solid: toon.toon({ vertexColors: true, paint: 0.14 }), glow: toon.glow("#ffffff", true) };
+function materials(toon: ToonLibrary): Partial<Record<Layer, Material>> {
+  return { solid: toon.toon({ vertexColors: true, paint: 0.14 }), glow: toon.glow("#ffffff", true), foliage: toon.toon({ vertexColors: true, paint: 0.14, sway: true }) };
 }
 
 let jarGeometry: SphereGeometry | null = null;

@@ -213,3 +213,25 @@ Seeded facts have `checkedOn: null` and an empty `deeper` field. Both get filled
 - The old `pieces-of-home.tsa-bu.workers.dev` address still works (same Worker, same static assets).
 
 **Alternatives considered:** renaming the account's workers.dev subdomain (changes every Worker URL on the account); a custom domain (costs money).
+
+## 21. World and character pass before Phase 03
+
+**Date:** 2026-11-11
+
+**Decision:** At the team's request, a desktop-focused pass on world design, landscaping and characters before Phase 03. What changed and why:
+
+- **Wind.** A new `foliage` batch layer carries a per-vertex sway weight (0 at the root of each shape, 1 at the tip). The toon shader bends those vertices with a slow lean plus a quick flutter, phased by position so the lawn ripples. One uniform drives it; reduced motion sets it to 0. Grass, flowers, canopies, the garden arch and the washing on the line all move, for no extra draw calls.
+- **Detail layer.** Grass, flowers, pebbles and mushrooms use a `detail` layer that sways but skips the shadow pass. Their shadows were reading as dark specks across the lawn, and skipping them saves shadow draw time.
+- **Fog on the far curve.** Fog distances count from the camera's horizon distance, so the haze sits on the planet's edge from any camera height. The wide orbit shot and the close follow camera both keep clean near colors.
+- **Near-camera fade.** Toon materials dissolve with a 4x4 ordered dither when closer than about 1.7 units to the camera, so a bush or post the camera brushes past never fills the screen. Off for the ground.
+- **Characters merged per joint.** Kids, Mom and props in hand are painted with vertex colors and merged per joint (`Assembly` in `actors/parts.ts`). Eyes and brows are joints of their own so blinking and brow lifts still work. Draw calls fell from 354 to 118 on Low and from 695 to 223 on High, even with Mom and many new shapes.
+- **Characters.** Catch lights in the eyes, brows, a button nose, mitten hands with thumbs, rounded shoulders, cuffs and socks, sneakers with pale soles. Remi gets a side-swept fringe, cowlick and nape tufts, pocket flaps with buttons, and a fuller backpack (flap and buckles, a ringed-planet patch, a bottle and a rolled map in side pockets, a bedroll, a brass key charm) that swings on a damped spring when Remi runs and jumps. The workshop friends turn their heads to look at the player.
+- **Mom (Game Bible 5.5).** A new actor seated on the porch bench with a mug of tea: sage cardigan, bob and round glasses, a folded letter in her pocket. She sips now and then, watches the player when they come near and waves once each time they walk up.
+- **Landscaping and story props** (`worlds/home/yard.ts`): porch steps and a lattice skirt, Remi's bike on the porch rail, a covered woodpile with an axe, rain barrels, a washing line with a basket, a hydrangea bed; sawhorses with a half-built birdhouse, a board stack under a tarp, Dad's cable to the dish on a pole, a solar panel, an old wheel and a crate of jars; a rose arch over the garden gate, Dad's tin-can scarecrow robot with pie tins, stacked pots and a wheelbarrow; a rebuilt hilltop telescope (tripod with spreader, mount, finder, dew cap) beside a bench with a star chart, paper planes and a lantern.
+- **Nature.** Trees are planned before the ground is painted, so the grass darkens under each one. Hero trees frame the yard (a big oak, an autumn maple, a birch grove, an apple tree with windfalls, pines); the far side is wilder woods. Canopies are a dark heart, a lumpy ring and bright top blobs. Background trees use lighter spheres. Mushrooms at tree roots, moss on rocks, grass gathered at edges, wildflowers in single-color drifts with ten-point heads.
+- **Smaller fixes.** A lamp post that stood on the porch deck is gone; terrain detail is higher on Medium and High so near slopes stop showing facets; the chimney smokes.
+- **Screenshots** are desktop only (1440x900) for this pass, at the team's request (`scripts/screens.ts ... desktop`). New gameplay bookmarks `play-yard`, `play-garden`, `play-shed`, `play-hill`, `play-meadow` stand the player in place with the normal follow camera, plus a `mom` close-up.
+
+**Budget after the pass:** Low 118 calls and 240k triangles; High 223 calls and 608k triangles (every pass included). Phase 07 measures a real mid laptop and phone.
+
+**Alternatives considered:** instancing grass and flowers (more code paths, and the merged batches already draw in one call each); alpha-blended near fade (needs sorting, breaks the depth-based ink).

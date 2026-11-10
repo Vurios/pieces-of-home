@@ -45,7 +45,7 @@ export const QUALITY: Record<QualityTier, QualitySettings> = {
     tiltShift: true,
     outlineBoil: true,
     particles: 0.7,
-    terrainDetail: 40,
+    terrainDetail: 52,
     audioLayers: 4,
   },
   high: {
@@ -56,7 +56,7 @@ export const QUALITY: Record<QualityTier, QualitySettings> = {
     tiltShift: true,
     outlineBoil: true,
     particles: 1,
-    terrainDetail: 56,
+    terrainDetail: 80,
     audioLayers: 6,
   },
 };

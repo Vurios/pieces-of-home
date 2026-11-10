@@ -1,7 +1,7 @@
-import { type BufferGeometry, Group, type Material, Mesh, Object3D } from "three";
+import { type BufferGeometry, Group, Mesh, type Object3D, Vector3 } from "three";
 import type { ToonLibrary } from "../render/toon";
 import { damp } from "../world/sphere";
-import { box, capsule, cylinder, sphere, torus } from "./parts";
+import { Assembly, box, capsule, cone, cylinder, sphere, torus } from "./parts";
 
 /**
  * Chunky chibi kids, built from simple shapes in code.
@@ -47,6 +47,8 @@ export interface Motion {
 export type Action = "none" | "interact" | "emote" | "celebrate";
 
 const INK = "#2B2622";
+const SOCK = "#F4ECDD";
+const SOLE = "#EFE6D6";
 
 /** A posable joint. */
 function joint(name: string, x = 0, y = 0, z = 0): Group {
@@ -55,6 +57,8 @@ function joint(name: string, x = 0, y = 0, z = 0): Group {
   group.position.set(x, y, z);
   return group;
 }
+
+const lookScratch = new Vector3();
 
 export class Character {
   readonly root = new Group();
@@ -70,7 +74,17 @@ export class Character {
   private armR: Group;
   private legL: Group;
   private legR: Group;
-  private eyes: Mesh[] = [];
+  private eyes: Group[] = [];
+  private brows: Group[] = [];
+  /** Parts are painted with vertex colors and merged per joint: one draw call per joint. */
+  private assembly: Assembly;
+  /** Secondary motion: the backpack and hair lag behind the body a little. */
+  private trail: Group | null = null;
+  private trailSwing = 0;
+  private trailVelocity = 0;
+  private lastPhase = 0;
+  /** Where the head should turn, in the character's own frame, or null. */
+  private lookTarget: { yaw: number; pitch: number } | null = null;
   private propInHand: Object3D | null = null;
 
   private phase = 0;
@@ -89,6 +103,7 @@ export class Character {
   ) {
     this.id = id;
     this.root.name = `kid-${id}`;
+    this.assembly = new Assembly(toon.toon({ vertexColors: true, objectSpace: true, paint: 0.1 }));
     const p = KID_PALETTES[id];
     this.root.add(this.body);
 
@@ -101,7 +116,13 @@ export class Character {
     for (const leg of [this.legL, this.legR]) {
       this.hips.add(leg);
       this.part(leg, capsule(0.12), p.legs, [0, -0.13, 0], [0.07, 0.122, 0.07]);
-      this.part(leg, box(0.035), p.shoes, [0, -0.27, 0.035], [0.13, 0.085, 0.21]);
+      // A rolled cuff and a sock line, so the leg ends in clothing, not a tube.
+      this.part(leg, cylinder(14), p.legs, [0, -0.2, 0], [0.079, 0.035, 0.079]);
+      this.part(leg, cylinder(12), SOCK, [0, -0.235, 0], [0.058, 0.03, 0.058]);
+      // Rounded sneaker: a puffy upper, a pale sole and a toe cap.
+      this.part(leg, sphere("mid"), p.shoes, [0, -0.258, 0.03], [0.072, 0.052, 0.112]);
+      this.part(leg, box(0.03), SOLE, [0, -0.292, 0.032], [0.142, 0.036, 0.228]);
+      this.part(leg, sphere("low"), SOLE, [0, -0.276, 0.118], [0.058, 0.03, 0.042]);
     }
 
     // Torso.
@@ -114,11 +135,18 @@ export class Character {
     // Arms hang from the shoulders.
     this.armL = joint("armL", -0.2, 0.33, 0);
     this.armR = joint("armR", 0.2, 0.33, 0);
+    const sleeve = id === "theo" ? "#F1E4CC" : p.top;
+    const cuff = id === "theo" ? "#F1E4CC" : p.topDark;
     for (const arm of [this.armL, this.armR]) {
       this.torso.add(arm);
-      this.part(arm, capsule(0.16), p.top, [0, -0.1, 0], [0.058, 0.098, 0.058]);
-      this.part(arm, sphere("low"), p.skin, [0, -0.235, 0], 0.064);
+      this.part(arm, capsule(0.16), sleeve, [0, -0.1, 0], [0.058, 0.098, 0.058]);
+      // Sleeve cuff, then a mitten hand with a little thumb.
+      this.part(arm, cylinder(12), cuff, [0, -0.185, 0], [0.063, 0.03, 0.063]);
+      this.part(arm, sphere("mid"), p.skin, [0, -0.238, 0.005], [0.06, 0.066, 0.056]);
+      this.part(arm, sphere("low"), p.skin, [arm === this.armL ? 0.04 : -0.04, -0.222, 0.035], [0.024, 0.03, 0.024]);
     }
+    // Rounded shoulders, so the arms grow out of the body.
+    for (const side of [-1, 1]) this.part(this.torso, sphere("mid"), p.top, [side * 0.165, 0.315, 0], [0.075, 0.07, 0.075]);
     this.carrySocket = joint("carry", 0, 0.2, 0.24);
     this.torso.add(this.carrySocket);
 
@@ -129,23 +157,29 @@ export class Character {
     this.part(this.head, sphere("low"), p.skin, [-0.265, 0.18, 0], [0.05, 0.065, 0.04]);
     this.part(this.head, sphere("low"), p.skin, [0.265, 0.18, 0], [0.05, 0.065, 0.04]);
     for (const side of [-1, 1]) {
-      const eye = this.part(this.head, sphere("low"), INK, [side * 0.095, 0.2, 0.235], [0.034, 0.05, 0.022]);
+      // Each eye is its own joint so it can blink. The catch lights sit inside it and blink too.
+      const eye = joint("eye", side * 0.095, 0.2, 0.235);
+      this.head.add(eye);
+      this.part(eye, sphere("mid"), INK, [0, 0, 0], [0.034, 0.05, 0.022]);
+      this.part(eye, sphere("tiny"), "#FFF8EC", [-0.011, 0.019, 0.0165], [0.0116, 0.012, 0.0088]);
+      this.part(eye, sphere("tiny"), "#FFF8EC", [0.0102, -0.0175, 0.0176], [0.0054, 0.0055, 0.0044]);
       this.eyes.push(eye);
       this.part(this.head, sphere("low"), "#E59A86", [side * 0.155, 0.13, 0.21], [0.045, 0.026, 0.02]);
+      // Brows sit just under the fringe and lift a little when the kid is happy.
+      const brow = joint("brow", side * 0.1, 0.268, 0.228);
+      this.head.add(brow);
+      this.part(brow, capsule(0.6), p.hair, [0, 0, 0], [0.011, 0.024, 0.011], [0, 0, Math.PI / 2 + side * 0.18]);
+      this.brows.push(brow);
     }
-    const mouth = this.part(this.head, torus(0.3, Math.PI * 0.8), INK, [0, 0.12, 0.246], 0.032);
-    mouth.rotation.z = Math.PI * 1.1;
+    // A button nose.
+    this.part(this.head, sphere("low"), p.skin, [0, 0.158, 0.255], [0.024, 0.02, 0.018]);
+    this.part(this.head, torus(0.3, Math.PI * 0.8), INK, [0, 0.12, 0.246], 0.032, [0, 0, Math.PI * 1.1]);
 
     this.dress(id, p);
-    this.root.traverse((object) => {
-      if (object instanceof Mesh) {
-        object.castShadow = true;
-        object.receiveShadow = false;
-      }
-    });
+    this.assembly.flush();
   }
 
-  /** Adds a painted shape to a joint. */
+  /** Adds a painted shape to a joint. Shapes merge when the assembly is flushed. */
   private part(
     parent: Object3D,
     geometry: BufferGeometry,
@@ -153,18 +187,8 @@ export class Character {
     position: [number, number, number],
     scale: number | [number, number, number],
     rotation: [number, number, number] = [0, 0, 0],
-  ): Mesh {
-    const mesh = new Mesh(geometry, this.material(color));
-    mesh.position.set(position[0], position[1], position[2]);
-    if (typeof scale === "number") mesh.scale.setScalar(scale);
-    else mesh.scale.set(scale[0], scale[1], scale[2]);
-    mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
-    parent.add(mesh);
-    return mesh;
-  }
-
-  private material(color: string): Material {
-    return this.toon.toon({ color, objectSpace: true, paint: 0.1 });
+  ): void {
+    this.assembly.add(parent, geometry, color, position, scale, rotation);
   }
 
   /** Hair, hats and the things that make each kid a silhouette. */
@@ -173,21 +197,52 @@ export class Character {
     const t = this.torso;
     switch (id) {
       case "remi": {
-        // Messy short hair with a tuft.
+        // Messy short hair: a cap of hair, a side-swept fringe, a cowlick and tufts at the nape.
         this.part(h, sphere("high"), p.hair, [0, 0.29, -0.03], [0.285, 0.2, 0.27]);
-        this.part(h, sphere("low"), p.hair, [0.12, 0.42, 0.04], [0.09, 0.06, 0.08], [0, 0, -0.5]);
-        this.part(h, sphere("low"), p.hair, [-0.2, 0.25, 0.1], [0.08, 0.09, 0.1]);
-        // Mustard jacket with many pockets.
+        this.part(h, sphere("mid"), p.hair, [-0.09, 0.33, 0.14], [0.17, 0.09, 0.12], [0.3, 0, 0.35]);
+        this.part(h, cone(6), p.hair, [0.07, 0.48, 0.0], [0.05, 0.1, 0.05], [0.2, 0, -0.55]);
+        this.part(h, cone(6), p.hair, [0.12, 0.46, -0.05], [0.04, 0.08, 0.04], [-0.1, 0, -0.9]);
+        for (const [x, y, z] of [[-0.12, 0.15, -0.2], [0.0, 0.13, -0.23], [0.12, 0.15, -0.2], [-0.21, 0.2, -0.1], [0.21, 0.2, -0.1]] as const) {
+          this.part(h, sphere("low"), p.hair, [x, y, z], [0.075, 0.07, 0.065]);
+        }
+        // Mustard jacket with many pockets, each with a flap and a button.
         for (const [x, y] of [[-0.09, 0.14], [0.09, 0.14], [-0.1, 0.27], [0.1, 0.27]] as const) {
           this.part(t, box(0.02), p.topDark, [x, y, 0.135], [0.07, 0.06, 0.03]);
+          this.part(t, box(0.01), p.topDark, [x, y + 0.035, 0.145], [0.076, 0.022, 0.03]);
+          this.part(t, sphere("low"), "#F4ECDD", [x, y + 0.03, 0.163], 0.009);
         }
         this.part(t, box(0.02), p.topDark, [0, 0.4, 0.07], [0.2, 0.05, 0.12]);
-        // The big backpack.
-        this.part(t, box(0.07), p.accent, [0, 0.23, -0.2], [0.44, 0.42, 0.22]);
-        this.part(t, box(0.05), p.accentDark, [0, 0.36, -0.235], [0.42, 0.15, 0.18]);
-        for (const side of [-1, 1]) this.part(t, box(0.04), p.accentDark, [side * 0.24, 0.17, -0.2], [0.08, 0.2, 0.16]);
-        this.part(t, box(0.03), p.accentDark, [0, 0.12, -0.3], [0.2, 0.1, 0.05]);
+        this.part(t, box(0.005), "#7A5A1E", [0, 0.22, 0.155], [0.012, 0.3, 0.01]);
         for (const side of [-1, 1]) this.part(t, box(0.01), p.accentDark, [side * 0.1, 0.25, 0.1], [0.035, 0.3, 0.05]);
+
+        // The big backpack hangs from the shoulders on its own pivot, so it can swing.
+        const pack = joint("pack", 0, 0.42, -0.14);
+        t.add(pack);
+        this.trail = pack;
+        const y0 = -0.42;
+        const z0 = 0.14;
+        this.part(pack, box(0.09), p.accent, [0, 0.23 + y0, -0.21 + z0], [0.42, 0.44, 0.22]);
+        // Top flap with two buckles.
+        this.part(pack, box(0.06), p.accentDark, [0, 0.4 + y0, -0.24 + z0], [0.44, 0.13, 0.2]);
+        for (const side of [-1, 1]) {
+          this.part(pack, box(0.01), p.accentDark, [side * 0.11, 0.3 + y0, -0.325 + z0], [0.04, 0.14, 0.02]);
+          this.part(pack, box(0.01), "#D9A441", [side * 0.11, 0.255 + y0, -0.33 + z0], [0.055, 0.035, 0.02]);
+        }
+        // Front pocket with a round patch: an orange planet with a ring.
+        this.part(pack, box(0.04), p.accentDark, [0, 0.12 + y0, -0.32 + z0], [0.26, 0.15, 0.06]);
+        this.part(pack, cylinder(16), "#F2A541", [0, 0.125 + y0, -0.352 + z0], [0.045, 0.01, 0.045], [Math.PI / 2, 0, 0]);
+        this.part(pack, torus(0.12), "#F4ECDD", [0, 0.125 + y0, -0.358 + z0], [0.068, 0.025, 0.03], [0, 0, 0.35]);
+        // Side pockets: a water bottle on one side, a rolled map on the other.
+        this.part(pack, box(0.04), p.accentDark, [0.235, 0.15 + y0, -0.21 + z0], [0.07, 0.2, 0.15]);
+        this.part(pack, cylinder(12), "#6E8FB0", [0.24, 0.29 + y0, -0.21 + z0], [0.04, 0.12, 0.04]);
+        this.part(pack, cylinder(12), "#2E2A4F", [0.24, 0.36 + y0, -0.21 + z0], [0.03, 0.03, 0.03]);
+        this.part(pack, box(0.04), p.accentDark, [-0.235, 0.15 + y0, -0.21 + z0], [0.07, 0.2, 0.15]);
+        this.part(pack, cylinder(10), "#F4ECDD", [-0.245, 0.3 + y0, -0.2 + z0], [0.03, 0.2, 0.03], [0.25, 0, 0]);
+        // A bedroll strapped under the bottom, and a little brass key charm.
+        this.part(pack, cylinder(16), "#C0573E", [0, 0.0 + y0, -0.2 + z0], [0.075, 0.46, 0.075], [0, 0, Math.PI / 2]);
+        for (const side of [-1, 1]) this.part(pack, cylinder(12), "#6B3825", [side * 0.14, 0.0 + y0, -0.2 + z0], [0.079, 0.025, 0.079], [0, 0, Math.PI / 2]);
+        this.part(pack, torus(0.3), "#D9A441", [-0.15, 0.34 + y0, -0.35 + z0], 0.018);
+        this.part(pack, box(0.01), "#D9A441", [-0.15, 0.3 + y0, -0.35 + z0], [0.015, 0.05, 0.008]);
         break;
       }
       case "nori": {
@@ -234,11 +289,6 @@ export class Character {
           this.part(h, cylinder(16), "#86C1CF", [side * 0.1, 0.345, 0.245], [0.07, 0.014, 0.07], [Math.PI / 2 - 0.45, 0, 0]);
           this.part(h, sphere("low"), "#FFFFFF", [side * 0.1 - 0.02, 0.365, 0.255], 0.015);
         }
-        // Shirt sleeves read under the overalls: arms in cream.
-        for (const arm of [this.armL, this.armR]) {
-          const sleeve = arm.children[0];
-          if (sleeve instanceof Mesh) sleeve.material = this.material("#F1E4CC");
-        }
         this.part(t, box(0.03), p.topDark, [0, 0.27, 0.13], [0.2, 0.18, 0.04]);
         for (const side of [-1, 1]) this.part(t, box(0.01), p.topDark, [side * 0.09, 0.36, 0.0], [0.035, 0.05, 0.3]);
         // Tool belt with a hammer and a screwdriver.
@@ -254,6 +304,27 @@ export class Character {
     }
   }
 
+  /**
+   * Turns the head toward a world point, or back to idle with null.
+   * Only points in front of the kid are followed; behind, the head relaxes.
+   */
+  lookAt(point: Vector3 | null): void {
+    if (!point) {
+      this.lookTarget = null;
+      return;
+    }
+    this.root.updateMatrixWorld();
+    const p = lookScratch.copy(point);
+    this.root.worldToLocal(p);
+    p.y -= 1.0;
+    if (p.z < -0.2) {
+      this.lookTarget = null;
+      return;
+    }
+    const flat = Math.hypot(p.x, p.z);
+    this.lookTarget = { yaw: Math.atan2(p.x, p.z), pitch: -Math.atan2(p.y, flat) };
+  }
+
   /** Starts a one-off action, such as reaching for a letter or waving. */
   play(action: Action): void {
     this.action = action;
@@ -264,6 +335,9 @@ export class Character {
   private holdProp(kind: "pebble" | "screwdriver" | null): void {
     if (this.propInHand) {
       this.armR.remove(this.propInHand);
+      this.propInHand.traverse((o) => {
+        if (o instanceof Mesh) o.geometry.dispose();
+      });
       this.propInHand = null;
     }
     if (!kind) return;
@@ -274,6 +348,7 @@ export class Character {
       this.part(prop, cylinder(6), "#B9B4AA", [0, -0.07, 0], [0.008, 0.08, 0.008]);
     }
     prop.position.set(0, -0.29, 0.04);
+    this.assembly.flush();
     this.armR.add(prop);
     this.propInHand = prop;
   }
@@ -405,10 +480,29 @@ export class Character {
       }
     }
 
-    // Head looks around a little while standing.
-    if (!moving && this.action === "none" && this.idleQuirk === 0 && !reducedMotion) {
+    // Head looks around a little while standing, or turns toward someone nearby.
+    if (this.lookTarget && this.action === "none" && this.idleQuirk === 0) {
+      headY = Math.max(-1.0, Math.min(1.0, this.lookTarget.yaw));
+      headX = Math.max(-0.35, Math.min(0.35, this.lookTarget.pitch));
+    } else if (!moving && this.action === "none" && this.idleQuirk === 0 && !reducedMotion) {
       headY = Math.sin(this.time * 0.37) * 0.25;
     }
+
+    // Happy actions lift the brows.
+    const browLift = this.action === "celebrate" || this.action === "emote" ? 0.018 : 0;
+    for (const brow of this.brows) brow.position.y += (0.268 + browLift - brow.position.y) * damp(12, dt);
+
+    // The backpack lags behind: a damped spring pushed by leaning, each footfall and jumps.
+    if (this.trail) {
+      const footfall = moving ? Math.abs(Math.sin(this.phase)) - Math.abs(Math.sin(this.lastPhase)) : 0;
+      const target = this.lean * 0.9 + (motion.grounded ? 0 : Math.max(-0.25, Math.min(0.25, -motion.verticalSpeed * 0.04)));
+      this.trailVelocity += ((target - this.trailSwing) * 120 - this.trailVelocity * 11) * dt + footfall * (motion.running ? 1.6 : 0.9);
+      this.trailSwing += this.trailVelocity * dt;
+      if (reducedMotion) this.trailSwing = target;
+      this.trailSwing = Math.max(-0.3, Math.min(0.45, this.trailSwing));
+      this.trail.rotation.x = this.trailSwing;
+    }
+    this.lastPhase = this.phase;
 
     const k = damp(18, dt);
     this.legL.rotation.x += (legL - this.legL.rotation.x) * k;
@@ -443,6 +537,6 @@ export class Character {
     this.blink -= dt;
     const closed = this.blink < 0.12;
     if (this.blink < 0) this.blink = 2.5 + Math.random() * 3;
-    for (const eye of this.eyes) eye.scale.y = closed ? 0.008 : 0.05;
+    for (const eye of this.eyes) eye.scale.y = closed ? 0.16 : 1;
   }
 }

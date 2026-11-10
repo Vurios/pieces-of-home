@@ -1,4 +1,5 @@
 import {
+  Fog,
   PCFShadowMap,
   PerspectiveCamera,
   Scene,
@@ -195,6 +196,7 @@ export class Engine {
       this.scene.add(this.sky.group);
     }
     this.post.setLook(world.look);
+    this.scene.fog = world.fog ? new Fog(world.fog.color, world.fog.near, world.fog.far) : null;
     this.puffs.setColor(world.dustColor);
     world.resize(this.renderer.domElement.height);
 
@@ -266,6 +268,8 @@ export class Engine {
     this.timer.update(time);
     const dt = Math.min(0.05, this.timer.getDelta());
     this.elapsed += dt;
+    this.toon.uniforms.uPohTime.value = this.elapsed;
+    this.toon.uniforms.uPohWind.value = this.reducedMotion ? 0 : 0.06;
     const world = this.world;
     if (!world) return;
     this.renderer.info.reset();
@@ -327,6 +331,15 @@ export class Engine {
     const skyUp = shot?.camera ? this.scratch.setFromMatrixColumn(this.camera.matrixWorld, 1).normalize() : up;
     this.sky?.update(this.camera.position, skyUp, this.elapsed);
 
+    // Haze sits on the far curve: fog distances count from the horizon, so close ground stays clean from any height.
+    if (this.scene.fog instanceof Fog && world.fog) {
+      const d = this.camera.position.length();
+      const radius = world.terrain.radiusAt(this.player.up);
+      const horizon = Math.sqrt(Math.max(1, d * d - radius * radius));
+      this.scene.fog.near = horizon + world.fog.near;
+      this.scene.fog.far = horizon + world.fog.far;
+    }
+
     this.arrow.update(dt, this.player.position, up, shot ? null : world.objective(), this.reducedMotion);
     this.puffs.update(dt);
 
@@ -371,6 +384,21 @@ export class Engine {
       state: () => this.store.value,
       player: () => ({ position: this.player.position.toArray(), grounded: this.player.grounded }),
       tier: () => this.quality.tier,
+      /** The heaviest meshes in the scene, for budgeting. */
+      heavy: () => {
+        const rows: [string, number][] = [];
+        let meshes = 0;
+        this.scene.traverse((o) => {
+          const g = (o as { geometry?: { index: { count: number } | null; attributes: { position: { count: number } } } }).geometry;
+          if (!g || !(o as { isMesh?: boolean }).isMesh) return;
+          meshes += 1;
+          rows.push([o.name || o.parent?.name || "?", (g.index ? g.index.count : g.attributes.position.count) / 3]);
+        });
+        rows.sort((a, b) => b[1] - a[1]);
+        return { meshes, top: rows.slice(0, 8) };
+      },
+      /** Draw calls and triangles of the last frame, every pass included. */
+      stats: () => ({ calls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles }),
       setQuality: (tier: QualityTier | null) => this.setQuality(tier),
       travel: (id: string) => this.travel(id),
       /** Stands the player next to an interactable, facing it. */

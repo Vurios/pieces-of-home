@@ -214,29 +214,6 @@ function rotationFromAxisAngle(axis: Vector3, angle: number): [number, number, n
   return [e.x, e.y, e.z];
 }
 
-/** The telescope on the hill, with a little stool beside it. */
-export function buildTelescope(b: Batcher, s: Site): Shape[] {
-  const m = s.matrix;
-  for (let i = 0; i < 3; i += 1) {
-    const a = (i / 3) * Math.PI * 2;
-    b.place(cylinder(6), C.woodDark, v(Math.cos(a) * 0.28, 0.5, Math.sin(a) * 0.28), [Math.sin(a) * 0.3, 0, -Math.cos(a) * 0.3], [0.025, 1.05, 0.025], m);
-  }
-  b.place(sphere("low"), C.metalDark, v(0, 1.02, 0), [0, 0, 0], 0.07, m);
-  b.place(cylinder(16, 0.8), C.brass, v(0, 1.18, 0.05), [-0.9, 0, 0], [0.11, 0.95, 0.11], m);
-  b.place(cylinder(16), C.ink, v(0, 1.52, 0.4), [-0.9, 0, 0], [0.12, 0.08, 0.12], m);
-  b.place(cylinder(12), C.metalDark, v(0, 0.86, -0.32), [-0.9, 0, 0], [0.06, 0.12, 0.06], m);
-  // Stool.
-  b.place(cylinder(12), C.wood, v(0.75, 0.45, -0.25), [0, 0, 0], [0.2, 0.06, 0.2], m);
-  for (let i = 0; i < 3; i += 1) {
-    const a = (i / 3) * Math.PI * 2;
-    b.place(cylinder(6), C.woodDark, v(0.75 + Math.cos(a) * 0.12, 0.21, -0.25 + Math.sin(a) * 0.12), [0, 0, 0], [0.02, 0.42, 0.02], m);
-  }
-  return [
-    { kind: "circle", x: 0, z: 0, radius: 0.35, height: 1.6 },
-    { kind: "circle", x: 0.75, z: -0.25, radius: 0.2, height: 0.48 },
-  ];
-}
-
 /** A lamp post along the path. Warm glass, no real light, so it costs nothing. */
 export function buildLampPost(b: Batcher, s: Site): Shape[] {
   const m = s.matrix;

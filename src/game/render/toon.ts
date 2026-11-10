@@ -31,6 +31,14 @@ export interface ToonOptions {
   emissiveIntensity?: number;
   /** Scales the shared rim light for this material. 1 by default. */
   rim?: number;
+  /** Bends vertices that carry an `aSway` weight in the wind (foliage batches). */
+  sway?: boolean;
+  /**
+   * Dissolves the surface with a dither pattern when it comes very close to the
+   * camera, so a bush or wall the camera brushes past never fills the screen.
+   * On by default. Off for the ground.
+   */
+  nearFade?: boolean;
 }
 
 function createBandTexture(): DataTexture {
@@ -44,6 +52,24 @@ function createBandTexture(): DataTexture {
 
 const VERTEX_HEAD = /* glsl */ `
 varying vec3 vPohPaint;
+#ifdef POH_SWAY
+attribute float aSway;
+uniform float uPohTime;
+uniform float uPohWind;
+#endif
+`;
+
+// Wind: a slow lean plus a quicker flutter, phased by position so a meadow ripples.
+const VERTEX_SWAY = /* glsl */ `
+#ifdef POH_SWAY
+  vec3 pohUp = normalize(position);
+  vec3 pohSide = normalize(cross(pohUp, vec3(0.31, 0.95, 0.12)));
+  vec3 pohFwd = cross(pohSide, pohUp);
+  float pohPhase = dot(position, vec3(0.37, 0.21, 0.29));
+  float pohLean = sin(uPohTime * 0.9 + pohPhase) * 0.7 + sin(uPohTime * 2.3 + pohPhase * 2.1) * 0.3;
+  float pohFlutter = sin(uPohTime * 5.1 + pohPhase * 3.7) * 0.25;
+  transformed += (pohSide * pohLean + pohFwd * pohFlutter) * aSway * uPohWind;
+#endif
 `;
 
 const VERTEX_BODY = /* glsl */ `
@@ -83,6 +109,21 @@ float pohNoise(vec3 x) {
 }
 `;
 
+const FRAGMENT_NEAR = /* glsl */ `
+#ifdef POH_NEAR_FADE
+{
+  // 4x4 ordered dither: a clean screen-door fade with no sorting.
+  vec2 pohA = floor(gl_FragCoord.xy);
+  vec2 pohH = floor(pohA * 0.5);
+  float pohB2a = fract(dot(pohH, vec2(0.5, pohH.y * 0.75)));
+  float pohB2b = fract(dot(pohA, vec2(0.5, pohA.y * 0.75)));
+  float pohBayer = pohB2a * 0.25 + pohB2b + 0.03;
+  float pohFade = smoothstep(0.75, 1.7, -vViewPosition.z);
+  if (pohFade < pohBayer) discard;
+}
+#endif
+`;
+
 const FRAGMENT_PAINT = /* glsl */ `
 // Two sizes of brush mottling.
 float pohBrush = pohNoise(vPohPaint * 1.3) * 0.65 + pohNoise(vPohPaint * 4.7) * 0.35;
@@ -103,6 +144,10 @@ export class ToonLibrary {
   readonly uniforms = {
     uPohRimColor: { value: new Color("#F2A541") },
     uPohRimStrength: { value: 0.5 },
+    /** Seconds. The engine sets it each frame. */
+    uPohTime: { value: 0 },
+    /** How far foliage tips travel, in world units. The engine sets 0 under reduced motion. */
+    uPohWind: { value: 0.06 },
   };
   private materials = new Set<{ dispose(): void }>();
   private toonCache = new Map<string, MeshToonMaterial>();
@@ -132,22 +177,27 @@ export class ToonLibrary {
     const objectSpace = options.objectSpace ?? false;
     const paintUniform = { value: paint };
     const rimUniform = { value: options.rim ?? 1 };
+    const sway = options.sway ?? false;
+    const nearFade = options.nearFade ?? true;
 
     material.onBeforeCompile = (shader) => {
       shader.uniforms["uPohRimColor"] = this.uniforms.uPohRimColor;
       shader.uniforms["uPohRimStrength"] = this.uniforms.uPohRimStrength;
       shader.uniforms["uPohPaint"] = paintUniform;
       shader.uniforms["uPohRimScale"] = rimUniform;
-      const define = objectSpace ? "#define POH_OBJECT_SPACE\n" : "";
+      shader.uniforms["uPohTime"] = this.uniforms.uPohTime;
+      shader.uniforms["uPohWind"] = this.uniforms.uPohWind;
+      const define = (objectSpace ? "#define POH_OBJECT_SPACE\n" : "") + (sway ? "#define POH_SWAY\n" : "");
       shader.vertexShader = shader.vertexShader
         .replace("#include <common>", `${define}#include <common>\n${VERTEX_HEAD}`)
+        .replace("#include <begin_vertex>", `#include <begin_vertex>\n${VERTEX_SWAY}`)
         .replace("#include <project_vertex>", `#include <project_vertex>\n${VERTEX_BODY}`);
       shader.fragmentShader = shader.fragmentShader
         .replace("#include <common>", `#include <common>\n${FRAGMENT_HEAD}`)
         .replace("#include <color_fragment>", `#include <color_fragment>\n${FRAGMENT_PAINT}`)
         .replace("#include <opaque_fragment>", `${FRAGMENT_RIM}\n#include <opaque_fragment>`);
     };
-    material.customProgramCacheKey = () => `poh-toon-${objectSpace ? "o" : "w"}`;
+    material.customProgramCacheKey = () => `poh-toon-${objectSpace ? "o" : "w"}${sway ? "s" : ""}${nearFade ? "n" : ""}`;
 
     this.toonCache.set(key, material);
     this.materials.add(material);

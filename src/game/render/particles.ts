@@ -229,3 +229,66 @@ export class Floaters {
     this.points.material.dispose();
   }
 }
+
+/**
+ * Chimney smoke: soft puffs that rise along `up`, drift with the breeze,
+ * swell and fade, then start again at the chimney.
+ */
+export class Smoke {
+  readonly points: Points<BufferGeometry, ShaderMaterial>;
+  private positions: Float32Array;
+  private sizes: Float32Array;
+  private alphas: Float32Array;
+  private time = 0;
+  private readonly side: Vector3;
+
+  constructor(
+    private origin: Vector3,
+    private up: Vector3,
+    private count: number,
+    color: ColorRepresentation,
+  ) {
+    this.positions = new Float32Array(count * 3);
+    this.sizes = new Float32Array(count);
+    this.alphas = new Float32Array(count);
+    this.side = new Vector3().crossVectors(up, new Vector3(0.3, 0.9, 0.2)).normalize();
+    const geometry = new BufferGeometry();
+    geometry.setAttribute("position", new BufferAttribute(this.positions, 3));
+    geometry.setAttribute("aSize", new BufferAttribute(this.sizes, 1));
+    geometry.setAttribute("aAlpha", new BufferAttribute(this.alphas, 1));
+    this.points = new Points(geometry, createMaterial(color, false, 0.35));
+    this.points.frustumCulled = false;
+    this.points.renderOrder = 4;
+  }
+
+  setScale(pixelHeight: number): void {
+    this.points.material.uniforms["uScale"]!.value = pixelHeight * 1.37;
+  }
+
+  update(dt: number, reducedMotion: boolean): void {
+    this.time += reducedMotion ? 0 : dt;
+    const life = 5.5;
+    for (let i = 0; i < this.count; i += 1) {
+      const t = ((this.time + (i / this.count) * life) % life) / life;
+      const rise = t * 2.6;
+      const drift = t * t * 2.2 + Math.sin(this.time * 0.6 + i * 1.7) * 0.22 * t;
+      const p = scratchSmoke.copy(this.origin).addScaledVector(this.up, rise).addScaledVector(this.side, drift);
+      this.positions[i * 3] = p.x;
+      this.positions[i * 3 + 1] = p.y;
+      this.positions[i * 3 + 2] = p.z;
+      this.sizes[i] = 0.32 + t * 1.25;
+      this.alphas[i] = Math.sin(Math.min(1, t * 1.15) * Math.PI) * 0.42;
+    }
+    const geometry = this.points.geometry;
+    geometry.attributes["position"]!.needsUpdate = true;
+    geometry.attributes["aSize"]!.needsUpdate = true;
+    geometry.attributes["aAlpha"]!.needsUpdate = true;
+  }
+
+  dispose(): void {
+    this.points.geometry.dispose();
+    this.points.material.dispose();
+  }
+}
+
+const scratchSmoke = new Vector3();

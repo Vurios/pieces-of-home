@@ -1,15 +1,4 @@
-import {
-  BufferAttribute,
-  type BufferGeometry,
-  Color,
-  type ColorRepresentation,
-  type Material,
-  Matrix4,
-  Mesh,
-  Object3D,
-  Quaternion,
-  Vector3,
-} from "three";
+import { BufferAttribute, type BufferGeometry, Color, type ColorRepresentation, type Material, Matrix4, Mesh, Object3D, Quaternion, Vector3 } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 /**
@@ -17,8 +6,19 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
  * pieces. We paint each piece with a vertex color and merge every still piece
  * that shares a material into one mesh, so a whole world draws in a handful of
  * calls.
+ *
+ * Layers:
+ * - solid: lit toon pieces
+ * - glow: unlit pieces such as windows and bulbs
+ * - foliage: lit toon pieces that sway in the wind. Each vertex gets a sway
+ *   weight from its height inside its own shape, so roots and trunks stay put
+ *   and tips move.
+ * - detail: foliage too small to cast a useful shadow (grass, flowers). It
+ *   skips the shadow pass, which saves draw time and keeps the lawn free of
+ *   speckled shadow dots.
  */
-export type Layer = "solid" | "glow";
+export type Layer = "solid" | "glow" | "foliage" | "detail";
+const LAYERS: Layer[] = ["solid", "glow", "foliage", "detail"];
 
 interface Piece {
   geometry: BufferGeometry;
@@ -31,27 +31,36 @@ const tmpQuat = new Quaternion();
 const tmpScale = new Vector3();
 const tmpPos = new Vector3();
 
-/** Keeps only position, normal and color, with an index, so any pieces can merge. */
-function normalize(geometry: BufferGeometry, color: Color): BufferGeometry {
-  const g = geometry.index ? geometry.clone() : geometry.clone();
+function smooth(edge0: number, edge1: number, x: number): number {
+  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+}
+
+/** Keeps only position, normal, color and sway, with an index, so any pieces can merge. */
+function normalize(geometry: BufferGeometry, color: Color, sway: number): BufferGeometry {
+  const g = geometry.clone();
   for (const name of Object.keys(g.attributes)) {
     if (name !== "position" && name !== "normal") g.deleteAttribute(name);
   }
   if (!g.getAttribute("normal")) g.computeVertexNormals();
+  const position = g.getAttribute("position");
+  const count = position.count;
   if (!g.index) {
-    const count = g.getAttribute("position").count;
     const index = new (count > 65535 ? Uint32Array : Uint16Array)(count);
     for (let i = 0; i < count; i += 1) index[i] = i;
     g.setIndex(new BufferAttribute(index, 1));
   }
-  const count = g.getAttribute("position").count;
   const colors = new Float32Array(count * 3);
+  const weights = new Float32Array(count);
   for (let i = 0; i < count; i += 1) {
     colors[i * 3] = color.r;
     colors[i * 3 + 1] = color.g;
     colors[i * 3 + 2] = color.b;
+    // Unit shapes run from about -0.5 (or -1) to 0.5 (or 1) in Y.
+    weights[i] = sway > 0 ? sway * smooth(-0.5, 0.7, position.getY(i)) : 0;
   }
   g.setAttribute("color", new BufferAttribute(colors, 3));
+  g.setAttribute("aSway", new BufferAttribute(weights, 1));
   g.morphAttributes = {};
   return g;
 }
@@ -62,10 +71,11 @@ export class Batcher {
   /**
    * Adds a painted piece. `matrix` places it in the batch's space.
    * The source geometry is not changed and can be shared.
+   * `sway` (foliage only) scales how far the tip moves in the wind.
    */
-  add(geometry: BufferGeometry, matrix: Matrix4, color: ColorRepresentation, layer: Layer = "solid"): void {
+  add(geometry: BufferGeometry, matrix: Matrix4, color: ColorRepresentation, layer: Layer = "solid", sway = 1): void {
     tmpColor.set(color);
-    const g = normalize(geometry, tmpColor);
+    const g = normalize(geometry, tmpColor, layer === "foliage" || layer === "detail" ? sway : 0);
     g.applyMatrix4(matrix);
     this.pieces.push({ geometry: g, layer });
   }
@@ -79,6 +89,7 @@ export class Batcher {
     scale: [number, number, number] | number = 1,
     parent?: Matrix4,
     layer: Layer = "solid",
+    sway = 1,
   ): void {
     const helper = placeHelper;
     helper.position.set(position[0], position[1], position[2]);
@@ -88,28 +99,29 @@ export class Batcher {
     helper.updateMatrix();
     tmpMatrix.copy(helper.matrix);
     if (parent) tmpMatrix.premultiply(parent);
-    this.add(geometry, tmpMatrix, color, layer);
+    this.add(geometry, tmpMatrix, color, layer, sway);
   }
 
   get size(): number {
     return this.pieces.length;
   }
 
-  /** Merges the pieces of each layer into one mesh. */
-  build(materials: Record<Layer, Material>, options: { castShadow?: boolean; receiveShadow?: boolean } = {}): Mesh[] {
+  /** Merges the pieces of each layer into one mesh. A layer with no material is skipped. */
+  build(materials: Partial<Record<Layer, Material>>, options: { castShadow?: boolean; receiveShadow?: boolean } = {}): Mesh[] {
     const meshes: Mesh[] = [];
-    for (const layer of ["solid", "glow"] as const) {
+    for (const layer of LAYERS) {
+      const material = materials[layer] ?? (layer === "detail" ? materials.foliage : undefined) ?? (layer === "foliage" || layer === "detail" ? materials.solid : undefined);
       const list = this.pieces.filter((piece) => piece.layer === layer).map((piece) => piece.geometry);
-      if (list.length === 0) continue;
+      if (list.length === 0 || !material) continue;
       const merged = mergeGeometries(list, false);
       for (const g of list) g.dispose();
       if (!merged) continue;
       merged.computeBoundingSphere();
-      const mesh = new Mesh(merged, materials[layer]);
+      const mesh = new Mesh(merged, material);
       mesh.name = `batch-${layer}`;
       mesh.matrixAutoUpdate = false;
-      if (layer === "solid") {
-        mesh.castShadow = options.castShadow ?? true;
+      if (layer !== "glow") {
+        mesh.castShadow = layer === "detail" ? false : (options.castShadow ?? true);
         mesh.receiveShadow = options.receiveShadow ?? true;
       }
       meshes.push(mesh);

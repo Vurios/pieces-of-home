@@ -5,9 +5,12 @@ import {
   ConeGeometry,
   CylinderGeometry,
   SphereGeometry,
+  type Material,
+  type Object3D,
   TorusGeometry,
 } from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+import { Batcher } from "../render/kit";
 
 /**
  * Shared unit shapes for characters, Milo and props. Every shape is made once
@@ -25,10 +28,10 @@ function cached(key: string, make: () => BufferGeometry): BufferGeometry {
   return geometry;
 }
 
-/** Unit sphere (radius 1). */
-export const sphere = (detail: "low" | "mid" | "high" = "mid"): BufferGeometry =>
+/** Unit sphere (radius 1). "tiny" is for things a few pixels wide, such as petals and berries. */
+export const sphere = (detail: "tiny" | "low" | "mid" | "high" = "mid"): BufferGeometry =>
   cached(`sphere-${detail}`, () =>
-    detail === "low" ? new SphereGeometry(1, 9, 6) : detail === "mid" ? new SphereGeometry(1, 14, 10) : new SphereGeometry(1, 30, 22),
+    detail === "tiny" ? new SphereGeometry(1, 6, 4) : detail === "low" ? new SphereGeometry(1, 9, 6) : detail === "mid" ? new SphereGeometry(1, 14, 10) : new SphereGeometry(1, 30, 22),
   );
 
 /** Capsule with radius 1 and a straight middle of `length`. */
@@ -56,4 +59,38 @@ export const torus = (tube = 0.18, arc = Math.PI * 2): BufferGeometry =>
 export function disposeParts(): void {
   for (const geometry of cache.values()) geometry.dispose();
   cache.clear();
+}
+
+/**
+ * Collects painted shapes per joint, then merges each joint's shapes into one
+ * vertex-colored mesh. A kid made of seventy shapes draws in about a dozen calls.
+ */
+export class Assembly {
+  private pending = new Map<Object3D, Batcher>();
+
+  constructor(private material: Material) {}
+
+  add(
+    parent: Object3D,
+    geometry: BufferGeometry,
+    color: string,
+    position: [number, number, number],
+    scale: number | [number, number, number],
+    rotation: [number, number, number] = [0, 0, 0],
+  ): void {
+    let batch = this.pending.get(parent);
+    if (!batch) {
+      batch = new Batcher();
+      this.pending.set(parent, batch);
+    }
+    batch.place(geometry, color, position, rotation, scale);
+  }
+
+  /** Builds every joint added since the last flush. */
+  flush(castShadow = true): void {
+    for (const [parent, batch] of this.pending) {
+      for (const mesh of batch.build({ solid: this.material }, { castShadow, receiveShadow: false })) parent.add(mesh);
+    }
+    this.pending.clear();
+  }
 }

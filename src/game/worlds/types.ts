@@ -55,6 +55,11 @@ export interface World {
   /** A fixed world direction the key light leans toward. */
   sunToward: Vector3;
   dustColor: string;
+  /**
+   * Haze toward the horizon, so the curve of the little world reads with depth.
+   * `near` and `far` count from the camera's horizon distance, so they can be negative.
+   */
+  fog: { color: string; near: number; far: number } | null;
   spawn: { dir: Vector3; forward: Vector3 };
   bookmarks: Record<string, Bookmark>;
   surfaceAt(dir: Vector3, onPlatform: boolean): string;
