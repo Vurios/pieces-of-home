@@ -235,3 +235,62 @@ Seeded facts have `checkedOn: null` and an empty `deeper` field. Both get filled
 **Budget after the pass:** Low 118 calls and 240k triangles; High 223 calls and 608k triangles (every pass included). Phase 07 measures a real mid laptop and phone.
 
 **Alternatives considered:** instancing grass and flowers (more code paths, and the merged batches already draw in one call each); alpha-blended near fade (needs sorting, breaks the depth-based ink).
+
+## 22. Phase 03 type system and the taste skill
+
+**Date:** 2026-11-11
+
+**Decision:** Three self-hosted open fonts, latin subsets only, from `@fontsource` (dev dependencies; the woff2 files and their OFL texts live in `public/fonts/`):
+
+- **Kalam** (400, 700) for Dad's handwriting, the kids' notes, headings and buttons. Warm, readable at small sizes, not a novelty script.
+- **Atkinson Hyperlegible Next** (variable) for reading text. Built for low-vision readers; its slashed zero and open shapes help young readers too.
+- **Zilla Slab** (500, 700) for museum tags, stamps and labels.
+- **OpenDyslexic** (400, 700) as the optional reading font.
+
+Kalam is preloaded on the loader so the first paint is already in Dad's hand. The taste skill (tasteskill 2.5.1) is written for company websites: its dealers, section plans and gate expect a marketing page. We applied its general rules (one system of tokens, real photos with exact credits, plain copy, hover and press micro-motion, no generic fade-ins, no purple gradients or glass) rather than its site generator, which does not fit a game UI.
+
+**Alternatives considered:** Patrick Hand or Caveat for the hand (thinner, harder to read at 15 px); Lexend for reading (good, but Atkinson's legibility research suits the audience better); the system UI stack (banned by the phase prompt for display text).
+
+## 23. Loader built at build time, progress from real work
+
+**Date:** 2026-11-11
+
+**Decision:** The loader is inline HTML and CSS in `index.html`, filled in by a Vite plugin (`scripts/vite/loader-plugin.ts`): the lamp is five SVG strokes in three hand-wobbled copies (a 3-frame boil at about 10 fps), and the "Things that kept working" lines come from each fact's new `short` wording, so `check:facts` covers them. `BootProgress` (`src/boot/progress.ts`) weights real tasks (engine, world build, textures through a `LoadingManager`, audio prepare, fonts, UI mount); nothing moves unless its work does. Slow loads (8 s) show a note and a percentage, no WebGL shows a paper note linking to the Field Guide, reduced motion drops the boil and the curl for a cross-dissolve. A gamepad button also turns on the light; since a pad press is not a browser gesture, the audio engine retries its unlock on the next click or key.
+
+**Intro switches:** `?test`, `?shot` and `?skip` skip the loader wait and the title (tests and bookmarks need the game at once); add `?intro` to run the real intro in tests.
+
+**Alternatives considered:** a Svelte loader (paints only after the bundle loads); a fake timed progress bar (dishonest, and the prompt says real progress).
+
+## 24. Title sequence on wall-clock time
+
+**Date:** 2026-11-11
+
+**Decision:** `TitleSequence` (`src/game/title/`) owns the camera from the loader to the menu: a straight dolly back from Dad's lamp, out through the open workshop door with the lamp still centered, then up and over the planet. The block letters are our own 5-row grid alphabet, traced into outlines with rounded corners and extruded with a bevel (wood sides, cream and amber faces). Every glyph joins its cells by edges, never only by corners, so each letter is one piece. The title stands in front of the planet with its baseline on the horizon as seen from the final camera, which is aimed above the planet so the sky holds all three lines. The O in HOME is a glass bulb with a coiled filament; the BEGIN tag hangs on a beaded pull chain that springs back. An accessible button rides over the tag (drag, click, tap, Enter or gamepad A). The sequence uses wall-clock time capped at 0.25 s per frame, so a slow machine sees the same 7-second flight, not slow motion.
+
+Dad's desk lamp was rebuilt for the opening close-up: weighted base, twin lower arm, enamel shade with a brass rim, and an always-lit bulb, shade lining, halo and light pool, so it glows while the rest of the planet is still dark on the title.
+
+**Alternatives considered:** a flight out through the side window (the window panes are opaque batched glow, which hid the lamp); a 2D title over a screenshot (loses the bulb and chain that belong to the world).
+
+## 25. Field Guide and About as static pages
+
+**Date:** 2026-11-11
+
+**Decision:** `/field-guide/` and `/about/` are plain HTML pages built by a Vite plugin (`scripts/vite/pages-plugin.ts`) from the same notebook, fact, image and credit data as the game, as extra client entries in `vite.config.ts`. No WebGL and no bundle: one stylesheet, one tiny inline script that swaps the Voyager light-day wording on the day it comes true. Dad's sketches are drawn at build time with rough.js (it needs no DOM). Every fact carries a numbered source link, every photo its exact credit line; the print sheet hides navigation, drops color and prints each source URL. The About page holds the "For grown-ups" note from Game Bible 5.9. Player-facing pages and the menu do not name the challenge; the NASA disclaimer lives in Credits and in the two page footers (team request).
+
+**Alternatives considered:** a Svelte route inside the game bundle (slow on old machines, and it would load Three.js); a separate static site (two copies of the content could drift apart).
+
+## 26. Gamepad for the 2D screens
+
+**Date:** 2026-11-11
+
+**Decision:** One `gamepadNav` helper (spatial focus moves on the D-pad or stick, A clicks, B goes back) runs on the title, menu, panels and emote wheel from `App.svelte`, and inside the notebook (LB and RB turn pages). In play, View opens the notebook, LB takes a photo, Y opens emotes and Menu opens settings; the HUD stamps show those glyphs when a pad is in use. A Playwright test drives the whole front door with a pretend pad.
+
+**Alternatives considered:** mapping the pad to fake key events (loses spatial focus and the A-means-click rule).
+
+## 27. Unit tests run from the canonical path
+
+**Date:** 2026-11-11
+
+**Decision:** `npm run test` runs `scripts/vitest.mjs`, which starts Vitest from an upper-case drive path. When a Windows shell hands Node a lowercase `c:` path, Vitest loads itself twice and every suite fails with "reading 'config'". Pure settings logic moved to `src/ui/settings-data.ts` so it can be tested in Node.
+
+**Alternatives considered:** telling every teammate which shell to use (easy to forget).
