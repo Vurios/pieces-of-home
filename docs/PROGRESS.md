@@ -3,14 +3,14 @@
 There is no deadline. The full scope in the Game Bible gets built: P0, then P1, then P2. Quality is never traded for speed.
 
 - **Live URL:** https://pieces-of-home.tsa-bu.workers.dev
-- **Repo:** https://github.com/Vurios/pieces-of-home
+- **Repo:** not created yet. Planned: https://github.com/Vurios/pieces-of-home (public). Creating a public repo needs a person to approve it.
 - **Team rule for this run:** the agent asks the team before starting each next phase prompt.
 
 **Next up:** Phase 02, `docs/prompts/02_world_engine_and_look.md` (waiting for the team's go-ahead).
 
 ## State summary (2026-11-10)
 
-Phase 01 is done. The repo has the full skeleton, 19 skills, a deployed Worker with a `Room` Durable Object, seeded facts with a build check, unit and browser tests, and CI. The page shows a placeholder toon planet and a paper tag. Nothing player-facing is final yet.
+Phase 01 is done except for the public GitHub repo. The repo has the full skeleton, 19 skills, a deployed Worker with a `Room` Durable Object, seeded facts with a build check, unit and browser tests, and CI. The page shows a placeholder toon planet and a paper tag. Nothing player-facing is final yet.
 
 Things a new session should know:
 
@@ -41,7 +41,8 @@ Things a new session should know:
 - [x] Inline paper loader placeholder in `index.html`
 - [x] `src/data/facts.json` seeded from the Fact Sheet; `npm run check:facts` runs and gates the build
 - [x] README, LICENSE (MIT), CREDITS.md, `src/data/credits.json`
-- [x] Public GitHub repo, CI workflow
+- [x] CI workflow written (`.github/workflows/ci.yml`)
+- [ ] Public GitHub repo created and pushed, CI green (blocked: needs team approval to create the public repo)
 - [x] Deployed to Cloudflare; live smoke test passes (page, health, room WebSocket, two players counted)
 - [x] PROGRESS.md, DECISIONS.md, SKILLS.md, `docs/screens/`
 
