@@ -1,0 +1,339 @@
+/*
+ * The Field Guide and About pages: Dad's notebook as a plain web page.
+ * Paper, ink and amber, the same three faces as the game, one readable
+ * column, and a print sheet that drops the color and keeps every source.
+ */
+@import "../ui/theme.css";
+
+@font-face {
+  font-family: "Kalam";
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/kalam-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Kalam";
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/kalam-latin-700-normal.woff2") format("woff2");
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 1rem/1.6 var(--read);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--paper-light);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 22px 22px;
+  padding: 0 16px 64px;
+}
+
+body > * {
+  max-width: 46rem;
+  margin-inline: auto;
+}
+
+.skip {
+  position: absolute;
+  left: 16px;
+  top: -60px;
+  padding: 8px 14px;
+  background: var(--ink);
+  color: var(--paper-light);
+  border-radius: 6px;
+  z-index: 2;
+}
+.skip:focus {
+  top: 12px;
+}
+
+:focus-visible {
+  outline: 3px dashed var(--clay);
+  outline-offset: 3px;
+}
+
+a {
+  color: var(--clay-deep);
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1.5px;
+}
+a:hover {
+  color: var(--clay);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--hand);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: 0.005em;
+}
+h1 {
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
+  margin: 0.2em 0 0.25em;
+}
+h2 {
+  font-size: 2rem;
+  margin: 2.2em 0 0.5em;
+  padding-bottom: 0.15em;
+  background: linear-gradient(var(--amber), var(--amber)) 0 100% / 4.5em 4px no-repeat;
+}
+h3 {
+  font-size: 1.55rem;
+  margin: 1.4em 0 0.3em;
+}
+h4 {
+  font: 700 0.78rem/1.2 var(--label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--clay-deep);
+  margin: 1.4em 0 0.4em;
+}
+p,
+li {
+  max-width: 40rem;
+}
+ul,
+ol {
+  padding-left: 1.3em;
+}
+li + li {
+  margin-top: 0.35em;
+}
+
+.masthead {
+  padding-top: 48px;
+}
+.kicker {
+  margin: 0;
+}
+.lede {
+  font-size: 1.2rem;
+  color: var(--ink-soft);
+  margin: 0 0 1.2em;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.actions .btn {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.toc {
+  margin-top: 28px;
+  padding: 18px 22px 14px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 6px 14px 8px 12px;
+  box-shadow: 4px 5px 0 var(--shadow);
+}
+.toc h2 {
+  font-size: 1.3rem;
+  margin: 0 0 0.4em;
+  background: none;
+}
+.toc ol {
+  margin: 0;
+  columns: 2 14rem;
+}
+
+.machine {
+  position: relative;
+  margin: 2.4rem 0;
+  padding: 26px 28px 24px;
+  background: #fffdf7;
+  border: 1.5px solid var(--paper-edge);
+  border-radius: 4px;
+  box-shadow:
+    0 1px 0 var(--paper-edge),
+    0 14px 30px -18px rgba(30, 20, 10, 0.45);
+}
+.machine header h3 {
+  margin: 0.35em 0 0;
+  font-size: 2rem;
+}
+.machine .real {
+  margin: 0.1em 0 0;
+  color: var(--ink-soft);
+}
+.machine .chapter {
+  margin: 0.1em 0 0;
+  font: 700 0.95rem var(--hand);
+  color: var(--ink-soft);
+}
+
+.sketch {
+  margin: 12px 0 4px;
+  max-width: 340px;
+}
+.sketch svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sketch figcaption {
+  margin-top: 4px;
+}
+
+.photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+.photo {
+  margin: 0;
+  padding: 10px 10px 12px;
+  background: #fff;
+  box-shadow: 0 6px 14px -8px rgba(30, 20, 10, 0.5);
+  transform: rotate(-0.6deg);
+}
+.photo:nth-child(2n) {
+  transform: rotate(0.7deg);
+}
+.photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: var(--paper-deep);
+}
+.photo figcaption {
+  margin-top: 8px;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+.dad {
+  margin: 22px 0 0;
+  padding: 14px 18px 12px;
+  background: rgba(242, 165, 65, 0.16);
+  border-left: 4px solid var(--amber);
+  font: 400 1.25rem/1.45 var(--hand);
+}
+.dad p {
+  margin: 0;
+}
+.dad footer {
+  margin-top: 4px;
+  font: 700 0.95rem var(--hand);
+  color: var(--ink-soft);
+}
+
+.cite {
+  font: 700 0.8em var(--label);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.sources li,
+.small li {
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+.checked {
+  color: var(--ink-soft);
+}
+
+.grown {
+  padding: 4px 22px 14px;
+  background: var(--paper);
+  border: 2px dashed var(--ink-soft);
+  border-radius: 10px;
+}
+.grown h2 {
+  margin-top: 0.8em;
+}
+
+.foot {
+  margin-top: 56px;
+  padding-top: 14px;
+  border-top: 1.5px dashed var(--paper-edge);
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 560px) {
+  .machine {
+    padding: 20px 16px;
+  }
+  h2 {
+    font-size: 1.7rem;
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+    color: #000;
+    font-size: 11.5pt;
+  }
+  body {
+    padding: 0;
+  }
+  .skip,
+  .actions,
+  .toc {
+    display: none;
+  }
+  h2 {
+    background: none;
+    border-bottom: 1.5pt solid #000;
+    break-after: avoid;
+  }
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+  .machine {
+    box-shadow: none;
+    border: 1pt solid #999;
+    break-inside: avoid-page;
+  }
+  .photo,
+  .photo:nth-child(2n) {
+    transform: none;
+    box-shadow: none;
+    border: 0.5pt solid #999;
+    break-inside: avoid;
+  }
+  .dad {
+    background: none;
+    border-left-color: #000;
+  }
+  a {
+    color: #000;
+  }
+  /* On paper, show where each source link goes. */
+  .sources a::after,
+  .small a::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+}
