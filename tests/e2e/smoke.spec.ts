@@ -9,9 +9,11 @@ test("page loads, the canvas draws, and nothing logs an error", async ({ page })
 
   await page.goto("/");
   await expect(page).toHaveTitle("Pieces of Home");
-  await expect(page.locator("html")).toHaveAttribute("data-stage", "ready");
-  await expect(page.locator("canvas#stage")).toBeVisible();
-  await expect(page.locator("#boot")).toHaveAttribute("data-done", "");
+  // A plain visit waits on the loader for the player to turn on the light.
+  await expect(page.locator("html")).toHaveAttribute("data-stage", "waiting", { timeout: 60_000 });
+  await expect(page.locator("#boot")).toHaveAttribute("data-state", "ready");
+  await expect.poll(() => page.locator("#boot-progress").evaluate((el) => (el as HTMLProgressElement).value)).toBe(100);
+  await expect(page.locator("canvas#stage")).toBeAttached();
   // Solo by default: no room socket unless the link asks for one.
   await expect(page.locator("html")).toHaveAttribute("data-net", "solo");
 
@@ -29,7 +31,7 @@ test("health endpoint answers", async ({ request }) => {
 
 test("a room WebSocket connects", async ({ page }, testInfo) => {
   const room = `smoke-${testInfo.project.name}-${Date.now() % 100000}`;
-  await page.goto(`/?room=${room}`);
+  await page.goto(`/?room=${room}&test&quality=low`);
   await expect(page.locator("html")).toHaveAttribute("data-net", "connected", { timeout: 20_000 });
   await expect(page.locator("html")).toHaveAttribute("data-players", "1");
 });
@@ -38,9 +40,9 @@ test("two players in one room see each other counted", async ({ browser }, testI
   const room = `pair-${testInfo.project.name}-${Date.now() % 100000}`;
   const first = await browser.newPage();
   const second = await browser.newPage();
-  await first.goto(`/?room=${room}`);
+  await first.goto(`/?room=${room}&test&quality=low`);
   await expect(first.locator("html")).toHaveAttribute("data-net", "connected", { timeout: 20_000 });
-  await second.goto(`/?room=${room}`);
+  await second.goto(`/?room=${room}&test&quality=low`);
   await expect(second.locator("html")).toHaveAttribute("data-players", "2", { timeout: 20_000 });
   await expect(first.locator("html")).toHaveAttribute("data-players", "2", { timeout: 20_000 });
   await second.close();
