@@ -20,9 +20,122 @@
       "sourceUrl": "https://astrogeology.usgs.gov/ckan/dataset/7131d503-cdc9-45a5-8f83-5126c0fd397e/resource/5ea881c6-01b3-41fa-a7af-42d2131b54f1/download/mars_viking_mdim21_clrmosaic_1km.jpg",
       "page": "https://astrogeology.usgs.gov/search/map/mars_viking_colorized_global_mosaic_232m",
       "changes": "Downscaled to 1024 by 512 from the 1 km JPEG"
+    },
+    {
+      "id": "nb-apollo11-lrrr",
+      "file": "images/nasa/apollo11-lrrr.jpg",
+      "title": "Astronaut Edwin Aldrin after deployment of EASEP on surface of moon (AS11-40-5948)",
+      "credit": "NASA",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://images-assets.nasa.gov/image/as11-40-5948/as11-40-5948~orig.jpg",
+      "page": "https://images.nasa.gov/details/as11-40-5948",
+      "changes": "Resized and cropped for the notebook (900 px or less, JPEG)"
+    },
+    {
+      "id": "nb-apollo11-lroc",
+      "file": "images/nasa/apollo11-lroc.jpg",
+      "title": "A Stark Beauty All Its Own (LROC M175124932R)",
+      "credit": "NASA/GSFC/Arizona State University",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://www.lroc.asu.edu/news/uploads/Apollo_11.png",
+      "page": "https://www.lroc.asu.edu/images/484",
+      "changes": "Resized and cropped for the notebook (900 px or less, JPEG)"
+    },
+    {
+      "id": "nb-apollo15-lrv",
+      "file": "images/nasa/apollo15-lrv.jpg",
+      "title": "Astronaut David Scott on slope of Hadley Delta during Apollo 15 EVA (AS15-85-11451)",
+      "credit": "NASA",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://images-assets.nasa.gov/image/as15-85-11451/as15-85-11451~orig.jpg",
+      "page": "https://images.nasa.gov/details/as15-85-11451",
+      "changes": "Resized and cropped for the notebook (900 px or less, JPEG)"
+    },
+    {
+      "id": "nb-opportunity-tracks",
+      "file": "images/nasa/opportunity-tracks.jpg",
+      "title": "Looking Back on a Golden Opportunity (PIA22928)",
+      "credit": "NASA/JPL-Caltech",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia22/pia22928/PIA22928.jpg",
+      "page": "https://science.nasa.gov/photojournal/looking-back-on-a-golden-opportunity/",
+      "changes": "Resized and cropped for the notebook (900 px or less, JPEG)"
+    },
+    {
+      "id": "nb-opportunity-blueberries",
+      "file": "images/nasa/opportunity-blueberries.jpg",
+      "title": "\"Berries\" on the Ground (PIA05273)",
+      "credit": "NASA/JPL/Cornell/USGS",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia05/pia05273/PIA05273.jpg",
+      "page": "https://science.nasa.gov/photojournal/berries-on-the-ground/",
+      "changes": "Resized and cropped for the notebook (900 px or less, JPEG)"
+    },
+    {
+      "id": "nb-ingenuity-shadow",
+      "file": "images/nasa/ingenuity-shadow.jpg",
+      "title": "Ingenuity's First Black-and-White Image From the Air (PIA24584)",
+      "credit": "NASA/JPL-Caltech",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia24/pia24584/PIA24584.tif",
+      "page": "https://science.nasa.gov/photojournal/ingenuitys-first-black-and-white-image-from-the-air/",
+      "changes": "Resized and cropped for the notebook (900 px or less, JPEG)"
+    },
+    {
+      "id": "nb-ingenuity-valinor",
+      "file": "images/nasa/ingenuity-valinor.jpg",
+      "title": "Ingenuity at 'Valinor Hills' (PIA26237, detail)",
+      "credit": "NASA/JPL-Caltech/ASU/MSSS",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia26/pia26237/PIA26237.jpg",
+      "page": "https://science.nasa.gov/photojournal/ingenuity-at-valinor-hills/",
+      "changes": "Resized and cropped for the notebook (900 px or less, JPEG)"
+    },
+    {
+      "id": "nb-voyager",
+      "file": "images/nasa/voyager.jpg",
+      "title": "Mementos of Earth (PIA17035)",
+      "credit": "NASA/JPL-Caltech",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia17/pia17035/PIA17035.jpg",
+      "page": "https://science.nasa.gov/photojournal/mementos-of-earth/",
+      "changes": "Resized and cropped for the notebook (900 px or less, JPEG)"
     }
   ],
-  "fonts": [],
+  "fonts": [
+    {
+      "name": "Kalam",
+      "use": "Dad's handwriting and the loading page",
+      "license": "SIL Open Font License 1.1",
+      "by": "Indian Type Foundry",
+      "sourceUrl": "https://github.com/itfoundry/kalam",
+      "file": "fonts/LICENSE-kalam.txt"
+    },
+    {
+      "name": "Atkinson Hyperlegible Next",
+      "use": "Reading text",
+      "license": "SIL Open Font License 1.1",
+      "by": "Braille Institute of America",
+      "sourceUrl": "https://www.brailleinstitute.org/freefont/",
+      "file": "fonts/LICENSE-atkinson-hyperlegible-next.txt"
+    },
+    {
+      "name": "Zilla Slab",
+      "use": "Museum labels, tags and stamps",
+      "license": "SIL Open Font License 1.1",
+      "by": "Mozilla, Typotheque",
+      "sourceUrl": "https://github.com/mozilla/zilla-slab",
+      "file": "fonts/LICENSE-zilla-slab.txt"
+    },
+    {
+      "name": "OpenDyslexic",
+      "use": "Optional reading font",
+      "license": "SIL Open Font License 1.1",
+      "by": "Abbie Gonzalez",
+      "sourceUrl": "https://opendyslexic.org",
+      "file": "fonts/LICENSE-opendyslexic.txt"
+    }
+  ],
   "libraries": [
     {
       "name": "three",
@@ -47,6 +160,18 @@
       "use": "Reconnecting WebSocket client",
       "license": "MIT",
       "sourceUrl": "https://github.com/cloudflare/partykit"
+    },
+    {
+      "name": "roughjs",
+      "use": "Hand-drawn shapes in the notebook and UI",
+      "license": "MIT",
+      "sourceUrl": "https://github.com/rough-stuff/rough"
+    },
+    {
+      "name": "perfect-freehand",
+      "use": "Pen strokes",
+      "license": "MIT",
+      "sourceUrl": "https://github.com/steveruizok/perfect-freehand"
     }
   ],
   "tools": [
@@ -67,6 +192,18 @@
       "use": "Reads Draco-compressed NASA models (build time only)",
       "license": "Apache-2.0",
       "sourceUrl": "https://github.com/google/draco"
+    },
+    {
+      "name": "@fontsource packages",
+      "use": "Source of the self-hosted font files (build time only)",
+      "license": "MIT (packaging); fonts SIL OFL 1.1",
+      "sourceUrl": "https://github.com/fontsource/fontsource"
+    },
+    {
+      "name": "axe-core, @axe-core/playwright",
+      "use": "Accessibility checks in tests (never shipped)",
+      "license": "MPL-2.0",
+      "sourceUrl": "https://github.com/dequelabs/axe-core"
     }
   ]
 }

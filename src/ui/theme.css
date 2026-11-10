@@ -1,0 +1,226 @@
+/*
+ * Dad's notebook, as a visual system (Game Bible 11).
+ * Paper, ink and lamp amber lead. Three faces, all self-hosted and open:
+ *   Kalam: Dad's handwriting and the kids' notes
+ *   Atkinson Hyperlegible Next: reading text (OpenDyslexic as an option)
+ *   Zilla Slab: museum labels, tags and ink stamps
+ */
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+  src: url("/fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  font-weight: 200 800;
+  font-style: italic;
+  font-display: swap;
+  src: url("/fonts/atkinson-hyperlegible-next-latin-wght-italic.woff2") format("woff2-variations");
+}
+@font-face {
+  font-family: "Zilla Slab";
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/zilla-slab-latin-500-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Zilla Slab";
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/zilla-slab-latin-700-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "OpenDyslexic";
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/opendyslexic-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "OpenDyslexic";
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/opendyslexic-latin-700-normal.woff2") format("woff2");
+}
+
+:root {
+  --paper: #f4ecdd;
+  --paper-light: #fbf6ea;
+  --paper-deep: #e9dcc3;
+  --paper-edge: #d9c7a6;
+  --ink: #2b2622;
+  --ink-soft: #5a4f46;
+  --pencil: #8c8173;
+  --amber: #f2a541;
+  --amber-deep: #c97f1f;
+  --clay: #c0573e;
+  --clay-deep: #9c4433;
+  --sage: #7fa37a;
+  --sage-deep: #557358;
+  --sky: #5c7393;
+  --dusk: #2e2a4f;
+  --grid: rgba(70, 110, 140, 0.1);
+  --shadow: rgba(43, 38, 34, 0.32);
+  --hand: "Kalam", "Segoe Print", "Bradley Hand", ui-rounded, sans-serif;
+  --read: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Verdana", sans-serif;
+  --label: "Zilla Slab", "Rockwell", "Georgia", serif;
+  --ease-spring: cubic-bezier(0.3, 1.45, 0.45, 1);
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  font-size: 17px;
+}
+:root[data-text="s"] { font-size: 15px; }
+:root[data-text="l"] { font-size: 19px; }
+:root[data-text="xl"] { font-size: 22px; }
+:root[data-font="dyslexic"] { --read: "OpenDyslexic", "Verdana", sans-serif; }
+:root[data-contrast="high"] {
+  --paper: #fffdf6;
+  --paper-light: #ffffff;
+  --paper-deep: #f2e9d6;
+  --ink: #120f0d;
+  --ink-soft: #2b2622;
+  --pencil: #3f3a34;
+  --clay: #9c2f1c;
+  --shadow: rgba(0, 0, 0, 0.6);
+}
+
+#ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+  font-family: var(--read);
+  color: var(--ink);
+}
+#ui :where(button, a, input, select, label, [role="dialog"], .hit) {
+  pointer-events: auto;
+}
+
+/* The world dims and softens behind the notebook and panels. */
+#stage {
+  transition: filter 0.35s var(--ease-out);
+}
+:root[data-overlay] #stage {
+  filter: blur(4px) brightness(0.55) saturate(0.85);
+}
+:root[data-motion="reduce"] #stage {
+  transition: none;
+}
+
+/* One focus style everywhere: a dashed clay pencil ring. */
+#ui :focus-visible {
+  outline: 3px dashed var(--clay);
+  outline-offset: 4px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* A sheet of notebook paper with a faint engineering grid. */
+.paper {
+  background-color: var(--paper-light);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 20px 20px;
+  color: var(--ink);
+  box-shadow:
+    0 1px 0 var(--paper-edge),
+    0 18px 40px -18px rgba(30, 20, 10, 0.55),
+    0 4px 10px -4px rgba(30, 20, 10, 0.35);
+}
+
+/* The paper button: thick ink edge, hard shadow, presses down when clicked. */
+.btn {
+  font: 700 1.1rem/1.1 var(--hand);
+  color: var(--ink);
+  background: var(--paper-light);
+  border: 2.5px solid var(--ink);
+  border-radius: 12px 16px 11px 15px / 15px 11px 16px 12px;
+  padding: 0.6em 1.15em 0.5em;
+  min-height: 48px;
+  box-shadow: 3px 4px 0 var(--ink);
+  cursor: pointer;
+  transition:
+    transform 0.14s var(--ease-spring),
+    box-shadow 0.12s;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 4px 6px 0 var(--ink);
+}
+.btn:active {
+  transform: translateY(2px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+.btn.amber {
+  background: var(--amber);
+}
+.btn.quiet {
+  background: transparent;
+  box-shadow: none;
+  border-style: dashed;
+}
+
+/* A museum tag: slab type on a cream label with a punched hole. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font: 700 0.72rem/1 var(--label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: #efe2c7;
+  border: 1.5px solid var(--ink-soft);
+  border-radius: 3px 10px 10px 3px;
+  padding: 0.38em 0.7em 0.34em 1.3em;
+  position: relative;
+}
+.tag::before {
+  content: "";
+  position: absolute;
+  left: 0.45em;
+  top: 50%;
+  width: 0.38em;
+  height: 0.38em;
+  margin-top: -0.19em;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink-soft);
+  background: var(--paper-light);
+}
+
+/* A hand-drawn key cap for prompts. */
+.keycap {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.9em;
+  height: 1.9em;
+  padding: 0 0.35em;
+  font: 700 0.95rem/1 var(--label);
+  color: var(--ink);
+  background: var(--paper-light);
+  border: 2px solid var(--ink);
+  border-radius: 6px 8px 7px 6px;
+  box-shadow: 0 3px 0 var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .btn:hover,
+  .btn:active {
+    transition: none;
+    transform: none;
+  }
+}
+:root[data-motion="reduce"] .btn,
+:root[data-motion="reduce"] .btn:hover {
+  transition: none;
+  transform: none;
+}
