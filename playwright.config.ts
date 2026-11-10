@@ -3,7 +3,8 @@ import { defineConfig, devices } from "@playwright/test";
 // Local e2e: starts `npm run dev`, which runs the real Workers runtime.
 export default defineConfig({
   testDir: "tests/e2e",
-  timeout: 60_000,
+  // CPU-drawn WebGL on two pages at once: the intro tests make the machine busy, so give each test two minutes.
+  timeout: 120_000,
   fullyParallel: true,
   // Headless runs draw WebGL on the CPU. More than two pages at once starves
   // the machine and room sockets time out before they connect.

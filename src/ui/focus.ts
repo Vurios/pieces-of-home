@@ -77,7 +77,8 @@ export function moveFocus(root: HTMLElement, dx: number, dy: number): void {
 export function gamepadNav(getRoot: () => HTMLElement | null, onBack: () => void, onShoulder?: (dir: -1 | 1) => void): () => void {
   let frame = 0;
   const held = new Map<string, number>();
-  const press = (key: string, down: boolean, now: number): boolean => {
+  // Directions repeat when held, like a keyboard. Buttons fire once per press.
+  const press = (key: string, down: boolean, now: number, repeat = false): boolean => {
     if (!down) {
       held.delete(key);
       return false;
@@ -87,8 +88,7 @@ export function gamepadNav(getRoot: () => HTMLElement | null, onBack: () => void
       held.set(key, now);
       return true;
     }
-    // Repeat after a pause, like a keyboard.
-    if (now - since > 420) {
+    if (repeat && now - since > 420) {
       held.set(key, now - 300);
       return true;
     }
@@ -103,10 +103,10 @@ export function gamepadNav(getRoot: () => HTMLElement | null, onBack: () => void
     const b = (i: number): boolean => Boolean(pad.buttons[i]?.pressed);
     const ax = pad.axes[0] ?? 0;
     const ay = pad.axes[1] ?? 0;
-    if (press("up", b(12) || ay < -0.6, now)) moveFocus(root, 0, -1);
-    if (press("down", b(13) || ay > 0.6, now)) moveFocus(root, 0, 1);
-    if (press("left", b(14) || ax < -0.6, now)) moveFocus(root, -1, 0);
-    if (press("right", b(15) || ax > 0.6, now)) moveFocus(root, 1, 0);
+    if (press("up", b(12) || ay < -0.6, now, true)) moveFocus(root, 0, -1);
+    if (press("down", b(13) || ay > 0.6, now, true)) moveFocus(root, 0, 1);
+    if (press("left", b(14) || ax < -0.6, now, true)) moveFocus(root, -1, 0);
+    if (press("right", b(15) || ax > 0.6, now, true)) moveFocus(root, 1, 0);
     if (press("a", b(0), now)) {
       const el = document.activeElement as HTMLElement | null;
       if (el && root.contains(el)) el.click();
