@@ -6,7 +6,7 @@ A cozy 3D browser game for 1 to 4 players. Remi steps inside their late dad's ha
 
 Our entry for the **NASA Space Apps Challenge 2026**, challenge *Abandoned but not Forgotten: Storytelling about NASA's Discarded Equipment on the Moon and Mars*.
 
-**Play:** https://pieces-of-home.tsa-bu.workers.dev
+**Play:** https://piecesofhome.pages.dev
 
 **Status:** early build. The project skeleton, the co-op room server and the live deploy are in place. The game itself is being built phase by phase. See [docs/PROGRESS.md](docs/PROGRESS.md).
 

@@ -1,0 +1,8 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "//": "Cloudflare Pages project for https://piecesofhome.pages.dev. Static files never run code. Only /parties/* and /api/* run a Pages Function, which forwards to the pieces-of-home Worker that owns the co-op Room Durable Objects. Named .json on purpose: Wrangler looks for .json before .jsonc, so the root wrangler.jsonc does not shadow this file.",
+  "name": "piecesofhome",
+  "pages_build_output_dir": "../dist/client",
+  "compatibility_date": "2026-11-10",
+  "services": [{ "binding": "GAME", "service": "pieces-of-home" }]
+}

@@ -15,5 +15,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src/worker/**/*.ts", "src/net/protocol.ts", "worker-configuration.d.ts", "src/globals.d.ts"]
+  "include": ["src/worker/**/*.ts", "pages/functions/**/*.ts", "pages/lib/**/*.ts", "src/net/protocol.ts", "worker-configuration.d.ts", "src/globals.d.ts"]
 }

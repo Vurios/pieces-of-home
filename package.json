@@ -18,7 +18,8 @@
     "e2e:live": "playwright test --config playwright.live.config.ts",
     "check:facts": "tsx scripts/check-facts.ts",
     "cf-typegen": "wrangler types",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy && npm run deploy:pages",
+    "deploy:pages": "node scripts/deploy-pages.mjs"
   },
   "dependencies": {
     "partyserver": "^0.5.10",

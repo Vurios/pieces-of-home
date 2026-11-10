@@ -2,7 +2,7 @@
 
 There is no deadline. The full scope in the Game Bible gets built: P0, then P1, then P2. Quality is never traded for speed.
 
-- **Live URL:** https://pieces-of-home.tsa-bu.workers.dev
+- **Live URL:** https://piecesofhome.pages.dev
 - **Repo:** https://github.com/Vurios/pieces-of-home (public). No CI: the team asked for straight pushes to `main`. Run typecheck, tests and e2e locally before pushing.
 - **Team rule for this run:** the agent asks the team before starting each next phase prompt.
 

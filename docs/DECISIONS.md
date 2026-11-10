@@ -198,3 +198,18 @@ Seeded facts have `checkedOn: null` and an empty `deeper` field. Both get filled
 **Decision:** Building pads are tangent planes sunk by half their rise (`padLift` in `worlds/home/layout.ts`), so a pad dips slightly at its middle and lifts slightly at its rim instead of standing up like a tabletop. Footings reach down under each building so no edge floats. The hill is a low rounded rise (height 1.7, radius 8.5) instead of a flat-topped mesa.
 
 **Why:** the team said the top of the planet looked odd. Pads rising up to 0.5 units above the curve, plus a 2.5-unit mesa, broke the round silhouette.
+
+## 20. Public URL on Cloudflare Pages: piecesofhome.pages.dev
+
+**Date:** 2026-11-11
+
+**Decision:** The team asked for a URL without the account's `workers.dev` subdomain. The game is now served by a classic Cloudflare Pages project, `piecesofhome`, at https://piecesofhome.pages.dev. Two Pages Functions (`pages/functions/parties/[[path]].ts` and `pages/functions/api/[[path]].ts`) forward co-op and API requests, WebSocket upgrades included, over a service binding to the `pieces-of-home` Worker, which still owns the `Room` Durable Objects. Static files on Pages are free and never run a Function. `npm run deploy` deploys the Worker, then Pages (`scripts/deploy-pages.mjs`).
+
+**Notes:**
+
+- `pieces-of-home.pages.dev` was already taken by someone else, so the project is `piecesofhome`.
+- Wrangler 4.160 now sends `pages project create` to Workers by default; creating a classic Pages project needed `--force` once. Later Pages commands run normally.
+- The Vite plugin's `.wrangler/deploy/config.json` redirect and the root `wrangler.jsonc` would both shadow the Pages config, so the Pages config is `pages/wrangler.json` and the deploy script parks the redirect file while Pages deploys.
+- The old `pieces-of-home.tsa-bu.workers.dev` address still works (same Worker, same static assets).
+
+**Alternatives considered:** renaming the account's workers.dev subdomain (changes every Worker URL on the account); a custom domain (costs money).
