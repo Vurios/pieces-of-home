@@ -116,3 +116,13 @@ Seeded facts have `checkedOn: null` and an empty `deeper` field. Both get filled
 **Why:** the repo is public and MIT. The skills are other people's work under their own terms (some ship a separate `LICENSE.txt`), and they add about 1,700 files that are not part of the game. The lock file keeps the setup repeatable without republishing them.
 
 **Alternatives considered:** commit the skills (simple to resume, but republishes third-party files under our repo and bloats it).
+
+## 10. No CI. Push straight to main
+
+**Date:** 2026-11-10
+
+**Decision:** The GitHub Actions workflow is removed. Work is pushed straight to `main`.
+
+**Why:** the team asked for it. Typecheck, unit tests, the fact check and the Playwright tests still run locally before every push and deploy, so `main` stays deployable.
+
+**Alternatives considered:** keep CI on every push (the team chose not to).
