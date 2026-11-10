@@ -6,14 +6,17 @@ There is no deadline. The full scope in the Game Bible gets built: P0, then P1, 
 - **Repo:** https://github.com/Vurios/pieces-of-home (public). No CI: the team asked for straight pushes to `main`. Run typecheck, tests and e2e locally before pushing.
 - **Team rule for this run:** the agent asks the team before starting each next phase prompt.
 
-**Next up:** Phase 03, `docs/prompts/03_loading_title_and_ui.md` (waiting for the team's go-ahead).
+**Next up:** Phase 04, music, sound effects and voices (waiting for the team's go-ahead).
 
 ## State summary (2026-11-11)
 
-Phases 01 and 02 are done, plus a world and character pass (`DECISIONS.md` #21). The live site is a walkable Home planet at dusk: the house and porch, Mom's garden, the mailbox, Dad's workshop (it opens like a dollhouse when you step in), the workbench with Milo (stage 0), Mom on the porch with her tea, the notebook, Dad's lamp, four glass domes and two NASA-map globes with sourced landing pins, a meadow, a dish and a telescope on the hill. Remi walks, runs and jumps; Nori, Lumi and Theo wait in the workshop. A placeholder letter loop (take the letter from the mailbox, give it to the lamp) proves the interaction and carry systems. The paper arrow points to the next goal. The loader, title and notebook UI are still placeholders (Phase 03).
+Phases 01 and 02 are done, plus a world and character pass (`DECISIONS.md` #21). The live site is a walkable Home planet at dusk: the house and porch, Mom's garden, the mailbox, Dad's workshop (it opens like a dollhouse when you step in), the workbench with Milo (stage 0), Mom on the porch with her tea, the notebook, Dad's lamp, four glass domes and two NASA-map globes with sourced landing pins, a meadow, a dish and a telescope on the hill. Remi walks, runs and jumps; Nori, Lumi and Theo wait in the workshop. A placeholder letter loop (take the letter from the mailbox, give it to the lamp) proves the interaction and carry systems. The paper arrow points to the next goal. Phase 03 added the front door: a paper loader that draws Dad's lamp from real progress, "Turn on the light", a 3D title flight out of the workshop to the block-letter title with the bulb O and the BEGIN pull chain, notebook-tab menu, HUD stamps, speech bubbles and captions, the stamp moment, toasts, emotes, Dad's notebook (pencil pages ink in as chapters finish), settings, and the printable Field Guide and About pages.
 
 Things a new session should know:
 
+- A plain visit plays the real intro. `?test`, `?shot` and `?skip` jump straight into play; add `?intro` to run the intro in tests.
+- Intro screenshots: `npx tsx scripts/screens-intro.ts phase03 [url] desktop [all|intro|notebook|guide]`. Loader timing: `npx tsx scripts/measure-loader.ts [url] [4g|3g]`.
+- `npm run test` goes through `scripts/vitest.mjs` (Windows drive-letter fix, DECISIONS #27).
 - `npm run dev` runs Vite with the real Workers runtime on port 5173. `npm run typecheck` regenerates Worker types first.
 - Skills are git-ignored. After a fresh clone run `npx skills experimental_install` to restore them from `skills-lock.json` (`DECISIONS.md` #9).
 - Co-op is solo by default. Add `?room=some-code` to open a room socket. The page mirrors state on `<html data-net data-players data-stage data-tier>` for tests.
@@ -63,7 +66,7 @@ Things a new session should know:
 
 Open items carried forward from the art review (to finish in Phases 03 and 05):
 
-- Wide shot: tune for the title sequence (Phase 03 sets the real title camera)
+- [x] Wide shot: tuned for the title sequence (Phase 03)
 - Remi's backpack and Theo's goggles could read even stronger; revisit with the title close-ups
 - Hand-drawn labels on Dad's tags, the crates and the workshop sign (needs the type system from Phase 03)
 
@@ -80,14 +83,22 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 
 ## Phase 03: Loading screen, title sequence and the notebook UI
 
-- [ ] Inline loader (paper, lamp draws itself, "Things that kept working")
-- [ ] Title sequence in 3D
-- [ ] HUD
-- [ ] Notebook
-- [ ] Settings
-- [ ] Field Guide mode
-- [ ] Type and visual system (self-hosted open fonts)
-- [ ] Verify, deploy and smoke test
+- [x] Inline loader: paper, grid, coffee ring and grain; the lamp draws itself stroke by stroke from real weighted progress with a 3-frame boil; "Things that kept working" from fact `short` wording; warm bloom and "Turn on the light"; slow-load note, no-WebGL note with a Field Guide link, reduced motion, a `progress` element and live region (DECISIONS #23)
+- [x] Light press unlocks audio (retries on the next gesture after a gamepad press); page curl into the title
+- [x] Title in 3D: dolly back from Dad's rebuilt lamp out the workshop door, up over the planet; PIECES / OF / HOME block letters drop with a note each; bulb O warms; pull-chain BEGIN (drag, click, tap, Enter, gamepad A); windows light and music starts on the pull (DECISIONS #24)
+- [x] Menu as notebook tabs: Continue, New story (with confirm), Play together, Chapters (after the prologue or with Explore freely), Field Guide, Settings, Credits
+- [x] HUD: ink stamps (Notebook, Photo, Emote, Settings, Hint) with key or pad glyphs, interact prompt glyphs, speech bubbles with typed text and voice blips, captions, stamp moment, toasts, emote wheel with preset phrases, touch stick and buttons
+- [x] Notebook: cover and contents, a spread per machine (pencil until done, then inked), polaroids with exact credits, Then and now, Deeper notes, the letters still to deliver, page turns by drag, keys and gamepad, read-aloud, rough.js sketches and perfect-freehand underlines
+- [x] Settings: five audio buses, subtitles, bubbles, read-aloud, high contrast, text size, dyslexia-friendly font, motion, key remap, quality tier, language (Filipino stub), Explore freely
+- [x] Field Guide (`/field-guide/`) and About (`/about/`) as static semantic pages from the same data, with a print sheet and numbered sources (DECISIONS #25)
+- [x] Type system: Kalam, Atkinson Hyperlegible Next, Zilla Slab, OpenDyslexic, self-hosted (DECISIONS #22)
+- [x] Gamepad for every 2D screen (DECISIONS #26)
+- [x] Screenshots reviewed and saved in `docs/screens/phase03/` (desktop only, at the team's request)
+- [x] axe-core: no serious or critical issues on the menu, settings, credits, notebook, Field Guide and About
+- [x] Keyboard-only and gamepad-only Playwright passes through loader, title, menu and notebook
+- [x] Timing on the live site (fresh cache): first paint 480 ms and light ready 3.7 s on 4G; first paint 870 ms and light ready 6.0 s on Fast 3G (both include the 1.2 s settle). Whole build 2.5 MB; main script 240 KB gzipped
+- [x] Typecheck, svelte-check, 44 unit tests, 22 Playwright tests (local and live), check:facts pass
+- [x] Committed, pushed, deployed, live smoke test passed
 
 ## Phase 04: Music, sound effects and voices in JavaScript
 
