@@ -1,12 +1,17 @@
 <script lang="ts">
+  import type { Engine } from "../game/engine";
   import type { NetClient, NetState } from "../net/client";
+  import DebugOverlay from "./DebugOverlay.svelte";
+  import Hud from "./Hud.svelte";
 
   interface Props {
     net: NetClient;
+    engine: Engine;
     version: string;
+    debug: boolean;
   }
 
-  let { net, version }: Props = $props();
+  let { net, engine, version, debug }: Props = $props();
   // `subscribe` reports the current state right away, so this default never shows.
   let state: NetState = $state({ status: "solo", room: null, players: 1 });
 
@@ -28,36 +33,25 @@
   });
 </script>
 
-<!-- Phase 01 placeholder. The notebook UI replaces this in Phase 03. -->
-<aside class="tag" aria-live="polite">
-  <span class="name">Pieces of Home</span>
-  {#if label}<span class="net">{label}</span>{/if}
-  <span class="build">Build {version}. Setup preview.</span>
-</aside>
+<Hud {engine} />
+{#if debug}<DebugOverlay {engine} {version} />{/if}
+{#if label}
+  <aside class="net" aria-live="polite">{label}</aside>
+{/if}
 
 <style>
-  .tag {
+  .net {
     position: fixed;
-    left: 16px;
-    bottom: 16px;
-    max-width: min(320px, calc(100vw - 32px));
-    display: grid;
-    gap: 2px;
-    padding: 10px 14px;
+    left: 50%;
+    top: 16px;
+    transform: translateX(-50%) rotate(-0.8deg);
+    max-width: calc(100vw - 32px);
+    padding: 8px 14px;
     background: #f4ecdd;
     color: #2b2622;
     border: 2px solid #2b2622;
-    border-radius: 3px 10px 4px 8px;
-    box-shadow: 3px 4px 0 rgba(43, 38, 34, 0.35);
+    border-radius: 4px 10px 4px 9px;
+    box-shadow: 3px 4px 0 rgba(43, 38, 34, 0.3);
     font: 15px/1.35 "Segoe Print", "Bradley Hand", "Comic Sans MS", ui-rounded, system-ui, sans-serif;
-    transform: rotate(-1.2deg);
-  }
-  .name {
-    font-weight: 700;
-    font-size: 17px;
-  }
-  .build {
-    opacity: 0.7;
-    font-size: 13px;
   }
 </style>

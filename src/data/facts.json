@@ -575,6 +575,62 @@
       "status": "checked",
       "checkedOn": null,
       "note": ""
+    },
+    {
+      "id": "a11-site",
+      "kid": "Apollo 11 landed at Tranquility Base, close to the middle of the Moon's near side.",
+      "deeper": "Lunar Module at 0.67416 degrees N, 23.47314 degrees E (planetocentric Mean Earth/Polar Axis, DE421), measured from Lunar Reconnaissance Orbiter images.",
+      "value": "0.67416 N, 23.47314 E",
+      "lat": 0.67416,
+      "lon": 23.47314,
+      "date": "1969-07-20",
+      "sourceTitle": "NSSDCA: Apollo Landing Site Coordinates",
+      "sourceUrl": "https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html",
+      "status": "checked",
+      "checkedOn": "2026-11-10",
+      "note": "Table row: Lunar Module 0.67416 23.47314 (degrees N latitude, degrees E longitude)."
+    },
+    {
+      "id": "a15-site",
+      "kid": "Apollo 15 landed at Hadley-Apennine, beside a long winding valley called Hadley Rille.",
+      "deeper": "Lunar Module at 26.13239 degrees N, 3.63330 degrees E (planetocentric Mean Earth/Polar Axis, DE421).",
+      "value": "26.13239 N, 3.63330 E",
+      "lat": 26.13239,
+      "lon": 3.6333,
+      "date": null,
+      "sourceTitle": "NSSDCA: Apollo Landing Site Coordinates",
+      "sourceUrl": "https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html",
+      "status": "checked",
+      "checkedOn": "2026-11-10",
+      "note": "Table row: Lunar Module 26.13239 3.63330. Kid wording about the rille is not from this page; confirm before use."
+    },
+    {
+      "id": "opp-site",
+      "kid": "Opportunity came to rest in a small crater on the plains of Meridiani Planum, near the Mars equator.",
+      "deeper": "1.946 degrees S, 354.473 degrees E (IAU 2000 body-centered), which is 5.527 degrees W.",
+      "value": "1.946 S, 354.473 E",
+      "lat": -1.946,
+      "lon": -5.527,
+      "date": null,
+      "sourceTitle": "NSSDCA: Opportunity spacecraft details",
+      "sourceUrl": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=2003-032A",
+      "status": "checked",
+      "checkedOn": "2026-11-10",
+      "note": "Quote: The spacecraft came to rest in a 20 m diameter crater at 1.946 S and 354.473 E (IAU 2000 body-centered coordinates)."
+    },
+    {
+      "id": "ing-site",
+      "kid": "Ingenuity flew in Jezero Crater on Mars.",
+      "deeper": "",
+      "value": "about 18.5 N, 77.3 E (end of Flight 72)",
+      "lat": 18.49727,
+      "lon": 77.32253,
+      "date": "2024-01-18",
+      "sourceTitle": "NASA Mars 2020 helicopter waypoints data feed",
+      "sourceUrl": "https://mars.nasa.gov/mmgis-maps/M20/Layers/json/m20_heli_waypoints.json",
+      "status": "verify",
+      "checkedOn": null,
+      "note": "Flight 72 record, Sol 1036. The press kit gives about 18 N, 77 E for Jezero: https://www.jpl.nasa.gov/news/press_kits/mars_2020/landing/mission/landing_site/ . Confirm a prose NASA page before use."
     }
   ]
 }
