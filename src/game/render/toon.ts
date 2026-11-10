@@ -29,6 +29,8 @@ export interface ToonOptions {
   paint?: number;
   emissive?: ColorRepresentation;
   emissiveIntensity?: number;
+  /** Scales the shared rim light for this material. 1 by default. */
+  rim?: number;
 }
 
 function createBandTexture(): DataTexture {
@@ -61,6 +63,7 @@ varying vec3 vPohPaint;
 uniform vec3 uPohRimColor;
 uniform float uPohRimStrength;
 uniform float uPohPaint;
+uniform float uPohRimScale;
 
 float pohHash(vec3 p) {
   p = fract(p * 0.3183099 + 0.1);
@@ -90,7 +93,7 @@ const FRAGMENT_RIM = /* glsl */ `
 // A thin warm edge light, drawn as a band so it stays graphic.
 float pohFacing = 1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0);
 float pohRim = smoothstep(0.62, 0.74, pohFacing);
-outgoingLight += uPohRimColor * pohRim * uPohRimStrength * (0.35 + 0.65 * diffuseColor.rgb);
+outgoingLight += uPohRimColor * pohRim * uPohRimStrength * uPohRimScale * (0.35 + 0.65 * diffuseColor.rgb);
 `;
 
 /** Creates and tracks every material in a world, so they share uniforms and can be freed together. */
@@ -128,11 +131,13 @@ export class ToonLibrary {
     }
     const objectSpace = options.objectSpace ?? false;
     const paintUniform = { value: paint };
+    const rimUniform = { value: options.rim ?? 1 };
 
     material.onBeforeCompile = (shader) => {
       shader.uniforms["uPohRimColor"] = this.uniforms.uPohRimColor;
       shader.uniforms["uPohRimStrength"] = this.uniforms.uPohRimStrength;
       shader.uniforms["uPohPaint"] = paintUniform;
+      shader.uniforms["uPohRimScale"] = rimUniform;
       const define = objectSpace ? "#define POH_OBJECT_SPACE\n" : "";
       shader.vertexShader = shader.vertexShader
         .replace("#include <common>", `${define}#include <common>\n${VERTEX_HEAD}`)

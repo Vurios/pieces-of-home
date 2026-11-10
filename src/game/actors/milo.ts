@@ -14,9 +14,10 @@ export const MILO_STAGES = 5;
 
 const METAL = "#B9B4AA";
 const METAL_DARK = "#6E6A66";
-const SHELL = "#E9DCC2";
-const SHELL_DARK = "#C9B795";
-const LAMP = "#C0573E";
+// Unfinished: dark gunmetal and dusty paint. He brightens as he gets his parts.
+const SHELL = "#4F4843";
+const SHELL_DARK = "#3A3431";
+const LAMP = "#5F7F7A";
 const INK = "#2B2622";
 const GOLD = "#E0B34A";
 
@@ -53,24 +54,36 @@ export class Milo {
     for (const x of [-0.17, 0.17]) for (const y of [0.22, 0.4]) this.mesh(this.body, sphere("low"), METAL_DARK, [x, y, 0.172], 0.012);
     this.mesh(this.body, box(0.01), LAMP, [0, 0.245, 0.171], [0.42, 0.035, 0.01]);
     this.mesh(this.body, box(0.01), SHELL_DARK, [-0.212, 0.31, 0], [0.01, 0.12, 0.2]);
-    this.mesh(this.body, torus(0.25, Math.PI), METAL_DARK, [0, 0.435, 0.08], [0.07, 0.05, 0.05]);
+    // Folded little arms, not finished yet: bare hinges and stubby grippers.
+    for (const side of [-1, 1]) {
+      this.mesh(this.body, sphere("low"), METAL_DARK, [side * 0.225, 0.34, 0.05], 0.035);
+      this.mesh(this.body, cylinder(8), METAL, [side * 0.235, 0.27, 0.09], [0.018, 0.13, 0.018], [0.5, 0, 0]);
+      this.mesh(this.body, box(0.01), METAL_DARK, [side * 0.235, 0.22, 0.13], [0.04, 0.035, 0.05]);
+    }
 
-    // Neck: two lamp-arm segments with springs.
-    this.neck.position.set(0, 0.43, -0.06);
+    // Panel seams, and axle stubs waiting for wheels.
+    for (const x of [-0.07, 0.07]) this.mesh(this.body, box(0.002), "#2E2926", [x, 0.32, 0.171], [0.006, 0.2, 0.004]);
+    for (const x of [-0.215, 0.215]) for (const z of [-0.12, 0.12]) this.mesh(this.body, cylinder(10), METAL_DARK, [x, 0.21, z], [0.035, 0.03, 0.035], [0, 0, Math.PI / 2]);
+    // Neck: a desk-lamp arm in two segments, with springs along the side.
+    this.neck.position.set(0, 0.43, -0.08);
     this.body.add(this.neck);
-    this.mesh(this.neck, cylinder(8), METAL, [0, 0.11, 0], [0.025, 0.22, 0.025]);
-    this.mesh(this.neck, sphere("low"), METAL_DARK, [0, 0.0, 0], 0.04);
-    this.mesh(this.neck, torus(0.25), METAL_DARK, [0.035, 0.12, 0], [0.025, 0.025, 0.06], [0, Math.PI / 2, 0]);
+    this.mesh(this.neck, sphere("low"), METAL_DARK, [0, 0.0, 0], 0.045);
+    this.mesh(this.neck, cylinder(8), METAL, [0, 0.12, -0.03], [0.022, 0.25, 0.022], [-0.25, 0, 0]);
+    this.mesh(this.neck, sphere("low"), METAL_DARK, [0, 0.24, -0.06], 0.035);
+    this.mesh(this.neck, cylinder(8), METAL, [0, 0.31, 0.0], [0.02, 0.17, 0.02], [0.75, 0, 0]);
+    for (let i = 0; i < 4; i += 1) {
+      this.mesh(this.neck, torus(0.3), METAL_DARK, [0.04, 0.06 + i * 0.045, -0.015 - i * 0.012], [0.018, 0.018, 0.018], [0, Math.PI / 2, 0]);
+    }
 
     // Head: a desk lamp shade with the bulb as his face.
-    this.head.position.set(0, 0.24, 0);
+    this.head.position.set(0, 0.37, 0.06);
     this.neck.add(this.head);
     this.mesh(this.head, sphere("low"), METAL_DARK, [0, 0, 0], 0.045);
     // The wide mouth of the shade faces forward and a little down: that is his face.
     const shade = this.mesh(this.head, cylinder(20, 0.45, true), LAMP, [0, 0.02, 0.1], [0.17, 0.2, 0.17], [-1.27, 0, 0]);
     shade.material = this.toon.toon({ color: LAMP, objectSpace: true, paint: 0.08, side: 2 });
     this.mesh(this.head, cylinder(20, 1), LAMP, [0, 0.05, 0.01], [0.08, 0.05, 0.08], [-1.27, 0, 0]);
-    this.bulbDark = this.toon.toon({ color: "#8E8676", objectSpace: true, paint: 0.05 });
+    this.bulbDark = this.toon.toon({ color: "#7A746A", objectSpace: true, paint: 0.05 });
     this.bulbLit = this.toon.glow("#FFE2A6");
     this.bulb = this.mesh(this.head, sphere("mid"), "#8E8676", [0, -0.005, 0.16], [0.09, 0.09, 0.07]);
     this.bulb.material = this.bulbDark;
@@ -93,8 +106,13 @@ export class Milo {
 
     // Stage 0 and 1: a stand. Milo has no wheels yet.
     const stand = new Group();
-    this.mesh(stand, cylinder(18), "#7A4A2E", [0, 0.07, 0], [0.26, 0.04, 0.26]);
-    this.mesh(stand, cylinder(10), METAL, [0, 0.12, 0], [0.05, 0.08, 0.05]);
+    // A turned wooden display stand, like the ones for Dad's models.
+    this.mesh(stand, cylinder(20), "#6B3F2A", [0, 0.02, 0], [0.27, 0.04, 0.27]);
+    this.mesh(stand, cylinder(20, 0.8), "#7A4A2E", [0, 0.06, 0], [0.22, 0.05, 0.22]);
+    this.mesh(stand, torus(0.25), GOLD, [0, 0.04, 0], [0.27, 0.27, 0.06], [Math.PI / 2, 0, 0]);
+    this.mesh(stand, cylinder(12, 0.7), "#7A4A2E", [0, 0.12, 0], [0.07, 0.08, 0.07]);
+    // A paper tag tied to the stand: no words yet, only a doodle.
+    this.mesh(stand, box(0.004), "#F4ECDD", [0.2, 0.09, 0.2], [0.09, 0.055, 0.004], [0, -0.7, 0.1]);
     this.root.add(stand);
 
     // Stubby feet while he waits for wheels.

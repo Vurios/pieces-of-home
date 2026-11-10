@@ -71,7 +71,7 @@ export function buildHouse(b: Batcher, s: Site): HouseResult {
   const D = 3.2;
   const wallTop = 0.35 + 2.2;
 
-  b.place(box(0.05), C.stone, v(0, 0.17, 0), [0, 0, 0], [W + 0.4, 0.4, D + 0.4], m);
+  b.place(box(0.05), C.stone, v(0, -0.23, 0), [0, 0, 0], [W + 0.4, 1.2, D + 0.4], m);
   b.place(box(0.04), C.houseWall, v(0, 0.35 + 1.1, 0), [0, 0, 0], [W, 2.2, D], m);
   // Corner boards.
   for (const x of [-1, 1]) for (const z of [-1, 1]) b.place(box(0.01), C.trim, v((x * W) / 2, 1.45, (z * D) / 2), [0, 0, 0], [0.14, 2.2, 0.14], m);
@@ -116,7 +116,7 @@ export function buildHouse(b: Batcher, s: Site): HouseResult {
 
   // Porch.
   const pz = D / 2 + 0.75;
-  b.place(box(0.03), C.woodLight, v(0, 0.17, pz), [0, 0, 0], [W + 0.2, 0.34, 1.5], m);
+  b.place(box(0.03), C.woodLight, v(0, -0.16, pz), [0, 0, 0], [W + 0.2, 1.0, 1.5], m);
   for (let i = 0; i < 9; i += 1) b.place(box(0.004), C.wood, v(-W / 2 + 0.25 + i * 0.47, 0.342, pz), [0, 0, 0], [0.025, 0.006, 1.45], m);
   for (const x of [-1.95, 1.95]) {
     b.place(box(0.02), C.trim, v(x, 0.34 + 1.05, pz + 0.62), [0, 0, 0], [0.14, 2.1, 0.14], m);

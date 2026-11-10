@@ -182,7 +182,9 @@ void main() {
     float sa = abs(d1 + d2 - 2.0 * dc) * k / diagonal;
     float sb = abs(d3 + d4 - 2.0 * dc) * k / diagonal;
     float slope = max(max(sx, sy), max(sa, sb));
-    ink = smoothstep(1.25, 2.3, slope);
+    // Far surfaces get a higher bar: depth precision falls off with distance.
+    float bar = 1.25 + z * 0.035;
+    ink = smoothstep(bar, bar + 1.05, slope);
     ink *= 1.0 - smoothstep(uInkFade.x, uInkFade.y, z);
   }
 
@@ -400,7 +402,8 @@ export class PostPipeline {
     ink["uFar"]!.value = perspective.far;
     ink["uTanHalfFov"]!.value = Math.tan((perspective.fov * Math.PI) / 360);
     ink["uTime"]!.value = time;
-    ink["uBoil"]!.value = this.quality.outlineBoil && !this.reducedMotion ? 1 : 0;
+    // A one-pixel wobble reads as a jagged edge on small screens, so boil only on tall ones.
+    ink["uBoil"]!.value = this.quality.outlineBoil && !this.reducedMotion && this.height >= 1200 ? 1 : 0;
 
     const finish = (this.tiltMaterial ?? this.inkMaterial).uniforms;
     finish["uTime"]!.value = this.reducedMotion ? 0 : time;

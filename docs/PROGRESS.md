@@ -6,21 +6,23 @@ There is no deadline. The full scope in the Game Bible gets built: P0, then P1, 
 - **Repo:** https://github.com/Vurios/pieces-of-home (public). No CI: the team asked for straight pushes to `main`. Run typecheck, tests and e2e locally before pushing.
 - **Team rule for this run:** the agent asks the team before starting each next phase prompt.
 
-**Next up:** Phase 02, `docs/prompts/02_world_engine_and_look.md` (waiting for the team's go-ahead).
+**Next up:** Phase 03, `docs/prompts/03_loading_title_and_ui.md` (waiting for the team's go-ahead).
 
-## State summary (2026-11-10)
+## State summary (2026-11-11)
 
-Phase 01 is done. The repo has the full skeleton, 19 skills, a deployed Worker with a `Room` Durable Object, seeded facts with a build check, unit and browser tests. The page shows a placeholder toon planet and a paper tag. Nothing player-facing is final yet.
+Phases 01 and 02 are done. The live site is a walkable Home planet at dusk: the house and porch, Mom's garden, the mailbox, Dad's workshop (it opens like a dollhouse when you step in), the workbench with Milo (stage 0), the notebook, Dad's lamp, four glass domes and two NASA-map globes with sourced landing pins, a meadow, a dish and a telescope on the hill. Remi walks, runs and jumps; Nori, Lumi and Theo wait in the workshop. A placeholder letter loop (take the letter from the mailbox, give it to the lamp) proves the interaction and carry systems. The paper arrow points to the next goal. The loader, title and notebook UI are still placeholders (Phase 03).
 
 Things a new session should know:
 
 - `npm run dev` runs Vite with the real Workers runtime on port 5173. `npm run typecheck` regenerates Worker types first.
 - Skills are git-ignored. After a fresh clone run `npx skills experimental_install` to restore them from `skills-lock.json` (`DECISIONS.md` #9).
-- Co-op is solo by default. Add `?room=some-code` to open a room socket. The page mirrors state on `<html data-net data-players data-stage>` for tests.
-- Playwright runs with 2 workers on purpose (see `DECISIONS.md` #8).
-- `scripts/screens.ts` captures the 1440x900 and 390x844 review screenshots into `docs/screens/`.
-- Facts: 48 seeded, 27 `checked`, 21 `verify`. No fact has a `checkedOn` date yet. Opening every source is the first job of Phase 05.
-- The taste skill ships a Stop hook that only acts if `.taste-skill/build.json` exists. We do not arm it (see `SKILLS.md`).
+- Co-op is solo by default. Add `?room=some-code` to open a room socket. The page mirrors state on `<html data-net data-players data-stage data-tier>` for tests.
+- URL switches: `?quality=low|medium|high`, `?shot=wide|porch|workshop|bench|character` (fixed camera bookmarks), `?debug` (fps overlay, always on in dev), `?test` (exposes `window.__poh`).
+- Screenshots: `npx tsx scripts/screens.ts <folder>` with the dev server running. Latest set is in `docs/screens/phase02/`.
+- Playwright runs with 2 workers, and walk tests use the Low tier (`DECISIONS.md` #8, #18).
+- NASA models: `npx tsx scripts/assets/nasa-models.ts build` (output to `.cache/` until a phase ships one).
+- Facts: 52 (30 checked, 22 verify). Location facts carry `lat`/`lon`. Opening every source and filling `checkedOn` is the first job of Phase 05.
+- Engine map: `src/game/engine.ts` (loop), `core/` (events, input, quality, state), `world/` (sphere math, terrain, colliders, controller, camera, interaction), `render/` (toon, post, grade, sky, particles, kit), `actors/` (kids, Milo, props), `worlds/home/`.
 
 ## Phase 01: Setup, skills, scaffold and first deploy
 
@@ -48,14 +50,22 @@ Things a new session should know:
 
 ## Phase 02: Tiny-planet engine and the look
 
-- [ ] Study the reference techniques, write our own
-- [ ] Engine systems (planet walking, controller, camera, input, interaction, quality tiers)
-- [ ] Rendering and art (toon bands, rim light, ink outlines, grading, grain, tilt-shift)
-- [ ] Home world, first pass
-- [ ] Characters and Milo
-- [ ] NASA hardware model pipeline
-- [ ] Visual review loop with screenshots
-- [ ] Deploy and smoke test
+- [x] Studied the reference (scene structure, depth outlines plus LUT idea). Wrote our own; nothing copied
+- [x] Engine systems: sphere controller (walk, run, jump, soft landing, step-up, colliders), calm follow camera (stable horizon, lag, look-ahead, recenter only when walking away, pull-in past props, place hints such as the dollhouse view), paper objective arrow, interaction prompts (press and hold), carry, input (keyboard with remappable keys, mouse, touch stick and buttons, gamepad), world manager with lazy world chunks and the Looking Lamp iris, typed event bus, serializable state with autosave, quality tiers with a frame watchdog, dev debug overlay
+- [x] Rendering: 3-band toon with paint breakup and warm rim; depth-based ink in warm grey with distance fade and boil; LUT grade per world; grain; vignette; tilt-shift on Medium and High; painted sky dome with clouds and stars; footstep puffs, lamp motes, fireflies
+- [x] Home world, first pass, lamp-lit, with globes (NASA SVS Moon, USGS Mars) and fact-sourced pins
+- [x] Four kids and Milo stage 0 in place; character approach logged (`DECISIONS.md` #11)
+- [x] NASA hardware model pipeline (`scripts/assets/`, `DECISIONS.md` #17)
+- [x] Two screenshot review passes, plus an independent subagent art review; saved in `docs/screens/phase02/`
+- [x] Performance: 180 fps at High on an RTX 4050 laptop GPU; Low tier 46 calls, 111k triangles. Real mid laptop and phone still to measure in Phase 07
+- [x] Tests: 32 unit, 11 Playwright (smoke, walk, letter loop on desktop and touch, every tier)
+- [x] Deploy and live smoke test
+
+Open items carried forward from the art review (to finish in Phases 03 and 05):
+
+- Wide shot: tune for the title sequence (Phase 03 sets the real title camera)
+- Remi's backpack and Theo's goggles could read even stronger; revisit with the title close-ups
+- Hand-drawn labels on Dad's tags, the crates and the workshop sign (needs the type system from Phase 03)
 
 ## Phase 03: Loading screen, title sequence and the notebook UI
 

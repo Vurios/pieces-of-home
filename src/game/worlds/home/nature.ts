@@ -26,7 +26,7 @@ export function pathDistance(dir: Vector3): number {
 }
 
 const KEEP_OUT: { dir: Vector3; radius: number }[] = [
-  { dir: SITES.house.dir, radius: 6.2 },
+  { dir: SITES.house.dir, radius: 7.0 },
   { dir: SITES.shed.dir, radius: 6.6 },
   { dir: SITES.garden.dir, radius: 4.8 },
   { dir: SITES.dish.dir, radius: 3.2 },
@@ -95,7 +95,7 @@ export function scatterNature(b: Batcher, terrain: Terrain, density: number): Co
   }
 
   // Bushes and rocks, with colliders for the big ones.
-  for (let n = 0, tries = 0; n < 60 * density + 10 && tries < 2000; tries += 1) {
+  for (let n = 0, tries = 0; n < 40 * density + 10 && tries < 2000; tries += 1) {
     const dir = randomDir(random);
     if (!isClear(dir, 0.4)) continue;
     const m = groundMatrix(terrain, dir, random() * 360);
@@ -116,7 +116,7 @@ export function scatterNature(b: Batcher, terrain: Terrain, density: number): Co
   }
 
   // Grass tufts and flower clusters: no colliders.
-  for (let n = 0, tries = 0; n < 320 * density + 60 && tries < 4000; tries += 1) {
+  for (let n = 0, tries = 0; n < 180 * density + 40 && tries < 4000; tries += 1) {
     const dir = randomDir(random);
     if (pathDistance(dir) < PATH_HALF_WIDTH + 0.15) continue;
     let blocked = false;
@@ -125,7 +125,7 @@ export function scatterNature(b: Batcher, terrain: Terrain, density: number): Co
     const m = groundMatrix(terrain, dir, random() * 360, 0.02);
     if (random() < 0.7) {
       for (let i = 0; i < 3; i += 1) {
-        b.place(cone(4), i === 1 ? "#8DAE7C" : "#6E9470", v((i - 1) * 0.06, 0.09, (random() - 0.5) * 0.06), [(i - 1) * 0.35, 0, (random() - 0.5) * 0.3], [0.05, 0.2 + random() * 0.1, 0.05], m);
+        b.place(cone(4), i === 1 ? "#A3BD8C" : "#8DAE7C", v((i - 1) * 0.06, 0.09, (random() - 0.5) * 0.06), [(i - 1) * 0.35, 0, (random() - 0.5) * 0.3], [0.05, 0.2 + random() * 0.1, 0.05], m);
       }
     } else {
       const color = FLOWERS[Math.floor(random() * FLOWERS.length)]!;
@@ -163,7 +163,7 @@ export function buildGarden(b: Batcher, s: Site): Shape[] {
   const shapes: Shape[] = [];
   for (let row = 0; row < 3; row += 1) {
     const z = -0.95 + row * 0.95;
-    b.place(box(0.03), C.wood, v(0, 0.15, z), [0, 0, 0], [2.6, 0.3, 0.66], m);
+    b.place(box(0.03), C.wood, v(0, 0.0, z), [0, 0, 0], [2.6, 0.6, 0.66], m);
     b.place(box(0.02), "#6B4A35", v(0, 0.29, z), [0, 0, 0], [2.45, 0.04, 0.52], m);
     for (let i = 0; i < 6; i += 1) {
       const x = -1.05 + i * 0.42;

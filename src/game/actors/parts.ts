@@ -28,7 +28,7 @@ function cached(key: string, make: () => BufferGeometry): BufferGeometry {
 /** Unit sphere (radius 1). */
 export const sphere = (detail: "low" | "mid" | "high" = "mid"): BufferGeometry =>
   cached(`sphere-${detail}`, () =>
-    detail === "low" ? new SphereGeometry(1, 9, 6) : detail === "mid" ? new SphereGeometry(1, 14, 10) : new SphereGeometry(1, 22, 16),
+    detail === "low" ? new SphereGeometry(1, 9, 6) : detail === "mid" ? new SphereGeometry(1, 14, 10) : new SphereGeometry(1, 30, 22),
   );
 
 /** Capsule with radius 1 and a straight middle of `length`. */

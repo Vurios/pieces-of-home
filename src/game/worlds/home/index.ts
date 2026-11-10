@@ -55,7 +55,8 @@ export function createHome(ctx: WorldContext): World {
     const slope = 1 - Math.max(0, normal.dot(dir));
     out.multiplyScalar(1 - Math.min(0.25, slope * 2.2));
   });
-  const planet = new Mesh(planetGeometry, toon.toon({ vertexColors: true, paint: 0.09 }));
+  // Little rim light on the ground: a bright edge round the whole planet reads as an outline.
+  const planet = new Mesh(planetGeometry, toon.toon({ vertexColors: true, paint: 0.09, rim: 0.2 }));
   planet.name = "planet";
   planet.receiveShadow = true;
   root.add(planet);
@@ -92,9 +93,11 @@ export function createHome(ctx: WorldContext): World {
   const scopeMatrix = groundMatrix(terrain, HILL_TOP, 20, 0.02);
   colliders.push(createColliderGroup(scopeMatrix, buildTelescope(b, { dir: HILL_TOP, forward: new Vector3(), origin: new Vector3(), matrix: scopeMatrix })));
 
-  for (const [lat, lon] of [[-2.2, 1.6], [3.5, -9], [14, 27], [18, 3]] as const) {
-    const m = groundMatrix(terrain, latLonToDir(lat, lon), 0, 0.02);
-    colliders.push(createColliderGroup(m, buildLampPost(b, { dir: latLonToDir(lat, lon), forward: new Vector3(), origin: new Vector3(), matrix: m })));
+  // Lamp posts along the paths. The one by the workshop is placed in the shed's own frame, outside its door.
+  const lampDirs = [latLonToDir(-2.2, 1.6), latLonToDir(3.5, -9), latLonToDir(18, 3), local(SITES.shed, 2.6, 0, 5.4).normalize()];
+  for (const dir of lampDirs) {
+    const m = groundMatrix(terrain, dir, 0, 0.02);
+    colliders.push(createColliderGroup(m, buildLampPost(b, { dir, forward: new Vector3(), origin: new Vector3(), matrix: m })));
   }
 
   colliders.push(createColliderGroup(SITES.garden.matrix, buildGarden(b, SITES.garden)));
@@ -138,15 +141,21 @@ export function createHome(ctx: WorldContext): World {
     sun.shadow.normalBias = 0.07;
   }
   root.add(sun, sun.target);
-  const fill = new HemisphereLight("#A99CD2", "#5C5248", 1.5);
+  const fill = new HemisphereLight("#A99CD2", "#5E554C", 1.8);
   root.add(fill);
 
-  const lampLight = new PointLight("#FFB25A", 7, 9, 1.4);
+  const lampLight = new PointLight("#FFC27A", 5.5, 9, 1.4);
   lampLight.position.copy(shop.lampBulb);
   root.add(lampLight);
   const porchLight = new PointLight("#FFC27A", 5, 6, 1.6);
   porchLight.position.copy(house.porchLight);
   root.add(porchLight);
+  // Cool dusk light falls in through the workshop window, so the room is not one note of amber.
+  if (quality.tier !== "low") {
+    const windowLight = new PointLight("#8FA3D9", 2.4, 5.5, 1.5);
+    windowLight.position.copy(local(SITES.shed, SHED.halfWidth - 0.6, 1.7, -0.2));
+    root.add(windowLight);
+  }
 
   // ---- Milo and the friends who wait in the workshop ----
   const milo = new Milo(toon);
@@ -234,14 +243,14 @@ export function createHome(ctx: WorldContext): World {
   // ---- Bookmarks for screenshots and the title sequence ----
   const spawnDir = latLonToDir(SITES.spawn.lat, SITES.spawn.lon);
   const spawnForward = headingToTangent(spawnDir, SITES.spawn.heading);
-  const wideTarget = latLonToDir(8, 0).multiplyScalar(HOME_RADIUS);
+  const wideTarget = latLonToDir(16, 10).multiplyScalar(HOME_RADIUS);
   const spawnGround = terrain.pointAt(spawnDir);
   const inShed = (x: number, z: number): Vector3 => local(SITES.shed, x, 0, z).normalize();
   const shedForward = SITES.shed.forward.clone().negate();
   const bookmarks: Record<string, Bookmark> = {
     wide: {
       player: { dir: spawnDir, forward: spawnForward },
-      camera: { position: latLonToDir(-34, 0).multiplyScalar(HOME_RADIUS + 30), target: wideTarget.clone().multiplyScalar(0.55) },
+      camera: { position: latLonToDir(-22, 12).multiplyScalar(HOME_RADIUS + 31), target: wideTarget.clone().multiplyScalar(0.5) },
     },
     porch: {
       player: { dir: local(SITES.house, 0.3, 0, 4.4).normalize(), forward: SITES.house.forward.clone().negate() },
@@ -328,6 +337,8 @@ export function createHome(ctx: WorldContext): World {
       // The front swings out and down on its bottom hinge, with a little bounce.
       const swing = open < 0.999 ? open * open * (3 - 2 * open) : 1;
       shop.frontWall.rotation.x = swing * (Math.PI / 2) * 0.985;
+      // Once down, the panel tucks into the ground so it never fills the bottom of a tall screen.
+      shop.frontWall.position.y = SHED.floor - 0.02 - Math.max(0, swing - 0.7) * 2;
       shop.frontWall.visible = true;
       shop.roof.position.y = SHED.floor + SHED.wallHeight + swing * 3.5;
       shop.roof.scale.setScalar(Math.max(0.001, 1 - swing));
@@ -358,7 +369,7 @@ export function createHome(ctx: WorldContext): World {
       fireflies.update(dt, frame.reducedMotion);
       hillFlies.update(dt, frame.reducedMotion);
       // The lamp breathes a little, like a real filament.
-      lampLight.intensity = 7 + (frame.reducedMotion ? 0 : Math.sin(frame.time * 3.1) * 0.25);
+      lampLight.intensity = 5.5 + (frame.reducedMotion ? 0 : Math.sin(frame.time * 3.1) * 0.2);
     },
     resize(height: number) {
       pixelHeight = height;

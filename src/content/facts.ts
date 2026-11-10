@@ -1,7 +1,7 @@
 import data from "../data/facts.json";
 
 /**
- * The only door to facts in game code. Write `fact("id")` so the fact check
+ * The only door to facts in game code. Call `fact` with a fact id in quotes so the fact check
  * can see every use. Using a fact that is still marked "verify", or one with
  * no source, fails `npm run check:facts`.
  */

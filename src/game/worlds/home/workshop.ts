@@ -61,9 +61,9 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
   const top = fy + wh;
 
   // Floor with planks, on a low stone footing.
-  b.place(box(0.03), C.stone, v(0, 0.06, 0), [0, 0, 0], [hw * 2 + 0.6, 0.14, hd * 2 + 0.6], m);
-  b.place(box(0.02), "#C29A6B", v(0, fy - 0.04, 0), [0, 0, 0], [hw * 2 + 0.2, 0.1, hd * 2 + 0.2], m);
-  for (let i = 0; i < 13; i += 1) b.place(box(0.003), "#9E7650", v(-hw + 0.25 + i * 0.46, fy + 0.012, 0), [0, 0, 0], [0.02, 0.006, hd * 2], m);
+  b.place(box(0.03), C.stone, v(0, -0.36, 0), [0, 0, 0], [hw * 2 + 0.6, 1.0, hd * 2 + 0.6], m);
+  b.place(box(0.02), "#A47A54", v(0, fy - 0.04, 0), [0, 0, 0], [hw * 2 + 0.2, 0.1, hd * 2 + 0.2], m);
+  for (let i = 0; i < 13; i += 1) b.place(box(0.003), "#83603F", v(-hw + 0.25 + i * 0.46, fy + 0.012, 0), [0, 0, 0], [0.02, 0.006, hd * 2], m);
 
   // Back and side walls, boards outside.
   b.place(box(0.02), C.shedWall, v(0, wallMid, -hd - 0.1), [0, 0, 0], [hw * 2 + 0.4, wh, 0.2], m);
@@ -81,8 +81,8 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     for (const z of [-1, 1]) b.place(box(0.01), C.woodDark, v(side * (hw + 0.12), wallMid, z * (hd + 0.12)), [0, 0, 0], [0.22, wh + 0.04, 0.22], m);
   }
   // Inner wall color: a warm pine.
-  b.place(box(0.01), "#C9A271", v(0, wallMid, -hd + 0.005), [0, 0, 0], [hw * 2, wh, 0.01], m);
-  for (const x of [-1, 1]) b.place(box(0.01), "#C9A271", v(x * (hw - 0.005), wallMid, 0), [0, 0, 0], [0.01, wh, hd * 2], m);
+  b.place(box(0.01), "#E3D1AF", v(0, wallMid, -hd + 0.005), [0, 0, 0], [hw * 2, wh, 0.01], m);
+  for (const x of [-1, 1]) b.place(box(0.01), "#E3D1AF", v(x * (hw - 0.005), wallMid, 0), [0, 0, 0], [0.01, wh, hd * 2], m);
 
   // Windows: warm outside, dusk-blue inside.
   const sideWindow = (side: number, z: number): void => {
@@ -112,7 +112,7 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
   for (const side of [-1, 1]) {
     fb.place(box(0.02), C.shedWall, v(side * (doorHalf + sideWidth / 2), wh / 2, -0.1), [0, 0, 0], [sideWidth, wh, 0.2]);
     for (let i = 0; i < 5; i += 1) fb.place(box(0.004), C.shedBoard, v(side * (doorHalf + 0.2 + i * 0.47), wh / 2, 0.01), [0, 0, 0], [0.06, wh, 0.025]);
-    fb.place(box(0.01), "#C9A271", v(side * (doorHalf + sideWidth / 2), wh / 2, -0.205), [0, 0, 0], [sideWidth, wh, 0.01]);
+    fb.place(box(0.01), "#E3D1AF", v(side * (doorHalf + sideWidth / 2), wh / 2, -0.205), [0, 0, 0], [sideWidth, wh, 0.01]);
     // Door frame.
     fb.place(box(0.01), C.trim, v(side * doorHalf, wh * 0.4, 0.02), [0, 0, 0], [0.1, wh * 0.8, 0.06]);
   }
@@ -155,7 +155,7 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
 
   // ---- Workbench along the back wall ----
   const benchHalf = 2.6;
-  b.place(box(0.02), "#B8865A", v(0, BENCH_Y - 0.05, BENCH_Z), [0, 0, 0], [benchHalf * 2, 0.1, 1.0], m);
+  b.place(box(0.02), "#A98C6C", v(0, BENCH_Y - 0.05, BENCH_Z), [0, 0, 0], [benchHalf * 2, 0.1, 1.0], m);
   b.place(box(0.01), C.woodDark, v(0, BENCH_Y - 0.12, BENCH_Z + 0.48), [0, 0, 0], [benchHalf * 2, 0.06, 0.05], m);
   for (const x of [-benchHalf + 0.12, benchHalf - 0.12]) for (const z of [BENCH_Z - 0.4, BENCH_Z + 0.4]) {
     b.place(box(0.01), C.woodDark, v(x, (fy + BENCH_Y) / 2 - 0.05, z), [0, 0, 0], [0.1, BENCH_Y - fy - 0.1, 0.1], m);
@@ -406,6 +406,9 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
   for (const [x, y, z, r] of [[-2.45, 0.25, 1.75, 0.1], [-2.4, 0.75, 1.72, -0.15], [-1.85, 0.25, 1.95, 0.4]] as const) {
     b.place(box(0.02), C.woodLight, v(x, fy + y, z), [0, r, 0], [0.5, 0.5, 0.5], m);
     b.place(box(0.01), C.wood, v(x, fy + y, z), [0, r, 0], [0.52, 0.08, 0.52], m);
+    // String tie and a paper label, so the crates look packed by hand.
+    b.place(box(0.005), C.paper, v(x, fy + y, z), [0, r, 0], [0.04, 0.515, 0.515], m);
+    b.place(box(0.004), C.paper, v(x, fy + y - 0.1, z), [0, r, 0], [0.18, 0.11, 0.53], m);
   }
   // A coiled cable and a watering can by the door.
   b.place(torus(0.15), C.ink, v(2.3, fy + 0.03, 1.6), [Math.PI / 2, 0, 0], 0.22, m);

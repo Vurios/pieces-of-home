@@ -6,7 +6,12 @@ NASA is credited as a source of images, models and data. NASA does not sponsor o
 
 ## Images, models and textures
 
-None yet. Each NASA image will be listed with its NASA ID, source URL and exact credit line.
+| Asset | Credit | License | Source |
+|---|---|---|---|
+| Moon globe map (`textures/globes/moon.jpg`), CGI Moon Kit color map, unchanged | NASA's Scientific Visualization Studio | Public domain | https://svs.gsfc.nasa.gov/4720 |
+| Mars globe map (`textures/globes/mars.jpg`), Viking MDIM 2.1 colorized global mosaic, downscaled to 1024 by 512 | NASA Ames / USGS Astrogeology Science Center | Public domain | https://astrogeology.usgs.gov/search/map/mars_viking_colorized_global_mosaic_232m |
+
+No NASA 3D model ships yet. The pipeline in `scripts/assets/` prints the credit line for each model when one is added.
 
 ## Fonts
 
@@ -29,6 +34,9 @@ All music and sound effects are made in code at runtime with the Web Audio API. 
 | vitest | Unit tests | MIT | https://github.com/vitest-dev/vitest |
 | @playwright/test | Browser tests and screenshots | Apache-2.0 | https://github.com/microsoft/playwright |
 | typescript | Type checking | Apache-2.0 | https://github.com/microsoft/TypeScript |
+| @gltf-transform (core, functions, extensions) | Model pipeline, build time only | MIT | https://github.com/donmccurdy/glTF-Transform |
+| meshoptimizer | Model simplify and compress, build time only | MIT | https://github.com/zeux/meshoptimizer |
+| draco3dgltf | Reads Draco NASA models, build time only | Apache-2.0 | https://github.com/google/draco |
 
 ## Technique reference
 

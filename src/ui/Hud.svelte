@@ -47,7 +47,7 @@
 </script>
 
 {#if prompt}
-  <div class="prompt" role="status" aria-live="polite">
+  <div class="prompt" class:touch={touchCapable} role="status" aria-live="polite">
     {#if device === "touch"}
       <span class="tap" aria-hidden="true"></span>
     {:else}
@@ -108,6 +108,10 @@
     pointer-events: none;
     animation: pop 0.28s cubic-bezier(0.3, 1.6, 0.5, 1);
     white-space: nowrap;
+  }
+  /* On touch screens the prompt sits above the thumb buttons. */
+  .prompt.touch {
+    bottom: calc(118px + env(safe-area-inset-bottom));
   }
   kbd {
     display: inline-grid;

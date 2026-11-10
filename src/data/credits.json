@@ -1,11 +1,72 @@
 {
   "note": "NASA is credited as a source. NASA does not sponsor or endorse this project.",
-  "media": [],
+  "media": [
+    {
+      "id": "moon-globe",
+      "file": "textures/globes/moon.jpg",
+      "title": "CGI Moon Kit color map (lroc_color_poles_1k)",
+      "credit": "NASA's Scientific Visualization Studio",
+      "license": "Public domain (NASA SVS: all content is in the public domain unless otherwise noted)",
+      "sourceUrl": "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_1k.jpg",
+      "page": "https://svs.gsfc.nasa.gov/4720",
+      "changes": "None"
+    },
+    {
+      "id": "mars-globe",
+      "file": "textures/globes/mars.jpg",
+      "title": "Mars Viking Colorized Global Mosaic (MDIM 2.1)",
+      "credit": "NASA Ames / USGS Astrogeology Science Center",
+      "license": "Public domain (USGS page: Access Constraints Public domain, Use Constraints None)",
+      "sourceUrl": "https://astrogeology.usgs.gov/ckan/dataset/7131d503-cdc9-45a5-8f83-5126c0fd397e/resource/5ea881c6-01b3-41fa-a7af-42d2131b54f1/download/mars_viking_mdim21_clrmosaic_1km.jpg",
+      "page": "https://astrogeology.usgs.gov/search/map/mars_viking_colorized_global_mosaic_232m",
+      "changes": "Downscaled to 1024 by 512 from the 1 km JPEG"
+    }
+  ],
   "fonts": [],
   "libraries": [
-    { "name": "three", "use": "3D rendering", "license": "MIT", "sourceUrl": "https://github.com/mrdoob/three.js" },
-    { "name": "svelte", "use": "2D UI layer", "license": "MIT", "sourceUrl": "https://github.com/sveltejs/svelte" },
-    { "name": "partyserver", "use": "Co-op rooms on Durable Objects", "license": "ISC", "sourceUrl": "https://github.com/cloudflare/partykit" },
-    { "name": "partysocket", "use": "Reconnecting WebSocket client", "license": "MIT", "sourceUrl": "https://github.com/cloudflare/partykit" }
+    {
+      "name": "three",
+      "use": "3D rendering",
+      "license": "MIT",
+      "sourceUrl": "https://github.com/mrdoob/three.js"
+    },
+    {
+      "name": "svelte",
+      "use": "2D UI layer",
+      "license": "MIT",
+      "sourceUrl": "https://github.com/sveltejs/svelte"
+    },
+    {
+      "name": "partyserver",
+      "use": "Co-op rooms on Durable Objects",
+      "license": "ISC",
+      "sourceUrl": "https://github.com/cloudflare/partykit"
+    },
+    {
+      "name": "partysocket",
+      "use": "Reconnecting WebSocket client",
+      "license": "MIT",
+      "sourceUrl": "https://github.com/cloudflare/partykit"
+    }
+  ],
+  "tools": [
+    {
+      "name": "@gltf-transform/core, functions, extensions",
+      "use": "Model pipeline (build time only)",
+      "license": "MIT",
+      "sourceUrl": "https://github.com/donmccurdy/glTF-Transform"
+    },
+    {
+      "name": "meshoptimizer",
+      "use": "Model simplify and compress (build time only)",
+      "license": "MIT",
+      "sourceUrl": "https://github.com/zeux/meshoptimizer"
+    },
+    {
+      "name": "draco3dgltf",
+      "use": "Reads Draco-compressed NASA models (build time only)",
+      "license": "Apache-2.0",
+      "sourceUrl": "https://github.com/google/draco"
+    }
   ]
 }

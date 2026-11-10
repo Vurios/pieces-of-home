@@ -50,7 +50,7 @@ export class Engine {
 
   private renderer: WebGLRenderer;
   private scene = new Scene();
-  private camera = new PerspectiveCamera(40, 1, 0.3, 400);
+  private camera = new PerspectiveCamera(40, 1, 0.5, 160);
   private toon = new ToonLibrary();
   private post: PostPipeline;
   private sky: Sky | null = null;
@@ -323,14 +323,16 @@ export class Engine {
     world.sun.target.updateMatrixWorld();
     world.fill.position.copy(up);
     this.sky?.setGlowDirection(this.sunDir);
-    this.sky?.update(this.camera.position, shot?.camera ? this.camera.up : up, this.elapsed);
+    // A fixed shot from orbit uses the lens up, so the sky still shows its horizon glow and stars.
+    const skyUp = shot?.camera ? this.scratch.setFromMatrixColumn(this.camera.matrixWorld, 1).normalize() : up;
+    this.sky?.update(this.camera.position, skyUp, this.elapsed);
 
     this.arrow.update(dt, this.player.position, up, shot ? null : world.objective(), this.reducedMotion);
     this.puffs.update(dt);
 
     // Keep the sharp band of the tilt-shift on the player.
     this.scratch.copy(this.player.position).addScaledVector(up, 0.6).project(this.camera);
-    this.post.focus = Math.max(0.25, Math.min(0.75, this.scratch.y * 0.5 + 0.5));
+    this.post.focus = Math.max(0.12, Math.min(0.88, this.scratch.y * 0.5 + 0.5));
     this.post.render(this.scene, this.camera, this.elapsed);
 
     this.afterFrame(dt);

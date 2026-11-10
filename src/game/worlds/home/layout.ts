@@ -16,11 +16,14 @@ export interface Site {
   matrix: Matrix4;
 }
 
-export function site(lat: number, lon: number, heading: number, lift = 0): Site {
+/** `scale` enlarges a whole building, including its colliders and local points. */
+export function site(lat: number, lon: number, heading: number, lift = 0, scale = 1): Site {
   const dir = latLonToDir(lat, lon);
   const forward = headingToTangent(dir, heading);
   const origin = dir.clone().multiplyScalar(HOME_RADIUS + lift);
-  return { dir, forward, origin, matrix: surfaceMatrix(origin, dir, forward) };
+  const matrix = surfaceMatrix(origin, dir, forward);
+  if (scale !== 1) matrix.multiply(new Matrix4().makeScale(scale, scale, scale));
+  return { dir, forward, origin, matrix };
 }
 
 /** A point in a site's frame, as a world position. */
@@ -33,16 +36,30 @@ export function localDir(s: Site, x: number, z: number): Vector3 {
   return local(s, x, 0, z).normalize();
 }
 
+/**
+ * A flat pad is a tangent plane, so on its own it rises above the round ground
+ * toward its edge and the planet looks like it has tabletops on it. Sinking
+ * the plane by half that rise splits the difference: the pad dips a little at
+ * the middle and lifts a little at the rim, and the planet stays round.
+ */
+export function padLift(radius: number): number {
+  return -0.5 * (HOME_RADIUS / Math.cos(radius / HOME_RADIUS) - HOME_RADIUS);
+}
+
+export const PAD = { house: 4.1, shed: 4.0, garden: 3.0, dish: 1.8 };
+
 export const SITES = {
   spawn: { lat: -5, lon: 2, heading: 2 },
-  house: site(10, -18, 146),
-  shed: site(9, 19, 214),
-  garden: site(-15, -12, 28),
-  dish: site(19, 37, 230),
+  // The house is drawn at 1.2 times its model size so it never looks smaller than the shed.
+  house: site(10, -18, 146, padLift(PAD.house), 1.2),
+  shed: site(9, 19, 214, padLift(PAD.shed)),
+  garden: site(-15, -12, 28, padLift(PAD.garden)),
+  dish: site(-1, 34, 290, padLift(PAD.dish)),
 };
 
 export const MAILBOX = { lat: -1.2, lon: -6.5 };
-export const HILL = { lat: 31, lon: 4, radius: 7, height: 2.5, plateau: 0.32 };
+// A gentle rounded hill, not a mesa: it should read as part of the planet's curve.
+export const HILL = { lat: 31, lon: 4, radius: 8.5, height: 1.7, plateau: 0.1 };
 export const HILL_TOP = latLonToDir(HILL.lat, HILL.lon);
 
 /** Door points, used by paths and by the objective arrow. */
@@ -72,10 +89,10 @@ export const TERRAIN: TerrainSpec = {
   noiseAmplitude: 0.24,
   noiseFrequency: 1.8,
   pads: [
-    { center: SITES.house.dir, radius: 3.4, blend: 1.8 },
-    { center: SITES.shed.dir, radius: 4.0, blend: 1.8 },
-    { center: SITES.garden.dir, radius: 3.0, blend: 1.5 },
-    { center: SITES.dish.dir, radius: 1.8, blend: 1.2 },
+    { center: SITES.house.dir, radius: PAD.house, blend: 2.2, lift: padLift(PAD.house) },
+    { center: SITES.shed.dir, radius: PAD.shed, blend: 2.2, lift: padLift(PAD.shed) },
+    { center: SITES.garden.dir, radius: PAD.garden, blend: 1.8, lift: padLift(PAD.garden) },
+    { center: SITES.dish.dir, radius: PAD.dish, blend: 1.4, lift: padLift(PAD.dish) },
   ],
   bumps: [
     { center: HILL_TOP, radius: HILL.radius, height: HILL.height, plateau: HILL.plateau },

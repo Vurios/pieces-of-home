@@ -28,7 +28,7 @@ interface Palette {
 
 export const KID_PALETTES: Record<KidId, Palette> = {
   remi: { skin: "#C68E64", hair: "#3A2A22", top: "#D3A13A", topDark: "#A97A24", legs: "#3D4A6B", shoes: "#7A3B2E", accent: "#8E4E35", accentDark: "#6B3825" },
-  nori: { skin: "#EFC59C", hair: "#211A17", top: "#E0603C", topDark: "#B4472A", legs: "#4A4F5C", shoes: "#F1E6D2", accent: "#C23F33", accentDark: "#8F2C25" },
+  nori: { skin: "#EFC59C", hair: "#211A17", top: "#EA7038", topDark: "#B9502A", legs: "#4A4F5C", shoes: "#F1E6D2", accent: "#2F3B63", accentDark: "#C0573E" },
   lumi: { skin: "#8C5A3B", hair: "#251B18", top: "#B9A5D8", topDark: "#9481B8", legs: "#5A4A69", shoes: "#2E2A4F", accent: "#7D3A4E", accentDark: "#5B2838" },
   theo: { skin: "#F1D0B2", hair: "#C3743A", top: "#2F8A86", topDark: "#21625F", legs: "#2F8A86", shoes: "#5A3A2A", accent: "#D9A441", accentDark: "#7A4A2E" },
 };
@@ -174,7 +174,7 @@ export class Character {
     switch (id) {
       case "remi": {
         // Messy short hair with a tuft.
-        this.part(h, sphere("mid"), p.hair, [0, 0.29, -0.03], [0.285, 0.2, 0.27]);
+        this.part(h, sphere("high"), p.hair, [0, 0.29, -0.03], [0.285, 0.2, 0.27]);
         this.part(h, sphere("low"), p.hair, [0.12, 0.42, 0.04], [0.09, 0.06, 0.08], [0, 0, -0.5]);
         this.part(h, sphere("low"), p.hair, [-0.2, 0.25, 0.1], [0.08, 0.09, 0.1]);
         // Mustard jacket with many pockets.
@@ -183,16 +183,17 @@ export class Character {
         }
         this.part(t, box(0.02), p.topDark, [0, 0.4, 0.07], [0.2, 0.05, 0.12]);
         // The big backpack.
-        this.part(t, box(0.07), p.accent, [0, 0.22, -0.19], [0.32, 0.36, 0.2]);
-        this.part(t, box(0.05), p.accentDark, [0, 0.33, -0.225], [0.3, 0.14, 0.16]);
+        this.part(t, box(0.07), p.accent, [0, 0.23, -0.2], [0.44, 0.42, 0.22]);
+        this.part(t, box(0.05), p.accentDark, [0, 0.36, -0.235], [0.42, 0.15, 0.18]);
+        for (const side of [-1, 1]) this.part(t, box(0.04), p.accentDark, [side * 0.24, 0.17, -0.2], [0.08, 0.2, 0.16]);
         this.part(t, box(0.03), p.accentDark, [0, 0.12, -0.3], [0.2, 0.1, 0.05]);
         for (const side of [-1, 1]) this.part(t, box(0.01), p.accentDark, [side * 0.1, 0.25, 0.1], [0.035, 0.3, 0.05]);
         break;
       }
       case "nori": {
-        this.part(h, sphere("mid"), p.hair, [0, 0.25, -0.05], [0.275, 0.2, 0.26]);
+        this.part(h, sphere("high"), p.hair, [0, 0.25, -0.05], [0.275, 0.2, 0.26]);
         // Cap with a long brim.
-        this.part(h, sphere("mid"), p.accent, [0, 0.33, 0], [0.275, 0.17, 0.27]);
+        this.part(h, sphere("high"), p.accent, [0, 0.33, 0], [0.275, 0.17, 0.27]);
         this.part(h, cylinder(20), p.accentDark, [0, 0.33, 0.25], [0.19, 0.018, 0.15]);
         this.part(h, sphere("low"), p.accentDark, [0, 0.5, 0], 0.03);
         // Windbreaker zip and collar.
@@ -201,7 +202,7 @@ export class Character {
         break;
       }
       case "lumi": {
-        this.part(h, sphere("mid"), p.hair, [0, 0.23, -0.06], [0.29, 0.24, 0.27]);
+        this.part(h, sphere("high"), p.hair, [0, 0.23, -0.06], [0.29, 0.24, 0.27]);
         // Hair falls to the shoulders.
         this.part(h, capsule(0.12), p.hair, [-0.22, 0.08, -0.06], [0.08, 0.1, 0.09]);
         this.part(h, capsule(0.12), p.hair, [0.22, 0.08, -0.06], [0.08, 0.1, 0.09]);
@@ -213,8 +214,8 @@ export class Character {
         this.part(t, box(0.03), p.topDark, [0, 0.12, 0.14], [0.2, 0.08, 0.03]);
         // Sketchbook in the left hand.
         const book = new Group();
-        this.part(book, box(0.01), "#C0573E", [0, 0, 0], [0.15, 0.2, 0.03]);
-        this.part(book, box(0.005), "#F4ECDD", [0, 0, 0.012], [0.135, 0.185, 0.015]);
+        this.part(book, box(0.01), "#C0573E", [0, 0, 0], [0.2, 0.26, 0.035]);
+        this.part(book, box(0.005), "#F4ECDD", [0, 0, 0.014], [0.18, 0.24, 0.015]);
         book.position.set(0, -0.26, 0.05);
         book.rotation.set(-0.3, 0, 0);
         this.armL.add(book);
@@ -222,15 +223,16 @@ export class Character {
       }
       case "theo": {
         // Curly hair, built from bumps.
-        this.part(h, sphere("mid"), p.hair, [0, 0.29, -0.03], [0.28, 0.19, 0.27]);
+        this.part(h, sphere("high"), p.hair, [0, 0.29, -0.03], [0.28, 0.19, 0.27]);
         for (const [x, y, z] of [[-0.18, 0.36, 0.08], [0.0, 0.43, 0.06], [0.17, 0.37, 0.07], [-0.2, 0.25, -0.1], [0.2, 0.26, -0.1]] as const) {
           this.part(h, sphere("low"), p.hair, [x, y, z], 0.075);
         }
         // Goggles pushed up on the forehead, with a strap.
-        this.part(h, torus(0.2), "#3A2F2A", [0, 0.33, 0], [0.27, 0.27, 0.12], [Math.PI / 2 - 0.25, 0, 0]);
+        this.part(h, torus(0.07), "#3A2F2A", [0, 0.3, -0.01], [0.275, 0.275, 0.2], [Math.PI / 2 - 0.3, 0, 0]);
         for (const side of [-1, 1]) {
-          this.part(h, cylinder(14), p.accent, [side * 0.08, 0.36, 0.22], [0.065, 0.05, 0.065], [Math.PI / 2 - 0.35, 0, 0]);
-          this.part(h, cylinder(14), "#86C1CF", [side * 0.08, 0.37, 0.247], [0.05, 0.012, 0.05], [Math.PI / 2 - 0.35, 0, 0]);
+          this.part(h, cylinder(16), p.accent, [side * 0.1, 0.33, 0.215], [0.09, 0.06, 0.09], [Math.PI / 2 - 0.45, 0, 0]);
+          this.part(h, cylinder(16), "#86C1CF", [side * 0.1, 0.345, 0.245], [0.07, 0.014, 0.07], [Math.PI / 2 - 0.45, 0, 0]);
+          this.part(h, sphere("low"), "#FFFFFF", [side * 0.1 - 0.02, 0.365, 0.255], 0.015);
         }
         // Shirt sleeves read under the overalls: arms in cream.
         for (const arm of [this.armL, this.armR]) {
@@ -241,8 +243,12 @@ export class Character {
         for (const side of [-1, 1]) this.part(t, box(0.01), p.topDark, [side * 0.09, 0.36, 0.0], [0.035, 0.05, 0.3]);
         // Tool belt with a hammer and a screwdriver.
         this.part(t, torus(0.22), p.accentDark, [0, 0.05, 0], [0.18, 0.18, 0.15], [Math.PI / 2, 0, 0]);
-        this.part(t, box(0.02), "#9A9286", [0.17, 0.0, 0.06], [0.03, 0.12, 0.03]);
-        this.part(t, box(0.02), p.accent, [-0.15, 0.03, 0.09], [0.06, 0.07, 0.04]);
+        // A hammer and a wrench hang from the belt, and a pouch sits at the front.
+        this.part(t, box(0.02), "#7A4A2E", [0.2, -0.05, 0.03], [0.035, 0.2, 0.035]);
+        this.part(t, box(0.03), "#9A9286", [0.2, 0.06, 0.03], [0.05, 0.05, 0.13]);
+        this.part(t, box(0.02), "#B9B4AA", [-0.2, -0.04, 0.03], [0.03, 0.18, 0.03]);
+        this.part(t, torus(0.3), "#B9B4AA", [-0.2, -0.14, 0.03], [0.035, 0.035, 0.035]);
+        this.part(t, box(0.03), p.accent, [0.0, 0.02, 0.15], [0.12, 0.09, 0.06]);
         break;
       }
     }
