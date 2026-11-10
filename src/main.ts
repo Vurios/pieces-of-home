@@ -1,22 +1,46 @@
+import "./ui/theme.css";
 import { mount } from "svelte";
+import { LoadingManager } from "three";
+import { audio } from "./audio/audio";
+import { BootProgress } from "./boot/progress";
 import { Engine } from "./game/engine";
 import { NetClient } from "./net/client";
 import { isValidRoomCode } from "./net/protocol";
 import App from "./ui/App.svelte";
+import { flow } from "./ui/flow.svelte";
+import { settings } from "./ui/settings.svelte";
 
 /**
- * Boot: start the engine, mount the 2D UI layer, hand off from the inline
- * loader, and join a co-op room only when the link asks for one.
+ * Boot: real progress drives the loader's lamp, then "Turn on the light"
+ * unlocks sound and hands off to the 3D title. Screenshot and test links
+ * (`?shot=`, `?test`) skip straight to play unless `?intro` is added.
  */
 async function boot(): Promise<void> {
   const root = document.documentElement;
+  const loader = window.__pohBoot;
   const canvas = document.querySelector<HTMLCanvasElement>("#stage");
   const ui = document.querySelector<HTMLElement>("#ui");
-  const bootScreen = document.querySelector<HTMLElement>("#boot");
-  const bootLine = document.querySelector<HTMLElement>("#boot-line");
   if (!canvas || !ui) throw new Error("Missing #stage or #ui in index.html");
 
   const params = new URLSearchParams(window.location.search);
+  const skipIntro = params.has("shot") || params.has("skip") || (params.has("test") && !params.has("intro"));
+
+  // Weighted milestones, in the order the margin list writes them.
+  const progress = new BootProgress((value) => loader?.progress(value));
+  const engineTask = progress.task(1);
+  const worldTask = progress.task(6, () => loader?.milestone(0));
+  const textureTask = progress.task(2, () => loader?.milestone(1));
+  const audioTask = progress.task(1, () => loader?.milestone(2));
+  const fontTask = progress.task(1);
+  const uiTask = progress.task(1, () => loader?.milestone(3));
+
+  const manager = new LoadingManager();
+  let texturesStarted = false;
+  manager.onStart = () => (texturesStarted = true);
+  manager.onProgress = (_url, loaded, total) => textureTask.set(total > 0 ? loaded / total : 1);
+  manager.onLoad = () => textureTask.done();
+  manager.onError = () => undefined;
+
   const net = new NetClient();
   net.subscribe((state) => {
     root.dataset["net"] = state.status;
@@ -27,28 +51,73 @@ async function boot(): Promise<void> {
     canvas,
     debug: import.meta.env.DEV || params.has("debug"),
     shot: params.get("shot"),
+    loading: manager,
   });
   if (!engine) {
     root.dataset["stage"] = "unsupported";
-    if (bootLine) bootLine.textContent = "This device cannot draw the 3D worlds yet. The Field Guide is coming soon.";
+    loader?.fail();
     return;
   }
+  engineTask.done();
   if (import.meta.env.DEV || params.has("test")) {
-    (window as unknown as { __poh: unknown }).__poh = engine.debugApi();
+    (window as unknown as { __poh: unknown }).__poh = { ...engine.debugApi(), flow: () => flow.stage };
   }
 
-  mount(App, { target: ui, props: { net, engine, version: __APP_VERSION__, debug: import.meta.env.DEV || params.has("debug") } });
+  // Fonts and the audio click render while the world builds.
+  const faces = ['700 20px "Kalam"', '400 20px "Atkinson Hyperlegible Next"', '700 20px "Zilla Slab"'];
+  let facesDone = 0;
+  const fonts = Promise.all(
+    faces.map((face) =>
+      document.fonts
+        .load(face)
+        .catch(() => [])
+        .then(() => fontTask.set(++facesDone / faces.length)),
+    ),
+  );
+  const sounds = audio
+    .prepare()
+    .catch(() => undefined)
+    .then(() => audioTask.done());
 
   await engine.loadWorld("home");
-  engine.start();
-  root.dataset["stage"] = "ready";
+  worldTask.done();
+  if (!texturesStarted) textureTask.done();
+  await Promise.all([fonts, sounds]);
+
+  mount(App, { target: ui, props: { net, engine, version: __APP_VERSION__, debug: import.meta.env.DEV || params.has("debug") } });
+  uiTask.done();
+  // Wait for the last textures, so the globes are never blank on the first frame.
+  if (!textureTask.finished) await new Promise<void>((resolve) => (manager.onLoad = () => (textureTask.done(), resolve())));
+
   root.dataset["tier"] = engine.quality.tier;
   engine.bus.on("quality:change", ({ tier }) => (root.dataset["tier"] = tier));
+  engine.bus.on("title:note", ({ index }) => audio.note(index));
 
   const room = params.get("room");
   if (room && isValidRoomCode(room)) net.join(room);
 
-  bootScreen?.setAttribute("data-done", "");
+  if (skipIntro) {
+    engine.start();
+    loader?.hide();
+    flow.setStage("play");
+    return;
+  }
+
+  // The camera waits on the lamp's glow behind the paper until the light is turned on.
+  engine.startTitle();
+  engine.start();
+  flow.setStage("waiting");
+  loader?.ready(() => {
+    // Inside the click, tap or key press: sound is allowed from here on.
+    void audio.unlock().then(() => {
+      audio.lampClick();
+      audio.setHum(1);
+    });
+    settings.apply();
+    loader.leave();
+    flow.setStage("title");
+    engine.playTitle();
+  });
 }
 
 void boot();

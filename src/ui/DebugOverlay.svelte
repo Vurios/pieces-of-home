@@ -23,8 +23,9 @@ v${version}`}</pre>
 <style>
   .debug {
     position: fixed;
-    right: 8px;
+    left: 8px;
     top: 8px;
+    opacity: 0.85;
     margin: 0;
     padding: 6px 8px;
     background: rgba(43, 38, 34, 0.72);
