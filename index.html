@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#F4ECDD" />
+    <meta
+      name="description"
+      content="Pieces of Home. A cozy game for 1 to 4 players about the machines left on the Moon and Mars. Left behind. Still shining."
+    />
+    <title>Pieces of Home</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <style>
+      /* Temporary loader placeholder. Paints before any JavaScript runs.
+         The real notebook loader arrives in Phase 03. */
+      :root {
+        --paper: #f4ecdd;
+        --ink: #2b2622;
+        --amber: #f2a541;
+        color-scheme: light;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        overflow: hidden;
+        font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", ui-rounded, system-ui, sans-serif;
+      }
+      #stage {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      #boot {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(rgba(43, 38, 34, 0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(43, 38, 34, 0.06) 1px, transparent 1px);
+        background-size: 24px 24px;
+        transition: opacity 0.4s ease;
+        z-index: 10;
+      }
+      #boot[data-done] {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #boot div {
+        text-align: center;
+        padding: 0 16px;
+      }
+      #boot h1 {
+        margin: 0 0 8px;
+        font-size: clamp(28px, 6vw, 44px);
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
+      #boot p {
+        margin: 0;
+        font-size: 18px;
+        opacity: 0.75;
+      }
+      #boot i {
+        display: block;
+        width: 14px;
+        height: 14px;
+        margin: 0 auto 20px;
+        border-radius: 50%;
+        background: var(--amber);
+        box-shadow: 0 0 24px 8px rgba(242, 165, 65, 0.45);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="stage" aria-label="Pieces of Home game view"></canvas>
+    <div id="boot" role="status" aria-live="polite">
+      <div>
+        <i aria-hidden="true"></i>
+        <h1>Pieces of Home</h1>
+        <p id="boot-line">The lamp is warming up.</p>
+      </div>
+    </div>
+    <div id="ui"></div>
+    <noscript>
+      <p style="position: fixed; inset: auto 0 16px; text-align: center">This game needs JavaScript to run.</p>
+    </noscript>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

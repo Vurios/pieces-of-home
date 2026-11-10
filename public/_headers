@@ -1,0 +1,13 @@
+# Hashed build output never changes, so cache it for a year.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The entry page must always be fresh so players get new builds.
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer

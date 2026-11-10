@@ -1,0 +1,11 @@
+{
+  "note": "NASA is credited as a source. NASA does not sponsor or endorse this project.",
+  "media": [],
+  "fonts": [],
+  "libraries": [
+    { "name": "three", "use": "3D rendering", "license": "MIT", "sourceUrl": "https://github.com/mrdoob/three.js" },
+    { "name": "svelte", "use": "2D UI layer", "license": "MIT", "sourceUrl": "https://github.com/sveltejs/svelte" },
+    { "name": "partyserver", "use": "Co-op rooms on Durable Objects", "license": "ISC", "sourceUrl": "https://github.com/cloudflare/partykit" },
+    { "name": "partysocket", "use": "Reconnecting WebSocket client", "license": "MIT", "sourceUrl": "https://github.com/cloudflare/partykit" }
+  ]
+}

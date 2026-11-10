@@ -1,0 +1,19 @@
+{
+  // Cloudflare Worker and the Room Durable Object.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "types": [],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "noEmit": true
+  },
+  "include": ["src/worker/**/*.ts", "src/net/protocol.ts", "worker-configuration.d.ts", "src/globals.d.ts"]
+}
