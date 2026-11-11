@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#1d1e3c" />
+    <title>Audio Lab</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <style>
+      @font-face {
+        font-family: "Kalam";
+        font-weight: 700;
+        font-display: swap;
+        src: url("/fonts/kalam-latin-700-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Atkinson Hyperlegible Next";
+        font-weight: 200 800;
+        font-display: swap;
+        src: url("/fonts/atkinson-hyperlegible-next-latin-wght-normal.woff2") format("woff2");
+      }
+      :root {
+        --paper: #fbf4e4;
+        --ink: #2b2622;
+        --soft: #6d6259;
+        --amber: #f2a541;
+        --clay: #c4613f;
+        --line: rgba(64, 108, 170, 0.12);
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #3d2a20;
+        color: var(--ink);
+        font: 16px/1.45 "Atkinson Hyperlegible Next", system-ui, sans-serif;
+      }
+      main {
+        max-width: 1180px;
+        margin: 24px auto;
+        padding: 28px 32px 40px;
+        background-color: var(--paper);
+        background-image: linear-gradient(var(--line) 1px, transparent 1px);
+        background-size: 100% 28px;
+        border-radius: 4px;
+        box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7);
+      }
+      h1 {
+        margin: 0;
+        font: 700 2.2rem/1.1 "Kalam", cursive;
+      }
+      h2 {
+        margin: 28px 0 10px;
+        font: 700 1.35rem "Kalam", cursive;
+        border-bottom: 2px dashed rgba(43, 38, 34, 0.25);
+      }
+      h3 {
+        margin: 14px 0 6px;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--soft);
+      }
+      p {
+        margin: 6px 0;
+        color: var(--soft);
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 6px 22px;
+      }
+      button,
+      select {
+        min-height: 38px;
+        padding: 6px 14px;
+        border: 2px solid var(--ink);
+        border-radius: 8px;
+        background: #fffaf0;
+        color: var(--ink);
+        font: 600 0.95rem inherit;
+        font-family: inherit;
+        cursor: pointer;
+        box-shadow: 0 3px 0 var(--ink);
+      }
+      button:active {
+        transform: translateY(2px);
+        box-shadow: 0 1px 0 var(--ink);
+      }
+      button.on {
+        background: var(--amber);
+      }
+      button.big {
+        padding: 10px 22px;
+        font-size: 1.1rem;
+        background: var(--amber);
+      }
+      input[type="range"] {
+        accent-color: var(--clay);
+      }
+      table {
+        border-collapse: collapse;
+        font-size: 0.88rem;
+        font-variant-numeric: tabular-nums;
+      }
+      td,
+      th {
+        padding: 3px 12px 3px 0;
+        text-align: left;
+      }
+      .warn {
+        color: var(--clay);
+        font-weight: 700;
+      }
+      #meter {
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+      }
+      label.slider {
+        display: grid;
+        grid-template-columns: 9.5em minmax(0, 1fr) 3em;
+        gap: 10px;
+        align-items: center;
+        font-size: 0.92rem;
+      }
+      .loop {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 8px;
+        align-items: center;
+      }
+      .caption {
+        min-height: 2.6em;
+        padding: 8px 12px;
+        border-left: 4px solid var(--amber);
+        background: rgba(242, 165, 65, 0.12);
+        font: 700 1.1rem "Kalam", cursive;
+      }
+      #status {
+        font-weight: 700;
+        color: var(--clay);
+      }
+      a {
+        color: var(--clay);
+      }
+    </style>
+  </head>
+  <body>
+    <main id="lab">
+      <h1>Audio lab</h1>
+      <p>Every sound in Pieces of Home, made in code. Press a button to hear it. Everything here uses the game's own audio engine.</p>
+      <div class="row"><button id="start" class="big" type="button">Start sound</button> <span id="status">Sound is off until you press Start.</span></div>
+    </main>
+    <script type="module" src="/src/pages/audio-lab.ts"></script>
+  </body>
+</html>

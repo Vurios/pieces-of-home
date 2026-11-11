@@ -1,5 +1,6 @@
 <script lang="ts">
   import { fade, fly } from "svelte/transition";
+  import { audio } from "../../audio/audio";
   import { PLACE_COPY, PLACE_IDS, placeFlag } from "../../content/places";
   import type { Engine } from "../../game/engine";
   import { settings } from "../settings.svelte";
@@ -40,6 +41,8 @@
         engine.store.update((s) => {
           if (!s.flags.includes(flag)) s.flags.push(flag);
         });
+        // A new place: a small bright phrase in the music, on the next beat.
+        if (!shot) audio.sting();
       }
       if (hidden || shot) return;
       const flags = engine.store.value.flags;

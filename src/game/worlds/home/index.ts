@@ -362,6 +362,20 @@ export function createHome(ctx: WorldContext): World {
         target: spawnGround.clone().addScaledVector(spawnDir, 0.7).addScaledVector(spawnForward, -0.2),
       },
     },
+    // Close-ups of each friend's face, for reviewing the characters.
+    ...Object.fromEntries(
+      friendIds.map((id, i): [string, Bookmark] => {
+        const spot = shop.friends[i]!;
+        const up = spot.position.clone().normalize();
+        return [
+          `friend-${id}`,
+          {
+            player: { dir: inShed(-0.9, -0.6), forward: shedForward },
+            camera: { position: spot.position.clone().addScaledVector(spot.forward, 1.75).addScaledVector(up, 1.05), target: spot.position.clone().addScaledVector(up, 0.82), up },
+          },
+        ];
+      }),
+    ),
     "character-side": {
       player: { dir: spawnDir, forward: spawnForward.clone().negate() },
       camera: {
@@ -372,6 +386,7 @@ export function createHome(ctx: WorldContext): World {
   };
 
   // ---- Per-frame ----
+  const earScratch = new Vector3();
   let inside = false;
   let open = 0;
   let zone: string | null = null;
@@ -440,6 +455,8 @@ export function createHome(ctx: WorldContext): World {
     anchor(id: string) {
       if (id === "mom") return mom.root.position.clone().addScaledVector(SITES.house.dir, 1.35);
       if (id === "lamp") return shop.lampBulb.clone();
+      if (id === "dish") return local(SITES.dish, 0, 1.6, 0);
+      if (id === "milo") return milo.root.position.clone();
       return null;
     },
     setPower(level: number) {
@@ -452,6 +469,23 @@ export function createHome(ctx: WorldContext): World {
     },
     bookmarks,
     surfaceAt,
+    // Dad's lamp hums where it stands, and Milo chirps now and then when someone comes close.
+    sounds: [
+      { position: shop.lampBulb.clone(), loop: "lamp-hum", value: 1 },
+      { position: milo.root.position.clone().addScaledVector(shedDir, 0.4), cue: "milo-curious", every: [16, 30], radius: 4 },
+    ],
+    ambience(player) {
+      // Inside the shed: the clock and still air. Outside: crickets and the breeze, with a little
+      // of the workshop near its door. The hill, the pond and the campfire add their own.
+      const nearShop = Math.max(0, Math.min(1, 1 - (shop.lampBulb.distanceTo(earScratch.set(player.x, player.y, player.z)) - 3) / 5));
+      return {
+        workshop: inside ? 1 : nearShop * 0.35,
+        dusk: inside ? 0.28 : 1,
+        hill: zone === "hill" ? 0.85 : 0,
+        pond: zone === "pond" ? 1 : 0,
+        camp: zone === "camp" ? 1 : 0,
+      };
+    },
     cameraHint(player) {
       if (!inside) return null;
       return { forward: shedForward.clone(), pitch: 0.78, distance: 6.4 + (player.position.length() > 0 ? 0 : 0) };

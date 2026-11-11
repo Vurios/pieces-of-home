@@ -26,7 +26,7 @@ export const SETTINGS_KEY = "poh.settings.v1";
 
 export function defaultSettings(): Settings {
   return {
-    volume: { master: 0.8, music: 0.6, ambience: 0.7, effects: 0.8, voices: 0.8 },
+    volume: { master: 0.8, music: 0.6, ambience: 0.7, effects: 0.8, voices: 0.8, ui: 0.7 },
     subtitles: true,
     bubbles: true,
     textSize: "m",

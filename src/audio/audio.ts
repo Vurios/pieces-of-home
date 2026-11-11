@@ -1,73 +1,100 @@
 /**
- * The audio controller, first version. Phase 03 needs a lamp click, a lamp
- * hum, the six title notes, voice blips and a quiet placeholder tune; Phase 04
- * grows this into the full mixer with ambience, footsteps and the real score.
+ * The Audio Director: the one place the game asks for sound.
  *
- * Everything is made in code with the Web Audio API. Nothing plays until the
- * player's first gesture unlocks the context ("Turn on the light").
+ * Everything is synthesized at runtime with the Web Audio API; there are no
+ * recordings except Dad's optional voice lines. Nothing plays until the
+ * player's first gesture ("Turn on the light") unlocks the AudioContext.
+ *
+ * - Mixer (mixer.ts): buses, compressor and limiter, room, ducking, muffle.
+ * - Cues (cues.ts, sfx.ts): named effects with anti-spam and random pitch.
+ * - Emitters: positional sounds on world objects, through PannerNodes
+ *   (HRTF on High, equal power on Medium, plain distance on Low).
+ * - Ambience (ambience.ts): layered beds crossfaded by where the player is.
+ * - Score (music.ts): the generative, adaptive music.
+ * - Voices (voices.ts): gibberish babble, Dad's hum or recordings, Milo's bleeps.
  */
-export type Bus = "master" | "music" | "ambience" | "effects" | "voices";
-export const BUSES: Bus[] = ["master", "music", "ambience", "effects", "voices"];
+import type { PerspectiveCamera } from "three";
+import type { GameBus, QualityTier } from "../game/core/events";
+import type { SoundSpot, World } from "../game/worlds/types";
+import { Ambience, prepareBeds } from "./ambience";
+import { crackle } from "./buffers";
+import { CUES, stepCue } from "./cues";
+import { BUSES, type Bus, DEFAULT_VOLUMES, Mixer } from "./mixer";
+import { Score, type Scene, type StormStage } from "./music";
+import { LOOPS, type LoopHandle, RECIPES } from "./sfx";
+import { cueAllowed } from "./theory";
+import { type Speaking, speak } from "./voices";
 
-/** Placeholder six-note motif (MIDI). Phase 04 writes the real one. */
-export const MOTIF = [67, 71, 74, 76, 74, 79];
+export { BUSES, type Bus } from "./mixer";
+export { VOICES } from "./voices";
 
-const midiToHz = (note: number): number => 440 * 2 ** ((note - 69) / 12);
+type Point = { x: number; y: number; z: number };
 
-/** Voices: base pitch and timbre per speaker, for gibberish blips. */
-export const VOICES: Record<string, { pitch: number; wave: OscillatorType }> = {
-  remi: { pitch: 72, wave: "triangle" },
-  nori: { pitch: 76, wave: "square" },
-  lumi: { pitch: 74, wave: "sine" },
-  theo: { pitch: 69, wave: "triangle" },
-  mom: { pitch: 64, wave: "sine" },
-  dad: { pitch: 57, wave: "sine" },
-  milo: { pitch: 84, wave: "square" },
-};
+export interface PlayOptions {
+  /** A world position: the sound comes from there. */
+  at?: Point | null;
+  level?: number;
+  rate?: number;
+  param?: number;
+  delay?: number;
+}
+
+/** What the engine tells the director each frame. */
+export interface SoundFrame {
+  camera: PerspectiveCamera;
+  player: Point;
+  world: World;
+  mode: "title" | "play";
+}
+
+const MUSIC_FOR: Record<string, Scene> = { home: "home", moon: "moon", mars: "mars", finale: "finale" };
 
 export class AudioEngine {
   private ctx: AudioContext | null = null;
-  private buses = new Map<Bus, GainNode>();
-  private volumes: Record<Bus, number> = { master: 0.8, music: 0.6, ambience: 0.7, effects: 0.8, voices: 0.8 };
-  private world: BiquadFilterNode | null = null;
-  private echo: DelayNode | null = null;
-  private hum: { gain: GainNode; stop(): void } | null = null;
-  private click: AudioBuffer | null = null;
-  private music: { stop(): void } | null = null;
+  private mx: Mixer | null = null;
+  private score: Score | null = null;
+  private ambience: Ambience | null = null;
+  private volumes: Record<Bus, number> = { ...DEFAULT_VOLUMES };
+  private tier: QualityTier = "high";
+  private muffled = false;
+  private hum: LoopHandle | null = null;
+  private humLevel = 0;
+  private wantScene: Scene = "silent";
+  private wantFriends = 0;
+  private cueState = new Map<string, { last: number; ends: number[] }>();
+  private emitters: { loop: LoopHandle | null; spot: SoundSpot; next: number; panner: AudioNode | null }[] = [];
+  private emitterWorld: World | null = null;
+  private voices = new Map<string, Speaking>();
+  private recordings = new Map<string, AudioBuffer | null>();
+  private crackleBed: AudioBuffer | null = null;
+  private retrying = false;
+  private wasRunning = false;
 
   get unlocked(): boolean {
     return this.ctx?.state === "running";
   }
 
+  /** The mixer, for the audio lab. Null until unlocked. */
+  get mixer(): Mixer | null {
+    return this.mx;
+  }
+
+  get music(): Score | null {
+    return this.score;
+  }
+
+  get ambient(): Ambience | null {
+    return this.ambience;
+  }
+
   /**
-   * Renders the lamp click ahead of time with an offline context. This needs
-   * no gesture, so it runs while the page loads and counts toward progress.
+   * Makes the looping beds ahead of time. It needs no gesture, so it runs
+   * while the page loads and counts toward the loader's progress.
    */
-  async prepare(): Promise<void> {
-    if (typeof OfflineAudioContext === "undefined") return;
-    const rate = 44100;
-    const offline = new OfflineAudioContext(1, Math.round(rate * 0.25), rate);
-    // A switch click: a short noise tick and a low thunk.
-    const noise = offline.createBuffer(1, Math.round(rate * 0.03), rate);
-    const data = noise.getChannelData(0);
-    for (let i = 0; i < data.length; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length) ** 3;
-    const tick = offline.createBufferSource();
-    tick.buffer = noise;
-    const tickFilter = offline.createBiquadFilter();
-    tickFilter.type = "highpass";
-    tickFilter.frequency.value = 1800;
-    tick.connect(tickFilter).connect(offline.destination);
-    tick.start(0);
-    const thunk = offline.createOscillator();
-    thunk.frequency.setValueAtTime(180, 0);
-    thunk.frequency.exponentialRampToValueAtTime(60, 0.08);
-    const thunkGain = offline.createGain();
-    thunkGain.gain.setValueAtTime(0.5, 0);
-    thunkGain.gain.exponentialRampToValueAtTime(0.001, 0.12);
-    thunk.connect(thunkGain).connect(offline.destination);
-    thunk.start(0.004);
-    thunk.stop(0.2);
-    this.click = await offline.startRendering();
+  async prepare(world = "home"): Promise<void> {
+    if (typeof AudioBuffer === "undefined") return;
+    this.crackleBed ??= crackle(5);
+    await prepareBeds(world);
   }
 
   /** Call from inside a user gesture. Safe to call again. */
@@ -75,7 +102,7 @@ export class AudioEngine {
     if (!this.ctx) {
       const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!Ctor) return;
-      this.ctx = new Ctor();
+      this.ctx = new Ctor({ latencyHint: "interactive" });
       this.build(this.ctx);
     }
     if (this.ctx.state !== "running") {
@@ -99,230 +126,338 @@ export class AudioEngine {
       window.addEventListener("keydown", again);
     }
   }
-  private retrying = false;
 
   private build(ctx: AudioContext): void {
-    const limiter = ctx.createDynamicsCompressor();
-    limiter.threshold.value = -6;
-    limiter.ratio.value = 12;
-    limiter.connect(ctx.destination);
-    const master = ctx.createGain();
-    master.connect(limiter);
-    this.buses.set("master", master);
-    // The world bus runs through a filter so the notebook can muffle it.
-    this.world = ctx.createBiquadFilter();
-    this.world.type = "lowpass";
-    this.world.frequency.value = 20000;
-    this.world.connect(master);
-    for (const bus of ["music", "ambience", "effects", "voices"] as const) {
-      const gain = ctx.createGain();
-      gain.connect(bus === "ambience" || bus === "effects" ? this.world : master);
-      this.buses.set(bus, gain);
-    }
-    // A soft echo for the music box.
-    this.echo = ctx.createDelay(1);
-    this.echo.delayTime.value = 0.32;
-    const feedback = ctx.createGain();
-    feedback.gain.value = 0.28;
-    const wet = ctx.createGain();
-    wet.gain.value = 0.35;
-    this.echo.connect(feedback).connect(this.echo);
-    this.echo.connect(wet).connect(this.buses.get("music")!);
-    for (const bus of BUSES) this.applyVolume(bus);
+    const mx = new Mixer(ctx);
+    this.mx = mx;
+    mx.setTier(this.tier);
+    for (const bus of BUSES) mx.setVolume(bus, this.volumes[bus]);
+    mx.muffle(this.muffled);
+    this.score = new Score(mx, this.crackleBed ?? undefined);
+    this.ambience = new Ambience(mx);
+    if (this.humLevel > 0) this.setHum(this.humLevel);
+    if (this.wantScene !== "silent") this.score.setScene(this.wantScene);
+    this.score.setFriends(this.wantFriends);
+    if (this.emitterWorld) this.placeEmitters(this.emitterWorld);
+    // Pause with the tab, carry on when it comes back.
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        this.wasRunning = ctx.state === "running";
+        if (this.wasRunning) void ctx.suspend();
+      } else if (this.wasRunning) void ctx.resume();
+    });
   }
 
   setVolume(bus: Bus, value: number): void {
     this.volumes[bus] = Math.max(0, Math.min(1, value));
-    this.applyVolume(bus);
+    this.mx?.setVolume(bus, this.volumes[bus]);
   }
 
-  private applyVolume(bus: Bus): void {
-    const node = this.buses.get(bus);
-    if (node && this.ctx) node.gain.setTargetAtTime(this.volumes[bus], this.ctx.currentTime, 0.05);
+  /** Low drops the room, the panning and some layers. */
+  setTier(tier: QualityTier): void {
+    this.tier = tier;
+    this.mx?.setTier(tier);
   }
 
-  /** Muffles the world (ambience and effects) while the notebook is open. */
+  /** Muffles the world while the notebook is open. */
   muffle(on: boolean): void {
-    if (this.world && this.ctx) this.world.frequency.setTargetAtTime(on ? 700 : 20000, this.ctx.currentTime, 0.12);
+    this.muffled = on;
+    this.mx?.muffle(on);
   }
 
-  lampClick(): void {
-    const ctx = this.ctx;
-    if (!ctx || !this.click) return;
-    const source = ctx.createBufferSource();
-    source.buffer = this.click;
-    source.playbackRate.value = 0.95 + Math.random() * 0.1;
-    source.connect(this.buses.get("effects")!);
-    source.start();
-  }
+  // ---- Cues ----
 
-  /** The lamp's warm hum, faded to `level` (0 stops it). */
-  setHum(level: number): void {
-    const ctx = this.ctx;
-    if (!ctx) return;
-    if (!this.hum && level > 0) {
-      const gain = ctx.createGain();
-      gain.gain.value = 0;
-      const filter = ctx.createBiquadFilter();
-      filter.type = "lowpass";
-      filter.frequency.value = 400;
-      const a = ctx.createOscillator();
-      a.frequency.value = 60;
-      const b = ctx.createOscillator();
-      b.type = "triangle";
-      b.frequency.value = 120.4;
-      const bGain = ctx.createGain();
-      bGain.gain.value = 0.3;
-      a.connect(filter);
-      b.connect(bGain).connect(filter);
-      filter.connect(gain).connect(this.buses.get("ambience")!);
-      a.start();
-      b.start();
-      this.hum = {
-        gain,
-        stop: () => {
-          a.stop();
-          b.stop();
-        },
-      };
+  /** Plays a named cue. Returns false when it was skipped (locked, unknown, or too soon). */
+  play(name: string, options: PlayOptions = {}): boolean {
+    const mx = this.mx;
+    const spec = CUES[name];
+    if (!mx || !spec || mx.ctx.state !== "running") return false;
+    const recipe = RECIPES[spec.recipe];
+    if (!recipe) return false;
+    const now = mx.now;
+    let state = this.cueState.get(name);
+    if (!state) {
+      state = { last: -Infinity, ends: [] };
+      this.cueState.set(name, state);
     }
-    this.hum?.gain.gain.setTargetAtTime(level * 0.05, ctx.currentTime, 0.4);
-  }
-
-  /** A music-box note. `index` walks the motif; higher indexes repeat it an octave down. */
-  note(index: number, when = 0): void {
-    const ctx = this.ctx;
-    if (!ctx) return;
-    const base = MOTIF[index % MOTIF.length]!;
-    const octave = Math.floor(index / MOTIF.length) % 2 === 1 ? -12 : 0;
-    this.tone(midiToHz(base + octave), ctx.currentTime + when, 1.6, 0.18, "music", true);
-  }
-
-  private tone(hz: number, at: number, length: number, level: number, bus: Bus, echo = false, wave: OscillatorType = "sine"): void {
-    const ctx = this.ctx;
-    if (!ctx) return;
-    const out = ctx.createGain();
-    out.gain.setValueAtTime(0, at);
-    out.gain.linearRampToValueAtTime(level, at + 0.005);
-    out.gain.exponentialRampToValueAtTime(0.0001, at + length);
-    out.connect(this.buses.get(bus)!);
-    if (echo && this.echo) out.connect(this.echo);
-    for (const [ratio, amp] of [
-      [1, 1],
-      [2, 0.25],
-      [4.2, 0.08],
-    ] as const) {
-      const osc = ctx.createOscillator();
-      osc.type = wave;
-      osc.frequency.value = hz * ratio;
-      const g = ctx.createGain();
-      g.gain.value = amp;
-      osc.connect(g).connect(out);
-      osc.start(at);
-      osc.stop(at + length + 0.05);
+    state.ends = state.ends.filter((end) => end > now);
+    if (!cueAllowed(now, state.last, spec.minGap ?? 0.03, state.ends.length, spec.maxVoices ?? 6)) return false;
+    const length = spec.length ?? 1.2;
+    state.last = now;
+    state.ends.push(now + length);
+    const rate = (options.rate ?? 1) * (1 + (Math.random() * 2 - 1) * (spec.pitch ?? 0));
+    const level = spec.volume * (options.level ?? 1) * (1 - Math.random() * (spec.vary ?? 0));
+    let out: AudioNode = mx.input(spec.bus);
+    if (options.at) {
+      const node = this.place(options.at, out);
+      out = node;
+      window.setTimeout(() => node.disconnect(), (length + (options.delay ?? 0) + 2) * 1000);
     }
+    recipe({ mx, out, at: now + 0.005 + (options.delay ?? 0), level, rate, param: options.param ?? 0 });
+    return true;
   }
 
-  /** One gibberish syllable for a speaker. */
-  blip(voice: string): void {
-    const ctx = this.ctx;
-    if (!ctx) return;
-    const v = VOICES[voice] ?? VOICES["remi"]!;
-    const at = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    osc.type = v.wave;
-    const hz = midiToHz(v.pitch + Math.floor(Math.random() * 5) - 2);
-    osc.frequency.setValueAtTime(hz, at);
-    osc.frequency.exponentialRampToValueAtTime(hz * (0.85 + Math.random() * 0.3), at + 0.07);
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = 1800;
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0, at);
-    g.gain.linearRampToValueAtTime(0.08, at + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, at + 0.09);
-    osc.connect(filter).connect(g).connect(this.buses.get("voices")!);
-    osc.start(at);
-    osc.stop(at + 0.1);
-  }
-
-  /** A stamp thunk, a page rustle and a soft pop, for the UI. */
-  ui(kind: "stamp" | "page" | "pop" | "tick"): void {
-    const ctx = this.ctx;
-    if (!ctx) return;
-    const at = ctx.currentTime;
-    if (kind === "stamp" || kind === "pop" || kind === "tick") {
-      const osc = ctx.createOscillator();
-      const start = kind === "stamp" ? 140 : kind === "pop" ? 520 : 900;
-      osc.frequency.setValueAtTime(start, at);
-      osc.frequency.exponentialRampToValueAtTime(start * 0.45, at + 0.09);
-      const g = ctx.createGain();
-      const level = kind === "stamp" ? 0.5 : kind === "pop" ? 0.12 : 0.05;
-      g.gain.setValueAtTime(level, at);
-      g.gain.exponentialRampToValueAtTime(0.0001, at + (kind === "stamp" ? 0.22 : 0.08));
-      osc.connect(g).connect(this.buses.get("effects")!);
-      osc.start(at);
-      osc.stop(at + 0.25);
-      return;
-    }
-    // Page: filtered noise swept upward.
-    const length = 0.28;
-    const buffer = ctx.createBuffer(1, Math.round(ctx.sampleRate * length), ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i = 0; i < data.length; i += 1) data[i] = (Math.random() * 2 - 1) * Math.sin((i / data.length) * Math.PI);
-    const source = ctx.createBufferSource();
-    source.buffer = buffer;
-    const filter = ctx.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.frequency.setValueAtTime(900, at);
-    filter.frequency.exponentialRampToValueAtTime(3200, at + length);
-    const g = ctx.createGain();
-    g.gain.value = 0.12;
-    source.connect(filter).connect(g).connect(this.buses.get("effects")!);
-    source.start(at);
-  }
-
-  /**
-   * A quiet placeholder tune: a warm pad and the motif on the music box now
-   * and then. Phase 04 replaces it with the real adaptive score.
-   */
-  startMusic(): void {
-    const ctx = this.ctx;
-    if (!ctx || this.music) return;
-    const pad = ctx.createGain();
-    pad.gain.value = 0;
-    pad.gain.setTargetAtTime(0.05, ctx.currentTime, 2);
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = 900;
-    filter.connect(pad).connect(this.buses.get("music")!);
-    const oscillators = [55, 59, 62, 66].map((note, i) => {
-      const osc = ctx.createOscillator();
-      osc.type = i % 2 ? "triangle" : "sine";
-      osc.frequency.value = midiToHz(note);
-      osc.detune.value = (i - 1.5) * 4;
-      osc.connect(filter);
-      osc.start();
-      return osc;
-    });
-    let bar = 0;
-    const timer = window.setInterval(() => {
-      bar += 1;
-      if (bar % 4 === 1) MOTIF.forEach((_, i) => this.note(i, i * 0.42));
-    }, 4000);
-    this.music = {
+  /** Starts a looping cue (a motor, the rotor, the radio). Null while locked. */
+  loop(name: string, value = 1, at?: Point | null): LoopHandle | null {
+    const mx = this.mx;
+    const spec = CUES[name];
+    const make = spec ? LOOPS[spec.recipe] : undefined;
+    if (!mx || !spec || !make) return null;
+    const out = at ? this.place(at, mx.input(spec.bus)) : mx.input(spec.bus);
+    const level = gainNode(mx, spec.volume);
+    level.connect(out);
+    const handle = make(mx, level, value);
+    return {
+      set: handle.set,
       stop: () => {
-        window.clearInterval(timer);
-        pad.gain.setTargetAtTime(0, ctx.currentTime, 0.5);
-        for (const osc of oscillators) osc.stop(ctx.currentTime + 2);
+        handle.stop();
+        window.setTimeout(() => {
+          level.disconnect();
+          if (at) out.disconnect();
+        }, 3000);
       },
     };
   }
 
-  stopMusic(): void {
-    this.music?.stop();
-    this.music = null;
+  /** A node that places sound at a world point, by the tier's rules. */
+  private place(at: Point, destination: AudioNode): AudioNode {
+    const mx = this.mx!;
+    const ctx = mx.ctx;
+    if (this.tier === "low") {
+      // Mono on Low: loudness by distance only, set when the sound starts.
+      const g = ctx.createGain();
+      g.gain.value = Math.min(1, 2.5 / Math.max(2.5, this.distanceTo(at)));
+      g.connect(destination);
+      return g;
+    }
+    const p = ctx.createPanner();
+    p.panningModel = this.tier === "high" ? "HRTF" : "equalpower";
+    p.distanceModel = "inverse";
+    p.refDistance = 2.5;
+    p.maxDistance = 60;
+    p.rolloffFactor = 1.1;
+    if (p.positionX) {
+      p.positionX.value = at.x;
+      p.positionY.value = at.y;
+      p.positionZ.value = at.z;
+    } else p.setPosition(at.x, at.y, at.z);
+    p.connect(destination);
+    return p;
   }
+
+  private listenerAt: Point = { x: 0, y: 0, z: 0 };
+  private distanceTo(at: Point): number {
+    const l = this.listenerAt;
+    return Math.hypot(at.x - l.x, at.y - l.y, at.z - l.z);
+  }
+
+  // ---- Old names the UI already uses ----
+
+  lampClick(): void {
+    this.play("lamp-click");
+  }
+
+  /** The lamp's warm hum, heard on the loader and title, faded to `level` (0 stops it). */
+  setHum(level: number): void {
+    this.humLevel = level;
+    if (!this.mx) return;
+    if (!this.hum && level > 0) this.hum = this.loop("lamp-hum", level);
+    else this.hum?.set(level);
+  }
+
+  /** A title-letter note: the motif, one note per letter. */
+  note(index: number): void {
+    this.score?.note(index);
+  }
+
+  ui(kind: "stamp" | "page" | "pop" | "tick" | "pencil" | "tape" | "toast"): void {
+    this.play(kind === "page" ? "page-flip" : kind);
+  }
+
+  startMusic(): void {
+    this.setMusic("title");
+  }
+
+  stopMusic(): void {
+    this.setMusic("silent");
+  }
+
+  // ---- Music ----
+
+  setMusic(scene: Scene): void {
+    this.wantScene = scene;
+    this.score?.setScene(scene);
+  }
+
+  setFocus(on: boolean): void {
+    this.score?.setFocus(on);
+  }
+
+  setFriends(count: number): void {
+    this.wantFriends = count;
+    this.score?.setFriends(count);
+  }
+
+  sting(): void {
+    this.score?.sting();
+  }
+
+  storm(stage: StormStage): void {
+    this.score?.storm(stage);
+  }
+
+  statement(): void {
+    this.score?.statement();
+  }
+
+  // ---- Voices ----
+
+  /**
+   * Speaks a line in a character's gibberish voice, under its caption. Dad's
+   * lines play a real recording from `/audio/vo/<line>.ogg` when a teammate has
+   * added one, and otherwise his warm hum.
+   */
+  speak(speaker: string, text: string, line?: string): Speaking | null {
+    const mx = this.mx;
+    if (!mx || mx.ctx.state !== "running") return null;
+    this.voices.get(speaker)?.stop();
+    if (speaker === "dad" && line) {
+      let stopped = false;
+      let inner: Speaking | null = null;
+      const handle: Speaking = {
+        duration: text.length / 42,
+        stop: () => {
+          stopped = true;
+          inner?.stop();
+        },
+      };
+      void Promise.race([this.recording(line), new Promise<undefined>((resolve) => window.setTimeout(() => resolve(undefined), 350))]).then((buffer) => {
+        if (stopped) return;
+        inner = buffer ? this.playRecording(buffer) : speak(mx, mx.input("voices"), speaker, text);
+      });
+      this.voices.set(speaker, handle);
+      return handle;
+    }
+    const voice = speak(mx, mx.input("voices"), speaker, text);
+    this.voices.set(speaker, voice);
+    return voice;
+  }
+
+  private async recording(line: string): Promise<AudioBuffer | null> {
+    if (this.recordings.has(line)) return this.recordings.get(line)!;
+    let buffer: AudioBuffer | null = null;
+    try {
+      const response = await fetch(`/audio/vo/${encodeURIComponent(line)}.ogg`);
+      const type = response.headers.get("content-type") ?? "";
+      // A missing file falls back to the game's own page, so check that this really is audio.
+      if (response.ok && type.startsWith("audio/") && this.mx) buffer = await this.mx.ctx.decodeAudioData(await response.arrayBuffer());
+    } catch {
+      buffer = null;
+    }
+    this.recordings.set(line, buffer);
+    return buffer;
+  }
+
+  private playRecording(buffer: AudioBuffer): Speaking {
+    const mx = this.mx!;
+    const source = mx.ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(mx.input("voices"));
+    source.start();
+    mx.duck(buffer.duration + 0.3);
+    return { duration: buffer.duration, stop: () => source.stop() };
+  }
+
+  // ---- The game ----
+
+  /** Listens to the game: feet, letters, Milo, photos, worlds, quality. */
+  attach(bus: GameBus, tier: QualityTier): void {
+    this.setTier(tier);
+    bus.on("quality:change", ({ tier: next }) => this.setTier(next));
+    bus.on("player:step", ({ surface, running }) => this.play(stepCue(surface), { level: running ? 1 : 0.72 }));
+    bus.on("player:jump", () => this.play("jump"));
+    bus.on("player:land", ({ speed }) => {
+      if (speed > 1.5) this.play("land", { param: speed });
+    });
+    bus.on("letter:taken", () => this.play("envelope-pickup"));
+    bus.on("letter:delivered", () => {
+      this.play("delivery-chime");
+      this.sting();
+    });
+    bus.on("milo:stage", () => this.play("part-clunk"));
+    bus.on("emote", () => this.play("emote-pop"));
+    bus.on("toast", () => this.play("toast"));
+    bus.on("title:done", () => {
+      // The lamp's hum moves from the speakers into the world.
+      this.setHum(0);
+    });
+  }
+
+  /** Called by the engine each frame, after the camera moves. */
+  frame(f: SoundFrame): void {
+    const mx = this.mx;
+    if (!mx || mx.ctx.state !== "running") {
+      if (this.emitterWorld !== f.world) this.emitterWorld = f.world;
+      return;
+    }
+    // The ears are the camera.
+    const e = f.camera.matrixWorld.elements;
+    const l = mx.ctx.listener;
+    this.listenerAt = { x: e[12]!, y: e[13]!, z: e[14]! };
+    if (l.positionX) {
+      const t = mx.now;
+      l.positionX.setValueAtTime(e[12]!, t);
+      l.positionY.setValueAtTime(e[13]!, t);
+      l.positionZ.setValueAtTime(e[14]!, t);
+      l.forwardX.setValueAtTime(-e[8]!, t);
+      l.forwardY.setValueAtTime(-e[9]!, t);
+      l.forwardZ.setValueAtTime(-e[10]!, t);
+      l.upX.setValueAtTime(e[4]!, t);
+      l.upY.setValueAtTime(e[5]!, t);
+      l.upZ.setValueAtTime(e[6]!, t);
+    } else {
+      l.setPosition(e[12]!, e[13]!, e[14]!);
+      l.setOrientation(-e[8]!, -e[9]!, -e[10]!, e[4]!, e[5]!, e[6]!);
+    }
+
+    if (this.emitterWorld !== f.world) this.placeEmitters(f.world);
+    if (this.ambience && this.ambience.current !== f.world.id) {
+      this.ambience.setWorld(f.world.id);
+    }
+    // The title flies high over the planet: only a little of the dusk comes through.
+    this.ambience?.setLevels(f.mode === "title" ? { dusk: 0.35 } : (f.world.ambience?.(f.player) ?? {}));
+    if (f.mode === "play" && this.wantScene === "title") this.setMusic(MUSIC_FOR[f.world.id] ?? "home");
+    else if (f.mode === "play" && this.wantScene !== "silent" && this.wantScene !== MUSIC_FOR[f.world.id]) this.setMusic(MUSIC_FOR[f.world.id] ?? "home");
+
+    const now = mx.now;
+    for (const emitter of this.emitters) {
+      const { spot } = emitter;
+      if (!spot.cue || !spot.every) continue;
+      const near = Math.hypot(spot.position.x - f.player.x, spot.position.y - f.player.y, spot.position.z - f.player.z) < (spot.radius ?? 6);
+      if (near && now >= emitter.next) {
+        this.play(spot.cue, { at: spot.position });
+        emitter.next = now + spot.every[0] + Math.random() * (spot.every[1] - spot.every[0]);
+      } else if (!near && emitter.next < now) emitter.next = now + spot.every[0] * 0.5;
+    }
+  }
+
+  /** Builds the world's positional sounds: machine hums and voices that live in a place. */
+  private placeEmitters(world: World): void {
+    for (const e of this.emitters) e.loop?.stop();
+    this.emitters = [];
+    this.emitterWorld = world;
+    if (!this.mx) return;
+    for (const spot of world.sounds ?? []) {
+      const loop = spot.loop ? this.loop(spot.loop, spot.value ?? 1, spot.position) : null;
+      this.emitters.push({ loop, spot, next: this.mx.now + (spot.every?.[0] ?? 0) * 0.5, panner: null });
+    }
+  }
+}
+
+function gainNode(mx: Mixer, value: number): GainNode {
+  const g = mx.ctx.createGain();
+  g.gain.value = value;
+  return g;
 }
 
 export const audio = new AudioEngine();

@@ -92,6 +92,22 @@ async function boot(): Promise<void> {
   root.dataset["tier"] = engine.quality.tier;
   engine.bus.on("quality:change", ({ tier }) => (root.dataset["tier"] = tier));
   engine.bus.on("title:note", ({ index }) => audio.note(index));
+  // Sound follows the game: feet, letters, worlds, and the camera as the ears.
+  audio.attach(engine.bus, engine.quality.tier);
+  engine.onFrame = (frame) => audio.frame(frame);
+  engine.bus.on("interact:done", ({ id }) => {
+    const at = engine.world?.anchor(id);
+    if (id === "dish" && at) audio.play("dish-servo", { at });
+  });
+  // One more instrument in the music for each friend in the room, and a chime as they come and go.
+  let friends = 0;
+  net.subscribe(({ players, status }) => {
+    const next = status === "connected" ? Math.max(0, players - 1) : 0;
+    if (next > friends) audio.play("join-chime");
+    else if (next < friends) audio.play("leave-chime");
+    friends = next;
+    audio.setFriends(next);
+  });
 
   const room = params.get("room");
   if (room && isValidRoomCode(room)) net.join(room);

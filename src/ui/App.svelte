@@ -87,7 +87,7 @@
       engine.bus.on("letter:delivered", ({ letter }) => {
         if (letter !== "to-the-lamp") return;
         const lamp = engine.world?.anchor("lamp");
-        engine.bus.emit("say", { speaker: "dad", name: "Dad", text: "Thanks for waiting up.", at: lamp ? [lamp.x, lamp.y + 0.3, lamp.z] : null });
+        engine.bus.emit("say", { speaker: "dad", name: "Dad", text: "Thanks for waiting up.", at: lamp ? [lamp.x, lamp.y + 0.3, lamp.z] : null, line: "prologue-lamp-thanks" });
         window.setTimeout(() => {
           engine.bus.emit("stamp", { id: "prologue", lines: ["Left on.", "Still shining."] });
           engine.store.update((s) => {
@@ -149,7 +149,9 @@
   async function photo(): Promise<void> {
     flash = true;
     window.setTimeout(() => (flash = false), 180);
-    audio.ui("tick");
+    // A shutter, then the instant photo rolls out.
+    audio.play("shutter");
+    audio.play("polaroid-whirr", { delay: 0.25 });
     const { full } = await keepPhoto(engine.snapshot());
     engine.bus.emit("toast", { text: full ? t("toast.photoFull") : t("toast.photo") });
   }

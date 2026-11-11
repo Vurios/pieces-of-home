@@ -58,6 +58,8 @@ export class Engine {
   mode: EngineMode = "play";
   /** True while the notebook, settings or a menu is open: the world keeps living, the player stands still. */
   paused = false;
+  /** Called each frame after the camera moves, so sound can follow the lens (see src/audio/audio.ts). */
+  onFrame: ((frame: { camera: PerspectiveCamera; player: Vector3; world: World; mode: EngineMode }) => void) | null = null;
   private title: TitleSequence | null = null;
   private motionPreference: boolean | null = null;
   private systemReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -499,6 +501,7 @@ export class Engine {
     this.camera.updateMatrixWorld();
     const skyUp = shot?.camera || titling ? this.scratch.setFromMatrixColumn(this.camera.matrixWorld, 1).normalize() : up;
     this.sky?.update(this.camera.position, skyUp, this.elapsed);
+    this.onFrame?.({ camera: this.camera, player: this.player.position, world, mode: this.mode });
 
     // Haze sits on the far curve: fog distances count from the horizon, so close ground stays clean from any height.
     if (this.scene.fog instanceof Fog && world.fog) {

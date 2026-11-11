@@ -92,6 +92,7 @@ export const EN = {
   "settings.ambience": "World sounds",
   "settings.effects": "Effects",
   "settings.voices": "Voices",
+  "settings.ui": "Paper and menus",
   "settings.reading": "Reading",
   "settings.subtitles": "Subtitles",
   "settings.bubbles": "Speech bubbles",

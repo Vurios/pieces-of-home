@@ -7,7 +7,7 @@
 
   /**
    * Speech: paper bubbles over whoever is talking, with a handwritten name,
-   * typed-on text and gibberish voice blips. When the speaker is off screen
+   * typed-on text and the speaker's gibberish voice. When the speaker is off screen
    * (or bubbles are off), the line shows in the caption bar instead.
    * Emotes pop a small icon bubble over the player.
    */
@@ -38,6 +38,8 @@
   $effect(() => {
     const offSay = engine.bus.on("say", (p) => {
       const life = Math.max(2.8, p.text.length * 0.065 + 1.8);
+      // The voice: babble that lasts as long as the typing, Dad's hum or his recording.
+      audio.speak(p.speaker, p.text, p.line);
       // One line per speaker at a time.
       lines = [
         ...lines.filter((l) => l.speaker !== p.speaker),
@@ -48,7 +50,6 @@
       const icon = (["wave", "heart", "star", "look", "question", "yay"] as const).find((name) => name === id) ?? null;
       if (!icon) return;
       lines = [...lines.filter((l) => l.speaker !== "emote"), { key: counter++, speaker: "emote", name: "", text: "", at: null, shown: 0, age: 0, life: 2.2, recording: false, icon, x: 0, y: 0, onScreen: false }];
-      audio.ui("pop");
     });
     let last = performance.now();
     let frame = 0;
@@ -61,10 +62,7 @@
       const reduce = settings.reducedMotion;
       lines = lines
         .map((line) => {
-          const before = Math.floor(line.shown);
           const shown = reduce ? line.text.length : Math.min(line.text.length, line.shown + dt * 42);
-          // A blip every few letters, in the speaker's voice.
-          if (Math.floor(shown / 3) > Math.floor(before / 3) && shown < line.text.length && line.speaker !== "emote") audio.blip(line.speaker);
           const at = line.speaker === "emote" ? engine.playerHead() : line.at;
           const p = at ? engine.project(at) : { x: 0, y: 0, visible: false };
           return { ...line, shown, age: line.age + dt, x: p.x, y: p.y, onScreen: p.visible };

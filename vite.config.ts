@@ -27,11 +27,13 @@ export default defineConfig({
     client: {
       build: {
         rollupOptions: {
-          // The game, plus two plain pages built from the same data: the Field Guide and About.
+          // The game, plus plain pages: the Field Guide and About (built from the same data) and the audio lab.
           input: {
             main: fileURLToPath(new URL("./index.html", import.meta.url)),
             guide: fileURLToPath(new URL("./field-guide/index.html", import.meta.url)),
             about: fileURLToPath(new URL("./about/index.html", import.meta.url)),
+            // A page for people to review every sound (Phase 04).
+            lab: fileURLToPath(new URL("./audio-lab/index.html", import.meta.url)),
           },
         },
       },

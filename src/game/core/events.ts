@@ -78,7 +78,7 @@ export interface GameEvents {
   /** The camera reached the player after the title. */
   "title:done": Record<string, never>;
   /** Someone speaks. `at` is a world position for the bubble, or null for a caption only. */
-  say: { speaker: string; name: string; text: string; at: [number, number, number] | null; recording?: boolean };
+  say: { speaker: string; name: string; text: string; at: [number, number, number] | null; recording?: boolean; line?: string };
   /** A small paper note at the edge of the screen. */
   toast: { text: string };
   /** A chapter or beat is complete. Two short lines for the big ink stamp. */

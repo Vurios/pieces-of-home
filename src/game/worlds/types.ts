@@ -29,6 +29,25 @@ export interface Bookmark {
   camera: { position: Vector3; target: Vector3; up?: Vector3 } | null;
 }
 
+/** A point in world space, for sounds. */
+export interface SoundPoint {
+  x: number;
+  y: number;
+  z: number;
+}
+
+/** A sound that lives in a place: a loop that keeps going, or a cue now and then while the player is near. */
+export interface SoundSpot {
+  position: SoundPoint;
+  /** A looping cue (see src/audio/cues.ts), kept running at `value`. */
+  loop?: string;
+  value?: number;
+  /** A one-shot cue played every `every` seconds (a random time in the range) while the player is within `radius`. */
+  cue?: string;
+  every?: [number, number];
+  radius?: number;
+}
+
 export interface FrameInfo {
   player: PlayerController;
   /** The player's carried letter, if any. */
@@ -75,6 +94,10 @@ export interface World {
   zoneAt?(dir: Vector3): string | null;
   /** Where the paper arrow should point, or null. */
   objective(): Vector3 | null;
+  /** Sounds placed in the world (machine hums, Milo's chirps). */
+  sounds?: SoundSpot[];
+  /** How loud each ambience layer should be where the player stands, 0 to 1 (see src/audio/ambience.ts). */
+  ambience?(player: SoundPoint): Record<string, number>;
   update(dt: number, frame: FrameInfo): void;
   /** Called when the pixel height of the screen changes, so particles keep their size. */
   resize(pixelHeight: number): void;
