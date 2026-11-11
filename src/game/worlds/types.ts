@@ -81,6 +81,10 @@ export interface World {
    */
   fog: { color: string; near: number; far: number } | null;
   spawn: { dir: Vector3; forward: Vector3 };
+  /** Named places to arrive at, for example "bench" when coming back from a dome. */
+  entries?: Record<string, { dir: Vector3; forward: Vector3 }>;
+  /** Test hooks, run through the debug API: "solve", "deliver" and so on. */
+  debug?: Record<string, () => unknown>;
   /** The title flight for this world, or null. Only Home has one. */
   intro: IntroSpec | null;
   /** Lamps and windows, 0 dark to 1 fully lit. The title lights them when the chain is pulled. */

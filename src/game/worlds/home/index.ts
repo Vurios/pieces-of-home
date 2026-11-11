@@ -10,6 +10,9 @@ import { fbm3 } from "../../world/noise";
 import { angleBetween, damp, headingToTangent, latLonToDir, surfaceMatrix } from "../../world/sphere";
 import { Terrain, buildPlanetGeometry } from "../../world/terrain";
 import type { Bookmark, FrameInfo, World, WorldContext } from "../types";
+import { CHAPTERS, chapterForPart } from "../../../content/chapters";
+import { STORY_COPY } from "../../../content/chapters/common";
+import { torus } from "../../actors/parts";
 import { C, buildDish, buildHouse, buildLampPost, buildMailbox } from "./buildings";
 import { GROUND_PATCHES, type Site, HILL, HILL_TOP, HOME_RADIUS, MAILBOX, MEADOW, ORCHARD, PATH_HALF_WIDTH, PLACES, POND, POND_RADIUS, SITES, TERRAIN, TRAIL_LAMPS, local, site } from "./layout";
 import { buildGarden, buildMeadow, groundMatrix, pathDistance, planTrees, scatterNature, treeShade } from "./nature";
@@ -281,6 +284,52 @@ export function createHome(ctx: WorldContext): World {
     onDone: () => undefined,
   });
 
+  // ---- Dad's domes: look into one and the Looking Lamp takes you inside ----
+  const DOME_WORLDS = ["tranquility", "hadley", "meridiani", "valinor"];
+  const domeGlows = shop.domes.map((dome) => {
+    // A warm ring under the glass: soft for the next world to visit, bright once its stamp is earned.
+    const ring = new Mesh(torus(0.12), toon.glow("#FFC877"));
+    ring.position.copy(dome.top).addScaledVector(shedDir, -0.27);
+    ring.quaternion.setFromRotationMatrix(SITES.shed.matrix);
+    ring.rotateX(Math.PI / 2);
+    ring.scale.setScalar(0.255);
+    ring.visible = false;
+    root.add(ring);
+    return ring;
+  });
+  const opened = (): boolean => store.value.stamps.includes("prologue") || store.value.flags.includes("explore-freely");
+  shop.domes.forEach((dome, i) => {
+    const world = DOME_WORLDS[i]!;
+    const chapter = CHAPTERS.find((c) => c.world === world);
+    if (!chapter) return;
+    interactions.add({
+      id: `dome-${world}`,
+      position: dome.stand,
+      radius: 1.0,
+      kind: "press",
+      label: () => (opened() && !store.value.carrying?.startsWith("part:") ? STORY_COPY.visit(chapter.dome) : null),
+      onDone: () => bus.emit("travel", { to: world, entry: "lamp" }),
+    });
+  });
+  // Milo takes the part a player brings home.
+  interactions.add({
+    id: "milo",
+    position: shop.benchFront.clone().lerp(shop.miloSpot.position, 0.25),
+    radius: 1.5,
+    kind: "press",
+    label: () => chapterForPart(store.value.carrying)?.partPrompt ?? null,
+    onDone: () => {
+      const chapter = chapterForPart(store.value.carrying);
+      if (!chapter) return;
+      store.update((s) => {
+        s.carrying = null;
+        s.miloStage = Math.max(s.miloStage, chapter.milo);
+      });
+      bus.emit("milo:stage", { stage: chapter.milo });
+    },
+  });
+  const offStage = bus.on("milo:stage", ({ stage }) => milo.setStage(stage));
+
   // ---- Bookmarks for screenshots and the title sequence ----
   const spawnDir = latLonToDir(SITES.spawn.lat, SITES.spawn.lon);
   const spawnForward = headingToTangent(spawnDir, SITES.spawn.heading);
@@ -433,6 +482,8 @@ export function createHome(ctx: WorldContext): World {
     // Dusk haze on the far curve. Starts past the play area so nearby color stays clean.
     fog: { color: "#C79390", near: -3, far: 22 },
     spawn: { dir: spawnDir, forward: spawnForward },
+    // Back from a dome: standing at the workbench, facing it.
+    entries: { bench: { dir: inShed(0.9, -0.55), forward: shedForward } },
     intro: {
       lamp: shop.lampBulb.clone(),
       // A dolly back from Dad's lamp along one straight line, out through the
@@ -509,6 +560,13 @@ export function createHome(ctx: WorldContext): World {
       const s = store.value;
       if (s.carrying === LETTER_TO_THE_LAMP) return shop.lampSpot;
       if (!s.delivered.includes(LETTER_TO_THE_LAMP)) return new Vector3(0, 0, 0.55).applyMatrix4(mailboxMatrix);
+      if (chapterForPart(s.carrying)) return shop.miloSpot.position;
+      if (!s.flags.includes("seen-notebook")) return null;
+      const next = CHAPTERS.find((c) => !s.stamps.includes(c.id));
+      if (next && opened()) {
+        const i = DOME_WORLDS.indexOf(next.world);
+        return i >= 0 ? shop.domes[i]!.stand : null;
+      }
       return null;
     },
     update(dt: number, frame: FrameInfo) {
@@ -545,6 +603,16 @@ export function createHome(ctx: WorldContext): World {
       }
 
       waitingLetter.visible = store.value.carrying === null && !store.value.delivered.includes(LETTER_TO_THE_LAMP);
+      // Earned domes glow; the next one breathes softly to say "here".
+      const nextChapter = opened() ? CHAPTERS.find((c) => !store.value.stamps.includes(c.id)) : undefined;
+      domeGlows.forEach((ring, i) => {
+        const chapter = CHAPTERS.find((c) => c.world === DOME_WORLDS[i]);
+        const earned = chapter ? store.value.stamps.includes(chapter.id) : false;
+        const next = chapter !== undefined && chapter === nextChapter;
+        ring.visible = earned || next;
+        const pulse = next && !frame.reducedMotion ? 0.55 + 0.45 * Math.sin(frame.time * 2.4) : 1;
+        (ring.material as { color: Color }).color.setRGB(1 * pulse, 0.78 * pulse, 0.46 * pulse);
+      });
 
       const toMilo = feet.distanceTo(milo.root.position);
       milo.update(dt, Math.max(0, 1 - toMilo / 3), frame.reducedMotion);
@@ -569,6 +637,7 @@ export function createHome(ctx: WorldContext): World {
       places.resize(pixelHeight);
     },
     dispose() {
+      offStage();
       for (const f of [motes, fireflies, hillFlies]) f.dispose();
       smoke.dispose();
       places.dispose();

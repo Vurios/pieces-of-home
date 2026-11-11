@@ -27,6 +27,8 @@ export class InteractionSystem {
   private progress = 0;
   private lastPrompt: string | null = null;
   private readonly toItem = new Vector3();
+  /** While a story card is up, the interact button belongs to the card. */
+  blocked = false;
 
   constructor(private bus: GameBus) {}
 
@@ -62,7 +64,7 @@ export class InteractionSystem {
     let best: Interactable | null = null;
     let bestScore = Infinity;
     let bestLabel: string | null = null;
-    for (const item of this.items.values()) {
+    for (const item of this.blocked ? [] : this.items.values()) {
       const distance = this.toItem.copy(item.position).sub(feet).length();
       if (distance > item.radius) continue;
       const label = item.label();

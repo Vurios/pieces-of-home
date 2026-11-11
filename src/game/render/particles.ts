@@ -45,7 +45,8 @@ void main() {
 }
 `;
 
-function createMaterial(color: ColorRepresentation, additive: boolean, soft: number): ShaderMaterial {
+/** Soft painted dots, sized in world units. Shared with the laser beam. */
+export function createMaterial(color: ColorRepresentation, additive: boolean, soft: number): ShaderMaterial {
   return new ShaderMaterial({
     vertexShader: VERTEX,
     fragmentShader: FRAGMENT,

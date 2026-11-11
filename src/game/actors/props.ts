@@ -104,3 +104,47 @@ export function createEnvelope(toon: ToonLibrary): Group {
   });
   return group;
 }
+
+/** A small parcel for Milo's next part: brown paper, twine and Dad's tag. */
+export function createParcel(toon: ToonLibrary): Group {
+  const group = new Group();
+  group.name = "parcel";
+  const paper = toon.toon({ color: "#B88A5A", objectSpace: true, paint: 0.1 });
+  const twine = toon.toon({ color: "#E9DCC0", objectSpace: true, paint: 0.04 });
+  const body = new Mesh(box(0.03), paper);
+  body.scale.set(0.24, 0.17, 0.2);
+  const band = new Mesh(box(0.004), twine);
+  band.scale.set(0.245, 0.175, 0.025);
+  const band2 = new Mesh(box(0.004), twine);
+  band2.scale.set(0.025, 0.175, 0.205);
+  const bow = new Mesh(box(0.01), twine);
+  bow.scale.set(0.07, 0.025, 0.04);
+  bow.position.y = 0.095;
+  const tag = new Mesh(box(0.004), toon.toon({ color: "#F4ECDD", objectSpace: true, paint: 0.05 }));
+  tag.scale.set(0.07, 0.045, 0.004);
+  tag.position.set(0.07, 0.03, 0.103);
+  tag.rotation.z = 0.25;
+  group.add(body, band, band2, bow, tag);
+  group.traverse((object) => {
+    if (object instanceof Mesh) object.castShadow = true;
+  });
+  return group;
+}
+
+/** A square mirror panel in a brass frame, as a player carries it. */
+export function createMirrorPanel(toon: ToonLibrary): Group {
+  const group = new Group();
+  group.name = "mirror-panel";
+  const frame = new Mesh(box(0.02), toon.toon({ color: "#C9A04A", objectSpace: true, paint: 0.08 }));
+  frame.scale.set(0.42, 0.42, 0.03);
+  const glass = new Mesh(box(0.01), toon.toon({ color: "#BFD8E6", objectSpace: true, paint: 0.02, emissive: "#9FC4D8", emissiveIntensity: 0.35 }));
+  glass.scale.set(0.37, 0.37, 0.034);
+  const streak = new Mesh(box(0.002), toon.glow("#F4FBFF"));
+  streak.scale.set(0.05, 0.3, 0.036);
+  streak.rotation.z = 0.7;
+  group.add(frame, glass, streak);
+  group.traverse((object) => {
+    if (object instanceof Mesh) object.castShadow = true;
+  });
+  return group;
+}

@@ -1,5 +1,6 @@
 import "./ui/theme.css";
 import { mount } from "svelte";
+import { WORLDS } from "./game/worlds/registry";
 import { LoadingManager } from "three";
 import { audio } from "./audio/audio";
 import { BootProgress } from "./boot/progress";
@@ -79,7 +80,9 @@ async function boot(): Promise<void> {
     .catch(() => undefined)
     .then(() => audioTask.done());
 
-  await engine.loadWorld("home");
+  // Test and screenshot links can start in another world: `?world=tranquility`.
+  const startWorld = params.get("world");
+  await engine.loadWorld(skipIntro && startWorld && startWorld in WORLDS ? startWorld : "home");
   worldTask.done();
   if (!texturesStarted) textureTask.done();
   await Promise.all([fonts, sounds]);

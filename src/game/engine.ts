@@ -12,7 +12,7 @@ import {
   WebGLRenderer,
 } from "three";
 import { Character } from "./actors/character";
-import { PaperArrow, createEnvelope } from "./actors/props";
+import { PaperArrow, createEnvelope, createMirrorPanel, createParcel } from "./actors/props";
 import { EventBus, type GameEvents, type QualityTier } from "./core/events";
 import { Input } from "./core/input";
 import { FrameWatchdog, QUALITY, ResolutionGovernor, type QualitySettings, detectTier, lowerTier, readDeviceHints, readTierOverride, writeTierOverride } from "./core/quality";
@@ -75,6 +75,8 @@ export class Engine {
   private player: PlayerController;
   private kid: Character;
   private envelope;
+  /** What a player carries, by the start of the carried id: letters, Milo's parts, mirror panels. */
+  private carried: { prefix: string; model: import("three").Object3D }[];
   private follow: FollowCamera;
   private arrow = new PaperArrow();
   private puffs: Puffs;
@@ -146,6 +148,14 @@ export class Engine {
     this.envelope = createEnvelope(this.toon);
     this.envelope.visible = false;
     this.kid.carrySocket.add(this.envelope);
+    this.carried = [
+      { prefix: "part:", model: createParcel(this.toon) },
+      { prefix: "mirror:", model: createMirrorPanel(this.toon) },
+    ];
+    for (const { model } of this.carried) {
+      model.visible = false;
+      this.kid.carrySocket.add(model);
+    }
     this.follow = new FollowCamera(this.camera);
     this.puffs = new Puffs(Math.round(90 * this.quality.particles) + 10, "#D8C3A0");
     this.scene.add(this.kid.root, this.arrow.root, this.puffs.points);
@@ -292,7 +302,7 @@ export class Engine {
 
   private loadTexture = (url: string): Texture => this.textureLoader.load(url);
 
-  async loadWorld(id: string): Promise<void> {
+  async loadWorld(id: string, entry?: string): Promise<void> {
     const load = WORLDS[id];
     if (!load) throw new Error(`Unknown world "${id}"`);
     this.bus.emit("world:loading", { id });
@@ -324,18 +334,32 @@ export class Engine {
     world.resize(this.renderer.domElement.height);
 
     this.bookmark = this.options.shot ? (world.bookmarks[this.options.shot] ?? null) : null;
-    const start = this.bookmark?.player ?? world.spawn;
+    const start = this.bookmark?.player ?? (entry ? world.entries?.[entry] : undefined) ?? world.spawn;
     this.player.teleport(start.dir, start.forward, world);
     this.follow.snap(this.player);
     if (this.options.shot === "character") this.follow.pitch = 0.32;
+    if (this.store.value.world !== id) {
+      this.store.update((s) => {
+        s.world = id;
+      });
+    }
     this.bus.emit("world:ready", { id });
   }
 
+  /** True while the iris is closed and a world is loading. */
+  traveling = false;
+
   /** Closes the Looking Lamp iris, swaps worlds, and opens it again. */
-  async travel(id: string): Promise<void> {
-    await this.animateIris(0, 1, 0.7);
-    await this.loadWorld(id);
-    await this.animateIris(1, 0, 0.8);
+  async travel(id: string, entry?: string): Promise<void> {
+    if (this.traveling) return;
+    this.traveling = true;
+    try {
+      await this.animateIris(0, 1, 0.7);
+      await this.loadWorld(id, entry);
+      await this.animateIris(1, 0, 0.8);
+    } finally {
+      this.traveling = false;
+    }
   }
 
   private animateIris(from: number, to: number, seconds: number): Promise<void> {
@@ -454,7 +478,13 @@ export class Engine {
     kid.matrix.makeBasis(this.scratch.crossVectors(this.player.up, this.player.forward).normalize(), this.player.up, this.player.forward);
     kid.matrix.setPosition(this.player.position);
     kid.matrix.decompose(kid.position, kid.quaternion, kid.scale);
-    this.envelope.visible = this.store.value.carrying !== null;
+    const carrying = this.store.value.carrying;
+    let other = false;
+    for (const { prefix, model } of this.carried) {
+      model.visible = carrying !== null && carrying.startsWith(prefix);
+      other ||= model.visible;
+    }
+    this.envelope.visible = carrying !== null && !other;
     this.kid.update(dt, {
       pace: this.player.pace,
       running: this.player.running,
@@ -587,7 +617,13 @@ export class Engine {
       setQuality: (tier: QualityTier | null) => this.setQuality(tier),
       /** Sends a game event, for screenshots of moments such as the stamp. */
       emit: <K extends keyof GameEvents>(type: K, payload: GameEvents[K]) => this.bus.emit(type, payload),
-      travel: (id: string) => this.travel(id),
+      travel: (id: string, entry?: string) => this.travel(id, entry),
+      /** Runs a world's test hook, for example "solve" or "deliver". */
+      world: (command: string) => this.world?.debug?.[command]?.() ?? false,
+      worldId: () => this.world?.id ?? null,
+      /** Changes the save directly, for tests. */
+      patch: (change: Partial<{ carrying: string | null; delivered: string[]; stamps: string[]; flags: string[]; miloStage: number }>) =>
+        this.store.update((s) => Object.assign(s, change)),
       /** Stands the player next to an interactable, facing it. */
       teleportTo: (id: string): boolean => {
         const target = this.interactions.positionOf(id);

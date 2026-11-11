@@ -1,5 +1,6 @@
 import type { InputDevice } from "../game/core/events";
 import type { GameState } from "../game/core/state";
+import { CHAPTERS, type ChapterDef, chapterForPart, chapterForWorld, chapterStep } from "./chapters";
 import { PLACE_IDS, placesFound } from "./places";
 
 /**
@@ -12,7 +13,7 @@ import { PLACE_IDS, placesFound } from "./places";
 export const LETTER_TO_THE_LAMP = "to-the-lamp";
 export const SEEN_NOTEBOOK = "seen-notebook";
 
-export type GoalId = "mailbox" | "lamp" | "notebook" | "explore";
+export type GoalId = "mailbox" | "lamp" | "notebook" | "explore" | "dome" | "arrive" | "letter" | "activity" | "part" | "home";
 
 export interface Goal {
   id: GoalId;
@@ -24,6 +25,8 @@ export interface Goal {
   detail: string;
   /** A little more help when the player asks for a hint. */
   hint: string;
+  /** Three hint tiers: a nudge, a direction, and "show me". The first is `hint` when missing. */
+  hints?: [string, string, string];
   /** Step number in this chapter, and how many steps it has. */
   step: number;
   steps: number;
@@ -31,7 +34,44 @@ export interface Goal {
 
 export const PROLOGUE = { label: "Prologue", name: "The Workshop", chapter: "Prologue: The Workshop" };
 
+/** Five steps in every chapter: three letters, the activity, and Milo's new part. */
+const CHAPTER_STEPS = 5;
+
+function chapterGoal(chapter: ChapterDef, state: Readonly<GameState>): Goal {
+  const base = { chapter: chapter.title, steps: CHAPTER_STEPS };
+  const step = chapterStep(chapter, state);
+  switch (step.kind) {
+    case "arrive":
+      return { ...base, id: "arrive", step: 1, title: chapter.goals.arrive, detail: "Dad's letters are in your bag.", hint: "Take a look around. Dad built every bit of this." };
+    case "letter":
+      return {
+        ...base,
+        id: "letter",
+        step: step.index + 1,
+        title: step.letter.prompt,
+        detail: step.letter.where,
+        hint: step.letter.where,
+        hints: [step.letter.where, "Follow the paper arrow by your feet. It points the way.", `Walk up close and give the letter. It says "${step.letter.address}" on the front.`],
+      };
+    case "activity":
+      if (!step.step) return { ...base, id: "activity", step: 4, title: chapter.goals.activity, detail: "Watch!", hint: "Watch!" };
+      return { ...base, id: "activity", step: 4, title: step.step.title, detail: step.step.detail, hint: step.step.hints[0], hints: step.step.hints };
+    case "part-take":
+      return { ...base, id: "part", step: 5, title: "Take Milo's new part", detail: "Dad left a parcel by his tag. It has Milo's name on it.", hint: "The parcel is next to Dad's tag, near the lamp light." };
+    case "part-home":
+      return { ...base, id: "home", step: 5, title: "Take the part home to Milo", detail: "Step into the lamp light to go back to the workshop.", hint: "The lamp light shines down where you landed. Follow the arrow." };
+    case "part-give":
+      return { ...base, id: "part", step: 5, title: chapter.partPrompt, detail: "Milo waits on Dad's workbench.", hint: "Milo is on the workbench, next to the glass domes." };
+    case "done":
+      return { ...base, id: "home", step: 5, title: chapter.goals.home, detail: "Step into the lamp light to go back.", hint: "The lamp light shines down where you landed." };
+  }
+}
+
 export function goalFor(state: Readonly<GameState>, device: InputDevice): Goal {
+  const here = chapterForWorld(state.world);
+  if (here) return chapterGoal(here, state);
+  const carried = chapterForPart(state.carrying);
+  if (carried) return chapterGoal(carried, state);
   const base = { chapter: PROLOGUE.chapter, steps: 3 };
   if (state.carrying === LETTER_TO_THE_LAMP) {
     return {
@@ -62,6 +102,20 @@ export function goalFor(state: Readonly<GameState>, device: InputDevice): Goal {
       title: "Open Dad's notebook",
       detail: `See what the letter changed. ${how}`,
       hint: `The notebook keeps every letter and every machine. ${how}`,
+    };
+  }
+  // The next dome waits on the workbench.
+  const next = CHAPTERS.find((c) => !state.stamps.includes(c.id));
+  if (next && state.stamps.includes("prologue")) {
+    return {
+      chapter: next.title,
+      steps: CHAPTER_STEPS,
+      id: "dome",
+      step: 1,
+      title: `Visit ${next.dome}`,
+      detail: "Dad's little worlds sit under glass on his workbench. Look into one to go inside.",
+      hint: `The domes are on the workbench in the workshop. Look into ${next.dome}.`,
+      hints: ["Dad built tiny worlds and put them under glass.", `Go into the workshop. The domes are on the long workbench. Find ${next.dome}.`, "Follow the paper arrow to the dome, then look into it."],
     };
   }
   const found = placesFound(state.flags);

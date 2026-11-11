@@ -47,7 +47,9 @@ export interface SoundFrame {
   mode: "title" | "play";
 }
 
-const MUSIC_FOR: Record<string, Scene> = { home: "home", moon: "moon", mars: "mars", finale: "finale" };
+const MUSIC_FOR: Record<string, Scene> = { home: "home", moon: "moon", mars: "mars", finale: "finale", tranquility: "moon", hadley: "moon", meridiani: "mars", valinor: "mars" };
+/** Which soundscape each world uses (see src/audio/ambience.ts). */
+const SCAPE_FOR: Record<string, string> = { tranquility: "moon", hadley: "moon", meridiani: "mars", valinor: "mars" };
 
 export class AudioEngine {
   private ctx: AudioContext | null = null;
@@ -383,7 +385,18 @@ export class AudioEngine {
       this.play("delivery-chime");
       this.sting();
     });
-    bus.on("milo:stage", () => this.play("part-clunk"));
+    bus.on("milo:stage", () => {
+      this.play("part-clunk");
+      this.play("milo-boot", { delay: 0.6 });
+      this.play("milo-happy", { delay: 2.1 });
+    });
+    // One-shot sounds from game code: mirrors, lasers, servos.
+    bus.on("sfx", ({ name, at, param, delay, level }) =>
+      this.play(name, { at: at ? { x: at[0], y: at[1], z: at[2] } : null, ...(param === undefined ? {} : { param }), ...(delay === undefined ? {} : { delay }), ...(level === undefined ? {} : { level }) }),
+    );
+    bus.on("story:card", ({ kind }) => {
+      if (kind === "note") this.play("pencil", { delay: 0.15, level: 0.6 });
+    });
     bus.on("emote", () => this.play("emote-pop"));
     bus.on("toast", () => this.play("toast"));
     bus.on("title:done", () => {
@@ -420,8 +433,9 @@ export class AudioEngine {
     }
 
     if (this.emitterWorld !== f.world) this.placeEmitters(f.world);
-    if (this.ambience && this.ambience.current !== f.world.id) {
-      this.ambience.setWorld(f.world.id);
+    const scape = SCAPE_FOR[f.world.id] ?? f.world.id;
+    if (this.ambience && this.ambience.current !== scape) {
+      this.ambience.setWorld(scape);
     }
     // The title flies high over the planet: only a little of the dusk comes through.
     this.ambience?.setLevels(f.mode === "title" ? { dusk: 0.35 } : (f.world.ambience?.(f.player) ?? {}));

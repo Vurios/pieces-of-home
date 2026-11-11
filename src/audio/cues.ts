@@ -62,6 +62,8 @@ export const CUES: Record<string, CueSpec> = {
   "part-clunk": { recipe: "part-clunk", bus: "effects", volume: 1, minGap: 0.5, group: "Milo", label: "Part clicks into place" },
 
   laser: { recipe: "laser", bus: "effects", volume: 0.8, minGap: 0.5, length: 3.5, group: "Chapter 1", label: "Laser ping and pong" },
+  "laser-ping": { recipe: "laser-ping", bus: "effects", volume: 0.8, minGap: 0.3, group: "Chapter 1", label: "Laser ping (sent)" },
+  "laser-pong": { recipe: "laser-pong", bus: "effects", volume: 0.85, minGap: 0.3, group: "Chapter 1", label: "Laser pong (came home)" },
   "mirror-snap": { recipe: "mirror-snap", bus: "effects", volume: 0.9, pitch: 0.05, minGap: 0.1, group: "Chapter 1", label: "Mirror panel snap" },
   "corner-sparkle": { recipe: "corner-sparkle", bus: "effects", volume: 0.65, minGap: 0.5, group: "Chapter 1", label: "Corner cube clicks home" },
 

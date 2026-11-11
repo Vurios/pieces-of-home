@@ -247,6 +247,16 @@ export const RECIPES: Record<string, Recipe> = {
     tone(c, "sine", 1800, 2000, 0.01, 0.13, 0.4, back, 0.3);
     chime(c, [93], 0, 0.06, back + 0.05, true);
   },
+  /** The laser leaves: a bright, quick ping with a glassy overtone. */
+  "laser-ping": (c) => {
+    tone(c, "sine", 2400, 1800, 0.002, 0.2, 0.25, 0, 0.2);
+    tone(c, "triangle", 4800, 3600, 0.002, 0.05, 0.12);
+  },
+  /** The light comes home: a softer, lower pong and one small bell. */
+  "laser-pong": (c) => {
+    tone(c, "sine", 1800, 2000, 0.01, 0.13, 0.4, 0, 0.3);
+    chime(c, [93], 0, 0.06, 0.05, true);
+  },
   /** A mirror panel snaps into its frame: a sharp click, a tiny metal ring, a low seat. */
   "mirror-snap": (c) => {
     burst(c, "white", "highpass", 3000, 0.7, 0.001, 0.35, 0.012);

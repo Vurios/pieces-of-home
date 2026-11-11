@@ -21,6 +21,12 @@
   import SettingsPanel from "./panels/SettingsPanel.svelte";
   import TogetherPanel from "./panels/TogetherPanel.svelte";
   import { keepPhoto } from "./photos";
+  import { CHAPTERS } from "../content/chapters";
+  import { SPREADS } from "../content/notebook";
+  import Countdown from "./story/Countdown.svelte";
+  import { StoryDirector } from "./story/director";
+  import Seismograph from "./story/Seismograph.svelte";
+  import StoryCards from "./story/StoryCards.svelte";
   import { settings, t } from "./settings.svelte";
   import Menu from "./title/Menu.svelte";
   import StoryIntro from "./title/StoryIntro.svelte";
@@ -41,7 +47,25 @@
   /** The short story plays before a new story starts. */
   let story = $state(false);
 
+  /** A trip into a dome waits for its countdown. */
+  let trip = $state<{ to: string; entry?: string; place: string } | null>(null);
+
   $effect(() => net.subscribe((next) => (netState = next)));
+  // The story director plays chapter scripts and moves each chapter along.
+  $effect(() => {
+    const director = new StoryDirector(engine, (text) => engine.bus.emit("toast", { text }));
+    return () => director.dispose();
+  });
+  // Explore freely opens every built dome.
+  $effect(() => {
+    const on = settings.value.exploreFreely;
+    untrack(() => {
+      if (on !== engine.store.value.flags.includes("explore-freely"))
+        engine.store.update((s) => {
+          s.flags = on ? [...s.flags, "explore-freely"] : s.flags.filter((f) => f !== "explore-freely");
+        });
+    });
+  });
   $effect(() => engine.store.subscribe((next) => (game = { ...next })));
 
   // The world holds still under the notebook and panels, and sounds muffled.
@@ -80,6 +104,19 @@
 
   $effect(() => {
     const offs = [
+      engine.bus.on("travel", ({ to, entry }) => {
+        if (engine.traveling || trip) return;
+        // A mirror panel stays in its world: it goes back on its stand.
+        if (engine.store.value.carrying?.startsWith("mirror:")) engine.store.update((s) => void (s.carrying = null));
+        const chapter = CHAPTERS.find((c) => c.world === to);
+        if (chapter) trip = { to, place: chapter.dome, ...(entry ? { entry } : {}) };
+        else void engine.travel(to, entry);
+      }),
+      engine.bus.on("notebook:open", ({ spread }) => {
+        const index = SPREADS.findIndex((s) => s.id === spread);
+        audio.ui("page");
+        flow.setNotebook(true, index + 1);
+      }),
       engine.bus.on("title:done", () => {
         flow.setStage("play");
         greet();
@@ -170,9 +207,16 @@
     engine.bus.emit("toast", { text: full ? t("toast.photoFull") : t("toast.photo") });
   }
 
-  /** A hint is the current goal, said a little more fully. */
+  /** Hints come in three tiers: a nudge, a direction, then "show me". Each press of Hint goes one further. */
+  let hintFor = "";
+  let hintTier = 0;
   function hint(): void {
-    engine.bus.emit("toast", { text: goalFor(game, engine.input.device).hint });
+    const goal = goalFor(game, engine.input.device);
+    const key = `${goal.id}:${goal.title}`;
+    hintTier = key === hintFor ? Math.min(2, hintTier + 1) : 0;
+    hintFor = key;
+    const tiers = goal.hints ?? [goal.hint, goal.hint, goal.hint];
+    engine.bus.emit("toast", { text: tiers[hintTier]! });
   }
 
   function toggleNotebook(open: boolean): void {
@@ -218,6 +262,18 @@
 <Guide {engine} {game} hidden={flow.stage !== "play" || flow.covered} notebookOpen={flow.notebook} />
 <PlaceCard {engine} hidden={flow.stage !== "play" || flow.covered || flow.notebook} />
 <Speech {engine} />
+<StoryCards {engine} />
+<Seismograph {engine} {game} />
+{#if trip}
+  <Countdown
+    place={trip.place}
+    ondone={() => {
+      const t = trip;
+      trip = null;
+      if (t) void engine.travel(t.to, t.entry);
+    }}
+  />
+{/if}
 <Toasts {engine} />
 <StampMoment {engine} />
 

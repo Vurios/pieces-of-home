@@ -1,8 +1,8 @@
 /**
  * Pure fact-checking rules, shared by `npm run check:facts` and the unit tests.
  *
- * A fact reference in content looks like `[F:fact-id]`, `{F:fact-id}` or
- * `fact("fact-id")`. Player-facing numbers must always come from a reference.
+ * A fact reference in content looks like `[F:fact-id]`, `{F:fact-id}`,
+ * `fact("fact-id")` or a chapter script line `{ fact: "fact-id" }`. Player-facing numbers must always come from a reference.
  */
 
 export interface Fact {
@@ -30,7 +30,8 @@ export interface FactReport {
   used: string[];
 }
 
-const REFERENCE_PATTERNS = [/[[{]F:([a-z0-9-]+)[\]}]/g, /\bfact\(\s*["'`]([a-z0-9-]+)["'`]\s*\)/g];
+// Chapter scripts name facts in lines like `{ fact: "fact-id" }`, so those count too.
+const REFERENCE_PATTERNS = [/[[{]F:([a-z0-9-]+)[\]}]/g, /\bfact\(\s*["'`]([a-z0-9-]+)["'`]\s*\)/g, /\{\s*fact:\s*["'`]([a-z0-9-]+)["'`]\s*\}/g];
 const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function findFactReferences(text: string): string[] {

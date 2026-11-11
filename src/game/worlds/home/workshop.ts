@@ -67,6 +67,8 @@ export interface WorkshopResult {
   friends: { position: Vector3; forward: Vector3 }[];
   benchFront: Vector3;
   dustCenter: Vector3;
+  /** Dad's four domes, left to right: the top of the glass, and where a player stands to look in. */
+  domes: { top: Vector3; stand: Vector3 }[];
   /** Is this world point inside? `margin` grows the box, for hysteresis. */
   isInside(point: Vector3, margin: number): boolean;
 }
@@ -520,6 +522,7 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
       { position: at(0.95, fy, -0.75), forward: new Vector3(-0.6, 0, -1).normalize().transformDirection(m) },
     ],
     benchFront: at(-0.55, fy, BENCH_Z + 1.0),
+    domes: [0.25, 0.85, 1.45, 2.05].map((x) => ({ top: at(x, BENCH_Y + 0.34, BENCH_Z - 0.05), stand: at(x, fy, BENCH_Z + 0.85) })),
     dustCenter: at(-1.4, 1.5, -1.2),
     isInside(point: Vector3, margin: number): boolean {
       scratch.copy(point).applyMatrix4(inverse);

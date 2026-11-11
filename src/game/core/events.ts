@@ -85,6 +85,21 @@ export interface GameEvents {
   stamp: { id: string; lines: [string, string] };
   emote: { id: string };
   "photo:taken": { count: number };
+  /** A story card: Dad's handwritten note, or a fact from facts.json. The UI answers with story:card-done. */
+  "story:card": { key: number; kind: "note" | "fact"; text: string; fact?: string };
+  "story:card-done": { key: number };
+  /** A chapter's main activity begins, moves on a step, or is finished. */
+  "activity:start": { id: string };
+  "activity:step": { id: string; step: string };
+  "activity:done": { id: string };
+  /** Something in an activity worth saying out loud, for example "miss" or "home". The story director picks the words. */
+  "activity:beat": { id: string; beat: string };
+  /** Ask to go to another little world through the Looking Lamp. `entry` picks where to stand there. */
+  travel: { to: string; entry?: string };
+  /** Open Dad's notebook at a spread. */
+  "notebook:open": { spread: string };
+  /** A one-shot sound from game code (see src/audio/cues.ts). */
+  sfx: { name: string; at?: [number, number, number] | null; param?: number; delay?: number; level?: number };
   "debug:stats": { fps: number; calls: number; triangles: number; geometries: number; textures: number; tier: QualityTier };
 }
 
