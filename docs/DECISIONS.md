@@ -396,3 +396,13 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 **Date:** 2026-11-11
 
 **Decision:** A resolution governor draws fewer pixels when play drops under 50 fps and wins them back above 58, before the watchdog drops a whole tier. The frozen world under the notebook and panels redraws at most ten times a second. The opening's shaders compile while loading, so the light switch answers at once. Looping UI animations only move by transform. Jumps forgive a late or early press by a fraction of a second, the camera lets a jump rise in front of the lens instead of bouncing the view, the mouse wheel zooms, and the lens opens slightly while running.
+
+## 41. Desktop screenshots only; more air in the loader title
+
+**Date:** 2026-11-11
+
+**Decision:** Review screenshots are captured and kept at 1440x900 only. The 390x844 phone captures were deleted from `docs/screens/`, and `scripts/screens.ts` and `scripts/screens-intro.ts` no longer take them. CLAUDE.md and the Phase 07 prompt say so. The loader's pen-drawn title gets wider letter gaps (1.3 cells instead of 0.8), a taller line gap, more room before "Things that kept working", and a little letter and word spacing on that heading.
+
+**Why:** The team asked to drop the phone screenshot process and focus review on the desktop view, and said the title's letters and words almost touched.
+
+**Alternatives considered:** Keeping phone captures but not reviewing them (wasted time and repo weight). The game still lays out and plays on phones; only the screenshot review changed.

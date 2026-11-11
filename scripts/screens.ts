@@ -1,10 +1,8 @@
 /**
- * Capture review screenshots at the two sizes the quality bar names:
- * 1440x900 and 390x844.
+ * Capture review screenshots at 1440x900. The team reviews the desktop view
+ * only (DECISIONS #41), so there is one size.
  *
- *   npx tsx scripts/screens.ts <folder> [shot,shot,...] [baseUrl] [quality] [sizes]
- *
- * `sizes` is "all" (default) or "desktop" for 1440x900 only.
+ *   npx tsx scripts/screens.ts <folder> [shot,shot,...] [baseUrl] [quality]
  *
  * Each shot opens `/?shot=<name>`, a fixed camera bookmark from the world.
  * Saves to docs/screens/<folder>/<shot>-<size>.png. Needs a running site
@@ -14,16 +12,11 @@ import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
 
-const [folder = "latest", shotList = "wide,porch,workshop,bench,character", baseUrl = "http://localhost:5173", quality = "high", sizeList = "all"] =
-  process.argv.slice(2);
+const [folder = "latest", shotList = "wide,porch,workshop,bench,character", baseUrl = "http://localhost:5173", quality = "high"] = process.argv.slice(2);
 const outDir = fileURLToPath(new URL(`../docs/screens/${folder}/`, import.meta.url));
 mkdirSync(outDir, { recursive: true });
 
-const allSizes = [
-  { label: "1440x900", width: 1440, height: 900, mobile: false },
-  { label: "390x844", width: 390, height: 844, mobile: true },
-];
-const sizes = sizeList === "desktop" ? allSizes.filter((size) => !size.mobile) : allSizes;
+const sizes = [{ label: "1440x900", width: 1440, height: 900, mobile: false }];
 
 const browser = await chromium.launch({
   args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],

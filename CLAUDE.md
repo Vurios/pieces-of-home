@@ -48,7 +48,7 @@ Short sentences. Reading level around grade 3 to 5 (Deeper notes can go higher).
 
 ## Quality bar
 
-- **Look:** follow the Game Bible art direction. After every visual change, capture Playwright screenshots at 1440x900 and 390x844, look at them, and fix anything that looks generic or off-style before moving on. Save the latest set in `docs/screens/`.
+- **Look:** follow the Game Bible art direction. After every visual change, capture Playwright screenshots at 1440x900 (desktop only, at the team's request), look at them, and fix anything that looks generic or off-style before moving on. Save the latest set in `docs/screens/`.
 - **Performance:** first playable download under 8 MB; each world under 4 MB; 60 fps on a mid laptop; steady 30 fps on a mid phone.
 - **Health:** typecheck, unit tests and the Playwright smoke test pass. Zero console errors.
 

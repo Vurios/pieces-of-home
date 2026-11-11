@@ -73,11 +73,13 @@ const width = (letter: string): number => GLYPHS[letter]![0]!.length;
  */
 export function titleArt(): string {
   const cell = 10;
-  const gap = 0.8;
+  // Room between the letters and the lines, so the pen strokes never touch.
+  const gap = 1.3;
+  const lead = GLYPH_ROWS + 2.7;
   const random = seeded(77);
   const lines: { word: string; x: number; y: number }[] = [
     { word: "PIECES", x: 0, y: 0 },
-    { word: "HOME", x: 4.6, y: GLYPH_ROWS + 1.7 },
+    { word: "HOME", x: 7.0, y: lead },
   ];
   const faces: string[] = [];
   const shadows: string[] = [];
@@ -108,10 +110,10 @@ export function titleArt(): string {
     maxX = Math.max(maxX, x - gap);
   }
   const w = (maxX + 0.6) * cell;
-  const h = (GLYPH_ROWS * 2 + 1.7 + 0.6) * cell;
+  const h = (lead + GLYPH_ROWS + 0.6) * cell;
   // "of", in Dad's hand, tucked in front of HOME.
-  const of = `<text class="of" x="${0.4 * cell}" y="${(GLYPH_ROWS + 1.7 + 3.9) * cell}" transform="rotate(-8 ${1.8 * cell} ${(GLYPH_ROWS + 4.6) * cell})">of</text>`;
-  const swash = `<path class="swash" d="M${0.3 * cell} ${(GLYPH_ROWS + 6.2) * cell} C ${1.5 * cell} ${(GLYPH_ROWS + 6.9) * cell}, ${3.2 * cell} ${(GLYPH_ROWS + 6.5) * cell}, ${4.1 * cell} ${(GLYPH_ROWS + 5.6) * cell}"/>`;
+  const of = `<text class="of" x="${0.9 * cell}" y="${(lead + 3.9) * cell}" transform="rotate(-8 ${2.3 * cell} ${(lead + 2.9) * cell})">of</text>`;
+  const swash = `<path class="swash" d="M${0.8 * cell} ${(lead + 4.5) * cell} C ${2.0 * cell} ${(lead + 5.2) * cell}, ${3.7 * cell} ${(lead + 4.8) * cell}, ${4.6 * cell} ${(lead + 3.9) * cell}"/>`;
   return `<svg class="title-art" viewBox="${-0.4 * cell} ${-1.4 * cell} ${w + 0.8 * cell} ${h + 1.4 * cell}" role="img" aria-labelledby="boot-title">
     <defs>
       <pattern id="t-hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(-38)"><path d="M0 0 L0 5" stroke="${INK}" stroke-width="1.5"/></pattern>

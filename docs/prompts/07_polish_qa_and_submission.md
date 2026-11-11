@@ -41,7 +41,7 @@ Read `CLAUDE.md` and Game Bible sections 13, 14, 16 and 17.
 
 ## 6. Final visual polish
 
-- Re-capture the full screenshot set at 1440x900 and 390x844 into `docs/screens/final/`.
+- Re-capture the full screenshot set at 1440x900 (desktop only) into `docs/screens/final/`.
 - Review against Game Bible section 9 and the taste skill rules. Polish the details that make it feel premium: line boil timing, paper springs, stamp impact, lamp glow, outline weights, color grading per world, title letter bounce, Milo's small habits.
 - Make a social share image (1200x630) and favicon in the Game Bible style (no NASA logos).
 

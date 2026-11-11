@@ -4,9 +4,9 @@
  * complete, the menu, settings, HUD in play, the speech bubble and stamp,
  * the notebook, and the Field Guide.
  *
- *   npx tsx scripts/screens-intro.ts [folder] [baseUrl] [sizes]
+ *   npx tsx scripts/screens-intro.ts [folder] [baseUrl] [part]
  *
- * `sizes` is "desktop" (default) or "all". `part` is "all" (default), "intro",
+ * Desktop only, 1440x900 (DECISIONS #41). `part` is "all" (default), "intro",
  * "notebook" or "guide", to rerun one stretch. Needs a running site.
  */
 import { mkdirSync } from "node:fs";
@@ -16,19 +16,13 @@ import { type Page, chromium } from "@playwright/test";
 const [
   folder = "phase03",
   baseUrl = "http://localhost:5173",
-  sizeList = "desktop",
   part = "all",
 ] = process.argv.slice(2);
 const outDir = fileURLToPath(
   new URL(`../docs/screens/${folder}/`, import.meta.url),
 );
 mkdirSync(outDir, { recursive: true });
-const sizes = [
-  { label: "1440x900", width: 1440, height: 900, mobile: false },
-  ...(sizeList === "all"
-    ? [{ label: "390x844", width: 390, height: 844, mobile: true }]
-    : []),
-];
+const sizes = [{ label: "1440x900", width: 1440, height: 900, mobile: false }];
 
 const browser = await chromium.launch({
   args: [
