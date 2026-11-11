@@ -23,6 +23,7 @@
   import { keepPhoto } from "./photos";
   import { settings, t } from "./settings.svelte";
   import Menu from "./title/Menu.svelte";
+  import StoryIntro from "./title/StoryIntro.svelte";
   import TitleScreen from "./title/TitleScreen.svelte";
 
   interface Props {
@@ -37,6 +38,8 @@
   let netState: NetState = $state({ status: "solo", room: null, players: 1 });
   let game = $state<GameState>(untrack(() => ({ ...engine.store.value })));
   let flash = $state(false);
+  /** The short story plays before a new story starts. */
+  let story = $state(false);
 
   $effect(() => net.subscribe((next) => (netState = next)));
   $effect(() => engine.store.subscribe((next) => (game = { ...next })));
@@ -57,6 +60,7 @@
     gamepadNav(
       () => {
         if (flow.notebook) return null;
+        if (story) return document.querySelector<HTMLElement>("#ui .story");
         if (flow.panel) return document.querySelector<HTMLElement>("#ui [role='dialog']");
         if (flow.emotes) return document.querySelector<HTMLElement>("#ui .wheel");
         if (flow.stage === "menu") return document.querySelector<HTMLElement>("#ui .confirm") ?? document.querySelector<HTMLElement>("#ui .menu");
@@ -64,7 +68,8 @@
         return null;
       },
       () => {
-        if (flow.panel) flow.close();
+        if (story) begin(true);
+        else if (flow.panel) flow.close();
         else if (flow.emotes) flow.emotes = false;
       },
     ),
@@ -117,6 +122,18 @@
   }
 
   function start(fresh: boolean): void {
+    // A new story opens with the short story of how Remi got here.
+    if (fresh) {
+      flow.close();
+      story = true;
+      return;
+    }
+    begin(false);
+  }
+
+  function begin(fresh: boolean): void {
+    if (fresh && !story) return;
+    story = false;
     if (fresh) engine.store.load(null);
     flow.close();
     flow.setStage("title");
@@ -166,8 +183,11 @@
 {#if flow.stage === "title" || flow.stage === "menu"}
   <TitleScreen {engine} onpull={pull} />
 {/if}
-{#if flow.stage === "menu" && !flow.panel}
+{#if flow.stage === "menu" && !flow.panel && !story}
   <Menu {hasSave} chapters={chaptersOpen} onstart={start} />
+{/if}
+{#if story}
+  <StoryIntro ondone={() => begin(true)} />
 {/if}
 
 <Hud

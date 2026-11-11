@@ -45,6 +45,12 @@ test("the light, the title and the chain lead to the menu, then into play", asyn
   await page.keyboard.press("ArrowDown");
   await expect(page.locator(".menu .tab").nth(1)).toBeFocused();
   await page.getByRole("button", { name: "New story" }).click();
+  // A new story opens with a short story; it can be read page by page or skipped.
+  const story = page.getByRole("dialog", { name: "The story so far" });
+  await expect(story).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await page.getByRole("button", { name: "Skip story" }).click();
+  await expect(story).toBeHidden();
   await expect(stage(page)).toHaveAttribute("data-stage", "ready", { timeout: 30_000 });
   expect(errors).toEqual([]);
 });
@@ -95,6 +101,9 @@ test("a gamepad alone gets from the loader to the notebook", async ({ page }, in
   await expect(page.locator(".menu .tab").nth(1)).toBeFocused();
   await tap(UP, 380);
   await tap(A);
+  // B skips the short story that opens a new game.
+  await expect(page.getByRole("dialog", { name: "The story so far" })).toBeVisible();
+  await tap(B);
   await expect(stage(page)).toHaveAttribute("data-stage", "ready", { timeout: 30_000 });
   await tap(VIEW);
   const book = page.locator(".notebook");

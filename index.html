@@ -643,7 +643,7 @@
         border: 2.4px solid var(--ink);
         border-radius: 6px;
         background: linear-gradient(180deg, #fffaf0, #e4d6bb);
-        transition: top 0.18s cubic-bezier(0.3, 1.6, 0.5, 1), background 0.2s;
+        transition: transform 0.18s cubic-bezier(0.3, 1.6, 0.5, 1), background 0.2s;
       }
       #boot[data-prompt] #light .lever {
         animation: nudge-lever 2.2s 0.6s ease-in-out infinite;
@@ -651,14 +651,12 @@
       @keyframes nudge-lever {
         0%,
         62%,
+        82%,
         100% {
-          top: 18px;
+          transform: translateY(0);
         }
         72% {
-          top: 11px;
-        }
-        82% {
-          top: 18px;
+          transform: translateY(-7px);
         }
       }
       /* A warm ring pulses round the switch while it waits. */
@@ -815,7 +813,7 @@
         --sy: 10px;
       }
       #boot[data-on] #light .lever {
-        top: 2px;
+        transform: translateY(-16px);
         animation: none;
         background: linear-gradient(180deg, #fff3c4, #f2c25a);
       }

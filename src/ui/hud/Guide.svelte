@@ -366,11 +366,12 @@
   }
   .count i.now {
     border-color: var(--ink);
+    background: #f9d79a;
     animation: now-pulse 1.6s ease-in-out infinite;
   }
   @keyframes now-pulse {
     50% {
-      background: #f9d79a;
+      transform: scale(1.25);
     }
   }
   .goal-body {

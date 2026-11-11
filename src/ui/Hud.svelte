@@ -266,14 +266,7 @@
     color: var(--ink);
     font: 700 0.68rem/1 var(--read);
   }
-  .hint .art {
-    animation: hint-glow 3.2s ease-in-out infinite;
-  }
-  @keyframes hint-glow {
-    50% {
-      background-color: #fbd892;
-    }
-  }
+
 
   /* The use prompt: a paper tag low and centered, with a drawn key cap. */
   .prompt {

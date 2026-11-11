@@ -106,6 +106,7 @@ async function boot(): Promise<void> {
   // The camera waits on the lamp's glow behind the paper until the light is turned on.
   engine.veiled = Boolean(loader);
   engine.startTitle();
+  await engine.warm();
   engine.start();
   flow.setStage("waiting");
   loader?.ready(() => {

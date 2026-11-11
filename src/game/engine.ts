@@ -348,6 +348,19 @@ export class Engine {
     });
   }
 
+  /**
+   * Compiles every shader the opening needs, without drawing a frame, so the
+   * first frames after the light comes on are quick and the page stays
+   * responsive while it waits.
+   */
+  async warm(): Promise<void> {
+    try {
+      await this.renderer.compileAsync(this.scene, this.camera);
+    } catch {
+      // Older drivers without parallel compile simply compile on first draw.
+    }
+  }
+
   start(): void {
     if (this.running) return;
     this.running = true;

@@ -6,6 +6,8 @@ import { fact } from "../../src/content/facts";
 import { LETTER_TO_THE_LAMP, SEEN_NOTEBOOK, TIP_ORDER, goalFor, tipFor } from "../../src/content/goals";
 import { GUIDE } from "../../src/content/guide";
 import { PLACE_COPY, PLACE_IDS, placeFlag, placesFound } from "../../src/content/places";
+import { STORY } from "../../src/content/story";
+import { STORY_ART } from "../../src/ui/title/StoryArt";
 import { PATHS, PLACES, TRAIL_SPECS, sampleTrail } from "../../src/game/worlds/home/layout";
 import { createInitialState, reviveState } from "../../src/game/core/state";
 import { SPREADS, factText, isComplete } from "../../src/content/notebook";
@@ -212,5 +214,18 @@ describe("places on Home", () => {
       }
     }
     expect(PATHS.length).toBeGreaterThan(TRAIL_SPECS.length);
+  });
+});
+
+describe("the opening story", () => {
+  it("has a drawing for every page, short plain lines and no em dashes or numbers", () => {
+    expect(STORY.pages.length).toBeGreaterThanOrEqual(4);
+    for (const page of STORY.pages) {
+      expect(STORY_ART[page.art]).toBeDefined();
+      expect(page.text).not.toMatch(/—/);
+      expect(page.text).not.toMatch(/[0-9]/);
+      expect(page.text.split(/\s+/).length).toBeLessThanOrEqual(28);
+    }
+    for (const word of [STORY.label, STORY.next, STORY.begin, STORY.skip]) expect(word).not.toMatch(/—/);
   });
 });
