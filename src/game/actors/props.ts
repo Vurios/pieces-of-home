@@ -33,8 +33,10 @@ export class PaperArrow {
   constructor() {
     const ink = new Mesh(new ShapeGeometry(arrowShape(0.62)), new MeshBasicMaterial({ color: "#2B2622", side: DoubleSide, transparent: true }));
     this.paper = new Mesh(new ShapeGeometry(arrowShape(0.5)), new MeshBasicMaterial({ color: "#F4ECDD", side: DoubleSide, transparent: true }));
-    ink.rotation.x = -Math.PI / 2;
-    this.paper.rotation.x = -Math.PI / 2;
+    // Lay the arrow flat with its tip on local +Z, the way surfaceMatrix aims
+    // "forward". (Flat on -PI/2 alone puts the tip on -Z: it pointed back at you.)
+    ink.rotation.set(-Math.PI / 2, 0, Math.PI);
+    this.paper.rotation.set(-Math.PI / 2, 0, Math.PI);
     this.paper.position.set(0, 0.004, 0.01);
     ink.renderOrder = 5;
     this.paper.renderOrder = 6;

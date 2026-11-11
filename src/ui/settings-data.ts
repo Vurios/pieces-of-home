@@ -16,6 +16,10 @@ export interface Settings {
   language: Language;
   exploreFreely: boolean;
   readAloud: boolean;
+  /** Show the short how-to-play tips. */
+  tips: boolean;
+  /** Tips already learned, so they do not show again. */
+  tipsDone: string[];
 }
 
 export const SETTINGS_KEY = "poh.settings.v1";
@@ -32,6 +36,8 @@ export function defaultSettings(): Settings {
     language: "en",
     exploreFreely: false,
     readAloud: false,
+    tips: true,
+    tipsDone: [],
   };
 }
 
@@ -63,5 +69,7 @@ export function reviveSettings(raw: unknown): Settings {
     language: pick(v["language"], ["en", "fil"] as const, d.language),
     exploreFreely: bool("exploreFreely", d.exploreFreely),
     readAloud: bool("readAloud", d.readAloud),
+    tips: bool("tips", d.tips),
+    tipsDone: Array.isArray(v["tipsDone"]) ? [...new Set((v["tipsDone"] as unknown[]).filter((x): x is string => typeof x === "string" && x.length < 24))].slice(0, 24) : [],
   };
 }

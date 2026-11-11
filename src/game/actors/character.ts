@@ -1,7 +1,7 @@
 import { type BufferGeometry, Group, Mesh, type Object3D, Vector3 } from "three";
 import type { ToonLibrary } from "../render/toon";
 import { damp } from "../world/sphere";
-import { Assembly, box, capsule, cone, cylinder, sphere, torus } from "./parts";
+import { Assembly, box, capsule, cone, cylinder, limb, sphere, torus } from "./parts";
 
 /**
  * Chunky chibi kids, built from simple shapes in code.
@@ -74,6 +74,10 @@ export class Character {
   private armR: Group;
   private legL: Group;
   private legR: Group;
+  private kneeL: Group;
+  private kneeR: Group;
+  private elbowL: Group;
+  private elbowR: Group;
   private eyes: Group[] = [];
   private brows: Group[] = [];
   /** Parts are painted with vertex colors and merged per joint: one draw call per joint. */
@@ -110,19 +114,32 @@ export class Character {
     this.hips = joint("hips", 0, 0.31, 0);
     this.body.add(this.hips);
 
-    // Legs.
+    // Legs: a thigh from the hip, a knee, and a shin that ends in a rolled cuff and a sneaker.
     this.legL = joint("legL", -0.085, 0, 0);
     this.legR = joint("legR", 0.085, 0, 0);
-    for (const leg of [this.legL, this.legR]) {
+    this.kneeL = joint("kneeL", 0, -0.135, 0);
+    this.kneeR = joint("kneeR", 0, -0.135, 0);
+    for (const [leg, knee] of [
+      [this.legL, this.kneeL],
+      [this.legR, this.kneeR],
+    ] as const) {
       this.hips.add(leg);
-      this.part(leg, capsule(0.12), p.legs, [0, -0.13, 0], [0.07, 0.122, 0.07]);
-      // A rolled cuff and a sock line, so the leg ends in clothing, not a tube.
-      this.part(leg, cylinder(14), p.legs, [0, -0.2, 0], [0.079, 0.035, 0.079]);
-      this.part(leg, cylinder(12), SOCK, [0, -0.235, 0], [0.058, 0.03, 0.058]);
-      // Rounded sneaker: a puffy upper, a pale sole and a toe cap.
-      this.part(leg, sphere("mid"), p.shoes, [0, -0.258, 0.03], [0.072, 0.052, 0.112]);
-      this.part(leg, box(0.03), SOLE, [0, -0.292, 0.032], [0.142, 0.036, 0.228]);
-      this.part(leg, sphere("low"), SOLE, [0, -0.276, 0.118], [0.058, 0.03, 0.042]);
+      leg.add(knee);
+      limb(this.assembly, leg, [0, 0.01, 0], [0, -0.135, 0], 0.068, p.legs);
+      limb(this.assembly, knee, [0, 0, 0], [0, -0.07, 0], 0.063, p.legs);
+      this.part(knee, cylinder(14), p.legs, [0, -0.066, 0], [0.076, 0.034, 0.076]);
+      this.part(knee, cylinder(12), SOCK, [0, -0.1, 0], [0.056, 0.03, 0.056]);
+      // Rounded sneaker: a puffy upper, a toe box, a pale sole and a toe cap, with two lace bars.
+      this.part(knee, sphere("mid"), p.shoes, [0, -0.122, 0.022], [0.07, 0.052, 0.1]);
+      this.part(knee, sphere("mid"), p.shoes, [0, -0.134, 0.08], [0.066, 0.042, 0.066]);
+      this.part(knee, box(0.03), SOLE, [0, -0.157, 0.032], [0.142, 0.036, 0.232]);
+      this.part(knee, sphere("low"), SOLE, [0, -0.141, 0.118], [0.058, 0.03, 0.042]);
+      for (const [z, y] of [
+        [0.035, -0.07],
+        [0.065, -0.075],
+      ] as const) {
+        this.part(knee, box(0.005), SOCK, [0, y, z], [0.058, 0.008, 0.012], [0.45, 0, 0]);
+      }
     }
 
     // Torso.
@@ -132,18 +149,24 @@ export class Character {
     // Hem, so the top reads as clothing.
     this.part(this.torso, cylinder(16), p.topDark, [0, 0.03, 0], [0.18, 0.05, 0.15]);
 
-    // Arms hang from the shoulders.
+    // Arms hang from the shoulders: an upper arm, an elbow, a forearm, a cuff and a mitten hand.
     this.armL = joint("armL", -0.2, 0.33, 0);
     this.armR = joint("armR", 0.2, 0.33, 0);
+    this.elbowL = joint("elbowL", 0, -0.105, 0);
+    this.elbowR = joint("elbowR", 0, -0.105, 0);
     const sleeve = id === "theo" ? "#F1E4CC" : p.top;
     const cuff = id === "theo" ? "#F1E4CC" : p.topDark;
-    for (const arm of [this.armL, this.armR]) {
+    for (const [arm, elbow] of [
+      [this.armL, this.elbowL],
+      [this.armR, this.elbowR],
+    ] as const) {
       this.torso.add(arm);
-      this.part(arm, capsule(0.16), sleeve, [0, -0.1, 0], [0.058, 0.098, 0.058]);
-      // Sleeve cuff, then a mitten hand with a little thumb.
-      this.part(arm, cylinder(12), cuff, [0, -0.185, 0], [0.063, 0.03, 0.063]);
-      this.part(arm, sphere("mid"), p.skin, [0, -0.238, 0.005], [0.06, 0.066, 0.056]);
-      this.part(arm, sphere("low"), p.skin, [arm === this.armL ? 0.04 : -0.04, -0.222, 0.035], [0.024, 0.03, 0.024]);
+      arm.add(elbow);
+      limb(this.assembly, arm, [0, 0.005, 0], [0, -0.105, 0], 0.056, sleeve);
+      limb(this.assembly, elbow, [0, 0, 0], [0, -0.07, 0], 0.052, sleeve);
+      this.part(elbow, cylinder(12), cuff, [0, -0.08, 0], [0.061, 0.03, 0.061]);
+      this.part(elbow, sphere("mid"), p.skin, [0, -0.132, 0.005], [0.058, 0.064, 0.054]);
+      this.part(elbow, sphere("low"), p.skin, [arm === this.armL ? 0.04 : -0.04, -0.117, 0.035], [0.024, 0.03, 0.024]);
     }
     // Rounded shoulders, so the arms grow out of the body.
     for (const side of [-1, 1]) this.part(this.torso, sphere("mid"), p.top, [side * 0.165, 0.315, 0], [0.075, 0.07, 0.075]);
@@ -271,9 +294,9 @@ export class Character {
         const book = new Group();
         this.part(book, box(0.01), "#C0573E", [0, 0, 0], [0.2, 0.26, 0.035]);
         this.part(book, box(0.005), "#F4ECDD", [0, 0, 0.014], [0.18, 0.24, 0.015]);
-        book.position.set(0, -0.26, 0.05);
+        book.position.set(0, -0.155, 0.05);
         book.rotation.set(-0.3, 0, 0);
-        this.armL.add(book);
+        this.elbowL.add(book);
         break;
       }
       case "theo": {
@@ -334,7 +357,7 @@ export class Character {
   /** Shows a small thing in the right hand for a personality idle. */
   private holdProp(kind: "pebble" | "screwdriver" | null): void {
     if (this.propInHand) {
-      this.armR.remove(this.propInHand);
+      this.elbowR.remove(this.propInHand);
       this.propInHand.traverse((o) => {
         if (o instanceof Mesh) o.geometry.dispose();
       });
@@ -347,9 +370,9 @@ export class Character {
       this.part(prop, cylinder(8), "#C0573E", [0, 0, 0], [0.022, 0.07, 0.022]);
       this.part(prop, cylinder(6), "#B9B4AA", [0, -0.07, 0], [0.008, 0.08, 0.008]);
     }
-    prop.position.set(0, -0.29, 0.04);
+    prop.position.set(0, -0.185, 0.04);
     this.assembly.flush();
-    this.armR.add(prop);
+    this.elbowR.add(prop);
     this.propInHand = prop;
   }
 
@@ -396,13 +419,20 @@ export class Character {
     const swing = moving ? (motion.running ? 0.95 : 0.62) * Math.min(1, pace) : 0;
     const breathe = reducedMotion ? 0 : Math.sin(this.time * 2.1) * 0.012;
 
-    // Legs and arms.
+    // Legs and arms. The leg swinging forward bends its knee to lift the foot;
+    // the leg on the ground stays nearly straight. Elbows bend more on a run.
     let legL = s * swing;
     let legR = -s * swing;
     let armL = -s * swing * 0.85;
     let armR = s * swing * 0.85;
     let armLz = 0.12;
     let armRz = -0.12;
+    const lift = moving ? (motion.running ? 1.4 : 0.95) * Math.min(1, pace) : 0;
+    let kneeL = 0.05 + Math.max(0, -c) * lift;
+    let kneeR = 0.05 + Math.max(0, c) * lift;
+    const bend = moving ? (motion.running ? -1.3 : -0.3) : -0.16;
+    let elbowL = bend - Math.max(0, s * swing) * 0.4;
+    let elbowR = bend - Math.max(0, -s * swing) * 0.4;
     let headX = 0;
     let headZ = 0;
     let headY = 0;
@@ -417,14 +447,20 @@ export class Character {
       armR = rising ? -2.2 : -1.0;
       armLz = 0.45;
       armRz = -0.45;
+      kneeL = rising ? 1.35 : 0.55;
+      kneeR = rising ? 0.45 : 0.3;
+      elbowL = -0.45;
+      elbowR = -0.45;
       bob = 0;
     }
 
     if (motion.carrying) {
-      armL = -1.15;
-      armR = -1.15;
-      armLz = -0.25;
-      armRz = 0.25;
+      armL = -0.85;
+      armR = -0.85;
+      armLz = -0.22;
+      armRz = 0.22;
+      elbowL = -0.75;
+      elbowR = -0.75;
     }
 
     // Personality idles.
@@ -432,8 +468,9 @@ export class Character {
       const q = Math.min(1, this.idleQuirk * 2.5) * Math.min(1, (3.6 - this.idleQuirk) * 2.5);
       switch (this.id) {
         case "remi":
-          armR = -1.35 * q;
+          armR = -1.0 * q;
           armRz = 0.35 * q;
+          elbowR = -0.16 - 0.9 * q;
           headX = 0.4 * q;
           if (this.propInHand) this.propInHand.rotation.y = this.time * 2;
           break;
@@ -442,18 +479,23 @@ export class Character {
           armR = -2.9 * q;
           armLz = 0.2 * q;
           armRz = -0.2 * q;
+          elbowL = -0.1;
+          elbowR = -0.1;
           headX = -0.25 * q;
           bob += 0.03 * q;
           break;
         case "lumi":
-          armL = -1.25 * q;
-          armR = (-1.05 + Math.sin(this.time * 9) * 0.12) * q;
+          armL = -0.8 * q;
+          elbowL = -0.16 - 1.0 * q;
+          armR = (-0.7 + Math.sin(this.time * 9) * 0.12) * q;
+          elbowR = -0.16 - 0.9 * q;
           armRz = 0.3 * q;
           headX = 0.3 * q;
           headZ = 0.15 * q;
           break;
         case "theo":
-          armR = -1.1 * q;
+          armR = -0.8 * q;
+          elbowR = -0.16 - 0.95 * q;
           armRz = 0.2 * q;
           headX = 0.25 * q;
           if (this.propInHand) this.propInHand.rotation.y = this.time * 14;
@@ -467,16 +509,23 @@ export class Character {
       if (this.action === "interact") {
         const k = Math.sin(Math.min(1, a / 0.6) * Math.PI);
         armR = -1.4 * k;
+        elbowR = -0.16 + 0.1 * k;
         headX = 0.3 * k;
       } else if (this.action === "emote") {
-        armR = -2.7;
-        armRz = -0.3 + Math.sin(a * 14) * 0.35;
+        // A wave: the arm up, the forearm rocking from the elbow.
+        armR = -2.5;
+        armRz = -0.35;
+        elbowR = -0.45 + Math.sin(a * 13) * 0.45;
       } else {
         armL = -2.8;
         armR = -2.8;
         armLz = 0.35;
         armRz = -0.35;
-        bob += Math.abs(Math.sin(a * 7)) * 0.22;
+        elbowL = -0.15;
+        elbowR = -0.15;
+        const hop = Math.abs(Math.sin(a * 7));
+        bob += hop * 0.22;
+        kneeL = kneeR = 0.6 * (1 - hop);
       }
     }
 
@@ -504,23 +553,37 @@ export class Character {
     }
     this.lastPhase = this.phase;
 
+    // Landing: the knees take the squash.
+    kneeL += this.squash * 2.4;
+    kneeR += this.squash * 2.4;
+
     const k = damp(18, dt);
     this.legL.rotation.x += (legL - this.legL.rotation.x) * k;
     this.legR.rotation.x += (legR - this.legR.rotation.x) * k;
+    this.kneeL.rotation.x += (kneeL - this.kneeL.rotation.x) * k;
+    this.kneeR.rotation.x += (kneeR - this.kneeR.rotation.x) * k;
+    this.elbowL.rotation.x += (elbowL - this.elbowL.rotation.x) * damp(14, dt);
+    this.elbowR.rotation.x += (elbowR - this.elbowR.rotation.x) * damp(14, dt);
     this.armL.rotation.x += (armL - this.armL.rotation.x) * k;
     this.armR.rotation.x += (armR - this.armR.rotation.x) * k;
     this.armL.rotation.z += (armLz - this.armL.rotation.z) * k;
     this.armR.rotation.z += (armRz - this.armR.rotation.z) * k;
     this.head.rotation.x += (headX - this.head.rotation.x) * damp(8, dt);
-    this.head.rotation.y += (headY - this.head.rotation.y) * damp(4, dt);
+    // Shoulders turn against the hips while walking; the head stays facing ahead.
+    // The torso is a child of the hips, so it undoes their turn and then some.
+    const twist = moving ? -s * (0.12 + (motion.running ? 0.1 : 0.06) * Math.min(1, pace)) : 0;
+    this.torso.rotation.y += (twist - this.torso.rotation.y) * k;
+    const facing = this.torso.rotation.y + (moving ? s * 0.12 : 0);
+    this.head.rotation.y += (headY - facing - this.head.rotation.y) * damp(moving ? 10 : 4, dt);
     this.head.rotation.z += (headZ - this.head.rotation.z) * damp(8, dt);
 
     // Lean into a run. A little sway while walking.
     const wantLean = moving ? (motion.running ? 0.22 : 0.08) * Math.min(1, pace) : 0;
     this.lean += (wantLean - this.lean) * damp(6, dt);
     this.torso.rotation.x = this.lean;
-    this.torso.rotation.z = moving ? s * 0.04 : 0;
+    this.torso.rotation.z = moving ? s * 0.035 : 0;
     this.hips.rotation.y = moving ? s * 0.12 : 0;
+    this.hips.rotation.z = moving ? c * 0.025 : 0;
 
     // Squash on landing, springing back with a little overshoot.
     if (motion.sinceLanding < 0.4 && motion.landingSpeed > 2) {

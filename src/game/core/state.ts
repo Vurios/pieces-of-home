@@ -18,10 +18,12 @@ export interface GameState {
   delivered: string[];
   /** Notebook stamps earned so far. */
   stamps: string[];
+  /** Small story beats that are done, like "seen-notebook". Older saves start empty. */
+  flags: string[];
 }
 
 export function createInitialState(): GameState {
-  return { version: SAVE_VERSION, world: "home", miloStage: 0, carrying: null, delivered: [], stamps: [] };
+  return { version: SAVE_VERSION, world: "home", miloStage: 0, carrying: null, delivered: [], stamps: [], flags: [] };
 }
 
 function isStringArray(value: unknown): value is string[] {
@@ -43,6 +45,7 @@ export function reviveState(raw: unknown): GameState {
     carrying: typeof value["carrying"] === "string" && value["carrying"].length < 64 ? value["carrying"] : null,
     delivered: isStringArray(value["delivered"]) ? [...new Set(value["delivered"])] : [],
     stamps: isStringArray(value["stamps"]) ? [...new Set(value["stamps"])] : [],
+    flags: isStringArray(value["flags"]) ? [...new Set(value["flags"])].slice(0, 64) : [],
   };
 }
 
@@ -66,6 +69,7 @@ export class StateStore {
       ...this.state,
       delivered: [...this.state.delivered],
       stamps: [...this.state.stamps],
+      flags: [...this.state.flags],
     };
     change(draft);
     this.state = draft;

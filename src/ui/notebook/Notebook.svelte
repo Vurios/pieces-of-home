@@ -1,19 +1,24 @@
 <script lang="ts">
   import { audio } from "../../audio/audio";
-  import { COVER, SPREADS, factText, isComplete, spreadYear } from "../../content/notebook";
+  import { COVER, SPREADS, factText, isComplete, spreadYear, type MachineSpread } from "../../content/notebook";
   import type { GameState } from "../../game/core/state";
   import { DRAWINGS } from "../drawing/machines";
   import Sketch from "../drawing/Sketch.svelte";
   import { gamepadNav, trap } from "../focus";
   import Icon from "../Icon.svelte";
   import { settings, t } from "../settings.svelte";
+  import Envelope from "./Envelope.svelte";
   import Polaroid from "./Polaroid.svelte";
   import Underline from "./Underline.svelte";
 
   /**
-   * Dad's notebook: a two-page spread over the dimmed world. The first spread
-   * is the dedication and contents; each one after is a machine. A page is
-   * a pencil sketch until its chapter is done, then it is inked in.
+   * Dad's notebook: a cloth-bound hardcover lying open over the dimmed world.
+   * The first spread is the dedication and contents; each one after is a
+   * machine. A page stays in pencil, with Dad's sealed letter clipped to it,
+   * until its chapter is done. Then it is inked in.
+   *
+   * Turning a page is a real leaf: its front shows the page you are leaving
+   * and its back shows the page you are turning to, so nothing pops.
    */
   interface Props {
     game: Readonly<GameState>;
@@ -24,8 +29,14 @@
   let { game, page, onclose, onpage }: Props = $props();
 
   const total = SPREADS.length + 1;
+  const FLIP_MS = 760;
+  const OPEN_MS = 1150;
+  const narrowQuery = typeof window !== "undefined" ? window.matchMedia("(max-width: 820px)") : null;
+
   let shown = $state(0);
-  let turning = $state<"next" | "prev" | null>(null);
+  let flip = $state<{ from: number; to: number; dir: 1 | -1 } | null>(null);
+  let slide = $state<1 | -1 | null>(null);
+  let opening = $state(!settings.reducedMotion && !narrowQuery?.matches);
   let reading = $state(false);
   let book: HTMLElement | null = $state(null);
   let dragX: number | null = null;
@@ -34,13 +45,30 @@
     shown = Math.max(0, Math.min(total - 1, page));
   });
 
-  const spread = $derived(shown === 0 ? null : SPREADS[shown - 1]!);
-  const inked = $derived(spread ? settings.value.exploreFreely || isComplete(spread, game) : true);
-  const pageLabel = $derived(t("notebook.page", { a: shown * 2 + 1, b: shown * 2 + 2, n: total * 2 }));
+  $effect(() => {
+    if (!opening) return;
+    const id = window.setTimeout(() => (opening = false), OPEN_MS);
+    return () => window.clearTimeout(id);
+  });
 
-  function turn(dir: 1 | -1): void {
-    const next = shown + dir;
-    if (next < 0 || next >= total || turning) return;
+  // While a leaf turns, the page under each half is whichever one it reveals.
+  const leftIndex = $derived(flip ? (flip.dir > 0 ? flip.from : flip.to) : shown);
+  const rightIndex = $derived(flip ? (flip.dir > 0 ? flip.to : flip.from) : shown);
+  const pageLabel = $derived(t("notebook.page", { a: shown * 2 + 1, b: shown * 2 + 2, n: total * 2 }));
+  const current = $derived(shown === 0 ? null : SPREADS[shown - 1]!);
+  const currentInked = $derived(current ? inkedFor(current) : true);
+
+  function inkedFor(spread: MachineSpread): boolean {
+    return settings.value.exploreFreely || isComplete(spread, game);
+  }
+
+  /** Extra classes for a page, so a copy on a turning leaf looks exactly like the real one. */
+  function kind(index: number): string {
+    if (index === 0) return "cover";
+    return inkedFor(SPREADS[index - 1]!) ? "" : "pencil-page";
+  }
+
+  function show(next: number, dir: 1 | -1): void {
     stopReading();
     audio.ui("page");
     if (settings.reducedMotion) {
@@ -48,20 +76,31 @@
       onpage(next);
       return;
     }
-    turning = dir > 0 ? "next" : "prev";
-    // Swap the words at the middle of the turn, when the leaf covers them.
-    window.setTimeout(() => {
+    if (narrowQuery?.matches) {
+      slide = dir;
       shown = next;
       onpage(next);
-    }, 260);
-    window.setTimeout(() => (turning = null), 540);
+      window.setTimeout(() => (slide = null), 380);
+      return;
+    }
+    flip = { from: shown, to: next, dir };
+    shown = next;
+    onpage(next);
+    window.setTimeout(() => (flip = null), FLIP_MS);
+  }
+
+  function turn(dir: 1 | -1): void {
+    const next = shown + dir;
+    if (next < 0 || next >= total || flip) return;
+    // No waiting for the cover: a turn while it opens just lands it open.
+    opening = false;
+    show(next, dir);
   }
 
   function goTo(index: number): void {
-    if (index === shown) return;
-    audio.ui("page");
-    shown = index;
-    onpage(index);
+    if (index === shown || flip) return;
+    opening = false;
+    show(index, index > shown ? 1 : -1);
   }
 
   function onkey(event: KeyboardEvent): void {
@@ -79,7 +118,7 @@
   }
 
   function down(event: PointerEvent): void {
-    if ((event.target as HTMLElement).closest("a, button")) return;
+    if ((event.target as HTMLElement).closest("a, button, summary")) return;
     dragX = event.clientX;
   }
 
@@ -92,13 +131,13 @@
   }
 
   function pageText(): string {
-    if (!spread) return `${COVER.title}. ${COVER.dedication} ${COVER.signature}.`;
-    const parts = [spread.nickname, spread.name, `${t("notebook.forWhat")}. ${spread.forWhat}`];
-    if (inked) {
-      if (spread.learned.length) parts.push(`${t("notebook.learned")}. ${spread.learned.map((f) => factText(f)).join(" ")}`);
-      if (spread.thenNow.length) parts.push(`${t("notebook.thenNow")}. ${spread.thenNow.map((f) => factText(f)).join(" ")}`);
+    if (!current) return `${COVER.title}. ${COVER.dedication} ${COVER.signature}.`;
+    const parts = [current.nickname, current.name, `${t("notebook.forWhat")}. ${current.forWhat}`];
+    if (currentInked) {
+      if (current.learned.length) parts.push(`${t("notebook.learned")}. ${current.learned.map((f) => factText(f)).join(" ")}`);
+      if (current.thenNow.length) parts.push(`${t("notebook.thenNow")}. ${current.thenNow.map((f) => factText(f)).join(" ")}`);
     }
-    parts.push(`${t("notebook.dad")}. ${spread.dadNote}`);
+    parts.push(`${t("notebook.dad")}. ${current.dadNote}`);
     return parts.join(". ");
   }
 
@@ -128,600 +167,1261 @@
       stopReading();
     };
   });
+
+  const TILTS = [-2.4, 1.8, -1.2, 2.6, -1.8];
+  const TAPES = ["amber", "sage", "sky"] as const;
 </script>
+
+{#snippet coverLeft()}
+  <div class="plate">
+    <div class="plate-lamp">
+      <span class="glow" aria-hidden="true"></span>
+      <Sketch id="cover-lamp" prims={DRAWINGS.lamp} seed={11} color="var(--dad-ink)" />
+    </div>
+    <h2 class="plate-title">{COVER.title}</h2>
+    <span class="plate-rule" aria-hidden="true"><i></i></span>
+  </div>
+  <p class="dedication">{COVER.dedication}</p>
+  <p class="signature">{COVER.signature}</p>
+{/snippet}
+
+{#snippet coverRight()}
+  <h2 class="toc-title">{COVER.contentsTitle}</h2>
+  <ol class="toc">
+    {#each SPREADS as s, i (s.id)}
+      {@const done = isComplete(s, game)}
+      <li>
+        <button type="button" onclick={() => goTo(i + 1)}>
+          <span class="box" class:done aria-hidden="true">
+            {#if done}<svg viewBox="0 0 24 24"><path d="M4 13 C 6 15, 8 17, 9.6 19.4 C 12.6 13.4, 16 8.6, 21 4.2" /></svg>{/if}
+          </span>
+          <span class="nick">{s.nickname}</span>
+          <span class="dots" aria-hidden="true"></span>
+          <span class="world">{s.world}</span>
+          <span class="pg" aria-hidden="true">{(i + 1) * 2 + 1}</span>
+          <span class="sr-only">{done ? "Done" : ""}</span>
+        </button>
+      </li>
+    {/each}
+  </ol>
+  <h3 class="memories-title">{COVER.memoriesTitle}</h3>
+  <div class="memories">
+    {#each [0, 1, 2] as i (i)}<div class="mem" aria-hidden="true"><Envelope empty tilt={[-3, 2, -1][i]} /></div>{/each}
+  </div>
+  <p class="memories-note">{COVER.memoriesEmpty}</p>
+{/snippet}
+
+{#snippet machineLeft(spread: MachineSpread, index: number)}
+  {@const inked = inkedFor(spread)}
+  {@const year = spreadYear(spread)}
+  <header class="head">
+    <p class="kicker"><span>{spread.world}</span>{#if year}<span class="sep" aria-hidden="true"></span><span>{year}</span>{/if}</p>
+    <h2 class="nick-title" class:pencil={!inked}>{spread.nickname}</h2>
+    <Underline width={210} seed={index * 5} color={inked ? "var(--amber)" : "rgba(140,129,115,0.45)"} />
+    <p class="real">{spread.name}</p>
+  </header>
+  <figure class="drawing">
+    <Sketch id={`draw-${spread.id}`} prims={DRAWINGS[spread.drawing]} seed={20 + index} pencil={!inked} color="var(--dad-ink)" label={`Dad's sketch of ${spread.name}`} />
+    <figcaption>{t("notebook.model")}</figcaption>
+  </figure>
+  <section class="for">
+    <h3 class="label">{spread.world === "Home" ? t("notebook.forWhatHome") : t("notebook.forWhat")}</h3>
+    <p>{spread.forWhat}</p>
+  </section>
+  <aside class="note">
+    <span class="note-tape" aria-hidden="true"></span>
+    <h3 class="sr-only">{t("notebook.dad")}</h3>
+    <p>{spread.dadNote}</p>
+    <p class="note-sig">{COVER.signature}</p>
+  </aside>
+{/snippet}
+
+{#snippet machineRight(spread: MachineSpread, index: number)}
+  {#if inkedFor(spread)}
+    {#if spread.images.length > 0}
+      <div class="photos" class:two={spread.images.length > 1}>
+        {#each spread.images as image, i (image.id)}
+          <Polaroid {image} tilt={i % 2 ? 2.2 : -1.8} tape={TAPES[(index + i) % 3]} strips={spread.images.length > 1 ? "middle" : "corners"} />
+        {/each}
+      </div>
+    {/if}
+    {#if spread.place}
+      <p class="place"><Icon name="pin" size={18} /> <span>{spread.place.kid}</span></p>
+    {/if}
+    {#if spread.learned.length}
+      <section class="learned">
+        <h3 class="label">{t("notebook.learned")}</h3>
+        <ul class="facts">
+          {#each spread.learned as f (f.id)}
+            <li>{factText(f)} <a class="src" href={f.sourceUrl} target="_blank" rel="noopener noreferrer" aria-label={`${t("notebook.source")}: ${f.sourceTitle}`}>{t("notebook.source")}</a></li>
+          {/each}
+        </ul>
+      </section>
+    {/if}
+    {#if spread.thenNow.length}
+      <section class="now">
+        <h3 class="label">{t("notebook.thenNow")}</h3>
+        {#each spread.thenNow as f (f.id)}<p>{factText(f)}</p>{/each}
+      </section>
+    {/if}
+    {#if spread.deeper.length}
+      <details class="deeper">
+        <summary>{t("notebook.deeper")}</summary>
+        {#each spread.deeper as f (f.id)}
+          <p>{f.kid}{f.deeper ? ` ${f.deeper}` : ""} <a href={f.sourceUrl} target="_blank" rel="noopener noreferrer">{f.sourceTitle}</a></p>
+        {/each}
+      </details>
+    {/if}
+    {#if spread.id === "lamp"}
+      <p class="stamp-mark" aria-label="Stamp: Left on. Still shining.">Left on.<br />Still shining.</p>
+      <section class="letters">
+        <h3 class="label">{t("notebook.letters")}</h3>
+        <p class="help">{t("notebook.lettersHelp")}</p>
+        <ul>
+          {#each SPREADS.filter((x) => x.id !== "lamp") as s, i (s.id)}
+            <li><Envelope to={s.letterTo} world={s.world} done={isComplete(s, game)} doneLabel={t("notebook.delivered")} tilt={TILTS[i % 5]! * 0.6} /></li>
+          {/each}
+        </ul>
+      </section>
+    {/if}
+  {:else}
+    <div class="pending">
+      {#if spread.images.length > 0}
+        <div class="corners" class:two={spread.images.length > 1} aria-hidden="true">
+          {#each spread.images as image (image.id)}<span class="slot"><i></i><i></i><i></i><i></i></span>{/each}
+        </div>
+      {/if}
+      <div class="waiting">
+        <div class="clipped">
+          <span class="clip-wire" aria-hidden="true"></span>
+          <Envelope to={spread.letterTo} world={spread.world} tilt={-3} />
+        </div>
+        <p class="pencil-note">{t("notebook.pencil")}</p>
+      </div>
+      <h3 class="label ghost-label">{t("notebook.learned")}</h3>
+      <div class="ghost-lines" aria-hidden="true">
+        {#each [92, 78, 86, 54] as w, i (i)}<span style:width={`${w}%`}></span>{/each}
+      </div>
+    </div>
+  {/if}
+{/snippet}
+
+{#snippet face(index: number, side: "left" | "right")}
+  <div class="scroll">
+    {#if index === 0}
+      {#if side === "left"}{@render coverLeft()}{:else}{@render coverRight()}{/if}
+    {:else if side === "left"}
+      {@render machineLeft(SPREADS[index - 1]!, index)}
+    {:else}
+      {@render machineRight(SPREADS[index - 1]!, index)}
+    {/if}
+  </div>
+  <span class="folio" aria-hidden="true">{index * 2 + (side === "left" ? 1 : 2)}</span>
+{/snippet}
 
 <div class="notebook" role="dialog" aria-modal="true" aria-labelledby="nb-title" tabindex="-1" use:trap={{ initial: ".nav.next" }} onkeydown={onkey} bind:this={book}>
   <h1 id="nb-title" class="sr-only">{t("notebook.label")}</h1>
   <p class="sr-only" aria-live="polite">{pageLabel}</p>
 
-  <div class="spread" class:turn-next={turning === "next"} class:turn-prev={turning === "prev"} onpointerdown={down} onpointerup={up} role="presentation">
-    <span class="rings" aria-hidden="true"></span>
-    <span class="leaf" aria-hidden="true"></span>
+  <div class="book" class:opening onpointerdown={down} onpointerup={up} role="presentation">
+    <span class="board l" aria-hidden="true"></span>
+    <span class="board r" aria-hidden="true"></span>
+    <span class="band" aria-hidden="true"></span>
 
-    {#if !spread}
-      <!-- Cover: Dad's dedication, and the contents. -->
-      <article class="page left cover">
-        <h2 class="hand big">{COVER.title}</h2>
-        <Underline width={220} seed={3} />
-        <div class="lamp-sketch"><Sketch id="cover-lamp" prims={DRAWINGS.lamp} seed={11} /></div>
-        <p class="dedication hand">{COVER.dedication}</p>
-        <p class="signature hand">{COVER.signature}</p>
-      </article>
-      <article class="page right">
-        <h2 class="hand">{COVER.contentsTitle}</h2>
-        <Underline width={240} seed={8} />
-        <ol class="contents">
-          {#each SPREADS as s, i (s.id)}
-            {@const done = isComplete(s, game)}
-            <li>
-              <button type="button" onclick={() => goTo(i + 1)}>
-                <span class="tick" class:done aria-hidden="true"></span>
-                <span class="nick hand">{s.nickname}</span>
-                <span class="tag">{s.world}</span>
-                <span class="sr-only">{done ? "Done" : ""}</span>
-              </button>
-            </li>
-          {/each}
-        </ol>
-        <h3 class="hand">{COVER.memoriesTitle}</h3>
-        <div class="memories">
-          {#each [0, 1, 2] as i (i)}<span class="envelope" aria-hidden="true"></span>{/each}
-          <p>{COVER.memoriesEmpty}</p>
+    <div class="spread" class:slide-next={slide === 1} class:slide-prev={slide === -1}>
+      {#key leftIndex}
+        <article class="page left {kind(leftIndex)}">{@render face(leftIndex, "left")}</article>
+      {/key}
+      {#key rightIndex}
+        <article class="page right {kind(rightIndex)}">{@render face(rightIndex, "right")}</article>
+      {/key}
+      <span class="gutter" aria-hidden="true"></span>
+
+      {#if flip}
+        <span class="shade" aria-hidden="true"></span>
+        <div class="leaf" class:next={flip.dir > 0} class:prev={flip.dir < 0} aria-hidden="true" inert>
+          {#if flip.dir > 0}
+            <div class="side front page right {kind(flip.from)}">{@render face(flip.from, "right")}</div>
+            <div class="side back page left {kind(flip.to)}">{@render face(flip.to, "left")}</div>
+          {:else}
+            <div class="side front page left {kind(flip.from)}">{@render face(flip.from, "left")}</div>
+            <div class="side back page right {kind(flip.to)}">{@render face(flip.to, "right")}</div>
+          {/if}
         </div>
-      </article>
-    {:else}
-      {@const year = spreadYear(spread)}
-      <article class="page left">
-        <header class="title">
-          <span class="tag">{spread.world}{year ? ` · ${year}` : ""}</span>
-          <h2 class="hand">{spread.nickname}</h2>
-          <Underline width={200} seed={shown * 5} color={inked ? "var(--amber)" : "rgba(140,129,115,0.5)"} />
-          <p class="real">{spread.name}</p>
-        </header>
-        <div class="drawing">
-          <Sketch id={`draw-${spread.id}`} prims={DRAWINGS[spread.drawing]} seed={20 + shown} pencil={!inked} label={`Dad's sketch of ${spread.name}`} />
-          <span class="model tag">{t("notebook.model")}</span>
+      {/if}
+    </div>
+
+    {#if opening}
+      <!-- The cover swings open; its inside is the left page you are about to read. -->
+      <div class="cover-leaf" aria-hidden="true" inert>
+        <div class="side front outside">
+          <span class="emboss">
+            <Sketch id="cover-emboss" prims={DRAWINGS.lamp} seed={4} color="rgba(255, 233, 196, 0.55)" />
+            <span>{COVER.title}</span>
+          </span>
         </div>
-        <section>
-          <h3>{spread.world === "Home" ? t("notebook.forWhatHome") : t("notebook.forWhat")}</h3>
-          <p>{spread.forWhat}</p>
-        </section>
-        <aside class="dad">
-          <h3 class="sr-only">{t("notebook.dad")}</h3>
-          <p class="hand">{spread.dadNote}</p>
-        </aside>
-      </article>
-      <article class="page right" class:pencil={!inked}>
-        {#if inked}
-          {#if spread.images.length > 0}
-            <div class="photos" class:two={spread.images.length > 1}>
-              {#each spread.images as image, i (image.id)}
-                <Polaroid {image} tilt={i % 2 ? 2.4 : -2.2} />
-              {/each}
-            </div>
-          {/if}
-          {#if spread.place}
-            <p class="place"><span class="tag">{spread.world}</span> {spread.place.kid}</p>
-          {/if}
-          {#if spread.learned.length}
-            <section>
-              <h3>{t("notebook.learned")}</h3>
-              <ul class="facts">
-                {#each spread.learned as f (f.id)}
-                  <li>{factText(f)} <a class="src" href={f.sourceUrl} target="_blank" rel="noopener noreferrer" aria-label={`${t("notebook.source")}: ${f.sourceTitle}`}>{t("notebook.source")}</a></li>
-                {/each}
-              </ul>
-            </section>
-          {/if}
-          {#if spread.thenNow.length}
-            <section class="then-now">
-              <h3>{t("notebook.thenNow")}</h3>
-              {#each spread.thenNow as f (f.id)}<p>{factText(f)}</p>{/each}
-            </section>
-          {/if}
-          {#if spread.deeper.length}
-            <details class="deeper">
-              <summary>{t("notebook.deeper")}</summary>
-              {#each spread.deeper as f (f.id)}
-                <p>{f.kid}{f.deeper ? ` ${f.deeper}` : ""} <a href={f.sourceUrl} target="_blank" rel="noopener noreferrer">{f.sourceTitle}</a></p>
-              {/each}
-            </details>
-          {/if}
-          {#if spread.id === "lamp"}
-            <p class="stamp-mark" aria-label="Stamp: Left on. Still shining.">LEFT ON.<br />STILL SHINING.</p>
-            <section class="letters">
-              <h3>{t("notebook.letters")}</h3>
-              <p class="help">{t("notebook.lettersHelp")}</p>
-              <ul>
-                {#each SPREADS.filter((x) => x.id !== "lamp") as s, i (s.id)}
-                  {@const done = isComplete(s, game)}
-                  <li class="letter" class:done style:--tilt={`${[-2, 1.5, -1, 2.2, -1.6][i % 5]}deg`}>
-                    <span class="flap" aria-hidden="true"></span>
-                    <span class="to hand">{s.letterTo}</span>
-                    <span class="tag">{s.world}</span>
-                    {#if done}<span class="posted">{t("notebook.delivered")}</span>{/if}
-                  </li>
-                {/each}
-              </ul>
-            </section>
-          {/if}
-        {:else}
-          <p class="pencil-note hand">{t("notebook.pencil")}</p>
-          <div class="ghosts" aria-hidden="true">
-            {#each spread.images as image (image.id)}<span class="ghost"></span>{/each}
-          </div>
-        {/if}
-      </article>
+        <div class="side back inside">
+          <div class="page left {kind(shown)}">{@render face(shown, "left")}</div>
+        </div>
+      </div>
     {/if}
   </div>
 
   <div class="bar">
-    <button type="button" class="nav prev" onclick={() => turn(-1)} disabled={shown === 0} aria-label={t("notebook.prev")}><Icon name="left" size={30} /></button>
+    <button type="button" class="nav prev" onclick={() => turn(-1)} disabled={shown === 0} aria-label={t("notebook.prev")}><Icon name="left" size={26} /></button>
     <span class="clip" aria-hidden="true">{shown + 1} / {total}</span>
+    <button type="button" class="nav next" onclick={() => turn(1)} disabled={shown === total - 1} aria-label={t("notebook.next")}><Icon name="right" size={26} /></button>
     {#if settings.value.readAloud}
-      <button type="button" class="btn quiet read" onclick={readAloud}><Icon name="speaker" size={22} /> {reading ? t("notebook.stopReading") : t("notebook.readAloud")}</button>
+      <span class="divider" aria-hidden="true"></span>
+      <button type="button" class="read" onclick={readAloud}><Icon name="speaker" size={22} /> <span>{reading ? t("notebook.stopReading") : t("notebook.readAloud")}</span></button>
     {/if}
-    <button type="button" class="nav next" onclick={() => turn(1)} disabled={shown === total - 1} aria-label={t("notebook.next")}><Icon name="right" size={30} /></button>
-    <button type="button" class="nav close" onclick={onclose} aria-label={t("notebook.close")}><Icon name="close" size={26} /></button>
+    <span class="divider" aria-hidden="true"></span>
+    <button type="button" class="nav close" onclick={onclose} aria-label={t("notebook.close")}><Icon name="close" size={22} /></button>
   </div>
 </div>
 
 <style>
+  /* ---------- The book ---------- */
   .notebook {
+    --flip: 760ms;
+    --margin: 13px;
+    /* Darker cousins of amber and pencil, for small text on cream (4.5:1 or better). */
+    --amber-ink: #8f4c10;
+    --pencil-ink: #6b6258;
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.31 0 0 0 0 0.16 0.22 0 0 0 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
     position: fixed;
     inset: 0;
     display: grid;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: minmax(0, 1fr) auto;
     justify-items: center;
     align-items: center;
-    padding: max(20px, 4vh) 16px 16px;
+    gap: 16px;
+    padding: max(18px, 3vh) 20px max(16px, 2.4vh);
     pointer-events: auto;
-    background: rgba(20, 14, 26, 0.25);
-    animation: lift 0.45s var(--ease-spring);
+    background: radial-gradient(ellipse at 50% 45%, rgba(20, 16, 36, 0.15), rgba(10, 8, 22, 0.55));
+    perspective: 2400px;
   }
-  .spread {
+  .book {
     position: relative;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    width: min(1180px, 100%);
-    height: min(740px, calc(100vh - 140px));
-    perspective: 2200px;
-    touch-action: pan-y;
-    filter: drop-shadow(0 26px 30px rgba(10, 6, 14, 0.5));
+    width: min(1200px, 100%);
+    height: min(760px, 100%);
+    animation: lift 0.5s var(--ease-out) both;
+    transform-style: preserve-3d;
   }
-  .page {
-    position: relative;
-    overflow-y: auto;
-    padding: 34px 38px 30px;
-    background-color: var(--paper-light);
-    background-image:
-      linear-gradient(var(--grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-    background-size: 20px 20px;
-    color: var(--ink);
-    line-height: 1.5;
-  }
-  .page.left {
-    border-radius: 10px 2px 2px 10px;
-    box-shadow: inset -26px 0 30px -24px rgba(60, 40, 20, 0.45);
-  }
-  .page.right {
-    border-radius: 2px 10px 10px 2px;
-    box-shadow: inset 26px 0 30px -24px rgba(60, 40, 20, 0.45);
-  }
-  /* The wire binding down the middle. */
-  .rings {
-    position: absolute;
-    left: 50%;
-    top: 22px;
-    bottom: 22px;
-    width: 26px;
-    margin-left: -13px;
-    z-index: 3;
-    pointer-events: none;
-    background: radial-gradient(ellipse 11px 6px at 50% 50%, transparent 55%, #7d756b 60%, #b9b2a6 72%, transparent 76%) 0 0 / 26px 34px repeat-y;
-  }
-  /* A blank leaf that sweeps over the spread while the words change. */
-  .leaf {
+  /* Cloth boards, deep green like the lamp's shade, with a fine weave. */
+  .board {
     position: absolute;
     top: 0;
     bottom: 0;
     width: 50%;
-    z-index: 4;
-    pointer-events: none;
-    background: var(--paper-light);
-    backface-visibility: hidden;
-    opacity: 0;
+    background:
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 3px),
+      linear-gradient(165deg, #3a5f52, #23403a 70%, #1e3832);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 -3px 8px rgba(0, 0, 0, 0.3),
+      0 40px 60px -30px rgba(6, 4, 14, 0.75),
+      0 16px 26px -14px rgba(6, 4, 14, 0.55);
   }
-  .turn-next .leaf {
-    left: 50%;
-    transform-origin: left center;
-    animation: leaf-next 0.54s cubic-bezier(0.45, 0.05, 0.3, 1);
-  }
-  .turn-prev .leaf {
+  .board.l {
     left: 0;
-    transform-origin: right center;
-    animation: leaf-prev 0.54s cubic-bezier(0.45, 0.05, 0.3, 1);
+    border-radius: 16px 5px 5px 16px;
   }
-  @keyframes leaf-next {
-    0% { opacity: 1; transform: rotateY(0deg); filter: brightness(1); }
-    50% { filter: brightness(0.8); }
-    100% { opacity: 1; transform: rotateY(-180deg); filter: brightness(1); }
+  .board.r {
+    right: 0;
+    border-radius: 5px 16px 16px 5px;
   }
-  @keyframes leaf-prev {
-    0% { opacity: 1; transform: rotateY(0deg); }
-    100% { opacity: 1; transform: rotateY(180deg); }
+  /* The elastic band that keeps it shut, resting along the back board. */
+  .band {
+    position: absolute;
+    top: -3px;
+    bottom: -3px;
+    right: 30px;
+    width: 9px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, #1b1714, #3a312a 45%, #221c18);
+    box-shadow: 1px 0 2px rgba(0, 0, 0, 0.35);
+    z-index: 0;
   }
-  @keyframes lift {
-    from { transform: translateY(40px) rotate(1deg); opacity: 0; }
+  .spread {
+    position: absolute;
+    inset: var(--margin);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    perspective: 2600px;
+    transform-style: preserve-3d;
+    touch-action: pan-y;
+    /* The page block's edge: a few sheets peeking out below. */
+    border-radius: 6px;
+    box-shadow:
+      0 1px 0 #efe6d3,
+      0 2px 0 #e2d6bd,
+      0 3px 0 #efe6d3,
+      0 4px 0 #d8cab0,
+      0 6px 10px -2px rgba(10, 8, 6, 0.35);
   }
-  .hand {
-    font-family: var(--hand);
-  }
-  h2 {
-    margin: 0;
-    font: 700 2rem/1.1 var(--hand);
-  }
-  h2.big {
-    font-size: 2.6rem;
-  }
-  h3 {
-    margin: 16px 0 4px;
-    font: 700 0.8rem/1 var(--label);
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    color: var(--clay-deep);
-  }
-  .page :global(h3.hand) {
-    font: 700 1.4rem/1.1 var(--hand);
-    letter-spacing: 0;
-    text-transform: none;
+
+  /* ---------- Paper ---------- */
+  .page {
+    position: relative;
+    overflow: hidden;
     color: var(--ink);
-    margin-top: 24px;
+    line-height: 1.5;
+    background-color: #fbf6ea;
   }
+  .page.left {
+    border-radius: 6px 0 0 6px;
+    background-image:
+      var(--grain),
+      linear-gradient(90deg, rgba(120, 90, 40, 0.06) 0, transparent 7%, transparent 80%, rgba(110, 80, 40, 0.1) 93%, rgba(70, 50, 24, 0.3) 100%);
+  }
+  .page.right {
+    border-radius: 0 6px 6px 0;
+    background-image:
+      var(--grain),
+      linear-gradient(270deg, rgba(120, 90, 40, 0.06) 0, transparent 7%, transparent 80%, rgba(110, 80, 40, 0.1) 93%, rgba(70, 50, 24, 0.3) 100%);
+  }
+  /* A soft highlight where the paper curves up out of the gutter. */
+  .page.left::after,
+  .page.right::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 26px;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255, 252, 240, 0.5), transparent);
+  }
+  .page.left::after {
+    right: 16px;
+  }
+  .page.right::after {
+    left: 16px;
+  }
+  .gutter {
+    position: absolute;
+    top: 18px;
+    bottom: 18px;
+    left: 50%;
+    width: 1px;
+    background: repeating-linear-gradient(to bottom, rgba(120, 96, 60, 0.5) 0 10px, transparent 10px 22px);
+    pointer-events: none;
+  }
+  .scroll {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 38px 46px 54px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(98, 87, 77, 0.3) transparent;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent);
+  }
+  .page.left .scroll {
+    padding-right: 54px;
+  }
+  .page.right .scroll {
+    padding-left: 54px;
+  }
+  .folio {
+    position: absolute;
+    bottom: 16px;
+    font: italic 400 0.85rem/1 var(--serif);
+    color: #6f665b;
+  }
+  .page.left .folio {
+    left: 26px;
+  }
+  .page.right .folio {
+    right: 26px;
+  }
+
+  /* ---------- Type on the page ---------- */
   p {
     margin: 0 0 8px;
   }
-  .title .tag {
-    margin-bottom: 8px;
+  .label {
+    margin: 22px 0 8px;
+    font: 700 0.72rem/1 var(--read);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--clay-deep);
   }
-  .real {
-    margin-top: 4px;
-    color: var(--ink-soft);
-    font-size: 0.95rem;
-  }
-  .drawing {
-    position: relative;
-    margin: 12px auto 0;
-    max-width: 380px;
-  }
-  .model {
-    position: absolute;
-    right: 0;
-    bottom: -6px;
-    transform: rotate(-3deg);
-  }
-  .dad {
-    margin-top: 18px;
-    padding: 10px 14px 6px;
-    background: rgba(242, 165, 65, 0.16);
-    border-left: 3px solid var(--amber);
-    transform: rotate(-0.7deg);
-  }
-  .dad p {
-    font-size: 1.25rem;
-    line-height: 1.35;
-  }
-  .cover {
-    text-align: center;
-    display: grid;
-    justify-items: center;
-    align-content: center;
-  }
-  .lamp-sketch {
-    width: min(300px, 80%);
-    margin: 16px 0;
-  }
-  .dedication {
-    font-size: 1.45rem;
-    line-height: 1.35;
-    max-width: 18em;
-  }
-  .signature {
-    font-size: 1.6rem;
-    font-weight: 700;
-    align-self: end;
-    justify-self: end;
-    margin-right: 12%;
-    transform: rotate(-4deg);
-  }
-  .contents {
-    list-style: none;
-    margin: 12px 0 0;
-    padding: 0;
-    display: grid;
-    gap: 4px;
-  }
-  .contents button {
+  .kicker {
     display: flex;
     align-items: center;
+    gap: 10px;
+    margin: 0 0 10px;
+    font: 700 0.72rem/1 var(--read);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--amber-ink);
+  }
+  .kicker .sep {
+    width: 18px;
+    height: 1.5px;
+    background: currentColor;
+    opacity: 0.6;
+  }
+  .nick-title {
+    margin: 0;
+    font: 700 2.5rem/1.05 var(--hand);
+    color: var(--dad-ink);
+    letter-spacing: -0.005em;
+  }
+  .nick-title.pencil {
+    color: #6f6a7a;
+  }
+  .real {
+    margin: 6px 0 0;
+    font: italic 400 1.02rem/1.35 var(--serif);
+    color: var(--ink-soft);
+  }
+
+  /* ---------- Cover spread ---------- */
+  .page.cover.left .scroll {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .plate {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    width: min(360px, 88%);
+    padding: 24px 26px 26px;
+    border: 1.5px solid rgba(43, 38, 34, 0.55);
+    outline: 1px solid rgba(43, 38, 34, 0.3);
+    outline-offset: -7px;
+    border-radius: 3px;
+  }
+  .plate-lamp {
+    position: relative;
+    width: 200px;
+  }
+  .glow {
+    position: absolute;
+    left: 66%;
+    top: 46%;
+    width: 120px;
+    height: 120px;
+    translate: -50% -50%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(242, 165, 65, 0.42), rgba(242, 165, 65, 0) 68%);
+  }
+  .plate-title {
+    margin: 6px 0 0;
+    font: 600 2.15rem/1.05 var(--serif);
+    letter-spacing: -0.01em;
+  }
+  .plate-rule {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 120px;
+    margin-top: 12px;
+  }
+  .plate-rule::before,
+  .plate-rule::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(43, 38, 34, 0.45);
+  }
+  .plate-rule i {
+    width: 7px;
+    height: 7px;
+    background: var(--amber);
+    transform: rotate(45deg);
+  }
+  .dedication {
+    max-width: 17em;
+    margin: 30px 0 0;
+    font: 400 1.5rem/1.35 var(--hand);
+    color: var(--dad-ink);
+  }
+  .signature {
+    align-self: flex-end;
+    margin: 6px 14% 0 0;
+    font: 700 1.7rem/1 var(--hand);
+    color: var(--dad-ink);
+    transform: rotate(-5deg);
+  }
+  .toc-title {
+    margin: 4px 0 18px;
+    font: 600 1.9rem/1.1 var(--serif);
+    letter-spacing: -0.01em;
+  }
+  .toc {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+  }
+  .toc button {
+    display: flex;
+    align-items: baseline;
     gap: 12px;
-    width: 100%;
-    min-height: 48px;
-    padding: 4px 8px;
-    background: none;
+    width: calc(100% + 16px);
+    min-height: 50px;
+    padding: 10px 8px;
+    margin: 0 -8px;
+    box-sizing: border-box;
     border: 0;
-    border-bottom: 1.5px dashed rgba(43, 38, 34, 0.2);
+    border-bottom: 1px solid rgba(43, 38, 34, 0.1);
+    border-radius: 8px;
+    background: none;
     color: var(--ink);
     text-align: left;
     cursor: pointer;
-    border-radius: 6px;
     transition: background 0.15s;
   }
-  .contents button:hover {
-    background: rgba(242, 165, 65, 0.15);
+  .toc button:hover {
+    background: rgba(242, 165, 65, 0.13);
   }
-  .nick {
-    flex: 1;
-    font-size: 1.25rem;
-    font-weight: 700;
-  }
-  .tick {
-    width: 22px;
-    height: 22px;
+  .toc .box {
+    align-self: center;
     flex: none;
-    border: 2px solid var(--ink-soft);
-    border-radius: 4px 6px 5px 4px;
-    position: relative;
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid rgba(43, 38, 34, 0.5);
+    border-radius: 4px 5px 4px 5px;
   }
-  .tick.done::after {
-    content: "";
-    position: absolute;
-    left: 5px;
-    top: 1px;
-    width: 8px;
-    height: 13px;
-    border-right: 3px solid var(--clay);
-    border-bottom: 3px solid var(--clay);
-    transform: rotate(40deg);
+  .toc .box.done {
+    border-color: var(--clay);
+  }
+  .toc .box svg {
+    width: 24px;
+    height: 24px;
+    margin: -6px -4px 0 0;
+    fill: none;
+    stroke: var(--clay);
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .toc .nick {
+    font: 400 1.3rem/1.2 var(--hand);
+    color: var(--dad-ink);
+  }
+  .toc .dots {
+    flex: 1;
+    min-width: 16px;
+    border-bottom: 2px dotted rgba(43, 38, 34, 0.25);
+    transform: translateY(-4px);
+  }
+  .toc .world {
+    font: 700 0.66rem/1 var(--read);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .toc .pg {
+    width: 1.6em;
+    text-align: right;
+    font: italic 400 1rem/1 var(--serif);
+    color: var(--ink-soft);
+  }
+  .memories-title {
+    margin: 30px 0 12px;
+    font: italic 400 1.3rem/1.1 var(--serif);
   }
   .memories {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-    margin-top: 8px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 96px));
+    gap: 16px;
   }
-  .memories p {
-    flex-basis: 100%;
+  .memories-note {
+    margin-top: 12px;
     color: var(--ink-soft);
-    font-size: 0.95rem;
+    font-size: 0.92rem;
   }
-  .envelope {
-    width: 62px;
-    height: 42px;
-    border: 2px dashed rgba(140, 129, 115, 0.7);
-    border-radius: 3px;
-    background: linear-gradient(155deg, transparent 49%, rgba(140, 129, 115, 0.5) 50%, transparent 52%), linear-gradient(25deg, transparent 49%, rgba(140, 129, 115, 0.5) 50%, transparent 52%);
-    background-size: 50% 60%;
-    background-position: 0 0, 100% 0;
-    background-repeat: no-repeat;
+
+  /* ---------- Machine, left page ---------- */
+  .drawing {
+    position: relative;
+    margin: 14px auto 0;
+    max-width: 360px;
   }
+  .drawing figcaption {
+    margin-top: 2px;
+    text-align: right;
+    font: italic 400 0.86rem/1.2 var(--serif);
+    color: var(--ink-soft);
+  }
+  .for p {
+    font-size: 1.04rem;
+  }
+  /* Dad's note: a slip of lined paper, taped down a little crooked. */
+  .note {
+    position: relative;
+    margin: 22px 6px 6px;
+    padding: 18px 20px 12px 22px;
+    background:
+      repeating-linear-gradient(to bottom, transparent 0 29px, rgba(92, 115, 147, 0.22) 29px 30px) 0 14px / 100% calc(100% - 14px) no-repeat,
+      #fffcf3;
+    box-shadow: 0 1px 2px rgba(46, 30, 12, 0.12), 0 10px 16px -12px rgba(46, 30, 12, 0.5);
+    transform: rotate(-0.8deg);
+  }
+  .note p {
+    margin: 0;
+    font: 400 1.32rem/30px var(--hand);
+    color: var(--dad-ink);
+  }
+  .note .note-sig {
+    text-align: right;
+    font-weight: 700;
+  }
+  .note-tape {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    width: 84px;
+    height: 20px;
+    margin-left: -42px;
+    background: linear-gradient(90deg, rgba(242, 178, 92, 0.6), rgba(236, 190, 120, 0.68));
+    clip-path: polygon(4% 0, 96% 0, 100% 18%, 95% 36%, 100% 54%, 96% 72%, 100% 90%, 96% 100%, 4% 100%, 0 82%, 5% 64%, 0 46%, 4% 28%, 0 10%);
+    transform: rotate(2deg);
+    mix-blend-mode: multiply;
+  }
+
+  /* ---------- Machine, right page ---------- */
   .photos {
     display: grid;
-    gap: 18px;
-    margin: 6px 0 14px;
+    justify-items: center;
+    gap: 22px;
+    margin: 10px 4px 18px;
+  }
+  .photos > :global(.photo) {
+    width: min(100%, 330px);
   }
   .photos.two {
     grid-template-columns: 1fr 1fr;
   }
+  .photos.two > :global(.photo) {
+    width: 100%;
+  }
   .place {
     display: flex;
     gap: 8px;
-    align-items: baseline;
-    font-size: 0.95rem;
-    color: var(--ink-soft);
-  }
-  .facts {
+    align-items: flex-start;
     margin: 0;
-    padding-left: 1.2em;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
   }
-  .facts li {
-    margin-bottom: 6px;
-  }
-  .facts li::marker {
+  .place :global(.icon) {
+    flex: none;
+    margin-top: 2px;
     color: var(--clay);
   }
-  .src {
-    font: 700 0.72rem var(--label);
-    color: var(--ink-soft);
-    text-decoration-color: var(--amber);
-    text-underline-offset: 2px;
-    margin-left: 4px;
-    padding: 6px 0;
+  .facts {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 7px;
   }
-  .then-now p {
+  .facts li {
+    position: relative;
+    padding-left: 22px;
+  }
+  .facts li::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 0.55em;
+    width: 8px;
+    height: 8px;
+    border: 2px solid var(--amber-deep);
+    border-radius: 50% 45% 55% 50%;
+  }
+  .src {
+    margin-left: 2px;
+    padding: 6px 0;
+    font: 700 0.74rem var(--read);
+    color: var(--amber-ink);
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+  }
+  /* Then and now: a museum-style label with its heading set into the border. */
+  .now {
+    position: relative;
+    margin-top: 26px;
+    padding: 18px 18px 8px;
+    border: 1.5px solid rgba(43, 38, 34, 0.35);
+    border-radius: 4px;
+  }
+  .now .label {
+    position: absolute;
+    top: -6px;
+    left: 12px;
+    margin: 0;
+    padding: 0 8px;
+    background: #fbf6ea;
+  }
+  .now p {
     font-weight: 600;
   }
   .deeper {
-    margin-top: 14px;
-    padding: 8px 12px;
-    background: rgba(92, 115, 147, 0.08);
-    border: 1.5px dashed rgba(92, 115, 147, 0.5);
-    border-radius: 6px;
+    margin-top: 16px;
+    border-top: 1px dashed rgba(43, 38, 34, 0.25);
   }
   .deeper summary {
-    min-height: 40px;
     display: flex;
     align-items: center;
-    font: 700 1.05rem var(--hand);
+    gap: 8px;
+    min-height: 44px;
+    font: italic 400 1.08rem var(--serif);
+    color: var(--ink);
     cursor: pointer;
+    list-style: none;
+  }
+  .deeper summary::-webkit-details-marker {
+    display: none;
+  }
+  .deeper summary::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid var(--amber-deep);
+    border-bottom: 2px solid var(--amber-deep);
+    transform: rotate(-45deg);
+    transition: transform 0.2s;
+  }
+  .deeper[open] summary::before {
+    transform: rotate(45deg);
+  }
+  .deeper p {
+    font-size: 0.95rem;
   }
   .deeper a {
-    color: var(--ink);
-    font-size: 0.9rem;
+    color: var(--amber-ink);
+    font-weight: 700;
+    font-size: 0.88rem;
   }
   .stamp-mark {
-    margin: 24px auto 0;
     width: max-content;
+    margin: 6px auto 0;
     padding: 10px 18px 8px;
-    border: 4px solid #a83a28;
-    outline: 2px solid #a83a28;
-    outline-offset: 4px;
-    color: #a83a28;
-    font: 700 1.6rem/1 var(--label);
-    letter-spacing: 0.05em;
+    border: 3px solid #b0402b;
+    outline: 1.5px solid #b0402b;
+    outline-offset: 3px;
+    border-radius: 3px;
+    color: #b0402b;
+    font: 700 1.4rem/1.05 var(--label);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
     text-align: center;
-    transform: rotate(-6deg);
-    opacity: 0.9;
+    transform: rotate(-5deg);
+    mix-blend-mode: multiply;
+    opacity: 0.88;
   }
   .letters {
-    margin-top: 34px;
+    margin-top: 18px;
   }
   .letters .help {
-    margin: 0 0 12px;
     color: var(--ink-soft);
     font-size: 0.92rem;
   }
   .letters ul {
     list-style: none;
-    margin: 0;
+    margin: 12px 0 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 12.5rem), 1fr));
+    gap: 16px 14px;
   }
-  .letter {
-    position: relative;
+
+  /* ---------- Pencil pages ---------- */
+  .pencil-page .label {
+    color: var(--pencil-ink);
+  }
+  .pending {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100%;
+  }
+  .corners {
     display: grid;
-    gap: 6px;
-    justify-items: start;
-    padding: 22px 12px 10px;
-    background: #f6ead2;
-    border: 1.5px solid var(--paper-edge);
-    border-radius: 3px;
-    box-shadow: 0 4px 8px -5px rgba(30, 20, 10, 0.45);
-    transform: rotate(var(--tilt));
-    overflow: hidden;
+    gap: 22px;
+    justify-items: center;
+    margin: 10px 4px 22px;
   }
-  /* The envelope flap: a soft V across the top. */
-  .flap {
+  .corners.two {
+    grid-template-columns: 1fr 1fr;
+  }
+  /* Photo corners waiting for a picture. */
+  .slot {
+    position: relative;
+    width: min(100%, 330px);
+    aspect-ratio: 4 / 3.4;
+  }
+  .corners.two .slot {
+    width: 100%;
+  }
+  .slot i {
     position: absolute;
-    inset: 0 0 auto;
-    height: 22px;
-    background: linear-gradient(to bottom right, transparent 48%, var(--paper-edge) 49%, transparent 54%) left / 50% 100% no-repeat,
-      linear-gradient(to bottom left, transparent 48%, var(--paper-edge) 49%, transparent 54%) right / 50% 100% no-repeat;
+    width: 26px;
+    height: 26px;
+    border: 0 solid rgba(140, 129, 115, 0.75);
   }
-  .to {
-    font-size: 1.12rem;
-    line-height: 1.2;
+  .slot i:nth-child(1) {
+    left: 0;
+    top: 0;
+    border-width: 1.5px 0 0 1.5px;
   }
-  .letter.done {
-    background: #efe6d6;
+  .slot i:nth-child(2) {
+    right: 0;
+    top: 0;
+    border-width: 1.5px 1.5px 0 0;
   }
-  .letter.done .to {
-    color: var(--ink-soft);
+  .slot i:nth-child(3) {
+    left: 0;
+    bottom: 0;
+    border-width: 0 0 1.5px 1.5px;
   }
-  .posted {
+  .slot i:nth-child(4) {
+    right: 0;
+    bottom: 0;
+    border-width: 0 1.5px 1.5px 0;
+  }
+  .waiting {
+    display: grid;
+    grid-template-columns: minmax(0, 190px) 1fr;
+    align-items: center;
+    gap: 22px;
+  }
+  .clipped {
+    position: relative;
+  }
+  /* A paper clip holding Dad's letter to the page. */
+  .clip-wire {
     position: absolute;
-    right: 8px;
-    bottom: 8px;
-    padding: 2px 6px;
-    border: 2px solid #a83a28;
-    border-radius: 4px;
-    color: #a83a28;
-    font: 700 0.7rem/1 var(--label);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    top: -14px;
+    left: 26px;
+    z-index: 1;
+    width: 13px;
+    height: 40px;
+    border: 2px solid #8d9196;
+    border-radius: 7px 7px 7px 7px;
     transform: rotate(-8deg);
   }
+  .clip-wire::after {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 7px;
+    width: 5px;
+    height: 24px;
+    border: 2px solid #8d9196;
+    border-top: 0;
+    border-radius: 0 0 5px 5px;
+  }
   .pencil-note {
-    margin-top: 30%;
+    margin: 0;
+    font: 400 1.28rem/1.35 var(--hand);
+    color: #6f6a7a;
+  }
+  .ghost-label {
+    margin-top: 30px;
+  }
+  .ghost-lines {
+    display: grid;
+    gap: 16px;
+    padding-top: 6px;
+  }
+  .ghost-lines span {
+    height: 1.5px;
+    background: linear-gradient(90deg, rgba(140, 129, 115, 0.5), rgba(140, 129, 115, 0.3));
+    border-radius: 2px;
+  }
+
+  /* ---------- Turning a page ---------- */
+  .leaf {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 50%;
+    z-index: 5;
+    pointer-events: none;
+    transform-style: preserve-3d;
+  }
+  .leaf.next {
+    left: 50%;
+    transform-origin: left center;
+    animation: flip-next var(--flip) cubic-bezier(0.36, 0.06, 0.18, 1) both;
+  }
+  .leaf.prev {
+    left: 0;
+    transform-origin: right center;
+    animation: flip-prev var(--flip) cubic-bezier(0.36, 0.06, 0.18, 1) both;
+  }
+  .side {
+    position: absolute;
+    inset: 0;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  .side.back {
+    transform: rotateY(180deg);
+  }
+  /* Light falls off the leaf as it stands up, and comes back as it lands. */
+  .leaf .side::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .leaf .front::before {
+    animation: dim-front var(--flip) linear both;
+  }
+  .leaf .back::before {
+    animation: dim-back var(--flip) linear both;
+  }
+  .leaf.next .front::before,
+  .leaf.prev .back::before {
+    background: linear-gradient(90deg, rgba(40, 26, 10, 0.45), rgba(40, 26, 10, 0.12));
+  }
+  .leaf.next .back::before,
+  .leaf.prev .front::before {
+    background: linear-gradient(270deg, rgba(40, 26, 10, 0.45), rgba(40, 26, 10, 0.12));
+  }
+  .shade {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent 18%, rgba(30, 20, 8, 0.2) 50%, transparent 82%);
+    animation: shade var(--flip) ease-in-out both;
+  }
+  @keyframes flip-next {
+    0% {
+      transform: rotateY(0deg);
+    }
+    50% {
+      transform: rotateY(-90deg) translateZ(6px);
+    }
+    100% {
+      transform: rotateY(-180deg);
+    }
+  }
+  @keyframes flip-prev {
+    0% {
+      transform: rotateY(0deg);
+    }
+    50% {
+      transform: rotateY(90deg) translateZ(6px);
+    }
+    100% {
+      transform: rotateY(180deg);
+    }
+  }
+  @keyframes dim-front {
+    0% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes dim-back {
+    0%,
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes shade {
+    0%,
+    100% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  /* ---------- Opening the cover ---------- */
+  .cover-leaf {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 50%;
+    z-index: 6;
+    transform-origin: left center;
+    transform-style: preserve-3d;
+    animation: open-cover 0.95s 0.2s cubic-bezier(0.5, 0.02, 0.2, 1) both;
+  }
+  .cover-leaf .outside {
+    display: grid;
+    place-items: center;
+    border-radius: 5px 16px 16px 5px;
+    background:
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 3px),
+      linear-gradient(165deg, #3d6457, #26443d 70%, #203a34);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      inset 0 -3px 8px rgba(0, 0, 0, 0.3);
+  }
+  .emboss {
+    display: grid;
+    justify-items: center;
+    gap: 8px;
+    width: 46%;
+    padding: 28px 18px 22px;
+    border: 1.5px solid rgba(255, 233, 196, 0.35);
+    border-radius: 4px;
+    color: rgba(255, 236, 204, 0.85);
+    font: 600 1.6rem/1.1 var(--serif);
     text-align: center;
-    font-size: 1.35rem;
-    color: var(--pencil);
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.35);
   }
-  .ghosts {
-    display: flex;
-    justify-content: center;
-    gap: 22px;
-    margin-top: 26px;
+  .emboss :global(.sketch) {
+    width: 72%;
   }
-  .ghost {
-    width: 150px;
-    height: 130px;
-    border: 2px dashed rgba(140, 129, 115, 0.55);
-    transform: rotate(-3deg);
+  .cover-leaf .inside {
+    border-radius: 16px 5px 5px 16px;
+    background:
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 3px),
+      linear-gradient(165deg, #3a5f52, #23403a 70%, #1e3832);
   }
-  .ghost:nth-child(2) {
-    transform: rotate(3deg);
+  .cover-leaf .inside .page {
+    position: absolute;
+    inset: var(--margin) 0 var(--margin) var(--margin);
   }
+  .opening .board.l,
+  .opening .spread > .page.left {
+    visibility: hidden;
+  }
+  .opening .spread {
+    clip-path: inset(-40px -40px -40px 50%);
+  }
+  @keyframes open-cover {
+    from {
+      transform: rotateY(0deg);
+    }
+    to {
+      transform: rotateY(-180deg);
+    }
+  }
+  @keyframes lift {
+    from {
+      opacity: 0;
+      transform: translateY(34px) rotateX(9deg) scale(0.97);
+    }
+  }
+
+  /* ---------- Phones: one long page, a soft slide between spreads ---------- */
+  .slide-next .page {
+    animation: slide-in-next 0.36s var(--ease-out);
+  }
+  .slide-prev .page {
+    animation: slide-in-prev 0.36s var(--ease-out);
+  }
+  @keyframes slide-in-next {
+    from {
+      opacity: 0;
+      transform: translateX(28px);
+    }
+  }
+  @keyframes slide-in-prev {
+    from {
+      opacity: 0;
+      transform: translateX(-28px);
+    }
+  }
+
+  /* ---------- Controls ---------- */
   .bar {
     display: flex;
     align-items: center;
-    gap: 14px;
-    margin-top: 12px;
+    gap: 4px;
+    padding: 6px;
+    border-radius: 999px;
+    background: rgba(26, 24, 48, 0.74);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.6);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    color: #fbf3e4;
+    animation: bar-in 0.5s 0.15s var(--ease-out) both;
   }
-  .nav {
-    display: grid;
-    place-items: center;
-    width: 54px;
-    height: 54px;
-    color: var(--ink);
-    background: var(--paper-light);
-    border: 2.5px solid var(--ink);
-    border-radius: 50%;
-    box-shadow: 2px 3px 0 var(--ink);
-    cursor: pointer;
-    transition: transform 0.15s var(--ease-spring);
-  }
-  .nav:hover:not(:disabled) {
-    transform: translateY(-2px);
-  }
-  .nav:active:not(:disabled) {
-    transform: translateY(2px);
-  }
-  .nav:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-  .clip {
-    font: 700 1rem var(--label);
-    color: var(--paper-light);
-    background: #6f6a63;
-    padding: 6px 12px;
-    border-radius: 14px;
-  }
+  .nav,
   .read {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    color: var(--paper-light);
-    border-color: var(--paper-light);
+    justify-content: center;
+    gap: 8px;
+    height: 48px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    transition:
+      background 0.15s,
+      color 0.15s,
+      transform 0.15s var(--ease-spring);
   }
-  :global(:root[data-motion="reduce"]) .notebook,
-  :global(:root[data-motion="reduce"]) .leaf {
+  .nav {
+    width: 48px;
+  }
+  .read {
+    padding: 0 16px 0 12px;
+    font: 600 0.95rem var(--read);
+  }
+  .nav:hover:not(:disabled),
+  .read:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffd79a;
+  }
+  .nav:active:not(:disabled),
+  .read:active {
+    transform: scale(0.94);
+  }
+  .nav:disabled {
+    opacity: 0.32;
+    cursor: default;
+  }
+  .nav.next {
+    background: var(--amber);
+    color: #2b1a06;
+  }
+  .nav.next:hover:not(:disabled) {
+    background: #f7b85e;
+    color: #2b1a06;
+  }
+  .nav.next:disabled {
+    background: transparent;
+    color: inherit;
+  }
+  .bar :global(:focus-visible) {
+    outline: 3px solid #ffd79a;
+    outline-offset: 2px;
+  }
+  .clip {
+    min-width: 64px;
+    text-align: center;
+    font: 600 1rem/1 var(--serif);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
+  }
+  .divider {
+    width: 1px;
+    height: 26px;
+    margin: 0 4px;
+    background: rgba(255, 255, 255, 0.16);
+  }
+  @keyframes bar-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+
+  :global(:root[data-motion="reduce"]) .book,
+  :global(:root[data-motion="reduce"]) .bar,
+  :global(:root[data-motion="reduce"]) .page {
     animation: none;
   }
+
   @media (max-width: 820px) {
+    .notebook {
+      --margin: 7px;
+      padding: 10px 10px max(12px, env(safe-area-inset-bottom));
+      gap: 10px;
+    }
+    .book {
+      height: 100%;
+    }
+    .band {
+      right: 14px;
+      width: 7px;
+    }
     .spread {
-      grid-template-columns: 1fr;
-      height: auto;
-      max-height: calc(100vh - 120px);
+      display: block;
       overflow-y: auto;
+      overscroll-behavior: contain;
+      border-radius: 6px;
+      background: #fbf6ea;
+    }
+    .page {
+      overflow: visible;
     }
     .page.left,
     .page.right {
-      border-radius: 8px;
-      box-shadow: none;
-      overflow: visible;
+      border-radius: 0;
+      background-image: var(--grain);
     }
-    .rings {
+    .page.left::after,
+    .page.right::after,
+    .gutter {
       display: none;
     }
-    .leaf {
-      width: 100%;
-      left: 0 !important;
+    .page.right {
+      border-top: 1px dashed rgba(43, 38, 34, 0.2);
+    }
+    .scroll {
+      position: relative;
+      inset: auto;
+      overflow: visible;
+      padding: 26px 22px 40px !important;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+    .page.cover.left .scroll {
+      min-height: 0;
+    }
+    .folio {
+      bottom: 12px;
+    }
+    .page.left .folio {
+      left: auto;
+      right: 18px;
+    }
+    .page.right .folio {
+      right: 18px;
+    }
+    .nick-title {
+      font-size: 2.1rem;
+    }
+    .waiting {
+      grid-template-columns: 1fr;
+      justify-items: center;
+      text-align: center;
+    }
+    .clipped {
+      width: min(220px, 80%);
+    }
+    .read span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .read {
+      width: 48px;
+      padding: 0;
     }
   }
 </style>

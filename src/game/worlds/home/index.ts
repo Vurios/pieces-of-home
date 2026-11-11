@@ -11,8 +11,10 @@ import { angleBetween, damp, headingToTangent, latLonToDir, surfaceMatrix } from
 import { Terrain, buildPlanetGeometry } from "../../world/terrain";
 import type { Bookmark, FrameInfo, World, WorldContext } from "../types";
 import { C, buildDish, buildHouse, buildLampPost, buildMailbox } from "./buildings";
-import { HILL, HILL_TOP, HOME_RADIUS, MAILBOX, PATH_HALF_WIDTH, POND, SITES, TERRAIN, local, site } from "./layout";
-import { buildGarden, buildMeadow, buildPond, groundMatrix, pathDistance, planTrees, scatterNature, treeShade } from "./nature";
+import { GROUND_PATCHES, type Site, HILL, HILL_TOP, HOME_RADIUS, MAILBOX, MEADOW, ORCHARD, PATH_HALF_WIDTH, PLACES, POND, POND_RADIUS, SITES, TERRAIN, TRAIL_LAMPS, local, site } from "./layout";
+import { buildGarden, buildMeadow, groundMatrix, pathDistance, planTrees, scatterNature, treeShade } from "./nature";
+import { buildPaths } from "./paths";
+import { buildPlaces } from "./places";
 import { SHED, buildWorkshop, workshopMaterials } from "./workshop";
 import { buildGardenYard, buildHilltop, buildHouseYard, buildShedYard, buildSolarPanel } from "./yard";
 
@@ -21,11 +23,11 @@ export const LETTER_TO_THE_LAMP = "to-the-lamp";
 const GRASS_A = new Color("#7FA37A");
 const GRASS_B = new Color("#668C66");
 const GRASS_WARM = new Color("#9DAF74");
-const PATH = new Color("#C9A97E");
-const PATH_EDGE = new Color("#A88E68");
+// Grass worn thin beside the footpaths, so the drawn track settles into the lawn.
+const WORN = new Color("#9AA27A");
 const DIRT = new Color("#B3926C");
 const MUD = new Color("#7E6B55");
-const scratch = new Color();
+const patches = GROUND_PATCHES.map((p) => ({ ...p, color: new Color(p.color) }));
 
 export function createHome(ctx: WorldContext): World {
   const { toon, quality } = ctx;
@@ -38,7 +40,7 @@ export function createHome(ctx: WorldContext): World {
   // Trees are planned first so the grass can darken under each one.
   const trees = planTrees(quality.particles);
   const shade = treeShade(trees);
-  const planetGeometry = buildPlanetGeometry(terrain, quality.terrainDetail, (dir, _r, normal, out) => {
+  const planetGeometry = buildPlanetGeometry(terrain, Math.round((quality.terrainDetail * HOME_RADIUS) / 15), (dir, _r, normal, out) => {
     const n = fbm3(dir.x * 5, dir.y * 5, dir.z * 5, 2, 3);
     const fine = fbm3(dir.x * 19, dir.y * 19, dir.z * 19, 2, 5);
     out.copy(GRASS_A).lerp(GRASS_B, Math.max(0, Math.min(1, 0.5 + n * 1.4)));
@@ -48,13 +50,14 @@ export function createHome(ctx: WorldContext): World {
     if (shed < 4.6) out.lerp(DIRT, Math.min(1, (4.6 - shed) / 1.2) * 0.85);
 
     const path = pathDistance(dir);
-    if (path < PATH_HALF_WIDTH + 0.18) {
-      const inner = path < PATH_HALF_WIDTH - 0.08;
-      scratch.copy(inner ? PATH : PATH_EDGE);
-      out.lerp(scratch, inner ? 1 : 0.8);
-    }
+    if (path < PATH_HALF_WIDTH + 0.7) out.lerp(WORN, 0.55 * Math.min(1, (PATH_HALF_WIDTH + 0.7 - path) / 0.6));
     const pond = angleBetween(dir, POND) * HOME_RADIUS;
-    if (pond < 2.9) out.lerp(MUD, Math.min(1, (2.9 - pond) / 0.6));
+    if (pond < POND_RADIUS + 0.4) out.lerp(MUD, Math.min(1, (POND_RADIUS + 0.4 - pond) / 0.6));
+    // Bare ground under the camp, the playground and the launch pad, soft at the edge.
+    for (const patch of patches) {
+      const d = angleBetween(dir, patch.dir) * HOME_RADIUS;
+      if (d < patch.radius + 0.5) out.lerp(patch.color, patch.strength * Math.min(1, (patch.radius + 0.5 - d) / 0.9));
+    }
 
     // Soft shade under trees, painted in so it shows even without shadow maps.
     for (const spot of shade) {
@@ -113,18 +116,25 @@ export function createHome(ctx: WorldContext): World {
   colliders.push(createColliderGroup(SITES.dish.matrix, buildSolarPanel(b, SITES.dish)));
 
   // Lamp posts along the paths. The one by the workshop is placed in the shed's own frame, outside its door.
-  const lampDirs = [latLonToDir(-2.2, 1.6), latLonToDir(18, 3), local(SITES.shed, 2.6, 0, 5.4).normalize()];
+  const lampDirs = [latLonToDir(-2.2, 1.6), latLonToDir(18, 3), local(SITES.shed, 2.6, 0, 5.4).normalize(), ...TRAIL_LAMPS];
   for (const dir of lampDirs) {
     const m = groundMatrix(terrain, dir, 0, 0.02);
     colliders.push(createColliderGroup(m, buildLampPost(b, { dir, forward: new Vector3(), origin: new Vector3(), matrix: m })));
   }
 
   colliders.push(createColliderGroup(SITES.garden.matrix, buildGarden(b, SITES.garden)));
-  buildPond(b, terrain);
   colliders.push(...buildMeadow(b, terrain, quality.particles));
   colliders.push(...scatterNature(b, terrain, quality.particles, trees));
 
+  // The places to find round the far side: treehouse, pond, camp, weather station and more.
   const materials = workshopMaterials(toon);
+  const places = buildPlaces(b, terrain, quality, materials);
+  colliders.push(...places.colliders);
+  for (const object of places.objects) root.add(object);
+
+  // Footpaths: soft ribbons over the grass, with pebbles and the porch stepping stones.
+  root.add(buildPaths(b, terrain, toon));
+
   for (const mesh of b.build(materials, { castShadow: quality.shadowMap > 0, receiveShadow: true })) root.add(mesh);
 
   // The shed's moving parts live in the shed's own frame.
@@ -199,7 +209,7 @@ export function createHome(ctx: WorldContext): World {
 
   // ---- Mom waits on the porch bench with a cup of tea ----
   const mom = new Mom(toon);
-  mom.root.matrix.copy(SITES.house.matrix).multiply(new Matrix4().makeTranslation(1.0, 0.66, 2.02));
+  mom.root.matrix.copy(SITES.house.matrix).multiply(new Matrix4().makeTranslation(1.0, 0.58, 2.02));
   mom.root.matrix.decompose(mom.root.position, mom.root.quaternion, mom.root.scale);
   root.add(mom.root);
 
@@ -274,7 +284,6 @@ export function createHome(ctx: WorldContext): World {
   // ---- Bookmarks for screenshots and the title sequence ----
   const spawnDir = latLonToDir(SITES.spawn.lat, SITES.spawn.lon);
   const spawnForward = headingToTangent(spawnDir, SITES.spawn.heading);
-  const wideTarget = latLonToDir(16, 10).multiplyScalar(HOME_RADIUS);
   const spawnGround = terrain.pointAt(spawnDir);
   const inShed = (x: number, z: number): Vector3 => local(SITES.shed, x, 0, z).normalize();
   const shedForward = SITES.shed.forward.clone().negate();
@@ -287,20 +296,45 @@ export function createHome(ctx: WorldContext): World {
     return (Math.atan2(d.dot(east), d.dot(north)) * 180) / Math.PI;
   };
   const yardSpot = latLonToDir(-3, -4);
-  const gardenSpot = latLonToDir(-8, -5);
+  const gardenSpot = latLonToDir(-8, -8);
   const shedSpot = local(SITES.shed, 0.6, 0, 7.2).normalize();
   const hillSpot = latLonToDir(HILL.lat - 7, HILL.lon - 1);
-  const meadowSpot = latLonToDir(-17, 4);
+  const meadowSpot = latLonToDir(-20, 6);
+  /** Stands in front of a place, some meters out along its front, looking at it. */
+  const visit = (s: Site, back: number, x = 0): Bookmark => {
+    const at = local(s, x, 0, back).normalize();
+    return standAt(at, toward(at, s.dir));
+  };
+  const near = (target: Vector3, from: Vector3, meters: number): Bookmark => {
+    const at = target.clone().lerp(from, meters / (angleBetween(target, from) * HOME_RADIUS)).normalize();
+    return standAt(at, toward(at, target));
+  };
+  /** A view from orbit, square onto the planet so it reads as a round ball. */
+  const orbit = (lat: number, lon: number, distance = 3.4): Bookmark => ({
+    player: { dir: spawnDir, forward: spawnForward },
+    camera: { position: latLonToDir(lat, lon).multiplyScalar(HOME_RADIUS * distance), target: new Vector3(0, 0, 0), up: headingToTangent(latLonToDir(lat, lon), 0) },
+  });
   const bookmarks: Record<string, Bookmark> = {
     "play-yard": standAt(yardSpot, toward(yardSpot, SITES.house.dir)),
     "play-garden": standAt(gardenSpot, toward(gardenSpot, SITES.garden.dir)),
     "play-shed": standAt(shedSpot, toward(shedSpot, SITES.shed.dir)),
     "play-hill": standAt(hillSpot, toward(hillSpot, HILL_TOP)),
-    "play-meadow": standAt(meadowSpot, toward(meadowSpot, latLonToDir(-27, -4))),
-    wide: {
-      player: { dir: spawnDir, forward: spawnForward },
-      camera: { position: latLonToDir(-22, 12).multiplyScalar(HOME_RADIUS + 31), target: wideTarget.clone().multiplyScalar(0.5) },
-    },
+    "play-meadow": standAt(meadowSpot, toward(meadowSpot, MEADOW.oak)),
+    "play-treehouse": visit(SITES.treehouse, 6.2, 0.8),
+    "play-pond": near(POND, SITES.camp.dir, POND_RADIUS + 3.6),
+    "play-camp": visit(SITES.camp, 5.6, -0.6),
+    "play-weather": visit(SITES.weather, 4.8),
+    "play-playground": visit(SITES.playground, 6.4),
+    "play-rocket": visit(SITES.rocket, 4.6, 0.5),
+    "play-orchard": near(ORCHARD, SITES.rocket.dir, 5.5),
+    "play-windpump": visit(SITES.windpump, 6.4, 0.6),
+    "play-balloon": visit(SITES.balloon, 7.0),
+    wide: orbit(-14, 6, 3.3),
+    "orbit-back": orbit(-8, 186),
+    "orbit-west": orbit(10, -100),
+    "orbit-east": orbit(-6, 96),
+    "orbit-north": orbit(70, 20),
+    "orbit-south": orbit(-62, -10),
     mom: {
       player: { dir: local(SITES.house, -0.6, 0, 4.6).normalize(), forward: SITES.house.forward.clone().negate() },
       camera: { position: local(SITES.house, 0.2, 1.5, 4.4), target: local(SITES.house, 1.0, 1.05, 2.0) },
@@ -326,9 +360,11 @@ export function createHome(ctx: WorldContext): World {
   // ---- Per-frame ----
   let inside = false;
   let open = 0;
+  let zone: string | null = null;
   let pixelHeight = 900;
   const surfaceAt = (dir: Vector3, onPlatform: boolean): string => {
     if (onPlatform) return "wood";
+    if (places.isWater(dir)) return "water";
     if (pathDistance(dir) < PATH_HALF_WIDTH) return "path";
     return "grass";
   };
@@ -380,11 +416,12 @@ export function createHome(ctx: WorldContext): World {
         local(SITES.shed, 1.6, 4.2, 8.0),
       ],
       final: {
-        position: latLonToDir(-24, 8).multiplyScalar(HOME_RADIUS + 33),
+        position: latLonToDir(-24, 8).multiplyScalar(HOME_RADIUS * 3.2),
         // Aimed above the planet so its top sits just under the middle of the screen, leaving the sky for the title.
         target: latLonToDir(25.6, 8).multiplyScalar(HOME_RADIUS * 1.03),
         up: latLonToDir(16, 10),
       },
+      radius: HOME_RADIUS * 1.027,
     },
     anchor(id: string) {
       if (id === "mom") return mom.root.position.clone().addScaledVector(SITES.house.dir, 1.35);
@@ -404,6 +441,21 @@ export function createHome(ctx: WorldContext): World {
     cameraHint(player) {
       if (!inside) return null;
       return { forward: shedForward.clone(), pitch: 0.78, distance: 6.4 + (player.position.length() > 0 ? 0 : 0) };
+    },
+    zoneAt(dir: Vector3) {
+      // A little give at the edge, so walking along a border never flickers the name.
+      if (zone) {
+        const current = PLACES.find((p) => p.id === zone);
+        if (current && angleBetween(dir, current.dir) * HOME_RADIUS < current.radius + 0.8) return zone;
+      }
+      zone = null;
+      for (const place of PLACES) {
+        if (angleBetween(dir, place.dir) * HOME_RADIUS < place.radius) {
+          zone = place.id;
+          break;
+        }
+      }
+      return zone;
     },
     objective() {
       const s = store.value;
@@ -458,6 +510,7 @@ export function createHome(ctx: WorldContext): World {
       fireflies.update(dt, frame.reducedMotion);
       hillFlies.update(dt, frame.reducedMotion);
       smoke.update(dt, frame.reducedMotion);
+      places.update(dt, frame.time, frame.reducedMotion);
       // The lamp breathes a little, like a real filament.
       lampLight.intensity = 5.5 + (frame.reducedMotion ? 0 : Math.sin(frame.time * 3.1) * 0.2);
     },
@@ -465,13 +518,15 @@ export function createHome(ctx: WorldContext): World {
       pixelHeight = height;
       for (const f of [motes, fireflies, hillFlies]) f.setScale(pixelHeight);
       smoke.setScale(pixelHeight);
+      places.resize(pixelHeight);
     },
     dispose() {
       for (const f of [motes, fireflies, hillFlies]) f.dispose();
       smoke.dispose();
+      places.dispose();
       planetGeometry.dispose();
       root.traverse((o) => {
-        if (o instanceof Mesh && o.name.startsWith("batch")) o.geometry.dispose();
+        if (o instanceof Mesh && (o.name.startsWith("batch") || o.name === "paths")) o.geometry.dispose();
       });
       textures.moon.dispose();
       textures.mars.dispose();

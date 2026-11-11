@@ -1,7 +1,7 @@
 import { type BufferGeometry, Group, type Object3D, Vector3 } from "three";
 import type { ToonLibrary } from "../render/toon";
 import { damp } from "../world/sphere";
-import { Assembly, box, capsule, cylinder, sphere, torus } from "./parts";
+import { Assembly, box, capsule, cylinder, limb, sphere, torus } from "./parts";
 
 /**
  * Mom, the safe adult (Game Bible 5.5). She sits on the porch bench with a mug
@@ -59,26 +59,30 @@ export class Mom {
     this.assembly = new Assembly(toon.toon({ vertexColors: true, objectSpace: true, paint: 0.1 }));
     this.root.add(this.torso);
 
-    // Seated legs: thighs forward along the seat, shins down to the porch floor.
+    // Seated legs: thighs forward along the seat, a knee, shins down to the porch floor.
     for (const side of [-1, 1]) {
       const thigh = joint("thigh", side * 0.1, 0.04, 0);
       this.root.add(thigh);
-      this.part(thigh, capsule(0.22), P.trousers, [0, 0, 0.15], [0.085, 0.12, 0.085], [Math.PI / 2, 0, 0]);
-      const shin = joint("shin", 0, 0, 0.3);
+      limb(this.assembly, thigh, [0, 0, -0.02], [0, 0, 0.29], 0.08, P.trousers);
+      const shin = joint("shin", 0, 0, 0.29);
       thigh.add(shin);
-      this.part(shin, capsule(0.18), P.trousers, [0, -0.15, 0], [0.072, 0.11, 0.072]);
-      this.part(shin, cylinder(12), P.trousers, [0, -0.25, 0], [0.08, 0.03, 0.08]);
-      this.part(shin, sphere("mid"), P.shoes, [0, -0.3, 0.04], [0.07, 0.045, 0.11]);
-      this.part(shin, box(0.02), "#4A2C1F", [0, -0.335, 0.04], [0.13, 0.02, 0.22]);
+      limb(this.assembly, shin, [0, 0, 0], [0, -0.24, 0.01], 0.07, P.trousers);
+      // A turned-up hem, then a flat loafer with a little heel.
+      this.part(shin, cylinder(14), P.trousers, [0, -0.25, 0.01], [0.078, 0.03, 0.078]);
+      this.part(shin, sphere("mid"), P.shoes, [0, -0.295, 0.045], [0.066, 0.042, 0.115]);
+      this.part(shin, box(0.02), "#4A2C1F", [0, -0.33, 0.045], [0.125, 0.022, 0.235]);
+      this.part(shin, box(0.02), "#4A2C1F", [0, -0.315, -0.035], [0.1, 0.03, 0.06]);
     }
 
-    // Body: a cream top under an open sage cardigan.
-    this.part(this.torso, capsule(0.9), P.cardigan, [0, 0.28, 0], [0.165, 0.12, 0.13]);
-    this.part(this.torso, capsule(0.9), P.top, [0, 0.3, 0.07], [0.075, 0.1, 0.07]);
+    // Body: a cream top under an open sage cardigan, with soft sloped shoulders.
+    this.part(this.torso, capsule(1.4), P.cardigan, [0, 0.27, 0], [0.155, 0.13, 0.125]);
+    this.part(this.torso, capsule(1.2), P.top, [0, 0.3, 0.06], [0.07, 0.1, 0.07]);
     for (const side of [-1, 1]) {
-      this.part(this.torso, box(0.02), P.cardigan, [side * 0.075, 0.3, 0.125], [0.05, 0.34, 0.035], [0, 0, side * 0.12]);
-      this.part(this.torso, sphere("mid"), P.cardigan, [side * 0.16, 0.47, 0], [0.072, 0.065, 0.07]);
+      this.part(this.torso, box(0.02), P.cardigan, [side * 0.072, 0.29, 0.118], [0.05, 0.34, 0.035], [0, 0, side * 0.12]);
+      limb(this.assembly, this.torso, [side * 0.05, 0.47, 0], [side * 0.165, 0.45, 0], 0.062, P.cardigan);
     }
+    // A collar folded open at the neck.
+    for (const side of [-1, 1]) this.part(this.torso, box(0.02), P.cardiganDark, [side * 0.06, 0.5, 0.075], [0.07, 0.02, 0.06], [0.3, 0, side * -0.5]);
     // A pocket with a folded letter peeking out: she has been reading Dad's notes too.
     this.part(this.torso, box(0.02), P.cardiganDark, [-0.1, 0.12, 0.12], [0.08, 0.07, 0.03]);
     this.part(this.torso, box(0.005), "#F4ECDD", [-0.1, 0.17, 0.125], [0.06, 0.04, 0.01], [0, 0, 0.15]);
@@ -89,13 +93,18 @@ export class Mom {
     this.armR = joint("armR", 0.18, 0.47, 0);
     this.foreL = joint("foreL", 0, -0.2, 0);
     this.foreR = joint("foreR", 0, -0.2, 0);
-    for (const [arm, fore] of [[this.armL, this.foreL], [this.armR, this.foreR]] as const) {
+    for (const [arm, fore] of [
+      [this.armL, this.foreL],
+      [this.armR, this.foreR],
+    ] as const) {
       this.torso.add(arm);
-      this.part(arm, capsule(0.14), P.cardigan, [0, -0.1, 0], [0.058, 0.075, 0.058]);
+      limb(this.assembly, arm, [0, 0.01, 0], [0, -0.2, 0], 0.056, P.cardigan);
       arm.add(fore);
-      this.part(fore, capsule(0.12), P.cardigan, [0, -0.08, 0], [0.054, 0.072, 0.054]);
-      this.part(fore, cylinder(12), P.cardiganDark, [0, -0.15, 0], [0.05, 0.03, 0.05]);
-      this.part(fore, sphere("mid"), P.skin, [0, -0.19, 0], [0.045, 0.05, 0.042]);
+      limb(this.assembly, fore, [0, 0, 0], [0, -0.13, 0], 0.05, P.cardigan);
+      this.part(fore, cylinder(12), P.cardiganDark, [0, -0.145, 0], [0.054, 0.03, 0.054]);
+      // A hand with a thumb, slightly flat like a real one.
+      this.part(fore, sphere("mid"), P.skin, [0, -0.19, 0.004], [0.04, 0.05, 0.03]);
+      this.part(fore, sphere("low"), P.skin, [arm === this.armL ? 0.03 : -0.03, -0.175, 0.022], [0.016, 0.024, 0.016]);
     }
     // The mug sits in the right hand.
     const mug = joint("mug", -0.03, -0.22, 0.03);

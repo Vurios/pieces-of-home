@@ -27,6 +27,8 @@ export interface IntroSpec {
   path: Vector3[];
   /** The resting title camera. */
   final: { position: Vector3; target: Vector3; up: Vector3 };
+  /** The planet's radius at the horizon, so the title can sit on it at any planet size. */
+  radius: number;
 }
 
 const LINES = ["PIECES", "OF", "HOME"];
@@ -67,6 +69,7 @@ export class TitleSequence {
   private bulbGlow!: Mesh<never, MeshBasicMaterial>;
   private filament!: MeshBasicMaterial;
   private bulbLight = new PointLight("#FFC27A", 0, 14, 1.4);
+  private scale = SCALE;
   private chain = new Group();
   private chainLinks: Mesh[] = [];
   private tag: Group;
@@ -98,13 +101,16 @@ export class TitleSequence {
     const right = new Vector3().crossVectors(forward, screenUp).normalize();
     const toCamera = position.clone().normalize();
     const distance = position.length();
-    const radius = 15.4;
+    // Everything was tuned on a 15.4 m horizon; a bigger planet scales the title with it.
+    const radius = this.intro.radius;
+    const k = radius / 15.4;
+    this.scale = SCALE * k;
     const theta = Math.asin(Math.min(0.99, radius / distance));
     const limb = screenUp.clone().multiplyScalar(Math.cos(theta)).addScaledVector(toCamera, Math.sin(theta)).multiplyScalar(radius);
-    const anchor = limb.clone().add(position.clone().sub(limb).normalize().multiplyScalar(17));
+    const anchor = limb.clone().add(position.clone().sub(limb).normalize().multiplyScalar(17 * k));
     this.frame = { right, up: screenUp, toward: forward.clone().negate(), anchor };
     this.root.matrixAutoUpdate = false;
-    this.root.matrix.makeBasis(right, screenUp, this.frame.toward).scale(new Vector3(SCALE, SCALE, SCALE)).setPosition(anchor);
+    this.root.matrix.makeBasis(right, screenUp, this.frame.toward).scale(new Vector3(this.scale, this.scale, this.scale)).setPosition(anchor);
     this.root.matrixWorldNeedsUpdate = true;
 
     const painted = (color: string): Material => {
@@ -270,7 +276,7 @@ export class TitleSequence {
 
   /** World point at the center of the title, for the tilt-shift focus. */
   focusPoint(): Vector3 {
-    return this.frame.anchor.clone().addScaledVector(this.frame.up, 4.5 * SCALE);
+    return this.frame.anchor.clone().addScaledVector(this.frame.up, 4.5 * this.scale);
   }
 
   play(): void {

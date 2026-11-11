@@ -65,6 +65,8 @@ export class Engine {
   private renderer: WebGLRenderer;
   private scene = new Scene();
   private camera = new PerspectiveCamera(40, 1, 0.5, 160);
+  /** The named place the player stands in, or null. */
+  private zone: string | null = null;
   private toon = new ToonLibrary();
   private post: PostPipeline;
   private sky: Sky | null = null;
@@ -81,6 +83,9 @@ export class Engine {
   private bookmark: Bookmark | null = null;
   private statsTime = 0;
   private frames = 0;
+  /** How long the last world render took on the main thread, in ms, and when it ran. */
+  private renderCost = 0;
+  private lastRender = 0;
   private saveTimer = 0;
   private running = false;
   private elapsed = 0;
@@ -378,6 +383,13 @@ export class Engine {
     this.toon.uniforms.uPohWind.value = this.reducedMotion ? 0 : 0.06;
     const world = this.world;
     if (!world) return;
+    // Under the notebook or a panel the world stands still. On a slow device a
+    // full render can take longer than a frame, which starves the 2D layer and
+    // the gamepad on top, so the frozen world is redrawn only now and then.
+    if (this.paused && !this.bookmark && this.renderCost > 40 && time - this.lastRender < this.renderCost * 4) {
+      this.afterFrame(dt);
+      return;
+    }
     this.renderer.info.reset();
 
     const input = this.input.read();
@@ -396,6 +408,12 @@ export class Engine {
     this.player.update(dt, input, this.follow.forward, this.follow.right, world);
     world.update(dt, { player: this.player, carrying: this.store.value.carrying, time: this.elapsed, reducedMotion: this.reducedMotion });
     this.interactions.update(dt, this.player.position, this.player.forward, input);
+    // Which named place the player is in, for the place-name card.
+    const zone = shot || titling || !world.zoneAt ? null : world.zoneAt(this.player.up);
+    if (zone !== this.zone) {
+      this.zone = zone;
+      this.bus.emit("player:zone", { zone });
+    }
 
     // Character pose on the sphere.
     const kid = this.kid.root;
@@ -416,7 +434,7 @@ export class Engine {
     // Camera.
     if (shot?.camera) {
       this.camera.position.copy(shot.camera.position);
-      this.camera.up.copy(shot.camera.target).normalize();
+      this.camera.up.copy(shot.camera.up ?? shot.camera.target).normalize();
       this.camera.lookAt(shot.camera.target);
     } else if (titling && this.title) {
       if (this.title.phase === "leaving") {
@@ -466,7 +484,10 @@ export class Engine {
     if (titling && this.title && this.title.phase !== "leaving") this.scratch.copy(this.title.focusPoint()).project(this.camera);
     else this.scratch.copy(this.player.position).addScaledVector(up, 0.6).project(this.camera);
     this.post.focus = Math.max(0.12, Math.min(0.88, this.scratch.y * 0.5 + 0.5));
+    const renderStart = performance.now();
     this.post.render(this.scene, this.camera, this.elapsed);
+    this.renderCost = performance.now() - renderStart;
+    this.lastRender = time;
 
     this.afterFrame(dt);
   };

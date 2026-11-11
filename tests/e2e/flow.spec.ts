@@ -31,8 +31,8 @@ test("walking with the keyboard moves the player over the planet", async ({ page
   expect(moved).toBeGreaterThan(0.5);
   // Still standing on the little planet.
   const radius = Math.hypot(...after);
-  expect(radius).toBeGreaterThan(14);
-  expect(radius).toBeLessThan(19);
+  expect(radius).toBeGreaterThan(18);
+  expect(radius).toBeLessThan(24);
 });
 
 test("take the letter from the mailbox and give it to the lamp", async ({ page }, info) => {

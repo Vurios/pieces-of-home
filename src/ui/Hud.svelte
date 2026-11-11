@@ -6,9 +6,9 @@
   import { t } from "./settings.svelte";
 
   /**
-   * The play HUD: ink-stamp buttons at the edge (Notebook, Photo, Emote,
-   * Settings, and Hint as a pencil mark), the interact prompt with the right
-   * key, tap or button glyph, and the touch stick and buttons.
+   * The play HUD: small panes of dusk glass at the edge (Notebook, Photo,
+   * Emote, Settings and Hint), the use prompt with the right key, tap or
+   * button glyph, and the touch stick and buttons.
    */
   interface Props {
     engine: Engine;
@@ -107,28 +107,29 @@
 <svelte:window onkeydown={onkey} />
 
 {#if !hidden}
-  <nav class="stamps" aria-label="Game">
-    {#each stamps as s, i (s.id)}
-      <button type="button" class="stamp" style:--tilt={`${[-2, 1.5, -1, 2][i]}deg`} onclick={s.act} aria-keyshortcuts={s.key === "Esc" ? "Escape" : s.key}>
-        <Icon name={s.icon} size={30} />
+  <nav class="tools" aria-label="Game">
+    {#each stamps as s (s.id)}
+      <button type="button" class="tool" onclick={s.act} aria-keyshortcuts={s.key === "Esc" ? "Escape" : s.key}>
+        <Icon name={s.icon} size={22} />
         <span class="label">{s.label}</span>
         {#if !touchCapable}<span class="key" aria-hidden="true">{device === "gamepad" ? PAD[s.id]!.glyph : s.key}</span>{/if}
       </button>
     {/each}
-    <button type="button" class="hint" onclick={onhint} aria-keyshortcuts="H">
-      <Icon name="pencil" size={24} />
-      <span>{t("hud.hint")}</span>
+    <button type="button" class="tool hint" onclick={onhint} aria-keyshortcuts="H">
+      <Icon name="question" size={22} />
+      <span class="label">{t("hud.hint")}</span>
+      {#if !touchCapable && device !== "gamepad"}<span class="key" aria-hidden="true">H</span>{/if}
     </button>
   </nav>
 
   {#if prompt}
     <div class="prompt" class:touch={touchCapable} role="status" aria-live="polite">
       {#if device === "touch"}
-        <span class="glyph tap"><Icon name="tap" size={26} /></span>
+        <span class="glyph tap"><Icon name="tap" size={24} /></span>
       {:else if device === "gamepad"}
         <span class="glyph pad" aria-label="X button">X</span>
       {:else}
-        <kbd class="keycap">{keyName}</kbd>
+        <kbd class="cap">{keyName}</kbd>
       {/if}
       <span class="text">{prompt.kind === "hold" ? `${t("hud.hold")} ${prompt.label.toLowerCase()}` : prompt.label}</span>
       {#if prompt.kind === "hold"}
@@ -168,151 +169,156 @@
 {/if}
 
 <style>
-  .stamps {
+  /* Tools: small panes of dusk glass, an icon, a word and the key that opens it. */
+  .tools {
     position: fixed;
     top: max(16px, env(safe-area-inset-top));
     right: max(16px, env(safe-area-inset-right));
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
-    gap: 10px;
+    align-items: stretch;
+    gap: 8px;
   }
-  /* An ink stamp on a scrap of paper. */
-  .stamp {
-    position: relative;
-    display: grid;
-    justify-items: center;
-    gap: 2px;
-    width: 82px;
-    padding: 8px 4px 6px;
-    color: var(--clay-deep);
-    background: var(--paper-light);
-    border: 2.5px solid var(--clay-deep);
-    outline: 1.5px solid var(--clay-deep);
-    outline-offset: -6px;
-    border-radius: 6px 9px 7px 8px;
-    box-shadow: 2px 3px 0 var(--shadow);
-    transform: rotate(var(--tilt));
-    cursor: pointer;
-    transition:
-      transform 0.16s var(--ease-spring),
-      box-shadow 0.14s;
-  }
-  .stamp:hover {
-    transform: rotate(var(--tilt)) translateY(-2px);
-    box-shadow: 3px 5px 0 var(--shadow);
-  }
-  .stamp:active {
-    transform: rotate(var(--tilt)) translateY(2px) scale(0.96);
-    box-shadow: 0 1px 0 var(--shadow);
-  }
-  .stamp:focus-visible {
-    outline: 3px dashed var(--ink);
-    outline-offset: 4px;
-  }
-  .label {
-    font: 700 0.66rem/1 var(--label);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-  .key {
-    position: absolute;
-    left: -10px;
-    top: -8px;
-    min-width: 20px;
-    padding: 2px 4px;
-    font: 700 0.62rem/1 var(--label);
-    color: var(--ink);
-    background: var(--paper-light);
-    border: 1.5px solid var(--ink);
-    border-radius: 4px;
-    box-shadow: 0 2px 0 var(--ink);
-  }
-  /* Hint is a pencil mark, quieter than the stamps. */
-  .hint {
+  .tool {
     display: flex;
     align-items: center;
-    gap: 4px;
-    min-height: 44px;
-    padding: 4px 10px;
-    font: 700 1rem var(--hand);
-    color: var(--paper-light);
-    background: rgba(43, 38, 34, 0.45);
-    border: 0;
+    gap: 10px;
+    min-width: 150px;
+    height: 46px;
+    padding: 0 8px 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
     border-radius: 999px;
+    background: rgba(24, 22, 48, 0.62);
+    box-shadow: 0 12px 24px -14px rgba(0, 0, 0, 0.6);
+    -webkit-backdrop-filter: blur(12px) saturate(1.1);
+    backdrop-filter: blur(12px) saturate(1.1);
+    color: #fbf3e4;
+    font: 600 0.95rem/1 var(--read);
     cursor: pointer;
-    transition: background 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s,
+      transform 0.18s var(--ease-spring);
   }
-  .hint:hover {
-    background: rgba(43, 38, 34, 0.7);
+  .tool :global(.icon) {
+    color: rgba(251, 243, 228, 0.78);
   }
+  .tool:hover {
+    background: rgba(40, 36, 76, 0.78);
+    color: #ffd79a;
+    transform: translateX(-3px);
+  }
+  .tool:hover :global(.icon) {
+    color: #ffd79a;
+  }
+  .tool:active {
+    transform: scale(0.96);
+  }
+  .tool:focus-visible {
+    outline: 3px solid #ffd79a;
+    outline-offset: 3px;
+  }
+  .label {
+    flex: 1;
+    text-align: left;
+  }
+  .key {
+    display: grid;
+    place-items: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(251, 243, 228, 0.85);
+    font: 700 0.74rem/1 var(--read);
+  }
+  .hint {
+    margin-top: 4px;
+    background: rgba(242, 165, 65, 0.2);
+    border-color: rgba(242, 165, 65, 0.45);
+  }
+  .hint :global(.icon) {
+    color: #ffd79a;
+  }
+
+  /* The use prompt, low and centered. */
   .prompt {
     position: fixed;
     left: 50%;
     bottom: max(28px, env(safe-area-inset-bottom));
-    transform: translateX(-50%) rotate(-1deg);
+    translate: -50% 0;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 18px 8px 10px;
-    background: var(--paper-light);
-    color: var(--ink);
-    border: 2px solid var(--ink);
-    border-radius: 6px 12px 5px 11px;
-    box-shadow: 3px 4px 0 var(--shadow);
-    font: 700 1.1rem/1.2 var(--hand);
+    gap: 12px;
+    padding: 7px 20px 7px 7px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    background: rgba(24, 22, 48, 0.78);
+    box-shadow: 0 16px 30px -14px rgba(0, 0, 0, 0.7);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    color: #fff7ea;
+    font: 600 1.08rem/1.2 var(--read);
     pointer-events: none;
-    animation: pop 0.28s var(--ease-spring);
     white-space: nowrap;
+    animation: pop 0.32s var(--ease-spring);
   }
   .prompt.touch {
     bottom: calc(118px + env(safe-area-inset-bottom));
   }
+  .cap,
   .glyph {
     display: grid;
     place-items: center;
+    min-width: 38px;
+    height: 38px;
+    padding: 0 9px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #f8bb62, #ee9b33);
+    box-shadow:
+      inset 0 -3px 0 rgba(120, 60, 8, 0.35),
+      0 2px 0 rgba(0, 0, 0, 0.35);
+    color: #2b1a08;
+    font: 700 1rem/1 var(--read);
   }
   .pad {
-    width: 30px;
-    height: 30px;
     border-radius: 50%;
-    background: #3f6fb2;
+    background: linear-gradient(180deg, #6b95d6, #3f6fb2);
     color: #fff;
-    font: 700 0.95rem var(--label);
-    border: 2px solid var(--ink);
   }
   .meter {
-    width: 64px;
-    height: 10px;
-    border: 2px solid var(--ink);
-    border-radius: 6px;
+    width: 72px;
+    height: 8px;
+    border-radius: 4px;
     overflow: hidden;
-    background: var(--paper-light);
+    background: rgba(255, 255, 255, 0.18);
   }
   .meter span {
     display: block;
     height: 100%;
-    background: var(--amber);
+    background: #f2a541;
   }
+
+  /* Touch: a soft ring for the stick, and two round buttons. */
   .stick {
     position: fixed;
     width: 112px;
     height: 112px;
     margin: -56px 0 0 -56px;
-    border: 2px dashed rgba(43, 38, 34, 0.55);
+    border: 2px solid rgba(255, 255, 255, 0.35);
     border-radius: 50%;
-    background: rgba(244, 236, 221, 0.18);
+    background: rgba(24, 22, 48, 0.25);
     pointer-events: none;
     display: grid;
     place-items: center;
   }
   .stick span {
-    width: 48px;
-    height: 48px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    border: 2px solid var(--ink);
-    background: var(--paper);
-    box-shadow: 2px 3px 0 var(--shadow);
+    background: rgba(251, 243, 228, 0.92);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
   }
   .buttons {
     position: fixed;
@@ -327,44 +333,65 @@
     width: 66px;
     height: 66px;
     border-radius: 50%;
-    border: 2px solid var(--ink);
-    background: var(--paper);
-    color: var(--ink);
-    box-shadow: 3px 4px 0 var(--shadow);
-    font: 700 1rem/1 var(--hand);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(24, 22, 48, 0.62);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    color: #fbf3e4;
+    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.6);
+    font: 700 1rem/1 var(--read);
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
   }
   .round:active {
-    transform: translateY(2px);
-    box-shadow: 1px 2px 0 var(--shadow);
+    transform: scale(0.94);
   }
   .act {
-    width: 76px;
-    height: 76px;
-    background: var(--amber);
+    width: 78px;
+    height: 78px;
+    border-color: rgba(140, 70, 10, 0.5);
+    background: linear-gradient(180deg, #f8bb62, #ee9b33);
+    color: #2b1a08;
   }
   @keyframes pop {
     from {
-      transform: translateX(-50%) rotate(-1deg) scale(0.85);
-    }
-    to {
-      transform: translateX(-50%) rotate(-1deg) scale(1);
+      transform: scale(0.88);
+      opacity: 0;
     }
   }
   :global(:root[data-motion="reduce"]) .prompt {
     animation: none;
   }
   @media (max-width: 640px) {
-    .stamps {
-      flex-direction: row-reverse;
-      align-items: flex-start;
-      gap: 8px;
+    .tools {
+      top: max(12px, env(safe-area-inset-top));
+      right: 12px;
+      left: 12px;
+      flex-direction: row;
+      justify-content: flex-end;
+      gap: 6px;
     }
-    .stamp {
-      width: 58px;
-      padding: 6px 2px 5px;
+    .tool {
+      flex-direction: column;
+      justify-content: center;
+      gap: 3px;
+      min-width: 0;
+      width: 62px;
+      height: 50px;
+      padding: 0;
+      border-radius: 14px;
+      font-size: 0.66rem;
+    }
+    .tool .label {
+      flex: none;
+      text-align: center;
+    }
+    .tool:hover {
+      transform: none;
+    }
+    .hint {
+      margin-top: 0;
     }
   }
 </style>

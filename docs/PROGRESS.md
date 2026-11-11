@@ -20,8 +20,9 @@ Things a new session should know:
 - `npm run dev` runs Vite with the real Workers runtime on port 5173. `npm run typecheck` regenerates Worker types first.
 - Skills are git-ignored. After a fresh clone run `npx skills experimental_install` to restore them from `skills-lock.json` (`DECISIONS.md` #9).
 - Co-op is solo by default. Add `?room=some-code` to open a room socket. The page mirrors state on `<html data-net data-players data-stage data-tier>` for tests.
-- URL switches: `?quality=low|medium|high`, `?shot=wide|porch|mom|workshop|bench|character` (fixed camera bookmarks) or `?shot=play-yard|play-garden|play-shed|play-hill|play-meadow` (player placed, normal camera), `?debug` (fps overlay, always on in dev), `?test` (exposes `window.__poh`).
-- Screenshots: `npx tsx scripts/screens.ts <folder> [shots] [url] [quality] [desktop]` with the dev server running. Latest set is in `docs/screens/pass3/` (desktop only, at the team's request).
+- URL switches: `?quality=low|medium|high`, `?shot=wide|orbit-back|orbit-west|orbit-east|orbit-north|orbit-south|porch|mom|workshop|bench|character` (fixed camera bookmarks) or `?shot=play-yard|play-garden|play-shed|play-hill|play-meadow|play-treehouse|play-pond|play-camp|play-weather|play-playground|play-rocket|play-orchard|play-windpump|play-balloon` (player placed, normal camera), `?debug` (fps overlay, always on in dev), `?test` (exposes `window.__poh`).
+- Home layout lives in `src/game/worlds/home/layout.ts` (sites, trails, places, terrain). Places are built in `places.ts`, paths in `paths.ts`, place names and lines in `src/content/places.ts`.
+- Screenshots: `npx tsx scripts/screens.ts <folder> [shots] [url] [quality] [desktop]` with the dev server running. Latest set is in `docs/screens/pass4/` (desktop only, at the team's request).
 - Playwright runs with 2 workers, and walk tests use the Low tier (`DECISIONS.md` #8, #18).
 - NASA models: `npx tsx scripts/assets/nasa-models.ts build` (output to `.cache/` until a phase ships one).
 - Facts: 52 (30 checked, 22 verify). Location facts carry `lat`/`lon`. Opening every source and filling `checkedOn` is the first job of Phase 05.
@@ -99,6 +100,19 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Timing on the live site (fresh cache): first paint 480 ms and light ready 3.7 s on 4G; first paint 870 ms and light ready 6.0 s on Fast 3G (both include the 1.2 s settle). Whole build 2.5 MB; main script 240 KB gzipped
 - [x] Typecheck, svelte-check, 44 unit tests, 22 Playwright tests (local and live), check:facts pass
 - [x] Committed, pushed, deployed, live smoke test passed
+
+## Home and front-end pass (after Phase 03, at the team's request)
+
+- [x] Notebook rebuilt as real spreads with envelopes, wax seals, polaroids, Then and now labels and a shaded page turn; menu, HUD and panels in one dusk-glass style; Field Guide and About restyled (DECISIONS #28)
+- [x] Goal card, chapter card and one-at-a-time how-to tips that end when the player does the thing; Hint repeats the goal; tips can be hidden or replayed from Settings (DECISIONS #29)
+- [x] Paper arrow now points at the goal, not back at the player; lamp pull chain hangs from the shade rim
+- [x] Kids and Mom: knees and elbows, even-radius limbs, better walk, run, jump and landing (DECISIONS #32)
+- [x] Home planet: radius 20 m, smooth round silhouette, low wide hill, more room round every building, one low porch step (DECISIONS #30)
+- [x] Nine places to find all round the planet, each named on arrival with a "New place found" card; the Explore goal counts them (DECISIONS #30)
+- [x] Footpaths redrawn as smooth curved ribbons with round junctions, pebbles and porch stepping stones; twelve lamp posts along the long trails (DECISIONS #31)
+- [x] Slow-device fixes: frozen world redrawn rarely under overlays, menu pad polled on a timer (DECISIONS #33)
+- [x] Screens in `docs/screens/pass4/` (desktop)
+- [x] Typecheck, svelte-check, 54 unit tests, 22 Playwright tests, check:facts pass
 
 ## Phase 04: Music, sound effects and voices in JavaScript
 

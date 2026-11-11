@@ -26,7 +26,7 @@ export interface Bookmark {
   /** Where the player stands. Unit direction from the planet center, and facing. */
   player: { dir: Vector3; forward: Vector3 };
   /** Camera position and look target in world space. Null follows the player normally. */
-  camera: { position: Vector3; target: Vector3 } | null;
+  camera: { position: Vector3; target: Vector3; up?: Vector3 } | null;
 }
 
 export interface FrameInfo {
@@ -71,6 +71,8 @@ export interface World {
   bookmarks: Record<string, Bookmark>;
   surfaceAt(dir: Vector3, onPlatform: boolean): string;
   cameraHint(player: PlayerController): CameraHint | null;
+  /** The named place the player is standing in, for the place-name card. Null between places. */
+  zoneAt?(dir: Vector3): string | null;
   /** Where the paper arrow should point, or null. */
   objective(): Vector3 | null;
   update(dt: number, frame: FrameInfo): void;

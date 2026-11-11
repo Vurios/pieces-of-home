@@ -75,7 +75,8 @@ export function moveFocus(root: HTMLElement, dx: number, dy: number): void {
  * Returns a stop function.
  */
 export function gamepadNav(getRoot: () => HTMLElement | null, onBack: () => void, onShoulder?: (dir: -1 | 1) => void): () => void {
-  let frame = 0;
+  // Polled on a timer, not once a frame: when the 3D world is slow to draw,
+  // menus still catch every press.
   const held = new Map<string, number>();
   // Directions repeat when held, like a keyboard. Buttons fire once per press.
   const press = (key: string, down: boolean, now: number, repeat = false): boolean => {
@@ -94,8 +95,8 @@ export function gamepadNav(getRoot: () => HTMLElement | null, onBack: () => void
     }
     return false;
   };
-  const tick = (now: number): void => {
-    frame = requestAnimationFrame(tick);
+  const tick = (): void => {
+    const now = performance.now();
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     const pad = [...pads].find((p) => p && p.connected);
     const root = getRoot();
@@ -116,6 +117,6 @@ export function gamepadNav(getRoot: () => HTMLElement | null, onBack: () => void
     if (onShoulder && press("lb", b(4), now)) onShoulder(-1);
     if (onShoulder && press("rb", b(5), now)) onShoulder(1);
   };
-  frame = requestAnimationFrame(tick);
-  return () => cancelAnimationFrame(frame);
+  const timer = window.setInterval(tick, 40);
+  return () => window.clearInterval(timer);
 }

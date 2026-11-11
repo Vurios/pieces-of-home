@@ -51,17 +51,14 @@ function rope(b: Batcher, parent: Matrix4, a: Vector3, c: Vector3, sag: number, 
 // ---------------------------------------------------------------- the house
 
 function porchSteps(b: Batcher, m: Matrix4, shapes: Shape[]): void {
-  // Two wide wooden steps down from the porch to the path, below the door.
+  // One wide, low wooden step down from the porch to the path, below the door.
   const x = -0.6;
-  for (const [z, top, depth] of [
-    [3.27, 0.23, 0.34],
-    [3.55, 0.12, 0.3],
-  ] as const) {
+  for (const [z, top, depth] of [[3.3, 0.13, 0.4]] as const) {
     b.place(box(0.02), C.woodLight, v(x, top - 0.3, z), [0, 0, 0], [1.3, 0.6, depth], m);
     b.place(box(0.004), C.wood, v(x, top + 0.002, z + depth / 2 - 0.02), [0, 0, 0], [1.3, 0.008, 0.03], m);
     shapes.push({ kind: "box", x, z, halfWidth: 0.65, halfDepth: depth / 2, height: top });
   }
-  for (const side of [-1, 1]) b.place(box(0.01), C.trim, v(x + side * 0.68, -0.05, 3.4), [0, 0, 0], [0.06, 0.55, 0.62], m);
+  for (const side of [-1, 1]) b.place(box(0.01), C.trim, v(x + side * 0.68, -0.1, 3.3), [0, 0, 0], [0.06, 0.45, 0.42], m);
 }
 
 function porchSkirt(b: Batcher, m: Matrix4): void {
@@ -75,9 +72,9 @@ function porchSkirt(b: Batcher, m: Matrix4): void {
     const n = Math.round(width / 0.22);
     for (let i = 0; i < n; i += 1) {
       const x = x0 + (i + 0.5) * (width / n);
-      for (const tilt of [-0.75, 0.75]) b.place(box(0.004), C.paper, v(x, 0.16, z), [0, 0, tilt], [0.025, 0.34, 0.02], m);
+      for (const tilt of [-0.75, 0.75]) b.place(box(0.004), C.paper, v(x, 0.12, z), [0, 0, tilt], [0.025, 0.26, 0.02], m);
     }
-    b.place(box(0.004), C.trim, v((x0 + x1) / 2, 0.3, z + 0.01), [0, 0, 0], [width, 0.05, 0.03], m);
+    b.place(box(0.004), C.trim, v((x0 + x1) / 2, 0.23, z + 0.01), [0, 0, 0], [width, 0.05, 0.03], m);
   }
 }
 

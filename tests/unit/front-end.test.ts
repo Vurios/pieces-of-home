@@ -3,7 +3,11 @@ import { renderPages } from "../../scripts/vite/pages-plugin";
 import { listHtml, wobble } from "../../scripts/vite/loader-plugin";
 import { BootProgress } from "../../src/boot/progress";
 import { fact } from "../../src/content/facts";
+import { LETTER_TO_THE_LAMP, SEEN_NOTEBOOK, TIP_ORDER, goalFor, tipFor } from "../../src/content/goals";
 import { GUIDE } from "../../src/content/guide";
+import { PLACE_COPY, PLACE_IDS, placeFlag, placesFound } from "../../src/content/places";
+import { PATHS, PLACES, TRAIL_SPECS, sampleTrail } from "../../src/game/worlds/home/layout";
+import { createInitialState, reviveState } from "../../src/game/core/state";
 import { SPREADS, factText, isComplete } from "../../src/content/notebook";
 import { GLYPHS, glyphShapes, letterGeometry, signedArea, traceGlyph } from "../../src/game/title/letters";
 import { ROOM_WORDS, makeRoomCode } from "../../src/net/words";
@@ -117,5 +121,96 @@ describe("notebook and Field Guide", () => {
     const html = renderPages.about();
     expect(html).toContain("For grown-ups");
     expect(html).not.toMatch(/—/);
+  });
+});
+
+describe("goals and tips", () => {
+  const fresh = createInitialState();
+  const key = (code: string): string => (code.startsWith("Key") ? code.slice(3) : code);
+  const bindings = { forward: ["KeyW"], back: ["KeyS"], left: ["KeyA"], right: ["KeyD"], run: ["ShiftLeft"], interact: ["KeyE"] };
+
+  it("always names one next step, in story order", () => {
+    expect(goalFor(fresh, "keyboard").id).toBe("mailbox");
+    expect(goalFor({ ...fresh, carrying: LETTER_TO_THE_LAMP }, "keyboard").id).toBe("lamp");
+    const delivered = { ...fresh, delivered: [LETTER_TO_THE_LAMP] };
+    expect(goalFor(delivered, "keyboard").id).toBe("notebook");
+    expect(goalFor({ ...delivered, flags: [SEEN_NOTEBOOK] }, "keyboard").id).toBe("explore");
+  });
+
+  it("tells each device how to open the notebook", () => {
+    const delivered = { ...fresh, delivered: [LETTER_TO_THE_LAMP] };
+    expect(goalFor(delivered, "keyboard").detail).toContain("Press N");
+    expect(goalFor(delivered, "touch").detail).toContain("Tap Notebook");
+    expect(goalFor(delivered, "gamepad").detail).toContain("View");
+  });
+
+  it("draws the player's own keys, and uses plain words with no em dashes", () => {
+    const move = tipFor("move", "keyboard", { ...bindings, forward: ["KeyZ"] }, key);
+    expect(move.keys).toEqual(["Z", "A", "S", "D"]);
+    for (const device of ["keyboard", "touch", "gamepad"] as const) {
+      for (const id of TIP_ORDER) expect(tipFor(id, device, bindings, key).text).not.toMatch(/—/);
+      for (const state of [fresh, { ...fresh, carrying: LETTER_TO_THE_LAMP }]) {
+        const goal = goalFor(state, device);
+        expect(`${goal.title} ${goal.detail} ${goal.hint}`).not.toMatch(/—/);
+      }
+    }
+  });
+
+  it("keeps story flags in the save, and old saves start with none", () => {
+    expect(reviveState({ ...fresh, flags: [SEEN_NOTEBOOK, SEEN_NOTEBOOK] }).flags).toEqual([SEEN_NOTEBOOK]);
+    const { flags: _drop, ...old } = fresh;
+    expect(reviveState(old).flags).toEqual([]);
+  });
+
+  it("remembers learned tips and drops junk", () => {
+    expect(defaultSettings().tips).toBe(true);
+    expect(reviveSettings({ tipsDone: ["move", 3, "look"] }).tipsDone).toEqual(["move", "look"]);
+  });
+});
+
+describe("places on Home", () => {
+  it("names every place the world can report, and nothing else", () => {
+    expect(PLACES.map((p) => p.id).sort()).toEqual([...PLACE_IDS].sort());
+  });
+
+  it("keeps place copy short and plain", () => {
+    for (const { name, line } of Object.values(PLACE_COPY)) {
+      expect(name.length).toBeLessThanOrEqual(22);
+      expect(line.split(" ").length).toBeLessThanOrEqual(14);
+      expect(`${name} ${line}`).not.toMatch(/[—–]/);
+      expect(line).not.toMatch(/\d/);
+    }
+  });
+
+  it("counts found places for the explore goal", () => {
+    const state = { ...createInitialState(), delivered: [LETTER_TO_THE_LAMP], flags: [SEEN_NOTEBOOK, placeFlag("pond"), placeFlag("camp"), "place:nowhere"] };
+    expect(placesFound(state.flags)).toBe(2);
+    expect(goalFor(state, "keyboard").detail).toContain(`2 of ${PLACE_IDS.length}`);
+    const all = { ...state, flags: [SEEN_NOTEBOOK, ...PLACE_IDS.map(placeFlag)] };
+    expect(goalFor(all, "keyboard").title).toBe("You found every place");
+  });
+
+  it("gives places room: no two place centers closer than 8 m", () => {
+    for (let i = 0; i < PLACES.length; i += 1) {
+      for (let j = i + 1; j < PLACES.length; j += 1) {
+        const meters = Math.acos(Math.min(1, PLACES[i]!.dir.dot(PLACES[j]!.dir))) * 20;
+        expect(meters, `${PLACES[i]!.id} to ${PLACES[j]!.id}`).toBeGreaterThan(8);
+      }
+    }
+  });
+
+  it("draws trails as smooth curves that join end to end", () => {
+    for (const spec of TRAIL_SPECS) {
+      const points = sampleTrail(spec, 0.5);
+      expect(points[0]!.distanceTo(spec.a)).toBeLessThan(1e-6);
+      expect(points.at(-1)!.distanceTo(spec.b)).toBeLessThan(1e-6);
+      // No kinks: each step turns only a little from the one before.
+      for (let i = 2; i < points.length; i += 1) {
+        const a = points[i - 1]!.clone().sub(points[i - 2]!).normalize();
+        const b = points[i]!.clone().sub(points[i - 1]!).normalize();
+        expect(a.dot(b)).toBeGreaterThan(0.97);
+      }
+    }
+    expect(PATHS.length).toBeGreaterThan(TRAIL_SPECS.length);
   });
 });

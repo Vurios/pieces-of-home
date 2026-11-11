@@ -86,6 +86,8 @@ export class Input {
   bindings: KeyBindings = loadBindings();
   readonly stick: TouchStick = { active: false, originX: 0, originY: 0, x: 0, y: 0 };
   device: InputDevice = "keyboard";
+  /** How far the player has turned the camera, in total. The tips use it to see that "look" was learned. */
+  lookTravel = 0;
 
   private keys = new Set<string>();
   private pressed = new Set<Action>();
@@ -173,6 +175,8 @@ export class Input {
       lookY += pad.lookY;
       run = run || pad.run;
     }
+
+    this.lookTravel += Math.abs(lookX) + Math.abs(lookY);
 
     const length = Math.hypot(moveX, moveY);
     if (length > 1) {

@@ -294,3 +294,51 @@ Dad's desk lamp was rebuilt for the opening close-up: weighted base, twin lower 
 **Decision:** `npm run test` runs `scripts/vitest.mjs`, which starts Vitest from an upper-case drive path. When a Windows shell hands Node a lowercase `c:` path, Vitest loads itself twice and every suite fails with "reading 'config'". Pure settings logic moved to `src/ui/settings-data.ts` so it can be tested in Node.
 
 **Alternatives considered:** telling every teammate which shell to use (easy to forget).
+
+## 28. Warm cards and dusk glass for the 2D layer
+
+**Date:** 2026-11-11
+
+**Decision:** Every control drawn over the world (HUD tools, prompt, goal card, tips, menu list, notebook bar) uses one dusk-glass style: deep indigo at 60 to 78 percent, a light blur, cream text and amber accents. Paper surfaces (the notebook, panels, the Field Guide) stay warm cream cards. The notebook was rebuilt as real spreads: a contents page with dotted leaders, a machine spread per letter (Dad's nickname in his hand, the real name, his sketch marked "Model, not to scale", his note on lined paper; then polaroids with exact credits, sourced facts, a "Then and now" label and Deeper notes), envelopes that get a wax seal and a Delivered stamp, and a page that lifts and turns with a shaded back face. Phones slide pages instead of flipping them.
+
+**Alternatives considered:** paper tabs for the menu over the 3D world (hard to read at dusk); a single-page notebook (loses the turn of a real book).
+
+## 29. One goal at a time, and tips that end when you do the thing
+
+**Date:** 2026-11-11
+
+**Decision:** A goal card (top left) always shows exactly one next step, where it is and why, with step dashes and a short "Done!" when it is finished (`src/content/goals.ts`). A chapter card names the part of the story when play begins. How-to tips teach one control at a time (move, look, the paper arrow, use, notebook) and each one ends when the player actually does it, not when they press OK. Tips can be hidden and shown again from Settings. The Hint tool repeats the goal's longer hint. Story flags (`GameState.flags`) record beats such as opening the notebook.
+
+**Alternatives considered:** a modal tutorial before play (kids skip it and then are lost); always-on control hints (clutter).
+
+## 30. Home: a round little planet with places all the way round
+
+**Date:** 2026-11-11
+
+**Decision:** The team found the planet lumpy and too crowded. The ground noise dropped to 7 cm and every loose bump was removed; only a low, wide hill remains, so the silhouette is a clean circle from any side. The home lot (house, workshop, garden, dish, hill, meadow) keeps the title framing but each building has more room. Nine places to find are spread over the rest of the sphere, each with its own pad, keep-out zone and footpath: the treehouse, the playground, Lily Pond with a dock and rowboat, Campfire Camp, Dad's weather station, the windpump, Rocket Field with Dad's model rocket, the orchard with beehives, and a tethered balloon at the south pole. Moving parts (fire, anemometer cups, wind vane, windsock, swings, windpump wheel, kite, balloon) are batched separately and turned each frame. Walking into a place shows its name; the first visit shows "New place found", one line and a dot per place, and the Explore goal counts places found (`src/content/places.ts`). All of it is procedural geometry, so there are no new assets or credits.
+
+**Alternatives considered:** a bigger radius (more walking, less tiny-planet charm); more props on the front face (more crowding, the complaint we were fixing).
+
+## 31. Footpaths as ribbons, not painted ground
+
+**Date:** 2026-11-11
+
+**Decision:** Paths painted into the planet's vertex colors took the mesh's stair-step edge and looked like orange roads. Paths are now their own ribbon mesh (`worlds/home/paths.ts`): smooth curves sampled every 28 cm along trails that bow and bend (flat at the ends, so they leave a door or junction straight), a nearly flat pale track with a thin soft rim that the ink pass outlines, edges that wander a little in width, round patches where trails meet or end, pebbles just off the edge, and flat stepping stones up to the porch. The grass beside a path is painted slightly worn so the track settles in. Distance checks skip far arcs with one dot product, so the many short arcs cost little at load.
+
+**Alternatives considered:** a decal texture (needs UV work on a sphere and another texture); keeping vertex colors with a denser planet mesh (many more triangles for the same edge).
+
+## 32. Limbs as true capsules with knees and elbows
+
+**Date:** 2026-11-11
+
+**Decision:** Short capsules stretched along one axis became squashed balls, which made arms and legs look like beads. `limb()` in `actors/parts.ts` builds an even-radius capsule between two points. Kids and Mom have thigh and shin, upper arm and forearm segments with knee and elbow joints, so walking lifts the knee, running bends the elbows, landing squashes into the knees, and the torso counter-twists.
+
+**Alternatives considered:** skinned meshes (a rig and a modeling pass for four kids and Mom, for little gain at this size).
+
+## 33. Keep the 2D layer responsive when the 3D world is slow
+
+**Date:** 2026-11-11
+
+**Decision:** When the notebook or a panel covers the world, the engine redraws the frozen world only now and then if a render takes longer than 40 ms, so a slow device keeps the notebook and its gamepad controls smooth. Menu gamepad input is polled on a 40 ms timer instead of once per frame, so a press is never missed between two slow frames. The gamepad test lets the page time each press itself, so a slow test runner cannot turn a tap into a held, repeating D-pad.
+
+**Alternatives considered:** pausing rendering entirely under overlays (the world behind the scrim would never update after a resize).

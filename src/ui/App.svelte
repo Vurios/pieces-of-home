@@ -8,7 +8,10 @@
   import { flow } from "./flow.svelte";
   import { gamepadNav } from "./focus";
   import Hud from "./Hud.svelte";
+  import { goalFor } from "../content/goals";
   import EmoteWheel from "./hud/EmoteWheel.svelte";
+  import Guide from "./hud/Guide.svelte";
+  import PlaceCard from "./hud/PlaceCard.svelte";
   import Speech from "./hud/Speech.svelte";
   import StampMoment from "./hud/StampMoment.svelte";
   import Toasts from "./hud/Toasts.svelte";
@@ -134,9 +137,9 @@
     engine.bus.emit("toast", { text: full ? t("toast.photoFull") : t("toast.photo") });
   }
 
+  /** A hint is the current goal, said a little more fully. */
   function hint(): void {
-    const key = game.carrying ? "hint.lamp" : game.delivered.includes("to-the-lamp") ? "hint.done" : "hint.mailbox";
-    engine.bus.emit("toast", { text: t(key) });
+    engine.bus.emit("toast", { text: goalFor(game, engine.input.device).hint });
   }
 
   function toggleNotebook(open: boolean): void {
@@ -176,6 +179,8 @@
   onsettings={() => flow.open("settings")}
   onhint={hint}
 />
+<Guide {engine} {game} hidden={flow.stage !== "play" || flow.covered} notebookOpen={flow.notebook} />
+<PlaceCard {engine} hidden={flow.stage !== "play" || flow.covered || flow.notebook} />
 <Speech {engine} />
 <Toasts {engine} />
 <StampMoment {engine} />

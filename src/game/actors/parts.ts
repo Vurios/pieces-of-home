@@ -4,10 +4,13 @@ import {
   CapsuleGeometry,
   ConeGeometry,
   CylinderGeometry,
-  SphereGeometry,
+  Euler,
   type Material,
   type Object3D,
+  Quaternion,
+  SphereGeometry,
   TorusGeometry,
+  Vector3,
 } from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { Batcher } from "../render/kit";
@@ -37,6 +40,28 @@ export const sphere = (detail: "tiny" | "low" | "mid" | "high" = "mid"): BufferG
 /** Capsule with radius 1 and a straight middle of `length`. */
 export const capsule = (length: number): BufferGeometry =>
   cached(`capsule-${length.toFixed(3)}`, () => new CapsuleGeometry(1, length, 5, 12));
+
+const limbUp = new Vector3(0, 1, 0);
+const limbDir = new Vector3();
+const limbQuat = new Quaternion();
+const limbEuler = new Euler();
+
+/**
+ * A rounded limb from `a` to `b` in a joint's space: a true capsule with an
+ * even radius, so an arm reads as an arm. (Stretching a short capsule along
+ * one axis makes a squashed ball, and a row of those looks like beads.)
+ */
+export function limb(assembly: Assembly, parent: Object3D, a: [number, number, number], b: [number, number, number], radius: number, color: string): void {
+  limbDir.set(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+  const length = limbDir.length();
+  limbDir.divideScalar(length || 1);
+  limbQuat.setFromUnitVectors(limbUp, limbDir);
+  limbEuler.setFromQuaternion(limbQuat, "XYZ");
+  // Round the straight part to 2 decimals in unit-radius space, so similar limbs share one geometry.
+  const straight = Math.max(0.01, Math.round((length / radius) * 100) / 100);
+  const mid: [number, number, number] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+  assembly.add(parent, capsule(straight), color, mid, radius, [limbEuler.x, limbEuler.y, limbEuler.z]);
+}
 
 /** Cylinder of radius 1 and height 1, centered. */
 export const cylinder = (segments = 16, topRatio = 1, open = false): BufferGeometry =>

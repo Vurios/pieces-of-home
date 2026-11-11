@@ -7,7 +7,7 @@ import { angleBetween, headingToTangent, latLonToDir, surfaceMatrix } from "../.
 import type { Terrain } from "../../world/terrain";
 import { distanceToArc } from "../shapes";
 import { C } from "./buildings";
-import { HILL_TOP, HOME_RADIUS, MAILBOX, PATHS, PATH_HALF_WIDTH, POND, SITES, type Site } from "./layout";
+import { HILL_TOP, HOME_RADIUS, MAILBOX, MEADOW, ORCHARD, PATHS, PATH_HALF_WIDTH, POND, POND_RADIUS, SITES, type Site } from "./layout";
 
 const v = (x: number, y: number, z: number): [number, number, number] => [x, y, z];
 
@@ -18,10 +18,23 @@ export function groundMatrix(terrain: Terrain, dir: Vector3, heading: number, si
   return surfaceMatrix(position, up, headingToTangent(up, heading));
 }
 
-/** Angular distance to the nearest footpath, in world units on the surface. */
+/** Each short path arc with a bounding cap, so far-off arcs are skipped with one dot product. */
+const PATH_REACH = 3;
+const SEGMENTS = PATHS.map(([a, b]) => {
+  const half = (angleBetween(a, b) * HOME_RADIUS) / 2;
+  return { a, b, mid: a.clone().add(b).normalize(), limit: Math.cos((half + PATH_REACH) / HOME_RADIUS) };
+});
+
+/**
+ * Distance along the ground to the nearest footpath, in meters. Anything
+ * farther than a few meters reads as Infinity, which is all any caller needs.
+ */
 export function pathDistance(dir: Vector3): number {
   let best = Infinity;
-  for (const [a, b] of PATHS) best = Math.min(best, distanceToArc(dir, a, b) * HOME_RADIUS);
+  for (const s of SEGMENTS) {
+    if (dir.dot(s.mid) < s.limit) continue;
+    best = Math.min(best, distanceToArc(dir, s.a, s.b) * HOME_RADIUS);
+  }
   return best;
 }
 
@@ -33,11 +46,19 @@ const KEEP_OUT: { dir: Vector3; radius: number }[] = [
   { dir: latLonToDir(MAILBOX.lat, MAILBOX.lon), radius: 1.6 },
   { dir: latLonToDir(SITES.spawn.lat, SITES.spawn.lon), radius: 2.5 },
   { dir: HILL_TOP, radius: 2.6 },
-  { dir: POND, radius: 3.4 },
-  { dir: latLonToDir(-27, -4), radius: 2.4 },
-  { dir: latLonToDir(-24, 13), radius: 1.6 },
-  { dir: latLonToDir(-17, 26), radius: 1.0 },
-  { dir: latLonToDir(4, 4), radius: 0.8 },
+  { dir: POND, radius: POND_RADIUS + 2.2 },
+  { dir: MEADOW.oak, radius: 2.4 },
+  { dir: MEADOW.picnic, radius: 1.6 },
+  { dir: MEADOW.bath, radius: 1.0 },
+  { dir: MEADOW.sign, radius: 0.8 },
+  { dir: SITES.treehouse.dir, radius: 3.6 },
+  { dir: SITES.playground.dir, radius: 4.2 },
+  { dir: SITES.camp.dir, radius: 4.0 },
+  { dir: SITES.rocket.dir, radius: 3.0 },
+  { dir: SITES.weather.dir, radius: 3.2 },
+  { dir: SITES.windpump.dir, radius: 3.4 },
+  { dir: SITES.balloon.dir, radius: 3.0 },
+  { dir: ORCHARD, radius: 4.6 },
 ];
 
 /** True if a prop of `size` can stand here without blocking a path or a building. */
@@ -46,7 +67,7 @@ export function isClear(dir: Vector3, size: number): boolean {
   return pathDistance(dir) > PATH_HALF_WIDTH + size + 0.2;
 }
 
-const LEAVES = ["#6E9470", "#7FA37A", "#5E8466", "#88A979"];
+export const LEAVES = ["#6E9470", "#7FA37A", "#5E8466", "#88A979"];
 const AUTUMN = ["#D49A4A", "#C77A3F", "#E0B060"];
 const BIRCH = ["#A9BF6E", "#BFCB7A", "#97B068"];
 export const FLOWERS = ["#E58B6B", "#F2C14E", "#F4ECDD", "#B9A5D8", "#E36F5A"];
@@ -85,16 +106,32 @@ export function planTrees(density: number): TreePlan[] {
   const random = createRandom(2026);
   const plan: TreePlan[] = [
     // Hero trees that frame the house and the workshop.
-    { dir: latLonToDir(18, -27), kind: "oak", scale: 1.45, heading: 20 },
-    { dir: latLonToDir(-1, -26), kind: "autumn", scale: 1.15, heading: 80 },
-    { dir: latLonToDir(20, 29), kind: "birch", scale: 1.2, heading: 0 },
-    { dir: latLonToDir(16, 32.5), kind: "birch", scale: 1.0, heading: 40 },
-    { dir: latLonToDir(21, 34), kind: "birch", scale: 0.9, heading: 90 },
-    { dir: latLonToDir(-9, -22), kind: "apple", scale: 1.0, heading: 10 },
-    { dir: latLonToDir(-5, 42), kind: "pine", scale: 1.25, heading: 0 },
+    { dir: latLonToDir(22, -36), kind: "oak", scale: 1.45, heading: 20 },
+    { dir: latLonToDir(2, -42), kind: "autumn", scale: 1.15, heading: 80 },
+    { dir: latLonToDir(22, 33), kind: "birch", scale: 1.2, heading: 0 },
+    { dir: latLonToDir(18, 37), kind: "birch", scale: 1.0, heading: 40 },
+    { dir: latLonToDir(24, 39), kind: "birch", scale: 0.9, heading: 90 },
+    { dir: latLonToDir(-11, -30), kind: "apple", scale: 1.0, heading: 10 },
+    { dir: latLonToDir(4, 53), kind: "pine", scale: 1.25, heading: 0 },
     { dir: latLonToDir(36, -14), kind: "pine", scale: 1.1, heading: 0 },
     { dir: latLonToDir(39, 20), kind: "oak", scale: 1.1, heading: 0 },
   ];
+  // The orchard: apple trees round a clearing, kept off the paths that cross it.
+  const east = headingToTangent(ORCHARD, 90);
+  const north = headingToTangent(ORCHARD, 0);
+  for (const [x, z, s] of [
+    [-2.4, 2.4, 1.05],
+    [0.4, 3.2, 0.95],
+    [3.0, 0.9, 1.1],
+    [-3.2, -0.4, 0.9],
+    [-1.2, -3.0, 1.0],
+    [1.8, -2.6, 0.95],
+    [3.4, -1.0, 0.85],
+  ] as const) {
+    const dir = ORCHARD.clone().addScaledVector(east, -x / HOME_RADIUS).addScaledVector(north, z / HOME_RADIUS).normalize();
+    if (pathDistance(dir) < 1.3) continue;
+    plan.push({ dir, kind: "apple", scale: s, heading: x * 40 });
+  }
   for (const tree of plan) tree.hero = true;
   const count = Math.round(40 * density + 18);
   for (let n = 0, tries = 0; n < count && tries < 3000; tries += 1) {
@@ -124,7 +161,7 @@ export function treeShade(plan: TreePlan[]): ShadeSpot[] {
  * top where the light lands. Blob sizes vary so the outline is lumpy, the way
  * a painted tree looks.
  */
-function canopy(b: Batcher, m: Matrix4, random: () => number, palette: string[], s: number, height: number, size: number, hero: boolean): void {
+export function canopy(b: Batcher, m: Matrix4, random: () => number, palette: string[], s: number, height: number, size: number, hero: boolean): void {
   const blob = sphere(hero ? "mid" : "low");
   b.place(blob, palette === AUTUMN ? "#A8643A" : "#4F7256", v(0, height * s, 0), [0, 0, 0], [size * 1.05 * s, size * 0.85 * s, size * 1.05 * s], m, "foliage", 0.3);
   const ring = 7;
@@ -200,7 +237,7 @@ function buildTree(b: Batcher, m: Matrix4, tree: TreePlan, random: () => number)
 
 /** A clump of grass blades that lean out from a soft mound. Tips sway; roots stay put. */
 const BLADES = ["#A3BD8C", "#8DAE7C", "#93B47E", "#B4C793"];
-function grassClump(b: Batcher, m: Matrix4, random: () => number, blades: number, tall = 1): void {
+export function grassClump(b: Batcher, m: Matrix4, random: () => number, blades: number, tall = 1): void {
   b.place(sphere("tiny"), "#7FA37A", v(0, 0.0, 0), [0, random() * 3, 0], [0.12, 0.05, 0.1], m, "detail", 0);
   for (let i = 0; i < blades; i += 1) {
     const a = (i / blades) * Math.PI * 2 + random() * 0.6;
@@ -247,6 +284,9 @@ export function flowerDrift(b: Batcher, terrain: Terrain, center: Vector3, rando
   }
 }
 
+/** The planet grew from 15 m to 20 m; a little more scatter keeps it from looking bare. */
+const COVER = 1.4;
+
 export function scatterNature(b: Batcher, terrain: Terrain, density: number, trees: TreePlan[]): ColliderGroup[] {
   const random = createRandom(2027);
   const colliders: ColliderGroup[] = [];
@@ -265,7 +305,7 @@ export function scatterNature(b: Batcher, terrain: Terrain, density: number, tre
   }
 
   // Bushes and mossy rock clusters.
-  for (let n = 0, tries = 0; n < 44 * density + 12 && tries < 3000; tries += 1) {
+  for (let n = 0, tries = 0; n < (44 * density + 12) * COVER && tries < 4000; tries += 1) {
     const dir = randomDir(random);
     if (!isClear(dir, 0.45)) continue;
     const m = groundMatrix(terrain, dir, random() * 360);
@@ -297,7 +337,7 @@ export function scatterNature(b: Batcher, terrain: Terrain, density: number, tre
   }
 
   // Grass clumps, thicker near the edges of paths and buildings.
-  for (let n = 0, tries = 0; n < 260 * density + 60 && tries < 6000; tries += 1) {
+  for (let n = 0, tries = 0; n < (260 * density + 60) * COVER && tries < 9000; tries += 1) {
     const dir = randomDir(random);
     const path = pathDistance(dir);
     if (path < PATH_HALF_WIDTH + 0.12) continue;
@@ -319,19 +359,6 @@ export function scatterNature(b: Batcher, terrain: Terrain, density: number, tre
     n += 1;
   }
 
-  // Pebbles along the path edges.
-  for (const [a, bDir] of PATHS) {
-    const steps = Math.max(2, Math.round((angleBetween(a, bDir) * HOME_RADIUS) / 0.9));
-    for (let i = 1; i < steps; i += 1) {
-      if (random() < 0.4) continue;
-      const t = i / steps;
-      const mid = a.clone().lerp(bDir, t).normalize();
-      const side = new Vector3().crossVectors(a, bDir).normalize().multiplyScalar(((random() < 0.5 ? -1 : 1) * (PATH_HALF_WIDTH + 0.1)) / HOME_RADIUS);
-      const dir = mid.add(side).normalize();
-      const m = groundMatrix(terrain, dir, random() * 360, 0.03);
-      b.place(sphere("low"), random() < 0.5 ? C.stoneLight : "#B8AE9E", v(0, 0.03, 0), [0, random() * 3, 0], [0.12, 0.06, 0.09], m, "detail", 0);
-    }
-  }
   return colliders;
 }
 
@@ -404,32 +431,6 @@ export function buildGarden(b: Batcher, s: Site): Shape[] {
   return shapes;
 }
 
-/** The little pond on the far side of the planet. */
-export function buildPond(b: Batcher, terrain: Terrain): void {
-  const up = POND.clone();
-  const position = up.clone().multiplyScalar(terrain.radiusAt(up) + 0.12);
-  const m = surfaceMatrix(position, up, headingToTangent(up, 0));
-  b.place(cylinder(28), "#6E8FB0", v(0, 0, 0), [0, 0, 0], [2.05, 0.04, 2.05], m);
-  b.place(cylinder(28), "#86A7C4", v(0.3, 0.025, -0.2), [0, 0, 0], [1.2, 0.02, 0.9], m);
-  const random = createRandom(31);
-  for (let i = 0; i < 5; i += 1) {
-    const a = random() * Math.PI * 2;
-    const r = 0.5 + random() * 1.1;
-    b.place(cylinder(10), "#7FA37A", v(Math.cos(a) * r, 0.04, Math.sin(a) * r), [0, a, 0], [0.18, 0.015, 0.18], m);
-    if (i % 2) b.place(sphere("low"), "#F4ECDD", v(Math.cos(a) * r, 0.08, Math.sin(a) * r), [0, 0, 0], 0.05, m);
-  }
-  for (let i = 0; i < 14; i += 1) {
-    const a = (i / 14) * Math.PI * 2 + random() * 0.3;
-    const r = 2.1 + random() * 0.3;
-    b.place(cylinder(4), "#6E9470", v(Math.cos(a) * r, 0.25, Math.sin(a) * r), [random() * 0.2, 0, random() * 0.2], [0.02, 0.6 + random() * 0.3, 0.02], m, "foliage", 0.9);
-    if (i % 3 === 0) b.place(capsuleLike(), "#7A4A2E", v(Math.cos(a) * r, 0.55, Math.sin(a) * r), [0, 0, 0], [0.035, 0.1, 0.035], m);
-  }
-}
-
-function capsuleLike() {
-  return sphere("low");
-}
-
 /**
  * The meadow on the south side: a big oak with a rope swing, a picnic
  * blanket, a bird bath and a signpost toward the hill. It gives the wide view
@@ -439,7 +440,7 @@ export function buildMeadow(b: Batcher, terrain: Terrain, density = 1): Collider
   const colliders: ColliderGroup[] = [];
 
   // The swing oak.
-  const oak = groundMatrix(terrain, latLonToDir(-27, -4), 70);
+  const oak = groundMatrix(terrain, MEADOW.oak, 70);
   b.place(cylinder(9, 0.65), C.woodDark, v(0, 1.0, 0), [0, 0, 0.04], [0.26, 2.0, 0.26], oak);
   b.place(cylinder(7, 0.5), C.woodDark, v(0.55, 1.95, 0), [0, 0, -1.25], [0.11, 1.4, 0.11], oak);
   canopy(b, oak, createRandom(14), LEAVES, 1.55, 1.75, 0.66, true);
@@ -449,7 +450,7 @@ export function buildMeadow(b: Batcher, terrain: Terrain, density = 1): Collider
   colliders.push(createColliderGroup(oak, [{ kind: "circle", x: 0, z: 0, radius: 0.32, height: 3 }]));
 
   // Picnic blanket with a basket and two cups.
-  const picnic = groundMatrix(terrain, latLonToDir(-24, 13), 20, 0.0);
+  const picnic = groundMatrix(terrain, MEADOW.picnic, 20, 0.0);
   for (let i = 0; i < 4; i += 1) for (let j = 0; j < 4; j += 1) {
     b.place(box(0.005), (i + j) % 2 ? C.paper : C.clay, v(-0.6 + i * 0.4, 0.03, -0.6 + j * 0.4), [0, 0, 0], [0.4, 0.02, 0.4], picnic);
   }
@@ -461,7 +462,7 @@ export function buildMeadow(b: Batcher, terrain: Terrain, density = 1): Collider
   b.place(cone(3), C.paper, v(-0.4, 0.07, -0.35), [Math.PI / 2, 0, 0.3], [0.12, 0.3, 0.03], picnic);
 
   // Bird bath.
-  const bath = groundMatrix(terrain, latLonToDir(-17, 26), 0);
+  const bath = groundMatrix(terrain, MEADOW.bath, 0);
   b.place(cylinder(10), C.stoneLight, v(0, 0.06, 0), [0, 0, 0], [0.3, 0.12, 0.3], bath);
   b.place(cylinder(10, 0.7), C.stoneLight, v(0, 0.45, 0), [0, 0, 0], [0.12, 0.7, 0.12], bath);
   b.place(cylinder(16, 1.2), C.stoneLight, v(0, 0.86, 0), [0, 0, 0], [0.38, 0.12, 0.38], bath);
@@ -472,7 +473,7 @@ export function buildMeadow(b: Batcher, terrain: Terrain, density = 1): Collider
   colliders.push(createColliderGroup(bath, [{ kind: "circle", x: 0, z: 0, radius: 0.4, height: 1.0 }]));
 
   // Signpost: two blank arrow boards, one toward the hill and one toward the workshop.
-  const sign = groundMatrix(terrain, latLonToDir(4, 4), 0);
+  const sign = groundMatrix(terrain, MEADOW.sign, 0);
   b.place(box(0.02), C.woodDark, v(0, 0.75, 0), [0, 0, 0], [0.1, 1.5, 0.1], sign);
   b.place(box(0.02), C.woodLight, v(0.25, 1.32, 0), [0, 0.15, 0], [0.6, 0.18, 0.05], sign);
   b.place(cone(3), C.woodLight, v(0.6, 1.32, -0.05), [0, 0.15, -Math.PI / 2], [0.13, 0.12, 0.05], sign);
@@ -482,12 +483,12 @@ export function buildMeadow(b: Batcher, terrain: Terrain, density = 1): Collider
   // Drifts of flowers across the meadow, each one color.
   const random = createRandom(5);
   const drifts: [number, number, string, number][] = [
-    [-30, -12, "#F2C14E", 18],
-    [-21, -2, "#F4ECDD", 14],
-    [-31, 8, "#E58B6B", 16],
-    [-15, 18, "#B9A5D8", 14],
-    [-26, 22, "#F2C14E", 12],
-    [-12, 6, "#E36F5A", 10],
+    [-37, -13, "#F2C14E", 18],
+    [-25, -7, "#F4ECDD", 14],
+    [-38, 11, "#E58B6B", 16],
+    [-21, 19, "#B9A5D8", 14],
+    [-31, 25, "#F2C14E", 12],
+    [-15, 9, "#E36F5A", 10],
   ];
   for (const [lat, lon, color, count] of drifts) flowerDrift(b, terrain, latLonToDir(lat, lon), random, color, Math.round(count * (0.45 + 0.55 * density)), 1.2);
   return colliders;

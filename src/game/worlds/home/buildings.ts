@@ -116,35 +116,37 @@ export function buildHouse(b: Batcher, s: Site): HouseResult {
 
   // Porch.
   const pz = D / 2 + 0.75;
-  b.place(box(0.03), C.woodLight, v(0, -0.16, pz), [0, 0, 0], [W + 0.2, 1.0, 1.5], m);
-  for (let i = 0; i < 9; i += 1) b.place(box(0.004), C.wood, v(-W / 2 + 0.25 + i * 0.47, 0.342, pz), [0, 0, 0], [0.025, 0.006, 1.45], m);
+  // A low porch: one easy step up from the path.
+  const deck = 0.26;
+  b.place(box(0.03), C.woodLight, v(0, deck - 0.5, pz), [0, 0, 0], [W + 0.2, 1.0, 1.5], m);
+  for (let i = 0; i < 9; i += 1) b.place(box(0.004), C.wood, v(-W / 2 + 0.25 + i * 0.47, deck + 0.002, pz), [0, 0, 0], [0.025, 0.006, 1.45], m);
   for (const x of [-1.95, 1.95]) {
-    b.place(box(0.02), C.trim, v(x, 0.34 + 1.05, pz + 0.62), [0, 0, 0], [0.14, 2.1, 0.14], m);
+    b.place(box(0.02), C.trim, v(x, deck + 1.1, pz + 0.62), [0, 0, 0], [0.14, 2.2, 0.14], m);
   }
   b.place(box(0.03), C.clay, v(0, 2.5, pz + 0.05), [0.2, 0, 0], [W + 0.5, 0.12, 1.85], m);
   // Railing on the sides of the porch.
   for (const x of [-1, 1]) {
-    b.place(box(0.01), C.trim, v(x * 2.02, 0.95, pz + 0.05), [0, 0, 0], [0.08, 0.06, 1.2], m);
-    for (let i = 0; i < 4; i += 1) b.place(box(0.01), C.trim, v(x * 2.02, 0.65, pz - 0.45 + i * 0.3), [0, 0, 0], [0.05, 0.6, 0.05], m);
+    b.place(box(0.01), C.trim, v(x * 2.02, deck + 0.61, pz + 0.05), [0, 0, 0], [0.08, 0.06, 1.2], m);
+    for (let i = 0; i < 4; i += 1) b.place(box(0.01), C.trim, v(x * 2.02, deck + 0.31, pz - 0.45 + i * 0.3), [0, 0, 0], [0.05, 0.6, 0.05], m);
   }
   // Porch bench and doormat.
-  b.place(box(0.02), C.wood, v(1.0, 0.62, pz - 0.35), [0, 0, 0], [1.1, 0.08, 0.38], m);
-  b.place(box(0.02), C.wood, v(1.0, 0.85, pz - 0.53), [0, 0, 0], [1.1, 0.36, 0.06], m);
-  for (const x of [0.55, 1.45]) b.place(box(0.01), C.woodDark, v(x, 0.48, pz - 0.35), [0, 0, 0], [0.06, 0.28, 0.32], m);
-  b.place(box(0.02), C.clayDark, v(-0.6, 0.35, pz - 0.35), [0, 0, 0], [0.8, 0.02, 0.5], m);
+  b.place(box(0.02), C.wood, v(1.0, deck + 0.28, pz - 0.35), [0, 0, 0], [1.1, 0.08, 0.38], m);
+  b.place(box(0.02), C.wood, v(1.0, deck + 0.51, pz - 0.53), [0, 0, 0], [1.1, 0.36, 0.06], m);
+  for (const x of [0.55, 1.45]) b.place(box(0.01), C.woodDark, v(x, deck + 0.14, pz - 0.35), [0, 0, 0], [0.06, 0.28, 0.32], m);
+  b.place(box(0.02), C.clayDark, v(-0.6, deck + 0.01, pz - 0.35), [0, 0, 0], [0.8, 0.02, 0.5], m);
   // Porch lamp by the door.
   b.place(box(0.02), C.ink, v(-1.25, 1.9, front + 0.06), [0, 0, 0], [0.16, 0.26, 0.12], m);
   b.place(sphere("low"), "#FFE2A6", v(-1.25, 1.86, front + 0.14), [0, 0, 0], 0.075, m, "glow");
   // Potted plants on the steps.
   for (const x of [-1.7, 1.7]) {
-    b.place(cylinder(10, 1.2), C.clay, v(x, 0.5, pz + 0.55), [0, 0, 0], [0.16, 0.3, 0.16], m);
-    b.place(sphere("low"), "#6E9470", v(x, 0.74, pz + 0.55), [0, 0, 0], 0.22, m);
+    b.place(cylinder(10, 1.2), C.clay, v(x, deck + 0.16, pz + 0.55), [0, 0, 0], [0.16, 0.3, 0.16], m);
+    b.place(sphere("low"), "#6E9470", v(x, deck + 0.4, pz + 0.55), [0, 0, 0], 0.22, m);
   }
 
   return {
     shapes: [
       { kind: "box", x: 0, z: 0, halfWidth: W / 2 + 0.2, halfDepth: D / 2 + 0.2, height: 4.2 },
-      { kind: "box", x: 0, z: pz, halfWidth: W / 2 + 0.1, halfDepth: 0.75, height: 0.34 },
+      { kind: "box", x: 0, z: pz, halfWidth: W / 2 + 0.1, halfDepth: 0.75, height: deck },
       { kind: "circle", x: -1.95, z: pz + 0.62, radius: 0.1, height: 2.4 },
       { kind: "circle", x: 1.95, z: pz + 0.62, radius: 0.1, height: 2.4 },
       { kind: "box", x: -2.02, z: pz + 0.05, halfWidth: 0.06, halfDepth: 0.6, height: 1.0 },

@@ -8,6 +8,7 @@
  */
 export const GUIDE = {
   title: "Pieces of Home: Field Guide",
+  kicker: "For families and classrooms",
   lede: "The whole story and every fact from the game, on one page. It works without 3D, with a screen reader, and on paper.",
   print: "Print this guide",
   play: "Play the game",
@@ -48,6 +49,7 @@ export const GUIDE = {
 
 export const ABOUT = {
   title: "About Pieces of Home",
+  kicker: "About the game",
   lede: "A cozy game for 1 to 4 players. Deliver a dad's letters to the machines people left on the Moon and Mars, and finish the little robot he started.",
   madeTitle: "Who made it",
   made: "A small team made it as a learning game about the machines people left behind in space, and why they still matter.",

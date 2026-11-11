@@ -57,13 +57,19 @@ test("a gamepad alone gets from the loader to the notebook", async ({ page }, in
     (window as unknown as { __pad: typeof pad }).__pad = pad;
     Object.defineProperty(navigator, "getGamepads", { value: () => [pad, null, null, null] });
   });
-  // Held for most of a second: the CPU renderer may draw only a couple of frames a second, and pads are read once a frame.
-  // The D-pad repeats when held, so its taps stay short.
-  const tap = async (index: number, hold = 900): Promise<void> => {
-    await page.evaluate((i) => ((window as unknown as { __pad: { buttons: { pressed: boolean }[] } }).__pad.buttons[i]!.pressed = true), index);
-    await page.waitForTimeout(hold);
-    await page.evaluate((i) => ((window as unknown as { __pad: { buttons: { pressed: boolean }[] } }).__pad.buttons[i]!.pressed = false), index);
-    await page.waitForTimeout(450);
+  // The page itself lets go after `hold` ms, on its own timer, so a slow test runner can never stretch a
+  // short D-pad tap into a held, repeating one. Buttons are held well over a second, since the game reads
+  // them once a frame and the CPU renderer may draw only one frame a second; they fire once per press.
+  const tap = async (index: number, hold = 1500): Promise<void> => {
+    await page.evaluate(
+      ([i, ms]) => {
+        const pad = (window as unknown as { __pad: { buttons: { pressed: boolean }[] } }).__pad;
+        pad.buttons[i]!.pressed = true;
+        window.setTimeout(() => (pad.buttons[i]!.pressed = false), ms);
+      },
+      [index, hold] as const,
+    );
+    await page.waitForTimeout(hold + 450);
   };
   const A = 0;
   const B = 1;
@@ -76,7 +82,7 @@ test("a gamepad alone gets from the loader to the notebook", async ({ page }, in
   await expect(stage(page)).toHaveAttribute("data-stage", "waiting", { timeout: 60_000 });
   await expect(page.locator("#boot")).toHaveAttribute("data-prompt", "", { timeout: 10_000 });
   await tap(A);
-  await expect(stage(page)).toHaveAttribute("data-stage", "title");
+  await expect(stage(page)).toHaveAttribute("data-stage", "title", { timeout: 15_000 });
   // A finds the Skip button, A again presses it.
   await tap(A);
   await tap(A);
@@ -93,7 +99,7 @@ test("a gamepad alone gets from the loader to the notebook", async ({ page }, in
   await tap(VIEW);
   const book = page.locator(".notebook");
   await expect(book).toBeVisible();
-  await tap(RB, 380);
+  await tap(RB);
   await expect(book.getByText("2 / 7")).toBeVisible();
   await tap(B);
   await expect(book).toBeHidden();

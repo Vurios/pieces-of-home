@@ -50,6 +50,15 @@
     });
   }
 
+  let tipsReset = $state(false);
+  function showTipsAgain(): void {
+    settings.update((d) => {
+      d.tips = true;
+      d.tipsDone = [];
+    });
+    tipsReset = true;
+  }
+
   function setQuality(value: "auto" | QualityTier): void {
     quality = value;
     engine.setQuality(value === "auto" ? null : value);
@@ -213,6 +222,14 @@
       {:else}
         <h3>{t("settings.story")}</h3>
         <label class="switch-row">
+          <span class="text">{t("settings.tips")}<span class="help">{t("settings.tipsHelp")}</span></span>
+          <input class="switch" type="checkbox" role="switch" checked={s.tips} onchange={(e) => set("tips", e.currentTarget.checked)} />
+        </label>
+        <div class="again">
+          <button type="button" class="btn" onclick={showTipsAgain}>{t("settings.tipsAgain")}</button>
+          {#if tipsReset}<span class="help" role="status">{t("settings.tipsReset")}</span>{/if}
+        </div>
+        <label class="switch-row">
           <span class="text">{t("settings.explore")}<span class="help">{t("settings.exploreHelp")}</span></span>
           <input class="switch" type="checkbox" role="switch" checked={s.exploreFreely} onchange={(e) => set("exploreFreely", e.currentTarget.checked)} />
         </label>
@@ -283,10 +300,24 @@
   .tabs button.on :global(.icon) {
     stroke: var(--amber-deep);
   }
+  .again {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .again .help {
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+  }
   .pane {
     min-height: 0;
     overflow-y: auto;
-    padding: 22px 32px 28px;
+    padding: 22px 32px 40px;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent);
     scrollbar-width: thin;
     animation: show 0.25s var(--ease-out);
   }
