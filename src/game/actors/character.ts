@@ -1,7 +1,7 @@
-import { type BufferGeometry, Group, Mesh, type Object3D, Vector3 } from "three";
+import { type BufferGeometry, Color, Group, Mesh, type Object3D, Vector3 } from "three";
 import type { ToonLibrary } from "../render/toon";
 import { damp } from "../world/sphere";
-import { Assembly, box, capsule, cone, cylinder, limb, sphere, torus } from "./parts";
+import { Assembly, box, capsule, cone, cylinder, hairLock, limb, sphere, torsoShape, torus } from "./parts";
 
 /**
  * Chunky chibi kids, built from simple shapes in code.
@@ -59,6 +59,11 @@ function joint(name: string, x = 0, y = 0, z = 0): Group {
 }
 
 const lookScratch = new Vector3();
+
+/** A colour a little lighter, for the locks the light catches. */
+function shade(hex: string, amount: number): string {
+  return `#${new Color(hex).lerp(new Color("#ffe8cc"), amount).getHexString()}`;
+}
 
 export class Character {
   readonly root = new Group();
@@ -145,7 +150,9 @@ export class Character {
     // Torso.
     this.torso = joint("torso", 0, 0.02, 0);
     this.hips.add(this.torso);
-    this.part(this.torso, capsule(0.16), p.top, [0, 0.2, 0], [0.175, 0.175, 0.145]);
+    this.part(this.torso, torsoShape(), p.top, [0, 0.01, 0], [0.18, 0.41, 0.15]);
+    // A rounded seat for the trousers, so the legs grow out of the body instead of out of a seam.
+    this.part(this.hips, sphere("mid"), p.legs, [0, 0.0, 0], [0.165, 0.09, 0.138]);
     // Hem, so the top reads as clothing.
     this.part(this.torso, cylinder(16), p.topDark, [0, 0.03, 0], [0.18, 0.05, 0.15]);
 
@@ -214,20 +221,44 @@ export class Character {
     this.assembly.add(parent, geometry, color, position, scale, rotation);
   }
 
+  /** One lock of hair on the head. */
+  private lock(root: [number, number, number], dir: [number, number, number], length: number, width: number, color: string, flat = 0.72): void {
+    hairLock(this.assembly, this.head, root, dir, length, width, color, flat);
+  }
+
+  /**
+   * A ring of locks round the head, from angle `from` to `to` in degrees
+   * (0 is the face, 180 the back), each falling outward and down.
+   */
+  private ring(from: number, to: number, count: number, radius: number, y: number, spread: number, length: number, width: number, color: string): void {
+    for (let i = 0; i < count; i += 1) {
+      const a = ((from + ((to - from) * i) / Math.max(1, count - 1)) * Math.PI) / 180;
+      const sx = Math.sin(a);
+      const cz = Math.cos(a);
+      this.lock([radius * sx, y, radius * cz - 0.02], [spread * sx, -1, spread * cz], length * (0.92 + ((i * 5) % 3) * 0.06), width, color);
+    }
+  }
+
   /** Hair, hats and the things that make each kid a silhouette. */
   private dress(id: KidId, p: Palette): void {
     const h = this.head;
     const t = this.torso;
     switch (id) {
       case "remi": {
-        // Messy short hair: a cap of hair, a side-swept fringe, a cowlick and tufts at the nape.
-        this.part(h, sphere("high"), p.hair, [0, 0.29, -0.03], [0.285, 0.2, 0.27]);
-        this.part(h, sphere("mid"), p.hair, [-0.09, 0.33, 0.14], [0.17, 0.09, 0.12], [0.3, 0, 0.35]);
-        this.part(h, cone(6), p.hair, [0.07, 0.48, 0.0], [0.05, 0.1, 0.05], [0.2, 0, -0.55]);
-        this.part(h, cone(6), p.hair, [0.12, 0.46, -0.05], [0.04, 0.08, 0.04], [-0.1, 0, -0.9]);
-        for (const [x, y, z] of [[-0.12, 0.15, -0.2], [0.0, 0.13, -0.23], [0.12, 0.15, -0.2], [-0.21, 0.2, -0.1], [0.21, 0.2, -0.1]] as const) {
-          this.part(h, sphere("low"), p.hair, [x, y, z], [0.075, 0.07, 0.065]);
-        }
+        // Messy short hair, sculpted from locks: a fringe swept to one side,
+        // sideburns, two rows of locks round the back and a cowlick on top.
+        const hi = shade(p.hair, 0.07);
+        this.part(h, sphere("high"), p.hair, [0, 0.275, -0.025], [0.279, 0.212, 0.268]);
+        this.ring(108, 252, 6, 0.25, 0.3, 0.25, 0.17, 0.1, p.hair);
+        this.ring(122, 238, 5, 0.255, 0.17, 0.12, 0.13, 0.105, p.hair);
+        this.ring(140, 220, 3, 0.2, 0.41, 0.4, 0.15, 0.1, p.hair);
+        this.lock([-0.14, 0.41, 0.13], [-0.45, -0.75, 0.5], 0.17, 0.088, p.hair);
+        this.lock([-0.04, 0.44, 0.15], [-0.35, -0.8, 0.5], 0.18, 0.094, hi);
+        this.lock([0.06, 0.44, 0.15], [-0.15, -0.85, 0.5], 0.17, 0.09, p.hair);
+        this.lock([0.15, 0.41, 0.12], [0.2, -0.85, 0.48], 0.14, 0.08, p.hair);
+        for (const side of [-1, 1]) this.lock([side * 0.25, 0.31, 0.06], [side * 0.25, -1, 0.15], 0.13, 0.064, p.hair);
+        this.lock([0.0, 0.49, 0.05], [0.04, 0.2, -1], 0.22, 0.1, hi, 0.5);
+        this.lock([0.03, 0.47, -0.04], [0.25, 0.85, -0.45], 0.12, 0.05, p.hair);
         // Mustard jacket with many pockets, each with a flap and a button.
         for (const [x, y] of [[-0.09, 0.14], [0.09, 0.14], [-0.1, 0.27], [0.1, 0.27]] as const) {
           this.part(t, box(0.02), p.topDark, [x, y, 0.135], [0.07, 0.06, 0.03]);
@@ -270,6 +301,9 @@ export class Character {
       }
       case "nori": {
         this.part(h, sphere("high"), p.hair, [0, 0.25, -0.05], [0.275, 0.2, 0.26]);
+        // Short locks peek out under the cap at the back and sides.
+        this.ring(95, 265, 8, 0.25, 0.27, 0.35, 0.16, 0.085, p.hair);
+        for (const side of [-1, 1]) this.lock([side * 0.25, 0.3, 0.07], [side * 0.2, -1, 0.15], 0.12, 0.06, p.hair);
         // Cap with a long brim.
         this.part(h, sphere("high"), p.accent, [0, 0.33, 0], [0.275, 0.17, 0.27]);
         this.part(h, cylinder(20), p.accentDark, [0, 0.33, 0.25], [0.19, 0.018, 0.15]);
@@ -280,10 +314,15 @@ export class Character {
         break;
       }
       case "lumi": {
-        this.part(h, sphere("high"), p.hair, [0, 0.23, -0.06], [0.29, 0.24, 0.27]);
-        // Hair falls to the shoulders.
-        this.part(h, capsule(0.12), p.hair, [-0.22, 0.08, -0.06], [0.08, 0.1, 0.09]);
-        this.part(h, capsule(0.12), p.hair, [0.22, 0.08, -0.06], [0.08, 0.1, 0.09]);
+        const hi = shade(p.hair, 0.07);
+        this.part(h, sphere("high"), p.hair, [0, 0.26, -0.04], [0.285, 0.225, 0.272]);
+        // Straight bangs across the forehead.
+        for (const x of [-0.16, -0.08, 0, 0.08, 0.16]) {
+          this.lock([x, 0.43, Math.sqrt(0.045 - x * x * 0.8)], [x * 0.5, -1, 0.42], 0.15, 0.075, x === 0 ? hi : p.hair);
+        }
+        // Hair falls past the ears to the shoulders, all the way round the back.
+        this.ring(70, 290, 9, 0.255, 0.3, 0.22, 0.34, 0.1, p.hair);
+        this.ring(110, 250, 5, 0.22, 0.42, 0.45, 0.3, 0.11, hi);
         // A soft beret tipped to one side.
         this.part(h, sphere("mid"), p.accent, [0.04, 0.42, -0.02], [0.27, 0.075, 0.25], [0, 0, -0.22]);
         this.part(h, cylinder(8), p.accentDark, [0.06, 0.49, -0.02], [0.02, 0.04, 0.02]);
@@ -302,8 +341,16 @@ export class Character {
       case "theo": {
         // Curly hair, built from bumps.
         this.part(h, sphere("high"), p.hair, [0, 0.29, -0.03], [0.28, 0.19, 0.27]);
-        for (const [x, y, z] of [[-0.18, 0.36, 0.08], [0.0, 0.43, 0.06], [0.17, 0.37, 0.07], [-0.2, 0.25, -0.1], [0.2, 0.26, -0.1]] as const) {
-          this.part(h, sphere("low"), p.hair, [x, y, z], 0.075);
+        // Curls all over: little round bumps in rings, a shade lighter on top.
+        const hi = shade(p.hair, 0.08);
+        for (let i = 0; i < 26; i += 1) {
+          const a = i * 2.39996;
+          const up = 0.15 + 0.85 * ((i * 0.618) % 1);
+          const r = Math.sqrt(1 - up * up);
+          const x = Math.sin(a) * r * 0.27;
+          const z = Math.cos(a) * r * 0.26 - 0.03;
+          if (z > 0.12 && up < 0.55) continue;
+          this.part(h, sphere("low"), up > 0.6 ? hi : p.hair, [x, 0.27 + up * 0.2, z], 0.062 + ((i * 7) % 3) * 0.008);
         }
         // Goggles pushed up on the forehead, with a strap.
         this.part(h, torus(0.07), "#3A2F2A", [0, 0.3, -0.01], [0.275, 0.275, 0.2], [Math.PI / 2 - 0.3, 0, 0]);

@@ -355,6 +355,20 @@ export function createHome(ctx: WorldContext): World {
         target: spawnGround.clone().addScaledVector(spawnDir, 0.75).addScaledVector(spawnForward, 0.4),
       },
     },
+    "character-back": {
+      player: { dir: spawnDir, forward: spawnForward.clone().negate() },
+      camera: {
+        position: spawnGround.clone().addScaledVector(spawnForward, 2.3).addScaledVector(spawnDir, 1.35),
+        target: spawnGround.clone().addScaledVector(spawnDir, 0.7).addScaledVector(spawnForward, -0.2),
+      },
+    },
+    "character-side": {
+      player: { dir: spawnDir, forward: spawnForward.clone().negate() },
+      camera: {
+        position: spawnGround.clone().addScaledVector(spawnForward, -1.4).addScaledVector(spawnDir, 1.1).addScaledVector(new Vector3().crossVectors(spawnDir, spawnForward).normalize(), 2.0),
+        target: spawnGround.clone().addScaledVector(spawnDir, 0.7),
+      },
+    },
   };
 
   // ---- Per-frame ----

@@ -1,7 +1,7 @@
 import { type BufferGeometry, Group, type Object3D, Vector3 } from "three";
 import type { ToonLibrary } from "../render/toon";
 import { damp } from "../world/sphere";
-import { Assembly, box, capsule, cylinder, limb, sphere, torus } from "./parts";
+import { Assembly, box, capsule, cylinder, hairLock, limb, sphere, torus } from "./parts";
 
 /**
  * Mom, the safe adult (Game Bible 5.5). She sits on the porch bench with a mug
@@ -121,10 +121,23 @@ export class Mom {
     this.part(this.head, cylinder(12), P.skin, [0, 0.0, 0], [0.05, 0.08, 0.05]);
     this.part(this.head, sphere("high"), P.skin, [0, 0.15, 0], [0.165, 0.175, 0.16]);
     for (const side of [-1, 1]) this.part(this.head, sphere("low"), P.skin, [side * 0.163, 0.14, 0], [0.03, 0.042, 0.026]);
-    this.part(this.head, sphere("high"), P.hair, [0, 0.21, -0.02], [0.175, 0.14, 0.168]);
-    this.part(this.head, sphere("mid"), P.hair, [-0.06, 0.24, 0.1], [0.12, 0.06, 0.08], [0.4, 0, 0.3]);
-    this.part(this.head, sphere("mid"), P.hair, [0, 0.13, -0.15], [0.09, 0.085, 0.08]);
-    this.part(this.head, torus(0.35), P.mugBand, [0, 0.16, -0.1], [0.05, 0.05, 0.05], [0.3, 0, 0]);
+    // Hair swept back from a side parting into a low bun, sculpted from locks.
+    this.part(this.head, sphere("high"), P.hair, [0, 0.2, -0.02], [0.172, 0.15, 0.166]);
+    const lock = (root: [number, number, number], dir: [number, number, number], length: number, width: number): void =>
+      hairLock(this.assembly, this.head, root, dir, length, width, P.hair, 0.6);
+    // A soft wave across the forehead from the parting, and locks tucked behind the ears.
+    lock([-0.05, 0.31, 0.1], [0.75, -0.35, 0.45], 0.17, 0.07);
+    lock([0.04, 0.31, 0.11], [0.7, -0.55, 0.35], 0.14, 0.06);
+    lock([-0.08, 0.3, 0.1], [-0.6, -0.6, 0.4], 0.12, 0.055);
+    for (const side of [-1, 1]) {
+      lock([side * 0.15, 0.24, 0.06], [side * 0.3, -0.6, -0.75], 0.17, 0.06);
+      lock([side * 0.12, 0.3, -0.04], [side * 0.25, -0.35, -0.9], 0.18, 0.07);
+    }
+    lock([0, 0.32, 0.0], [0, -0.2, -1], 0.2, 0.08);
+    // The bun, wrapped round with a band.
+    this.part(this.head, sphere("mid"), P.hair, [0, 0.14, -0.17], [0.085, 0.08, 0.075]);
+    lock([0.03, 0.17, -0.2], [-0.8, -0.4, -0.3], 0.1, 0.05);
+    this.part(this.head, torus(0.35), P.mugBand, [0, 0.16, -0.12], [0.05, 0.05, 0.05], [0.3, 0, 0]);
     for (const side of [-1, 1]) {
       const eye = joint("eye", side * 0.06, 0.15, 0.148);
       this.head.add(eye);

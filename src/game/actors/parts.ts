@@ -5,11 +5,13 @@ import {
   ConeGeometry,
   CylinderGeometry,
   Euler,
+  LatheGeometry,
   type Material,
   type Object3D,
   Quaternion,
   SphereGeometry,
   TorusGeometry,
+  Vector2,
   Vector3,
 } from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
@@ -62,6 +64,73 @@ export function limb(assembly: Assembly, parent: Object3D, a: [number, number, n
   const mid: [number, number, number] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
   assembly.add(parent, capsule(straight), color, mid, radius, [limbEuler.x, limbEuler.y, limbEuler.z]);
 }
+
+/**
+ * A lock of hair: a rounded teardrop, thick at the root and tapering to a
+ * soft tip at -y. Unit size; scale it to taste.
+ */
+export const lockShape = (): BufferGeometry =>
+  cached("lock", () => {
+    const geometry = new SphereGeometry(1, 16, 12);
+    const pos = geometry.getAttribute("position");
+    for (let i = 0; i < pos.count; i += 1) {
+      const y = pos.getY(i);
+      if (y < 0) {
+        const k = 1 + y * 0.6;
+        pos.setX(i, pos.getX(i) * k);
+        pos.setZ(i, pos.getZ(i) * k);
+      }
+    }
+    geometry.computeVertexNormals();
+    return geometry;
+  });
+
+const lockDown = new Vector3(0, -1, 0);
+
+/**
+ * Adds one lock of hair that grows from `root` toward `dir`, in a joint's
+ * space. Hair built from overlapping locks reads as sculpted, finished hair
+ * instead of a helmet.
+ */
+export function hairLock(
+  assembly: Assembly,
+  parent: Object3D,
+  root: [number, number, number],
+  dir: [number, number, number],
+  length: number,
+  width: number,
+  color: string,
+  flat = 0.72,
+): void {
+  limbDir.set(dir[0], dir[1], dir[2]).normalize();
+  limbQuat.setFromUnitVectors(lockDown, limbDir);
+  limbEuler.setFromQuaternion(limbQuat, "XYZ");
+  // The thickest part sits a little way along the lock, so the root tucks into the hair under it.
+  const center: [number, number, number] = [root[0] + limbDir.x * length * 0.32, root[1] + limbDir.y * length * 0.32, root[2] + limbDir.z * length * 0.32];
+  assembly.add(parent, lockShape(), color, center, [width, length * 0.62, width * flat], [limbEuler.x, limbEuler.y, limbEuler.z]);
+}
+
+/**
+ * A kid's top: a lathe with soft shoulders, a little belly and a hem, so the
+ * body reads as a chubby figure in clothes rather than a pill. Height 1,
+ * radius about 1 at the widest.
+ */
+export const torsoShape = (): BufferGeometry =>
+  cached("torso", () => {
+    const profile = [
+      [0, 0],
+      [0.9, 0],
+      [1.0, 0.06],
+      [1.04, 0.24],
+      [1.02, 0.48],
+      [0.97, 0.68],
+      [0.86, 0.84],
+      [0.62, 0.95],
+      [0.34, 1.0],
+      [0, 1.01],
+    ].map(([x, y]) => new Vector2(x, y));
+    return new LatheGeometry(profile, 18);
+  });
 
 /** Cylinder of radius 1 and height 1, centered. */
 export const cylinder = (segments = 16, topRatio = 1, open = false): BufferGeometry =>
