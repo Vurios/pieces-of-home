@@ -70,6 +70,11 @@ export class TitleSequence {
   private filament!: MeshBasicMaterial;
   private bulbLight = new PointLight("#FFC27A", 0, 14, 1.4);
   private scale = SCALE;
+  /** The scale the title was tuned at, before it shrinks to fit a narrow screen. */
+  private baseScale = SCALE;
+  /** Half the width of the widest line, in title units. */
+  private halfWidth = 0;
+  private fitted = "";
   private chain = new Group();
   private chainLinks: Mesh[] = [];
   private tag: Group;
@@ -105,6 +110,7 @@ export class TitleSequence {
     const radius = this.intro.radius;
     const k = radius / 15.4;
     this.scale = SCALE * k;
+    this.baseScale = this.scale;
     const theta = Math.asin(Math.min(0.99, radius / distance));
     const limb = screenUp.clone().multiplyScalar(Math.cos(theta)).addScaledVector(toCamera, Math.sin(theta)).multiplyScalar(radius);
     const anchor = limb.clone().add(position.clone().sub(limb).normalize().multiplyScalar(17 * k));
@@ -126,6 +132,7 @@ export class TitleSequence {
     LINES.forEach((line, row) => {
       const widths = [...line].map((ch) => glyphWidth(ch));
       const total = widths.reduce((s, w) => s + w, 0) + (line.length - 1);
+      this.halfWidth = Math.max(this.halfWidth, (total / 2) * CELL);
       let x = (-total / 2) * CELL;
       const y = (LINES.length - 1 - row) * lineHeight;
       [...line].forEach((ch, i) => {
@@ -331,7 +338,25 @@ export class TitleSequence {
    * Runs one frame and drives the camera. During "leaving" the engine first
    * places the camera where the follow camera wants it; we blend toward it.
    */
+  /**
+   * On a tall phone the full-size title is wider than the screen. Shrink it
+   * about its baseline, so HOME still sits on the horizon and every letter shows.
+   */
+  private fit(camera: PerspectiveCamera): void {
+    const key = `${camera.fov}:${camera.aspect.toFixed(3)}`;
+    if (key === this.fitted) return;
+    this.fitted = key;
+    const distance = this.intro.final.position.distanceTo(this.frame.anchor);
+    const halfView = distance * Math.tan((camera.fov * Math.PI) / 360) * camera.aspect;
+    const f = Math.min(1, (0.86 * halfView) / (this.baseScale * this.halfWidth));
+    this.scale = this.baseScale * f;
+    const { right, up, toward, anchor } = this.frame;
+    this.root.matrix.makeBasis(right, up, toward).scale(new Vector3(this.scale, this.scale, this.scale)).setPosition(anchor);
+    this.root.matrixWorldNeedsUpdate = true;
+  }
+
   update(frameDt: number, camera: PerspectiveCamera): void {
+    this.fit(camera);
     // Wall-clock time, so a slow machine sees the same 7-second flight instead of slow motion.
     const now = performance.now();
     const dt = this.lastNow === null ? frameDt : Math.min(0.25, (now - this.lastNow) / 1000);

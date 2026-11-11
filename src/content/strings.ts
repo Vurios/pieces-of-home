@@ -12,6 +12,8 @@ export const EN = {
   "menu.label": "Main menu",
   "menu.continue": "Continue",
   "menu.new": "New story",
+  "menu.newSub": "Dad's letters are waiting",
+  "menu.continueSub": "Pick up where you left off",
   "menu.together": "Play together",
   "menu.chapters": "Chapters",
   "menu.guide": "Field Guide",
