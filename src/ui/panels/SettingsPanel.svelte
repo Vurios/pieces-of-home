@@ -1,24 +1,41 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import { BUSES, type Bus } from "../../audio/audio";
   import type { StringKey } from "../../content/strings";
   import type { QualityTier } from "../../game/core/events";
   import { type Action, DEFAULT_BINDINGS } from "../../game/core/input";
   import type { Engine } from "../../game/engine";
-  import { untrack } from "svelte";
+  import Icon, { type IconName } from "../Icon.svelte";
   import Panel from "../Panel.svelte";
   import { type Settings, settings, t } from "../settings.svelte";
 
+  /**
+   * Settings as a small two-pane card: sections down the side (chips across
+   * the top on a phone), one section shown at a time so nothing needs a long
+   * scroll. Every control is a real input, so keys, switches and screen
+   * readers all work.
+   */
   interface Props {
     engine: Engine;
     onclose: () => void;
   }
   let { engine, onclose }: Props = $props();
 
+  type Section = "sound" | "reading" | "motion" | "controls" | "graphics" | "story";
+  const SECTIONS: { id: Section; icon: IconName; label: StringKey }[] = [
+    { id: "sound", icon: "speaker", label: "settings.sound" },
+    { id: "reading", icon: "type", label: "settings.reading" },
+    { id: "motion", icon: "motion", label: "settings.motion" },
+    { id: "controls", icon: "keys", label: "settings.controls" },
+    { id: "graphics", icon: "picture", label: "settings.graphics" },
+    { id: "story", icon: "book", label: "settings.story" },
+  ];
+  let current = $state<Section>("sound");
+
   const s = $derived(settings.value);
   let quality = $state<"auto" | QualityTier>(untrack(() => (engine.autoQuality ? "auto" : engine.quality.tier)));
   let bindings = $state(untrack(() => ({ ...engine.input.bindings })));
   let listening = $state<Action | null>(null);
-
   const ACTIONS: Action[] = ["forward", "back", "left", "right", "jump", "interact", "run"];
 
   function setVolume(bus: Bus, value: number): void {
@@ -43,12 +60,7 @@
     if (code.startsWith("Arrow")) return code.slice(5);
     if (code.startsWith("Digit")) return code.slice(5);
     if (code === "ShiftLeft" || code === "ShiftRight") return "Shift";
-    if (code === "Space") return "Space";
     return code;
-  }
-
-  function listen(action: Action): void {
-    listening = action;
   }
 
   function onkey(event: KeyboardEvent): void {
@@ -72,249 +84,346 @@
     bindings = { ...engine.input.bindings };
   }
 
+  /** Arrow keys move between section tabs, as tab lists should. */
+  function tabKey(event: KeyboardEvent, index: number): void {
+    const step = event.key === "ArrowDown" || event.key === "ArrowRight" ? 1 : event.key === "ArrowUp" || event.key === "ArrowLeft" ? -1 : 0;
+    if (!step) return;
+    event.preventDefault();
+    const next = SECTIONS[(index + step + SECTIONS.length) % SECTIONS.length]!;
+    current = next.id;
+    document.getElementById(`set-tab-${next.id}`)?.focus();
+  }
+
   const busKey = (bus: Bus): StringKey => `settings.${bus}` as StringKey;
 </script>
 
 <svelte:window onkeydowncapture={onkey} />
 
-<Panel title={t("settings.title")} {onclose}>
-  <section aria-labelledby="set-sound">
-    <h3 id="set-sound">{t("settings.sound")}</h3>
-    {#each BUSES as bus (bus)}
-      <label class="slider">
-        <span>{t(busKey(bus))}</span>
-        <input type="range" min="0" max="1" step="0.05" value={s.volume[bus]} oninput={(e) => setVolume(bus, Number(e.currentTarget.value))} />
-        <output>{Math.round(s.volume[bus] * 100)}</output>
-      </label>
-    {/each}
-  </section>
-
-  <section aria-labelledby="set-reading">
-    <h3 id="set-reading">{t("settings.reading")}</h3>
-    <label class="check"><input type="checkbox" checked={s.subtitles} onchange={(e) => set("subtitles", e.currentTarget.checked)} /><span>{t("settings.subtitles")}</span></label>
-    <label class="check"><input type="checkbox" checked={s.bubbles} onchange={(e) => set("bubbles", e.currentTarget.checked)} /><span>{t("settings.bubbles")}</span></label>
-    <label class="check"><input type="checkbox" checked={s.readAloud} onchange={(e) => set("readAloud", e.currentTarget.checked)} /><span>{t("settings.readAloud")}</span></label>
-    <label class="check"><input type="checkbox" checked={s.highContrast} onchange={(e) => set("highContrast", e.currentTarget.checked)} /><span>{t("settings.contrast")}</span></label>
-    <fieldset>
-      <legend>{t("settings.textSize")}</legend>
-      <div class="chips">
-        {#each ["s", "m", "l", "xl"] as const as size (size)}
-          <label class="chip"><input type="radio" name="text-size" checked={s.textSize === size} onchange={() => set("textSize", size)} /><span>{t(`settings.size.${size}`)}</span></label>
-        {/each}
-      </div>
-    </fieldset>
-    <fieldset>
-      <legend>{t("settings.font")}</legend>
-      <div class="chips">
-        {#each ["standard", "dyslexic"] as const as font (font)}
-          <label class="chip" class:dys={font === "dyslexic"}><input type="radio" name="font" checked={s.readingFont === font} onchange={() => set("readingFont", font)} /><span>{t(`settings.font.${font}`)}</span></label>
-        {/each}
-      </div>
-    </fieldset>
-  </section>
-
-  <section aria-labelledby="set-motion">
-    <h3 id="set-motion">{t("settings.motion")}</h3>
-    <div class="chips">
-      {#each ["system", "reduce", "full"] as const as m (m)}
-        <label class="chip"><input type="radio" name="motion" checked={s.motion === m} onchange={() => set("motion", m)} /><span>{t(`settings.motion.${m}`)}</span></label>
+<Panel title={t("settings.title")} lede={t("settings.lede")} icon="gear" size="lg" {onclose} flush>
+  <div class="layout">
+    <div class="tabs" role="tablist" aria-label={t("settings.sections")} aria-orientation="vertical">
+      {#each SECTIONS as sec, i (sec.id)}
+        <button
+          type="button"
+          role="tab"
+          id={`set-tab-${sec.id}`}
+          aria-selected={current === sec.id}
+          aria-controls={`set-pane-${sec.id}`}
+          tabindex={current === sec.id ? 0 : -1}
+          class:on={current === sec.id}
+          onclick={() => (current = sec.id)}
+          onkeydown={(e) => tabKey(e, i)}
+        >
+          <Icon name={sec.icon} size={22} />
+          <span>{t(sec.label)}</span>
+        </button>
       {/each}
     </div>
-  </section>
 
-  <section aria-labelledby="set-controls">
-    <h3 id="set-controls">{t("settings.controls")}</h3>
-    <ul class="keys">
-      {#each ACTIONS as action (action)}
-        <li>
-          <span>{t(`settings.action.${action}`)}</span>
-          <button type="button" class="key" class:listening={listening === action} onclick={() => listen(action)} aria-label={`${t(`settings.action.${action}`)}: ${bindings[action].map(keyLabel).join(", ")}`}>
-            {listening === action ? t("settings.press") : bindings[action].map(keyLabel).join(" / ")}
-          </button>
-        </li>
-      {/each}
-    </ul>
-    <button type="button" class="btn quiet" onclick={resetKeys}>{t("settings.reset")}</button>
-  </section>
-
-  <section aria-labelledby="set-graphics">
-    <h3 id="set-graphics">{t("settings.graphics")}</h3>
-    <fieldset>
-      <legend>{t("settings.quality")}</legend>
-      <div class="chips">
-        {#each ["auto", "low", "medium", "high"] as const as q (q)}
-          <label class="chip"><input type="radio" name="quality" checked={quality === q} onchange={() => setQuality(q)} /><span>{t(`settings.quality.${q}`)}</span></label>
-        {/each}
-      </div>
-    </fieldset>
-  </section>
-
-  <section aria-labelledby="set-story">
-    <h3 id="set-story">{t("settings.story")}</h3>
-    <label class="check"><input type="checkbox" checked={s.exploreFreely} onchange={(e) => set("exploreFreely", e.currentTarget.checked)} /><span>{t("settings.explore")}</span></label>
-    <p class="help">{t("settings.exploreHelp")}</p>
-    <label class="select">
-      <span>{t("settings.language")}</span>
-      <select value={s.language} onchange={(e) => set("language", e.currentTarget.value as Settings["language"])}>
-        <option value="en">{t("settings.lang.en")}</option>
-        <option value="fil">{t("settings.lang.fil")}</option>
-      </select>
-    </label>
-  </section>
+    <div class="pane" role="tabpanel" id={`set-pane-${current}`} aria-labelledby={`set-tab-${current}`} tabindex="0">
+      {#if current === "sound"}
+        <h3>{t("settings.sound")}</h3>
+        <div class="sliders">
+          {#each BUSES as bus (bus)}
+            <label class="slider">
+              <span class="name">{t(busKey(bus))}</span>
+              <input class="range" type="range" min="0" max="1" step="0.05" value={s.volume[bus]} style:--v={s.volume[bus]} oninput={(e) => setVolume(bus, Number(e.currentTarget.value))} />
+              <output>{Math.round(s.volume[bus] * 100)}</output>
+            </label>
+          {/each}
+        </div>
+      {:else if current === "reading"}
+        <h3>{t("settings.reading")}</h3>
+        <label class="switch-row">
+          <span class="text">{t("settings.subtitles")}<span class="help">{t("settings.subtitlesHelp")}</span></span>
+          <input class="switch" type="checkbox" role="switch" checked={s.subtitles} onchange={(e) => set("subtitles", e.currentTarget.checked)} />
+        </label>
+        <label class="switch-row">
+          <span class="text">{t("settings.bubbles")}<span class="help">{t("settings.bubblesHelp")}</span></span>
+          <input class="switch" type="checkbox" role="switch" checked={s.bubbles} onchange={(e) => set("bubbles", e.currentTarget.checked)} />
+        </label>
+        <label class="switch-row">
+          <span class="text">{t("settings.readAloud")}<span class="help">{t("settings.readAloudHelp")}</span></span>
+          <input class="switch" type="checkbox" role="switch" checked={s.readAloud} onchange={(e) => set("readAloud", e.currentTarget.checked)} />
+        </label>
+        <label class="switch-row">
+          <span class="text">{t("settings.contrast")}<span class="help">{t("settings.contrastHelp")}</span></span>
+          <input class="switch" type="checkbox" role="switch" checked={s.highContrast} onchange={(e) => set("highContrast", e.currentTarget.checked)} />
+        </label>
+        <fieldset>
+          <legend class="eyebrow">{t("settings.textSize")}</legend>
+          <div class="seg">
+            {#each ["s", "m", "l", "xl"] as const as size (size)}
+              <label><input type="radio" name="text-size" checked={s.textSize === size} onchange={() => set("textSize", size)} /><span>{t(`settings.size.${size}`)}</span></label>
+            {/each}
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="eyebrow">{t("settings.font")}</legend>
+          <div class="seg">
+            {#each ["standard", "dyslexic"] as const as font (font)}
+              <label class:dys={font === "dyslexic"}><input type="radio" name="font" checked={s.readingFont === font} onchange={() => set("readingFont", font)} /><span>{t(`settings.font.${font}`)}</span></label>
+            {/each}
+          </div>
+        </fieldset>
+        <p class="preview" aria-hidden="true">{t("settings.preview")}</p>
+      {:else if current === "motion"}
+        <h3>{t("settings.motion")}</h3>
+        <p class="help">{t("settings.motionHelp")}</p>
+        <div class="seg">
+          {#each ["system", "reduce", "full"] as const as m (m)}
+            <label><input type="radio" name="motion" checked={s.motion === m} onchange={() => set("motion", m)} /><span>{t(`settings.motion.${m}`)}</span></label>
+          {/each}
+        </div>
+      {:else if current === "controls"}
+        <h3>{t("settings.controls")}</h3>
+        <p class="help">{t("settings.controlsHelp")}</p>
+        <ul class="keys">
+          {#each ACTIONS as action (action)}
+            <li>
+              <span>{t(`settings.action.${action}`)}</span>
+              <button
+                type="button"
+                class="key"
+                class:listening={listening === action}
+                onclick={() => (listening = action)}
+                aria-label={`${t(`settings.action.${action}`)}: ${bindings[action].map(keyLabel).join(", ")}`}
+              >
+                {#if listening === action}
+                  {t("settings.press")}
+                {:else}
+                  {#each bindings[action] as code, i (code)}{#if i > 0}<span class="or">/</span>{/if}<kbd class="keycap">{keyLabel(code)}</kbd>{/each}
+                {/if}
+              </button>
+            </li>
+          {/each}
+        </ul>
+        <button type="button" class="btn quiet" onclick={resetKeys}>{t("settings.reset")}</button>
+      {:else if current === "graphics"}
+        <h3>{t("settings.graphics")}</h3>
+        <p class="help">{t("settings.qualityHelp")}</p>
+        <fieldset>
+          <legend class="eyebrow">{t("settings.quality")}</legend>
+          <div class="seg">
+            {#each ["auto", "low", "medium", "high"] as const as q (q)}
+              <label><input type="radio" name="quality" checked={quality === q} onchange={() => setQuality(q)} /><span>{t(`settings.quality.${q}`)}</span></label>
+            {/each}
+          </div>
+        </fieldset>
+      {:else}
+        <h3>{t("settings.story")}</h3>
+        <label class="switch-row">
+          <span class="text">{t("settings.explore")}<span class="help">{t("settings.exploreHelp")}</span></span>
+          <input class="switch" type="checkbox" role="switch" checked={s.exploreFreely} onchange={(e) => set("exploreFreely", e.currentTarget.checked)} />
+        </label>
+        <label class="field">
+          <span class="eyebrow">{t("settings.language")}</span>
+          <select class="select" value={s.language} onchange={(e) => set("language", e.currentTarget.value as Settings["language"])}>
+            <option value="en">{t("settings.lang.en")}</option>
+            <option value="fil">{t("settings.lang.fil")}</option>
+          </select>
+          <span class="help">{t("settings.languageHelp")}</span>
+        </label>
+      {/if}
+    </div>
+  </div>
 </Panel>
 
 <style>
-  section {
-    padding: 14px 0 18px;
-    border-bottom: 1.5px dashed rgba(43, 38, 34, 0.22);
+  /* A fixed height so the card does not jump when a tab is shorter or taller. */
+  .layout {
+    flex: none;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    height: min(540px, calc(100dvh - 190px));
+  }
+  .tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 18px 12px;
+    background: var(--card-sunk);
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+  }
+  .tabs button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 48px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--ink-soft);
+    font: 600 1rem var(--read);
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .tabs button :global(.icon) {
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .tabs button:hover {
+    background: rgba(43, 38, 34, 0.05);
+    color: var(--ink);
+  }
+  .tabs button.on {
+    background: #fff;
+    color: var(--ink);
+    box-shadow: 0 1px 0 rgba(43, 38, 34, 0.08), 0 4px 12px -6px rgba(43, 38, 34, 0.3);
+  }
+  .tabs button.on :global(.icon) {
+    stroke: var(--amber-deep);
+  }
+  .pane {
+    min-height: 0;
+    overflow-y: auto;
+    padding: 22px 32px 28px;
+    scrollbar-width: thin;
+    animation: show 0.25s var(--ease-out);
+  }
+  .pane:focus-visible {
+    outline-offset: -4px;
   }
   h3 {
-    margin: 0 0 10px;
-    font: 700 1.25rem/1.2 var(--hand);
+    margin: 0 0 14px;
+    font: 600 1.3rem/1.2 var(--serif);
+  }
+  .help {
+    margin: 0 0 16px;
+    color: var(--ink-soft);
+    font-size: 0.92rem;
+    line-height: 1.45;
   }
   fieldset {
     border: 0;
-    margin: 12px 0 0;
+    margin: 20px 0 0;
     padding: 0;
   }
-  legend {
-    font-weight: 700;
-    margin-bottom: 6px;
+  .sliders {
+    display: grid;
+    gap: 6px;
   }
   .slider {
     display: grid;
-    grid-template-columns: 8.5em 1fr 2.5em;
+    grid-template-columns: 9em 1fr 2.6em;
     align-items: center;
-    gap: 12px;
-    min-height: 44px;
+    gap: 16px;
+    min-height: 52px;
+  }
+  .slider .name {
+    font-weight: 600;
   }
   .slider output {
-    font: 700 0.9rem var(--label);
+    font: 700 0.95rem var(--read);
+    color: var(--ink-soft);
     text-align: right;
+    font-variant-numeric: tabular-nums;
   }
-  input[type="range"] {
-    width: 100%;
-    accent-color: var(--clay);
-    height: 32px;
-  }
-  .check {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 44px;
-    cursor: pointer;
-  }
-  .check input {
-    appearance: none;
-    flex: none;
-    width: 26px;
-    height: 26px;
-    margin: 0;
-    border: 2.5px solid var(--ink);
-    border-radius: 5px 7px 6px 5px;
-    background: var(--paper-light);
-    display: grid;
-    place-items: center;
-    cursor: pointer;
-  }
-  .check input::after {
-    content: "";
-    width: 12px;
-    height: 7px;
-    border-left: 3px solid var(--clay);
-    border-bottom: 3px solid var(--clay);
-    transform: translateY(-2px) rotate(-48deg) scale(0);
-    transition: transform 0.18s var(--ease-spring);
-  }
-  .check input:checked::after {
-    transform: translateY(-2px) rotate(-48deg) scale(1);
-  }
-  .chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .chip {
-    position: relative;
-    cursor: pointer;
-  }
-  .chip input {
-    position: absolute;
-    opacity: 0;
-    inset: 0;
-    margin: 0;
-    cursor: pointer;
-  }
-  .chip span {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    padding: 0 14px;
-    border: 2px solid var(--ink-soft);
-    border-radius: 10px 14px 9px 13px;
-    background: var(--paper-light);
-    transition: background 0.15s, transform 0.15s var(--ease-spring);
-  }
-  .chip:hover span {
-    transform: translateY(-1px);
-  }
-  .chip input:checked + span {
-    background: var(--amber);
-    border-color: var(--ink);
-    font-weight: 700;
-  }
-  .chip input:focus-visible + span {
-    outline: 3px dashed var(--clay);
-    outline-offset: 3px;
-  }
-  .chip.dys span {
+  .dys span {
     font-family: "OpenDyslexic", var(--read);
+  }
+  .preview {
+    margin: 22px 0 0;
+    padding: 14px 16px;
+    border-radius: var(--radius-sm);
+    background: var(--card-sunk);
+    color: var(--ink);
+    line-height: 1.5;
   }
   .keys {
     list-style: none;
-    margin: 0 0 12px;
+    margin: 0 0 16px;
     padding: 0;
-    display: grid;
-    gap: 6px;
   }
   .keys li {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
+    min-height: 54px;
+    border-bottom: 1px solid var(--line);
+    font-weight: 600;
   }
   .key {
-    min-width: 7em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     min-height: 44px;
-    font: 700 0.95rem var(--label);
-    background: var(--paper-light);
+    min-width: 7em;
+    justify-content: flex-end;
+    padding: 0 10px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
     color: var(--ink);
-    border: 2px solid var(--ink);
-    border-radius: 7px 9px 8px 7px;
-    box-shadow: 0 3px 0 var(--ink);
+    font: 600 0.92rem var(--read);
     cursor: pointer;
   }
+  .key:hover {
+    border-color: var(--line-strong);
+    background: #fff;
+  }
   .key.listening {
-    background: var(--amber);
+    border-color: var(--amber);
+    background: var(--amber-wash);
   }
-  .help {
-    margin: 0 0 12px 38px;
-    color: var(--ink-soft);
-    font-size: 0.92rem;
+  .or {
+    color: var(--pencil);
   }
-  .select {
+  .field {
     display: grid;
-    gap: 6px;
-    font-weight: 700;
+    gap: 8px;
+    margin-top: 22px;
+    max-width: 22rem;
   }
-  select {
-    min-height: 44px;
-    font: inherit;
-    font-weight: 400;
-    padding: 0 10px;
-    border: 2px solid var(--ink);
-    border-radius: 8px;
-    background: var(--paper-light);
-    color: var(--ink);
+  .field .eyebrow {
+    margin: 0;
+  }
+  @keyframes show {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  :global(:root[data-motion="reduce"]) .pane {
+    animation: none;
+  }
+  @media (max-width: 720px) {
+    .layout {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr);
+      height: min(600px, calc(100dvh - 150px));
+    }
+    .tabs {
+      flex-direction: row;
+      overflow-x: auto;
+      padding: 10px 12px;
+      border-right: 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .tabs button {
+      flex: none;
+      min-height: 44px;
+    }
+    .pane {
+      padding: 18px 18px 24px;
+    }
+    .slider {
+      grid-template-columns: 1fr 2.6em;
+      grid-template-areas: "name out" "range range";
+      gap: 2px 12px;
+    }
+    .slider .name { grid-area: name; }
+    .slider output { grid-area: out; }
+    .slider :global(.range) { grid-area: range; }
   }
 </style>

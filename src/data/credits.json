@@ -105,11 +105,19 @@
   "fonts": [
     {
       "name": "Kalam",
-      "use": "Dad's handwriting and the loading page",
+      "use": "Dad's handwriting",
       "license": "SIL Open Font License 1.1",
       "by": "Indian Type Foundry",
       "sourceUrl": "https://github.com/itfoundry/kalam",
       "file": "fonts/LICENSE-kalam.txt"
+    },
+    {
+      "name": "Fraunces",
+      "use": "Titles and headings",
+      "license": "SIL Open Font License 1.1",
+      "by": "Undercase Type (Phaedra Charles, Flavia Zimbardi)",
+      "sourceUrl": "https://github.com/undercasetype/Fraunces",
+      "file": "fonts/LICENSE-fraunces.txt"
     },
     {
       "name": "Atkinson Hyperlegible Next",

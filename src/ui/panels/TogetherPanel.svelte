@@ -40,98 +40,139 @@
   }
 </script>
 
-<Panel title={t("together.title")} {onclose}>
-  <p>{t("together.intro")}</p>
-  <section aria-labelledby="tg-make">
-    <h3 id="tg-make">{t("together.make")}</h3>
-    {#if made}
-      <p class="code-label">{t("together.code")}</p>
-      <p class="code">{made}</p>
-      <div class="row">
-        <button type="button" class="btn" onclick={copy}><Icon name="copy" size={22} /> {copied ? t("together.copied") : t("together.copy")}</button>
-        <button type="button" class="btn amber" onclick={() => made && go(made)}>{t("together.open")}</button>
-      </div>
-    {:else}
-      <button type="button" class="btn amber" onclick={make}>{t("together.make")}</button>
-    {/if}
-  </section>
-  <section aria-labelledby="tg-join">
-    <h3 id="tg-join">{t("together.join")}</h3>
-    <div class="pickers">
-      {#each [0, 1, 2] as i (i)}
+<Panel title={t("together.title")} lede={t("together.intro")} icon="people" size="lg" {onclose}>
+  <div class="cards">
+    <section class="option" aria-labelledby="tg-make">
+      <span class="mark" aria-hidden="true"><Icon name="plus" size={22} /></span>
+      <h3 id="tg-make">{t("together.make")}</h3>
+      <p class="help">{t("together.makeHelp")}</p>
+      {#if made}
+        <p class="eyebrow">{t("together.code")}</p>
+        <p class="code">
+          {#each made.split("-") as part, i (i)}<span>{part}</span>{/each}
+        </p>
+        <div class="row">
+          <button type="button" class="btn" onclick={copy}><Icon name={copied ? "check" : "copy"} size={18} /> {copied ? t("together.copied") : t("together.copy")}</button>
+          <button type="button" class="btn amber" onclick={() => made && go(made)}>{t("together.open")}</button>
+        </div>
+      {:else}
+        <button type="button" class="btn amber" onclick={make}>{t("together.make")}</button>
+      {/if}
+    </section>
+
+    <section class="option" aria-labelledby="tg-join">
+      <span class="mark" aria-hidden="true"><Icon name="door" size={22} /></span>
+      <h3 id="tg-join">{t("together.join")}</h3>
+      <p class="help">{t("together.joinHelp")}</p>
+      <div class="pickers">
+        {#each [0, 1, 2] as i (i)}
+          <label>
+            <span class="eyebrow">{t("together.word", { n: i + 1 })}</span>
+            <select class="select" bind:value={words[i]}>
+              {#each ROOM_WORDS as w (w)}<option value={w}>{w}</option>{/each}
+            </select>
+          </label>
+        {/each}
         <label>
-          <span>{t("together.word", { n: i + 1 })}</span>
-          <select bind:value={words[i]}>
-            {#each ROOM_WORDS as w (w)}<option value={w}>{w}</option>{/each}
+          <span class="eyebrow">{t("together.number")}</span>
+          <select class="select" bind:value={number}>
+            {#each Array.from({ length: 99 }, (_, n) => n + 1) as n (n)}<option value={n}>{n}</option>{/each}
           </select>
         </label>
-      {/each}
-      <label>
-        <span>{t("together.number")}</span>
-        <select bind:value={number}>
-          {#each Array.from({ length: 99 }, (_, n) => n + 1) as n (n)}<option value={n}>{n}</option>{/each}
-        </select>
-      </label>
-    </div>
-    <button type="button" class="btn" onclick={() => go(`${words.join("-")}-${number}`)}>{t("together.joinGo")}</button>
-  </section>
+      </div>
+      <button type="button" class="btn" onclick={() => go(`${words.join("-")}-${number}`)}>{t("together.joinGo")}</button>
+    </section>
+  </div>
+  <p class="safe"><Icon name="lock" size={18} /> {t("together.safe")}</p>
 </Panel>
 
 <style>
-  section {
-    margin-top: 20px;
-    padding-top: 14px;
-    border-top: 1.5px dashed rgba(43, 38, 34, 0.22);
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 14px;
+  }
+  .option {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 20px 20px 22px;
+    border-radius: 18px;
+    background: #fff;
+    border: 1px solid var(--line);
+  }
+  .mark {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    margin-bottom: 4px;
+    border-radius: 12px;
+    background: var(--card-sunk);
+    color: var(--amber-deep);
+  }
+  .mark :global(.icon),
+  .row :global(.icon),
+  .safe :global(.icon) {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
   h3 {
-    margin: 0 0 10px;
-    font: 700 1.25rem var(--hand);
-  }
-  .code-label {
     margin: 0;
+    font: 600 1.25rem/1.2 var(--serif);
+  }
+  .help {
+    margin: 0 0 12px;
     color: var(--ink-soft);
+    font-size: 0.92rem;
+  }
+  .option > .btn {
+    margin-top: auto;
+  }
+  .eyebrow {
+    margin: 4px 0 6px;
   }
   .code {
-    margin: 4px 0 12px;
-    font: 700 1.6rem/1.2 var(--label);
-    letter-spacing: 0.02em;
-    background: #efe2c7;
-    padding: 8px 14px;
-    width: max-content;
-    max-width: 100%;
-    transform: rotate(-0.8deg);
-    border: 2px solid var(--ink);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 14px;
+  }
+  .code span {
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: var(--amber-wash);
+    border: 1px solid rgba(184, 102, 28, 0.35);
+    font: 700 1.1rem var(--read);
   }
   .row {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-  }
-  .row .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+    gap: 10px;
   }
   .pickers {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 10px;
-    margin-bottom: 14px;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 10px;
+    width: 100%;
+    margin-bottom: 16px;
   }
   .pickers label {
     display: grid;
-    gap: 4px;
-    font-weight: 700;
-    font-size: 0.92rem;
   }
-  select {
-    min-height: 44px;
-    font: inherit;
-    font-weight: 400;
-    padding: 0 8px;
-    border: 2px solid var(--ink);
-    border-radius: 8px;
-    background: var(--paper-light);
-    color: var(--ink);
+  .pickers .eyebrow {
+    margin: 0 0 6px;
+  }
+  .safe {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 18px 0 0;
+    color: var(--ink-soft);
+    font-size: 0.92rem;
   }
 </style>

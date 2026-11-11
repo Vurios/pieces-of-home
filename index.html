@@ -3,44 +3,60 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#F4ECDD" />
+    <meta name="theme-color" content="#181936" />
     <meta
       name="description"
       content="Pieces of Home. A cozy game for 1 to 4 players about the machines left on the Moon and Mars. Left behind. Still shining."
     />
     <title>Pieces of Home</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="/fonts/fraunces-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/kalam-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/kalam-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
     <style>
-      /* The loading page. It paints before any JavaScript: paper, grid, a coffee ring, and Dad's lamp. */
+      /*
+       * The loading page, painted before any JavaScript: Dad's blueprint of his
+       * desk lamp, at dusk. The lamp draws itself as the game loads. When it is
+       * ready, a wall switch turns the light on, and the light fills the screen
+       * and becomes the lamp in the 3D workshop.
+       */
+      @font-face {
+        font-family: "Fraunces";
+        font-weight: 600;
+        font-display: swap;
+        src: url("/fonts/fraunces-latin-600-normal.woff2") format("woff2");
+      }
+      @font-face {
+        font-family: "Fraunces";
+        font-weight: 400;
+        font-style: italic;
+        font-display: swap;
+        src: url("/fonts/fraunces-latin-400-italic.woff2") format("woff2");
+      }
       @font-face {
         font-family: "Kalam";
         font-weight: 400;
         font-display: swap;
         src: url("/fonts/kalam-latin-400-normal.woff2") format("woff2");
       }
-      @font-face {
-        font-family: "Kalam";
-        font-weight: 700;
-        font-display: swap;
-        src: url("/fonts/kalam-latin-700-normal.woff2") format("woff2");
-      }
       :root {
-        --paper: #f4ecdd;
-        --ink: #2b2622;
+        --dusk: #181936;
+        --chalk: #e7eaff;
+        --chalk-soft: rgba(206, 213, 255, 0.62);
+        --chalk-faint: rgba(190, 200, 255, 0.16);
+        --warm: #ffe2ae;
         --amber: #f2a541;
-        --clay: #c0573e;
-        color-scheme: light;
+        --cream: #f7efe1;
+        --serif: "Fraunces", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+        --hand: "Kalam", "Segoe Print", "Bradley Hand", ui-rounded, sans-serif;
+        --sans: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
+        color-scheme: dark;
       }
       html,
       body {
         height: 100%;
         margin: 0;
-        background: var(--paper);
-        color: var(--ink);
+        background: var(--dusk);
         overflow: hidden;
-        font-family: "Kalam", "Segoe Print", "Bradley Hand", ui-rounded, sans-serif;
       }
       #stage {
         position: fixed;
@@ -54,274 +70,403 @@
         inset: 0;
         z-index: 50;
         overflow: hidden;
-        background-color: var(--paper);
-        background-image:
-          linear-gradient(rgba(70, 110, 140, 0.11) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(70, 110, 140, 0.11) 1px, transparent 1px),
-          linear-gradient(rgba(70, 110, 140, 0.05) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(70, 110, 140, 0.05) 1px, transparent 1px);
-        background-size:
-          60px 60px,
-          60px 60px,
-          12px 12px,
-          12px 12px;
-        background-position: -1px -1px;
-        transform-origin: 0 50%;
-        cursor: default;
+        color: var(--chalk);
+        font-family: var(--sans);
+        background:
+          radial-gradient(ellipse 60% 70% at 64% 46%, #2f3166 0%, rgba(40, 41, 86, 0.6) 38%, rgba(24, 25, 54, 0) 72%),
+          linear-gradient(160deg, #20214a 0%, #181936 55%, #121329 100%);
+        -webkit-user-select: none;
+        user-select: none;
       }
-      /* Paper grain from SVG noise, multiplied over the page. */
-      #boot::before {
+      /* Blueprint paper: fine fibers and a soft vignette. */
+      #boot::before,
+      #boot::after {
         content: "";
         position: absolute;
         inset: 0;
         pointer-events: none;
-        opacity: 0.5;
-        mix-blend-mode: multiply;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.36 0 0 0 0 0.25 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
       }
-      /* The warm bloom when the bulb flicks on. */
+      #boot::before {
+        opacity: 0.55;
+        mix-blend-mode: screen;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.62 0 0 0 0 0.66 0 0 0 0 0.9 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      }
       #boot::after {
-        content: "";
-        position: absolute;
-        left: var(--bulb-x, 62%);
-        top: var(--bulb-y, 58%);
-        width: 260vmax;
-        height: 260vmax;
-        transform: translate(-50%, -50%) scale(0.05);
-        border-radius: 50%;
-        pointer-events: none;
-        background: radial-gradient(circle, rgba(255, 214, 140, 0.95) 0%, rgba(242, 165, 65, 0.45) 9%, rgba(242, 165, 65, 0.14) 22%, rgba(242, 165, 65, 0) 40%);
-        mix-blend-mode: multiply;
-        opacity: 0;
-        transition:
-          opacity 0.5s ease-out,
-          transform 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        background: radial-gradient(ellipse 80% 80% at 55% 50%, transparent 55%, rgba(8, 8, 20, 0.55) 100%);
       }
-      #boot[data-state="ready"]::after,
-      #boot[data-state="leaving"]::after {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-      }
-      .ring {
-        position: absolute;
-        right: 7vw;
-        top: 9vh;
-        width: min(26vw, 220px);
-        height: auto;
-        opacity: 0.8;
-        transform: rotate(-12deg);
-        pointer-events: none;
-      }
-      .sheet {
+
+      #boot .sheet {
         position: relative;
+        z-index: 1;
         height: 100%;
-        display: grid;
-        grid-template-columns: minmax(220px, 30%) 1fr;
-        grid-template-rows: auto 1fr auto;
-        gap: 0 4vw;
-        padding: clamp(20px, 5vh, 56px) clamp(20px, 6vw, 96px);
         box-sizing: border-box;
+        display: grid;
+        grid-template-columns: minmax(280px, 0.8fr) 1.6fr;
+        grid-template-rows: 1fr auto;
+        grid-template-areas: "words drawing" "words switch";
+        column-gap: clamp(16px, 3vw, 56px);
+        padding: clamp(24px, 6vh, 72px) clamp(24px, 6vw, 112px) clamp(20px, 5vh, 56px);
       }
-      .head {
-        grid-column: 1 / -1;
-        margin: 0;
-        font-weight: 700;
-        font-size: clamp(22px, 2.6vw, 32px);
-        letter-spacing: 0.01em;
-        transform: rotate(-1deg);
-        width: max-content;
-        background: linear-gradient(transparent 82%, rgba(242, 165, 65, 0.55) 82%, rgba(242, 165, 65, 0.55) 94%, transparent 94%);
-      }
-      .margin {
+
+      /* Left: the name, and the margin list. */
+      #boot .words {
+        grid-area: words;
         align-self: center;
-        border-right: 2px solid rgba(192, 87, 62, 0.45);
-        padding: 8px 24px 8px 0;
+        max-width: 26rem;
       }
-      .margin h2 {
-        margin: 0 0 10px;
-        font-size: clamp(18px, 1.8vw, 22px);
-        font-weight: 700;
+      #boot .kicker {
+        margin: 0 0 14px;
+        font: 600 0.78rem/1 var(--sans);
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(255, 214, 150, 0.82);
       }
-      .margin ol {
+      #boot .title {
+        margin: 0;
+        font: 600 clamp(2.6rem, 5.2vw, 4.6rem) / 0.98 var(--serif);
+        letter-spacing: -0.015em;
+        color: var(--cream);
+        text-wrap: balance;
+      }
+      #boot .rule {
+        display: block;
+        width: 72px;
+        height: 2px;
+        margin: clamp(18px, 3vh, 30px) 0 clamp(16px, 2.6vh, 26px);
+        background: linear-gradient(90deg, rgba(255, 214, 150, 0.9), rgba(255, 214, 150, 0));
+      }
+      #boot .kept h2 {
+        margin: 0 0 12px;
+        font: italic 400 clamp(1.1rem, 1.5vw, 1.3rem) / 1.2 var(--serif);
+        color: var(--chalk);
+      }
+      #boot .kept ol {
         list-style: none;
         margin: 0;
         padding: 0;
-        font-size: clamp(17px, 1.6vw, 21px);
-        line-height: 1.5;
-      }
-      .margin li {
-        position: relative;
-        padding-left: 1.3em;
-        margin: 0 0 6px;
-        visibility: hidden;
-      }
-      .margin li::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 0.55em;
-        width: 0.65em;
-        height: 0.55em;
-        border-left: 2.5px solid var(--ink);
-        border-bottom: 2.5px solid var(--ink);
-        transform: rotate(-48deg) scale(0);
-        transform-origin: 30% 70%;
-        transition: transform 0.25s 0.7s cubic-bezier(0.3, 1.6, 0.5, 1);
-      }
-      .margin li.on {
-        visibility: visible;
-      }
-      .margin li.on::before {
-        transform: rotate(-48deg) scale(1);
-      }
-      .margin li span {
-        display: inline-block;
-        clip-path: inset(0 100% 0 0);
-        transition: clip-path 0.8s steps(18, end);
-      }
-      .margin li.on span {
-        clip-path: inset(0 0 0 0);
-      }
-      .desk {
         display: grid;
-        align-content: center;
-        justify-items: center;
+        gap: 10px;
+        font-size: clamp(0.98rem, 1.15vw, 1.08rem);
+        line-height: 1.35;
+        color: var(--chalk-soft);
+      }
+      #boot .kept li {
+        display: grid;
+        grid-template-columns: 20px 1fr;
+        gap: 12px;
+        align-items: start;
+        opacity: 0.18;
+        transition: opacity 0.5s ease, color 0.5s ease;
+      }
+      #boot .kept li.on {
+        opacity: 1;
+        color: var(--chalk);
+      }
+      #boot .tick {
+        width: 18px;
+        height: 18px;
+        margin-top: 1px;
+        fill: none;
+        stroke: rgba(255, 214, 150, 0.95);
+        stroke-width: 2.4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      #boot .tick path {
+        stroke-dasharray: 1 1.02;
+        stroke-dashoffset: 1;
+        transition: stroke-dashoffset 0.45s 0.15s cubic-bezier(0.6, 0, 0.3, 1);
+      }
+      #boot .kept li.on .tick path {
+        stroke-dashoffset: 0;
+      }
+
+      /* Right: the drawing. */
+      #boot .drawing {
+        grid-area: drawing;
         min-height: 0;
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) auto auto;
+        justify-items: center;
+        align-items: center;
       }
       #lamp {
-        width: min(46vh, 34vw, 420px);
-        height: auto;
+        width: 100%;
+        height: 100%;
+        max-height: 62vh;
+        min-height: 0;
         overflow: visible;
       }
-      #lamp path {
+      #lamp .guides {
         fill: none;
-        stroke: var(--ink);
-        stroke-width: 3.2;
+        stroke: var(--chalk-faint);
+        stroke-width: 1.2;
+        stroke-dasharray: 3 7;
+      }
+      #lamp .s path {
+        fill: none;
+        stroke: var(--chalk);
+        stroke-width: 3;
         stroke-linecap: round;
         stroke-linejoin: round;
         stroke-dasharray: 1 1.02;
+        transition: stroke 0.6s ease;
       }
-      .s0 path { stroke-dashoffset: calc(1 - var(--s0, 0)); }
-      .s1 path { stroke-dashoffset: calc(1 - var(--s1, 0)); }
-      .s2 path { stroke-dashoffset: calc(1 - var(--s2, 0)); }
-      .s3 path { stroke-dashoffset: calc(1 - var(--s3, 0)); }
-      .s4 path { stroke-dashoffset: calc(1 - var(--s4, 0)); }
-      #boot[data-state="ready"] .s4 path,
-      #boot[data-state="leaving"] .s4 path {
-        fill: rgba(255, 215, 140, 0.9);
-      }
+      #boot .s0 path { stroke-dashoffset: calc(1 - var(--s0, 0)); }
+      #boot .s1 path { stroke-dashoffset: calc(1 - var(--s1, 0)); }
+      #boot .s2 path { stroke-dashoffset: calc(1 - var(--s2, 0)); }
+      #boot .s3 path { stroke-dashoffset: calc(1 - var(--s3, 0)); }
+      #boot .s4 path { stroke-dashoffset: calc(1 - var(--s4, 0)); }
       /* The boil: three hand-drawn copies, one shown at a time. */
-      .f {
-        animation: boil 0.3s steps(1, end) infinite;
+      #boot .f {
+        animation: boil 0.36s steps(1, end) infinite;
       }
-      .f1 { animation-delay: -0.1s; }
-      .f2 { animation-delay: -0.2s; }
+      #boot .f1 { animation-delay: -0.12s; }
+      #boot .f2 { animation-delay: -0.24s; }
       @keyframes boil {
         0% { visibility: visible; }
         33.34% { visibility: hidden; }
       }
-      .line {
-        min-height: 1.6em;
-        margin: 10px 0 0;
-        font-size: clamp(19px, 2vw, 26px);
+      /* Dad's notes beside each part, written in once that part is drawn. */
+      #lamp .a .lead {
+        fill: none;
+        stroke: var(--chalk-soft);
+        stroke-width: 1.4;
+        stroke-dasharray: 1 1.02;
+        stroke-dashoffset: 1;
+        transition: stroke-dashoffset 0.5s cubic-bezier(0.6, 0, 0.3, 1);
+      }
+      #lamp .a .dot {
+        fill: var(--chalk-soft);
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      #lamp .a text {
+        font: 400 19px var(--hand);
+        fill: var(--chalk-soft);
+        opacity: 0;
+        transition: opacity 0.6s 0.35s;
+      }
+      #lamp .a.on .lead { stroke-dashoffset: 0; }
+      #lamp .a.on .dot,
+      #lamp .a.on text { opacity: 1; }
+      #lamp .halo {
+        opacity: 0;
+        transform-origin: 278px 204px;
+        transform: scale(0.6);
+        transition: opacity 1.2s ease, transform 1.2s ease;
+      }
+      #boot .line {
+        margin: 6px 0 0;
+        font: 400 clamp(1.05rem, 1.6vw, 1.35rem) / 1.3 var(--hand);
+        color: var(--chalk-soft);
         text-align: center;
         clip-path: inset(0 100% 0 0);
       }
-      #boot[data-state="ready"] .line,
-      #boot[data-state="leaving"] .line {
-        clip-path: inset(0 0 0 0);
-        transition: clip-path 1.6s 0.5s steps(40, end);
-      }
-      .go {
-        grid-column: 1 / -1;
-        justify-self: center;
-        display: grid;
-        justify-items: center;
-        gap: 4px;
-        min-height: 92px;
-      }
-      #light {
-        visibility: hidden;
-        opacity: 0;
-        transform: translateY(8px) rotate(-1.5deg);
-        font: 700 clamp(22px, 2.4vw, 30px) / 1 "Kalam", "Segoe Print", ui-rounded, sans-serif;
-        color: var(--ink);
-        background: #fff8e8;
-        border: 2.5px solid var(--ink);
-        border-radius: 14px 18px 12px 16px / 16px 12px 18px 14px;
-        padding: 14px 26px 12px;
-        box-shadow: 4px 5px 0 var(--ink);
-        cursor: pointer;
-        transition:
-          opacity 0.3s,
-          transform 0.35s cubic-bezier(0.3, 1.5, 0.5, 1),
-          box-shadow 0.12s;
-      }
-      #light:hover {
-        transform: translateY(-2px) rotate(-1.5deg);
-        box-shadow: 5px 7px 0 var(--ink);
-      }
-      #light:active {
-        transform: translateY(3px) rotate(-1.5deg);
-        box-shadow: 1px 2px 0 var(--ink);
-      }
-      #light:focus-visible {
-        outline: 3px dashed var(--clay);
-        outline-offset: 6px;
-      }
-      #boot[data-prompt] #light {
-        visibility: visible;
-        opacity: 1;
-        transform: translateY(0) rotate(-1.5deg);
-      }
-      .hint {
-        font-size: 16px;
-        opacity: 0;
-        transition: opacity 0.4s 0.3s;
-      }
-      #boot[data-prompt] .hint {
-        opacity: 0.7;
-      }
-      .slow {
+      #boot .slow {
         display: none;
-        font-size: 18px;
-        margin: 8px 0 0;
+        margin: 6px 0 0;
+        font-size: 0.95rem;
+        color: var(--chalk-soft);
       }
       #boot[data-slow]:not([data-state="ready"]) .slow {
         display: block;
       }
-      .nogl {
-        display: none;
-        grid-column: 1 / -1;
-        justify-self: center;
-        max-width: 34em;
-        text-align: center;
-        font-size: 20px;
-        background: #fff8e8;
-        border: 2px solid var(--ink);
-        padding: 18px 22px;
-        transform: rotate(-0.6deg);
-        box-shadow: 4px 5px 0 rgba(43, 38, 34, 0.35);
+
+      /* Ready: the bulb warms, the dedication writes itself in. */
+      #boot[data-state="ready"] #lamp .halo,
+      #boot[data-state="leaving"] #lamp .halo {
+        opacity: 0.55;
+        transform: scale(1);
+        animation: breathe 2.8s ease-in-out 1.2s infinite;
       }
-      .nogl a {
+      @keyframes breathe {
+        50% { opacity: 0.8; }
+      }
+      #boot[data-state="ready"] .s4 path,
+      #boot[data-state="leaving"] .s4 path {
+        fill: rgba(255, 220, 160, 0.35);
+      }
+      #boot[data-state="ready"] .line,
+      #boot[data-state="leaving"] .line {
+        clip-path: inset(0 0 0 0);
+        transition: clip-path 1.8s 0.4s steps(42, end);
+      }
+
+      /* The wall switch. */
+      #boot .switch {
+        grid-area: switch;
+        justify-self: center;
+        display: grid;
+        justify-items: center;
+        gap: 10px;
+        min-height: 112px;
+        padding-top: 6px;
+      }
+      #light {
+        display: inline-flex;
+        align-items: center;
+        gap: 18px;
+        padding: 10px 26px 10px 12px;
+        border: 1px solid rgba(255, 226, 174, 0.35);
+        border-radius: 999px;
+        background: rgba(255, 240, 210, 0.06);
+        color: var(--cream);
+        font: 600 clamp(1.15rem, 1.6vw, 1.4rem) / 1 var(--serif);
+        letter-spacing: 0.005em;
+        cursor: pointer;
+        visibility: hidden;
+        opacity: 0;
+        transform: translateY(10px);
+        transition:
+          opacity 0.5s ease,
+          transform 0.6s cubic-bezier(0.2, 1.3, 0.4, 1),
+          background 0.25s ease,
+          border-color 0.25s ease,
+          box-shadow 0.25s ease;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #light:hover {
+        background: rgba(255, 240, 210, 0.12);
+        border-color: rgba(255, 226, 174, 0.6);
+        box-shadow: 0 0 40px rgba(255, 190, 100, 0.18);
+      }
+      #light:focus-visible {
+        outline: 2px solid var(--warm);
+        outline-offset: 4px;
+      }
+      #boot[data-prompt] #light {
+        visibility: visible;
+        opacity: 1;
+        transform: none;
+      }
+      #boot .plate {
+        position: relative;
+        width: 34px;
+        height: 54px;
+        border-radius: 7px;
+        background: linear-gradient(160deg, #fbf4e6, #e2d6c0);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.8),
+          inset 0 -2px 0 rgba(120, 100, 70, 0.25),
+          0 3px 8px rgba(0, 0, 0, 0.45);
+      }
+      #boot .plate::before,
+      #boot .plate::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        width: 4px;
+        height: 4px;
+        margin-left: -2px;
+        border-radius: 50%;
+        background: #b9ab92;
+        box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.3);
+      }
+      #boot .plate::before { top: 5px; }
+      #boot .plate::after { bottom: 5px; }
+      #boot .slot {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 10px;
+        height: 22px;
+        margin: -11px 0 0 -5px;
+        border-radius: 3px;
+        background: #6d6152;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+      }
+      #boot .lever {
+        position: absolute;
+        left: 1px;
+        right: 1px;
+        top: 11px;
+        height: 14px;
+        border-radius: 3px;
+        background: linear-gradient(180deg, #fffaf0, #d9ccb2);
+        box-shadow: 0 2px 2px rgba(0, 0, 0, 0.35);
+        transform-origin: 50% 0;
+        transition: top 0.12s cubic-bezier(0.5, 0, 0.5, 1.6);
+      }
+      #boot[data-on] .lever {
+        top: -3px;
+        box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.3);
+      }
+      #boot .hint {
+        font-size: 0.85rem;
+        color: var(--chalk-soft);
+        opacity: 0;
+        transition: opacity 0.4s 0.4s;
+      }
+      #boot[data-prompt] .hint {
+        opacity: 0.8;
+      }
+
+      /* The engineer's title block, bottom right. */
+      #boot .block {
+        position: absolute;
+        right: clamp(16px, 3vw, 40px);
+        bottom: clamp(14px, 3vh, 32px);
+        z-index: 1;
+        display: grid;
+        grid-template-columns: auto auto;
+        margin: 0;
+        border: 1px solid var(--chalk-faint);
+        font-size: 0.78rem;
+      }
+      #boot .block div {
+        display: contents;
+      }
+      #boot .block dt,
+      #boot .block dd {
+        margin: 0;
+        padding: 5px 10px;
+        border-bottom: 1px solid var(--chalk-faint);
+      }
+      #boot .block div:last-child dt,
+      #boot .block div:last-child dd {
+        border-bottom: 0;
+      }
+      #boot .block dt {
+        font: 600 0.66rem/1.6 var(--sans);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: rgba(206, 213, 255, 0.5);
+        border-right: 1px solid var(--chalk-faint);
+      }
+      #boot .block dd {
+        font: 400 0.95rem/1.25 var(--hand);
+        color: var(--chalk-soft);
+      }
+
+      /* No WebGL: a kind note and the Field Guide. */
+      #boot .nogl {
+        display: none;
+        grid-area: switch;
+        justify-self: center;
+        max-width: 32rem;
+        text-align: center;
+        font-size: 1.05rem;
+        line-height: 1.5;
+        color: var(--chalk);
+      }
+      #boot .nogl a {
         display: inline-block;
-        margin-top: 12px;
-        font-weight: 700;
-        font-size: 24px;
-        color: var(--ink);
-        text-decoration-thickness: 3px;
-        text-decoration-color: var(--amber);
-        text-underline-offset: 5px;
-        padding: 8px 0;
+        margin-top: 10px;
+        padding: 12px 22px;
+        border-radius: 999px;
+        background: var(--cream);
+        color: #2b2622;
+        font: 600 1.1rem var(--serif);
+        text-decoration: none;
       }
       #boot[data-state="nogl"] .nogl {
         display: block;
       }
-      #boot[data-state="nogl"] .desk,
-      #boot[data-state="nogl"] .go {
+      #boot[data-state="nogl"] .switch {
         display: none;
       }
-      .sr {
+      #boot .sr {
         position: absolute;
         width: 1px;
         height: 1px;
@@ -329,88 +474,136 @@
         clip-path: inset(50%);
         white-space: nowrap;
       }
-      /* The page curls away to the left, showing the workshop behind it. */
+
+      /*
+       * Light on. The switch clicks, the drawing turns warm, and a circle of
+       * lamplight opens from the bulb until it fills the screen. Then the page
+       * fades and the same light is the lamp in the workshop.
+       */
+      #boot .flood {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        background: radial-gradient(circle at var(--bulb-x, 64%) var(--bulb-y, 46%), #fff7e6 0%, #ffe3ad 18%, #f7b35c 46%, #d7783a 100%);
+        -webkit-mask-image: radial-gradient(circle at var(--bulb-x, 64%) var(--bulb-y, 46%), #000 var(--flood), transparent calc(var(--flood) + 22vmax));
+        mask-image: radial-gradient(circle at var(--bulb-x, 64%) var(--bulb-y, 46%), #000 var(--flood), transparent calc(var(--flood) + 22vmax));
+        opacity: 0;
+      }
+      @property --flood {
+        syntax: "<length>";
+        inherits: false;
+        initial-value: 0px;
+      }
+      #boot[data-on] #lamp .s path {
+        stroke: var(--warm);
+      }
+      #boot[data-on] #lamp .halo {
+        opacity: 1;
+        transform: scale(1.6);
+        animation: none;
+        transition-duration: 0.35s;
+      }
+      #boot[data-on] .flood {
+        opacity: 1;
+        --flood: 150vmax;
+        transition:
+          --flood 1.05s 0.15s cubic-bezier(0.55, 0, 0.25, 1),
+          opacity 0.3s 0.15s;
+      }
       #boot[data-state="leaving"] {
         pointer-events: none;
-        animation: curl 1.1s cubic-bezier(0.55, 0, 0.3, 1) forwards;
+        opacity: 0;
+        transition: opacity 1.1s 0.25s cubic-bezier(0.3, 0, 0.2, 1);
       }
       #boot[data-state="gone"] {
         display: none;
       }
-      @keyframes curl {
-        0% { transform: perspective(1800px) rotateY(0deg); filter: brightness(1); }
-        60% { opacity: 1; }
-        100% { transform: perspective(1800px) rotateY(-96deg) translateX(-12%); filter: brightness(0.7); opacity: 0; }
-      }
+
       @media (max-width: 760px) {
-        .sheet {
+        #boot .sheet {
           grid-template-columns: 1fr;
-          grid-template-rows: auto auto 1fr auto;
-          padding: 20px 20px 28px;
+          grid-template-rows: auto minmax(0, 1fr) auto;
+          grid-template-areas: "words" "drawing" "switch";
+          padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
         }
-        .margin {
-          order: 3;
-          border-right: 0;
-          border-top: 2px solid rgba(192, 87, 62, 0.45);
-          padding: 12px 0 0;
+        #boot .words {
           align-self: start;
         }
-        #lamp {
-          width: min(60vw, 34vh);
+        #boot .title {
+          font-size: 2.3rem;
         }
-        .ring {
-          width: 34vw;
-          right: -4vw;
-          top: 4vh;
+        #boot .rule {
+          margin: 12px 0;
+        }
+        #boot .kept ol {
+          gap: 6px;
+          font-size: 0.92rem;
+        }
+        #boot .block {
+          display: none;
+        }
+        #lamp {
+          max-height: 46vh;
+        }
+        #lamp .a text {
+          font-size: 23px;
+        }
+      }
+      @media (max-height: 640px) and (min-width: 761px) {
+        #boot .kept {
+          display: none;
         }
       }
       @media (prefers-reduced-motion: reduce) {
-        .f1,
-        .f2 {
+        #boot .f1,
+        #boot .f2 {
           display: none;
         }
-        .f {
+        #boot .f {
           animation: none;
         }
-        #boot[data-state="leaving"] {
-          animation: fade 0.35s linear forwards;
+        #boot[data-state="ready"] #lamp .halo {
+          animation: none;
         }
-        .margin li span,
-        #boot[data-state="ready"] .line {
+        #boot[data-on] .flood {
+          transition: opacity 0.25s;
+        }
+        #boot[data-state="leaving"] {
+          transition-duration: 0.35s;
+          transition-delay: 0s;
+        }
+        #boot[data-state="ready"] .line,
+        #boot .tick path,
+        #lamp .a .lead {
           transition-duration: 0.01s;
         }
-      }
-      @keyframes fade {
-        to { opacity: 0; }
       }
     </style>
   </head>
   <body>
     <canvas id="stage" aria-label="Pieces of Home game view"></canvas>
     <div id="boot" data-state="loading">
-      <svg class="ring" viewBox="0 0 200 200" aria-hidden="true">
-        <defs>
-          <filter id="ringblur"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" result="t" /><feDisplacementMap in="SourceGraphic" in2="t" scale="7" /><feGaussianBlur stdDeviation="0.8" /></filter>
-        </defs>
-        <g filter="url(#ringblur)" fill="none">
-          <circle cx="100" cy="100" r="78" stroke="rgba(140,92,48,0.22)" stroke-width="7" />
-          <circle cx="100" cy="100" r="72" stroke="rgba(140,92,48,0.1)" stroke-width="12" />
-          <path d="M40 150 C 60 180, 120 190, 160 160" stroke="rgba(140,92,48,0.16)" stroke-width="3" />
-        </g>
-      </svg>
       <div class="sheet">
-        <p class="head">Pieces of Home</p>
-        <section class="margin" aria-labelledby="kept-h">
-          <h2 id="kept-h"><!--poh:heading--></h2>
-          <ol id="kept"><!--poh:list--></ol>
+        <section class="words">
+          <p class="kicker"><!--poh:kicker--></p>
+          <h1 class="title"><!--poh:title--></h1>
+          <span class="rule" aria-hidden="true"></span>
+          <section class="kept" aria-labelledby="kept-h">
+            <h2 id="kept-h"><!--poh:heading--></h2>
+            <ol id="kept"><!--poh:list--></ol>
+          </section>
         </section>
-        <div class="desk">
+        <div class="drawing">
           <!--poh:lamp-->
           <p class="line"><!--poh:ready--></p>
           <p class="slow"><!--poh:slow--> <span id="pct">0</span>%</p>
         </div>
-        <div class="go">
-          <button id="light" type="button"><!--poh:prompt--></button>
+        <div class="switch">
+          <button id="light" type="button">
+            <span class="plate" aria-hidden="true"><span class="slot"><span class="lever"></span></span></span>
+            <span><!--poh:prompt--></span>
+          </button>
           <span class="hint"><!--poh:hint--></span>
         </div>
         <div class="nogl" role="alert">
@@ -418,13 +611,15 @@
           <a href="/field-guide/"><!--poh:nowebgl-link--></a>
         </div>
       </div>
+      <dl class="block"><!--poh:titleblock--></dl>
+      <div class="flood" aria-hidden="true"></div>
       <progress id="boot-progress" class="sr" max="100" value="0" aria-label="Loading">0%</progress>
       <p id="boot-live" class="sr" role="status" aria-live="polite"></p>
     </div>
     <div id="ui"></div>
     <noscript>
-      <p style="position: fixed; inset: auto 0 16px; z-index: 60; text-align: center; font-size: 20px">
-        This game needs JavaScript. You can read the story in the <a href="/field-guide/">Field Guide</a>.
+      <p style="position: fixed; inset: auto 0 16px; z-index: 60; text-align: center; font-size: 20px; color: #f7efe1">
+        This game needs JavaScript. You can read the story in the <a href="/field-guide/" style="color: #ffe2ae">Field Guide</a>.
       </p>
     </noscript>
     <script>
@@ -437,12 +632,18 @@
         var pct = document.getElementById("pct");
         var light = document.getElementById("light");
         var items = boot.querySelectorAll("#kept li");
+        var notes = lamp.querySelectorAll(".a");
         var words = /*poh:milestones*/;
         var value = 0;
         var waiting = null;
+        var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         function set(p) {
           value = Math.max(value, Math.min(1, p || 0));
-          for (var i = 0; i < 5; i++) lamp.style.setProperty("--s" + i, Math.max(0, Math.min(1, value * 5 - i)).toFixed(3));
+          for (var i = 0; i < 5; i++) {
+            var s = Math.max(0, Math.min(1, value * 5 - i));
+            lamp.style.setProperty("--s" + i, s.toFixed(3));
+            if (s >= 1 && notes[i]) notes[i].classList.add("on");
+          }
           var n = Math.round(value * 100);
           bar.value = n;
           bar.textContent = n + "%";
@@ -453,10 +654,14 @@
           if (words[i]) live.textContent = words[i];
         }
         function place() {
-          // Center the bloom on the bulb.
+          // The light opens from the bulb, wherever the drawing sits.
           var box = lamp.getBoundingClientRect();
-          boot.style.setProperty("--bulb-x", box.left + box.width * 0.75 + "px");
-          boot.style.setProperty("--bulb-y", box.top + box.height * 0.5 + "px");
+          var vb = lamp.viewBox.baseVal;
+          var k = Math.min(box.width / vb.width, box.height / vb.height);
+          var ox = box.left + (box.width - vb.width * k) / 2;
+          var oy = box.top + (box.height - vb.height * k) / 2;
+          boot.style.setProperty("--bulb-x", ox + (278 - vb.x) * k + "px");
+          boot.style.setProperty("--bulb-y", oy + (204 - vb.y) * k + "px");
         }
         // Any gamepad button turns on the light too.
         function pollPad() {
@@ -478,23 +683,26 @@
           var cb = waiting;
           waiting = null;
           if (event) event.preventDefault();
-          cb();
+          place();
+          // Click: the switch flips, the light opens, then the world takes over.
+          boot.dataset.on = "";
+          setTimeout(cb, reduce ? 60 : 620);
         }
         function ready(cb) {
           set(1);
           for (var i = 0; i < items.length; i++) milestone(i);
-          place();
           boot.dataset.state = "ready";
-          live.textContent = light.textContent;
+          live.textContent = light.textContent.trim();
           setTimeout(function () {
             boot.dataset.prompt = "";
             waiting = cb;
             light.focus({ preventScroll: true });
             pollPad();
-          }, 1200);
+          }, reduce ? 200 : 1200);
         }
         boot.addEventListener("pointerup", go);
         window.addEventListener("keydown", go);
+        window.addEventListener("resize", place);
         light.addEventListener("click", function (e) {
           e.stopPropagation();
           go(e);
@@ -513,7 +721,7 @@
             boot.dataset.state = "leaving";
             setTimeout(function () {
               boot.dataset.state = "gone";
-            }, 1200);
+            }, 1500);
           },
           hide: function () {
             boot.dataset.state = "gone";

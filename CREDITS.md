@@ -27,7 +27,8 @@ All fonts are self-hosted from `public/fonts/`, Latin subset only, with their li
 
 | Font | Use | License | By | Source |
 |---|---|---|---|---|
-| Kalam | Dad's handwriting and the loading page | SIL Open Font License 1.1 | Indian Type Foundry | https://github.com/itfoundry/kalam |
+| Kalam | Dad's handwriting | SIL Open Font License 1.1 | Indian Type Foundry | https://github.com/itfoundry/kalam |
+| Fraunces | Titles and headings | SIL Open Font License 1.1 | Undercase Type (Phaedra Charles, Flavia Zimbardi) | https://github.com/undercasetype/Fraunces |
 | Atkinson Hyperlegible Next | Reading text | SIL Open Font License 1.1 | Braille Institute of America | https://www.brailleinstitute.org/freefont/ |
 | Zilla Slab | Museum labels, tags and stamps | SIL Open Font License 1.1 | Mozilla, Typotheque | https://github.com/mozilla/zilla-slab |
 | OpenDyslexic | Optional reading font | SIL Open Font License 1.1 | Abbie Gonzalez | https://opendyslexic.org |

@@ -73,9 +73,10 @@ for (const size of sizes) {
     await page.waitForTimeout(600);
     await shot(page, "loader-0");
     await page.evaluate(() => {
-      window.__pohBoot?.progress(0.5);
-      window.__pohBoot?.milestone(0);
-      window.__pohBoot?.milestone(1);
+      const boot = (window as unknown as { __pohBoot?: { progress(p: number): void; milestone(i: number): void } }).__pohBoot;
+      boot?.progress(0.5);
+      boot?.milestone(0);
+      boot?.milestone(1);
     });
     await page.waitForTimeout(1200);
     await shot(page, "loader-50");

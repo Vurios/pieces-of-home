@@ -1,22 +1,47 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import { trap } from "./focus";
-  import Icon from "./Icon.svelte";
+  import Icon, { type IconName } from "./Icon.svelte";
   import { t } from "./settings.svelte";
 
   /**
-   * A notebook page that slides in from the right, taped at the top. Used for
-   * settings, credits, play together and chapters. It is a real modal dialog:
-   * focus stays inside, Escape closes it, and focus goes back afterwards.
+   * A warm card over the dimmed world, used for settings, credits, play
+   * together and chapters. It always fits the screen: the header stays put and
+   * the body scrolls, with soft fades where there is more to see. It is a real
+   * modal dialog: focus stays inside, Escape closes it, focus returns after.
    */
   interface Props {
     title: string;
+    lede?: string;
+    icon?: IconName;
     onclose: () => void;
     children: Snippet;
+    size?: "sm" | "md" | "lg";
+    /** The body handles its own layout and scrolling (settings). */
+    flush?: boolean;
     wide?: boolean;
   }
-  let { title, onclose, children, wide = false }: Props = $props();
+  let { title, lede, icon, onclose, children, size = "md", flush = false, wide = false }: Props = $props();
   const id = `panel-${Math.random().toString(36).slice(2, 8)}`;
+  const width = $derived(wide ? "lg" : size);
+
+  let body: HTMLElement | null = $state(null);
+  let fadeTop = $state(false);
+  let fadeBottom = $state(false);
+
+  function measure(): void {
+    if (!body) return;
+    fadeTop = body.scrollTop > 4;
+    fadeBottom = body.scrollTop + body.clientHeight < body.scrollHeight - 4;
+  }
+
+  $effect(() => {
+    if (!body) return;
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(body);
+    return () => observer.disconnect();
+  });
 
   function onkey(event: KeyboardEvent): void {
     if (event.key === "Escape") {
@@ -28,14 +53,23 @@
 </script>
 
 <div class="scrim" aria-hidden="true" onpointerdown={onclose}></div>
-<div class="sheet paper" class:wide role="dialog" aria-modal="true" aria-labelledby={id} tabindex="-1" use:trap onkeydown={onkey}>
-  <span class="tape" aria-hidden="true"></span>
-  <header>
-    <h2 {id}>{title}</h2>
-    <button type="button" class="close" onclick={onclose} aria-label={t("panel.close")}><Icon name="close" size={26} /></button>
-  </header>
-  <div class="body">
-    {@render children()}
+<div class="wrap">
+  <div class={`sheet card ${width}`} role="dialog" aria-modal="true" aria-labelledby={id} tabindex="-1" use:trap onkeydown={onkey}>
+    <header>
+      {#if icon}<span class="badge" aria-hidden="true"><Icon name={icon} size={24} /></span>{/if}
+      <div class="titles">
+        <h2 {id}>{title}</h2>
+        {#if lede}<p class="lede">{lede}</p>{/if}
+      </div>
+      <button type="button" class="close" onclick={onclose} aria-label={t("panel.close")}><Icon name="close" size={20} /></button>
+    </header>
+    {#if flush}
+      <div class="flush">{@render children()}</div>
+    {:else}
+      <div class="body" class:fade-top={fadeTop} class:fade-bottom={fadeBottom} bind:this={body} onscroll={measure}>
+        {@render children()}
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -44,89 +78,164 @@
     position: fixed;
     inset: 0;
     pointer-events: auto;
-    background: rgba(24, 18, 30, 0.18);
+    background: radial-gradient(ellipse at 50% 40%, rgba(29, 30, 60, 0.35), rgba(12, 11, 26, 0.6));
+    animation: dim 0.3s ease both;
+  }
+  .wrap {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: max(20px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom));
+    pointer-events: none;
   }
   .sheet {
-    position: fixed;
-    top: max(24px, 5vh);
-    right: max(16px, 4vw);
-    bottom: max(24px, 5vh);
-    width: min(560px, calc(100vw - 32px));
+    position: relative;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-height: min(780px, calc(100dvh - 40px));
     pointer-events: auto;
-    border-radius: 3px 4px 5px 3px;
-    transform: rotate(0.5deg);
-    animation: slide 0.5s var(--ease-spring) both;
+    overflow: hidden;
+    animation: rise 0.42s var(--ease-out) both;
   }
-  .sheet.wide {
-    width: min(760px, calc(100vw - 32px));
+  .sm {
+    max-width: 480px;
   }
-  .tape {
+  .md {
+    max-width: 600px;
+  }
+  .lg {
+    max-width: 880px;
+  }
+  /* A warm line along the top edge, like lamplight on the card. */
+  .sheet::before {
+    content: "";
     position: absolute;
-    top: -12px;
-    left: 50%;
-    width: 120px;
-    height: 26px;
-    margin-left: -60px;
-    transform: rotate(-3deg);
-    background: rgba(242, 165, 65, 0.55);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+    inset: 0 0 auto;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--amber) 30%, #f7c776 60%, transparent);
+    opacity: 0.85;
   }
   header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 26px 22px 6px 30px;
-    border-bottom: 2px solid rgba(192, 87, 62, 0.35);
+    gap: 14px;
+    padding: 26px 24px 18px 28px;
+    border-bottom: 1px solid var(--line);
+  }
+  .badge {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: var(--amber-wash);
+    color: var(--amber-deep);
+  }
+  .badge :global(.icon) {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .titles {
+    flex: 1;
+    min-width: 0;
   }
   h2 {
     margin: 0;
-    font: 700 1.7rem/1.1 var(--hand);
+    font: 600 1.7rem/1.1 var(--serif);
+    letter-spacing: -0.01em;
+  }
+  .lede {
+    margin: 6px 0 0;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    line-height: 1.45;
   }
   .close {
+    flex: none;
+    align-self: flex-start;
     display: grid;
     place-items: center;
-    width: 48px;
-    height: 48px;
-    border: 2px solid transparent;
+    width: 44px;
+    height: 44px;
+    border: 0;
     border-radius: 50%;
-    background: none;
+    background: var(--card-sunk);
     color: var(--ink);
     cursor: pointer;
-    transition: transform 0.15s var(--ease-spring), border-color 0.15s;
+    transition: background 0.15s, transform 0.2s var(--ease-spring);
+  }
+  .close :global(.icon) {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.6;
+    stroke-linecap: round;
   }
   .close:hover {
-    border-color: var(--ink);
-    transform: rotate(8deg);
-  }
-  .close:active {
-    transform: scale(0.92);
+    background: #e8dfcf;
+    transform: rotate(90deg);
   }
   .body {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
-    padding: 14px 30px 30px;
+    overscroll-behavior: contain;
+    padding: 20px 28px 28px;
     font-size: 1rem;
     line-height: 1.5;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(43, 38, 34, 0.25) transparent;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--ft, 0px), #000 calc(100% - var(--fb, 0px)), transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 var(--ft, 0px), #000 calc(100% - var(--fb, 0px)), transparent 100%);
   }
-  @keyframes slide {
+  .body.fade-top {
+    --ft: 24px;
+  }
+  .body.fade-bottom {
+    --fb: 36px;
+  }
+  .flush {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  @keyframes rise {
     from {
-      transform: translateX(110%) rotate(4deg);
-    }
-    to {
-      transform: translateX(0) rotate(0.5deg);
+      opacity: 0;
+      transform: translateY(18px) scale(0.98);
     }
   }
-  :global(:root[data-motion="reduce"]) .sheet {
+  @keyframes dim {
+    from {
+      opacity: 0;
+    }
+  }
+  :global(:root[data-motion="reduce"]) .sheet,
+  :global(:root[data-motion="reduce"]) .scrim {
     animation: none;
   }
   @media (max-width: 640px) {
+    .wrap {
+      padding: 10px;
+      align-items: end;
+    }
     .sheet {
-      inset: 12px;
-      width: auto;
-      transform: none;
+      max-height: calc(100dvh - 20px);
+    }
+    header {
+      padding: 20px 16px 14px 18px;
+    }
+    .body {
+      padding: 16px 18px 22px;
+    }
+    h2 {
+      font-size: 1.45rem;
     }
   }
 </style>

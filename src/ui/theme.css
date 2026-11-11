@@ -1,9 +1,11 @@
 /*
- * Dad's notebook, as a visual system (Game Bible 11).
- * Paper, ink and lamp amber lead. Three faces, all self-hosted and open:
- *   Kalam: Dad's handwriting and the kids' notes
- *   Atkinson Hyperlegible Next: reading text (OpenDyslexic as an option)
- *   Zilla Slab: museum labels, tags and ink stamps
+ * The game's visual system (Game Bible 11): warm cards at dusk.
+ * Cream, ink and lamp amber lead, with the dusk indigo of the loader.
+ * Four faces, all self-hosted and open:
+ *   Fraunces: titles and headings
+ *   Atkinson Hyperlegible Next: reading text and controls (OpenDyslexic as an option)
+ *   Kalam: Dad's handwriting only
+ *   Zilla Slab: museum tags and ink stamps
  */
 @font-face {
   font-family: "Atkinson Hyperlegible Next";
@@ -43,30 +45,79 @@
   font-display: swap;
   src: url("/fonts/opendyslexic-latin-700-normal.woff2") format("woff2");
 }
+@font-face {
+  font-family: "Fraunces";
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/fraunces-latin-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Fraunces";
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/fraunces-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Fraunces";
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+  src: url("/fonts/fraunces-latin-400-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Kalam";
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/kalam-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Kalam";
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/kalam-latin-700-normal.woff2") format("woff2");
+}
 
 :root {
+  /* Paper and cards */
   --paper: #f4ecdd;
-  --paper-light: #fbf6ea;
-  --paper-deep: #e9dcc3;
+  --paper-light: #fbf6ec;
+  --paper-deep: #ebdfc9;
   --paper-edge: #d9c7a6;
+  --card: #fbf7f0;
+  --card-sunk: #f1e9db;
+  --line: rgba(43, 38, 34, 0.11);
+  --line-strong: rgba(43, 38, 34, 0.22);
+  /* Ink */
   --ink: #2b2622;
-  --ink-soft: #5a4f46;
+  --ink-soft: #62574d;
   --pencil: #8c8173;
+  --dad-ink: #2f4a7a;
+  /* Lamp and earth */
   --amber: #f2a541;
-  --amber-deep: #c97f1f;
+  --amber-deep: #b8661c;
+  --amber-wash: #fcebd0;
   --clay: #c0573e;
   --clay-deep: #9c4433;
   --sage: #7fa37a;
   --sage-deep: #557358;
   --sky: #5c7393;
-  --dusk: #2e2a4f;
+  /* Dusk, from the loader */
+  --dusk: #1d1e3c;
+  --dusk-2: #2b2c58;
+  --scrim: rgba(16, 15, 34, 0.5);
   --grid: rgba(70, 110, 140, 0.1);
   --shadow: rgba(43, 38, 34, 0.32);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 30px 60px -24px rgba(12, 10, 30, 0.6), 0 12px 24px -12px rgba(12, 10, 30, 0.35);
+  /* Type */
+  --serif: "Fraunces", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
   --hand: "Kalam", "Segoe Print", "Bradley Hand", ui-rounded, sans-serif;
   --read: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Verdana", sans-serif;
   --label: "Zilla Slab", "Rockwell", "Georgia", serif;
+  /* Motion and shape */
   --ease-spring: cubic-bezier(0.3, 1.45, 0.45, 1);
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --radius: 22px;
+  --radius-sm: 12px;
   font-size: 17px;
 }
 :root[data-text="s"] { font-size: 15px; }
@@ -77,10 +128,15 @@
   --paper: #fffdf6;
   --paper-light: #ffffff;
   --paper-deep: #f2e9d6;
+  --card: #ffffff;
+  --card-sunk: #f4eee2;
+  --line: rgba(0, 0, 0, 0.3);
+  --line-strong: rgba(0, 0, 0, 0.6);
   --ink: #120f0d;
   --ink-soft: #2b2622;
   --pencil: #3f3a34;
   --clay: #9c2f1c;
+  --amber-deep: #7d3f08;
   --shadow: rgba(0, 0, 0, 0.6);
 }
 
@@ -91,6 +147,7 @@
   z-index: 20;
   font-family: var(--read);
   color: var(--ink);
+  -webkit-font-smoothing: antialiased;
 }
 #ui :where(button, a, input, select, label, [role="dialog"], .hit) {
   pointer-events: auto;
@@ -101,16 +158,16 @@
   transition: filter 0.35s var(--ease-out);
 }
 :root[data-overlay] #stage {
-  filter: blur(4px) brightness(0.55) saturate(0.85);
+  filter: blur(5px) brightness(0.5) saturate(0.8);
 }
 :root[data-motion="reduce"] #stage {
   transition: none;
 }
 
-/* One focus style everywhere: a dashed clay pencil ring. */
+/* One focus style everywhere: a warm ring with a light halo, readable on light and dark. */
 #ui :focus-visible {
-  outline: 3px dashed var(--clay);
-  outline-offset: 4px;
+  outline: 3px solid var(--amber-deep);
+  outline-offset: 3px;
 }
 
 .sr-only {
@@ -122,7 +179,7 @@
   white-space: nowrap;
 }
 
-/* A sheet of notebook paper with a faint engineering grid. */
+/* A sheet of notebook paper with a faint grid. */
 .paper {
   background-color: var(--paper-light);
   background-image:
@@ -136,36 +193,58 @@
     0 4px 10px -4px rgba(30, 20, 10, 0.35);
 }
 
-/* The paper button: thick ink edge, hard shadow, presses down when clicked. */
-.btn {
-  font: 700 1.1rem/1.1 var(--hand);
+/* A warm card, the base of every panel. */
+.card {
+  background: var(--card);
   color: var(--ink);
-  background: var(--paper-light);
-  border: 2.5px solid var(--ink);
-  border-radius: 12px 16px 11px 15px / 15px 11px 16px 12px;
-  padding: 0.6em 1.15em 0.5em;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+/* Buttons: a soft pill with a pressable bottom edge. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
   min-height: 48px;
-  box-shadow: 3px 4px 0 var(--ink);
+  padding: 0.55em 1.3em;
+  font: 700 1rem/1.1 var(--read);
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  box-shadow: 0 2px 0 rgba(43, 38, 34, 0.16), 0 6px 14px -8px rgba(43, 38, 34, 0.35);
   cursor: pointer;
+  text-decoration: none;
   transition:
-    transform 0.14s var(--ease-spring),
-    box-shadow 0.12s;
+    transform 0.14s var(--ease-out),
+    box-shadow 0.14s var(--ease-out),
+    background 0.15s;
 }
 .btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 4px 6px 0 var(--ink);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 rgba(43, 38, 34, 0.16), 0 10px 18px -8px rgba(43, 38, 34, 0.4);
 }
 .btn:active {
-  transform: translateY(2px);
-  box-shadow: 1px 1px 0 var(--ink);
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(43, 38, 34, 0.16), 0 2px 6px -4px rgba(43, 38, 34, 0.4);
 }
 .btn.amber {
-  background: var(--amber);
+  background: linear-gradient(180deg, #f8b75c, #ee9b33);
+  border-color: rgba(140, 70, 10, 0.45);
+  color: #2b1a08;
+  box-shadow: 0 2px 0 #b8661c, 0 8px 18px -8px rgba(184, 102, 28, 0.7);
+}
+.btn.amber:hover {
+  background: linear-gradient(180deg, #fac26e, #f0a23e);
 }
 .btn.quiet {
   background: transparent;
   box-shadow: none;
-  border-style: dashed;
+}
+.btn.quiet:hover {
+  background: rgba(43, 38, 34, 0.05);
 }
 
 /* A museum tag: slab type on a cream label with a punched hole. */
@@ -173,42 +252,211 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5em;
-  font: 700 0.72rem/1 var(--label);
-  letter-spacing: 0.08em;
+  font: 700 0.7rem/1 var(--label);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink);
   background: #efe2c7;
-  border: 1.5px solid var(--ink-soft);
+  border: 1px solid rgba(98, 87, 77, 0.6);
   border-radius: 3px 10px 10px 3px;
-  padding: 0.38em 0.7em 0.34em 1.3em;
+  padding: 0.4em 0.75em 0.36em 1.35em;
   position: relative;
 }
 .tag::before {
   content: "";
   position: absolute;
-  left: 0.45em;
+  left: 0.48em;
   top: 50%;
   width: 0.38em;
   height: 0.38em;
   margin-top: -0.19em;
   border-radius: 50%;
-  border: 1.5px solid var(--ink-soft);
+  border: 1px solid rgba(98, 87, 77, 0.8);
   background: var(--paper-light);
 }
 
-/* A hand-drawn key cap for prompts. */
+/* Small caps label above a group of controls. */
+.eyebrow {
+  margin: 0 0 10px;
+  font: 700 0.72rem/1 var(--read);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* A key cap for prompts and bindings. */
 .keycap {
   display: inline-grid;
   place-items: center;
   min-width: 1.9em;
   height: 1.9em;
-  padding: 0 0.35em;
-  font: 700 0.95rem/1 var(--label);
+  padding: 0 0.4em;
+  font: 700 0.9rem/1 var(--read);
   color: var(--ink);
-  background: var(--paper-light);
-  border: 2px solid var(--ink);
-  border-radius: 6px 8px 7px 6px;
-  box-shadow: 0 3px 0 var(--ink);
+  background: linear-gradient(180deg, #fff, #efe6d6);
+  border: 1px solid var(--line-strong);
+  border-radius: 7px;
+  box-shadow: 0 2px 0 rgba(43, 38, 34, 0.28);
+}
+
+/* Toggle switch: a real checkbox with role="switch". */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 56px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+.switch-row + .switch-row {
+  border-top: 1px solid var(--line);
+}
+.switch-row .text {
+  display: grid;
+  gap: 2px;
+  font-weight: 600;
+}
+.switch-row .help {
+  font-weight: 400;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+}
+input.switch {
+  appearance: none;
+  flex: none;
+  position: relative;
+  width: 50px;
+  height: 30px;
+  margin: 0;
+  border-radius: 999px;
+  background: #d6ccbb;
+  box-shadow: inset 0 1px 3px rgba(43, 38, 34, 0.3);
+  cursor: pointer;
+  transition: background 0.2s var(--ease-out);
+}
+input.switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(43, 38, 34, 0.35);
+  transition: transform 0.22s var(--ease-spring);
+}
+input.switch:checked {
+  background: var(--amber);
+}
+input.switch:checked::after {
+  transform: translateX(20px);
+}
+
+/* Segmented control: radios in a pill track. */
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--card-sunk);
+  box-shadow: inset 0 1px 2px rgba(43, 38, 34, 0.12);
+}
+.seg label {
+  position: relative;
+  cursor: pointer;
+}
+.seg input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.seg span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.seg label:hover span {
+  color: var(--ink);
+}
+.seg input:checked + span {
+  background: #fff;
+  color: var(--ink);
+  font-weight: 700;
+  box-shadow: 0 1px 0 rgba(43, 38, 34, 0.12), 0 2px 8px -2px rgba(43, 38, 34, 0.25);
+}
+.seg input:focus-visible + span {
+  outline: 3px solid var(--amber-deep);
+  outline-offset: 2px;
+}
+
+/* Range slider with an amber fill up to its value (set --v from 0 to 1). */
+.range {
+  appearance: none;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.range::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--amber) calc(var(--v, 0.5) * 100%), #e2d8c8 calc(var(--v, 0.5) * 100%));
+  box-shadow: inset 0 1px 2px rgba(43, 38, 34, 0.2);
+}
+.range::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: #e2d8c8;
+}
+.range::-moz-range-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--amber);
+}
+.range::-webkit-slider-thumb {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(43, 38, 34, 0.25);
+  box-shadow: 0 2px 6px rgba(43, 38, 34, 0.35);
+}
+.range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid rgba(43, 38, 34, 0.25);
+  box-shadow: 0 2px 6px rgba(43, 38, 34, 0.35);
+}
+
+/* A select that matches the cards. */
+.select {
+  appearance: none;
+  min-height: 46px;
+  padding: 0 40px 0 14px;
+  font: 600 1rem var(--read);
+  color: var(--ink);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 L6 6.5 L11 1.5' fill='none' stroke='%232b2622' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") right 14px center / 12px 8px no-repeat,
+    #fff;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 0 rgba(43, 38, 34, 0.08);
+  cursor: pointer;
 }
 
 @media (prefers-reduced-motion: reduce) {

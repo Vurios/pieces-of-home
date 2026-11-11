@@ -1,5 +1,6 @@
 <script lang="ts">
   import { SPREADS } from "../../content/notebook";
+  import Icon from "../Icon.svelte";
   import Panel from "../Panel.svelte";
   import { t } from "../settings.svelte";
 
@@ -11,14 +12,16 @@
   let { onclose, onhome }: Props = $props();
 </script>
 
-<Panel title={t("chapters.title")} {onclose}>
+<Panel title={t("chapters.title")} lede={t("chapters.lede")} icon="book" {onclose}>
   <ol class="chapters">
     {#each SPREADS as s (s.id)}
-      <li>
+      <li class:soon={s.world !== "Home"}>
+        <span class="tag">{s.world}</span>
+        <span class="name">{s.chapter}</span>
         {#if s.world === "Home"}
-          <button type="button" class="btn" onclick={onhome}>{s.chapter}</button>
+          <button type="button" class="btn amber" onclick={onhome}>{t("chapters.go")}</button>
         {:else}
-          <span class="soon"><span>{s.chapter}</span> <span class="tag">{t("chapters.soon")}</span></span>
+          <span class="later"><Icon name="lock" size={16} /> {t("chapters.soon")}</span>
         {/if}
       </li>
     {/each}
@@ -31,15 +34,52 @@
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 12px;
+    gap: 8px;
   }
-  .soon {
-    display: flex;
-    flex-wrap: wrap;
+  li {
+    display: grid;
+    grid-template-columns: 6.5em 1fr auto;
     align-items: center;
-    gap: 10px;
-    min-height: 48px;
-    font: 700 1.05rem var(--hand);
+    gap: 12px;
+    min-height: 64px;
+    padding: 8px 10px 8px 16px;
+    border-radius: 14px;
+    background: #fff;
+    border: 1px solid var(--line);
+  }
+  li.soon {
+    background: transparent;
+  }
+  .tag {
+    justify-self: start;
+  }
+  .name {
+    font: 600 1.05rem/1.3 var(--serif);
+  }
+  .soon .name {
     color: var(--ink-soft);
+  }
+  .later {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding-right: 8px;
+    color: var(--pencil);
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .later :global(.icon) {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+  }
+  @media (max-width: 520px) {
+    li {
+      grid-template-columns: 1fr auto;
+    }
+    .tag {
+      grid-column: 1 / -1;
+    }
   }
 </style>

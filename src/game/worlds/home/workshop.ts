@@ -265,10 +265,20 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
   const mouth = head.clone().addScaledVector(aim, 0.155);
   b.place(torus(0.16), LAMP_BRASS, [mouth.x, mouth.y, mouth.z], alignTo(FORWARD, aim), 0.13, m);
   const lampBulbLocal = mouth.clone().addScaledVector(aim, 0.012);
-  // The pull switch hangs from the rim.
-  const rimLow = mouth.clone().add(new Vector3(0.1, -0.02, 0.02));
-  b.place(cylinder(6), C.ink, [rimLow.x, rimLow.y - 0.08, rimLow.z], [0, 0, 0], [0.004, 0.16, 0.004], m);
-  b.place(sphere("low"), C.brass, [rimLow.x, rimLow.y - 0.165, rimLow.z], [0, 0, 0], 0.014, m);
+  // The pull switch: a little brass knuckle clipped onto the side of the rim,
+  // and a beaded chain that hangs straight down from it with a bell pull.
+  // The side direction is level and square to the shade's aim, so the chain
+  // starts on the rim itself and falls clear of the opening.
+  const side = new Vector3().crossVectors(UP, aim).normalize();
+  const clip = mouth.clone().addScaledVector(side, 0.132);
+  b.place(sphere("low"), LAMP_BRASS, [clip.x, clip.y, clip.z], [0, 0, 0], 0.016, m);
+  const beads = 9;
+  for (let i = 1; i <= beads; i += 1) {
+    b.place(sphere("tiny"), "#8A6A35", [clip.x, clip.y - 0.006 - i * 0.017, clip.z], [0, 0, 0], 0.0062, m);
+  }
+  const pullY = clip.y - 0.006 - beads * 0.017 - 0.022;
+  b.place(cylinder(10, 0.45), LAMP_BRASS, [clip.x, pullY, clip.z], [0, 0, 0], [0.013, 0.03, 0.013], m);
+  b.place(sphere("low"), LAMP_BRASS, [clip.x, pullY - 0.017, clip.z], [0, 0, 0], 0.013, m);
 
   // The notebook, open, with a pencil.
   b.place(box(0.01), C.clay, v(-1.45, BENCH_Y + 0.015, BENCH_Z + 0.1), [0, 0.12, 0], [0.62, 0.03, 0.42], m);
