@@ -1,7 +1,8 @@
 import { type BufferGeometry, Group, type Object3D, Vector3 } from "three";
 import type { ToonLibrary } from "../render/toon";
 import { damp } from "../world/sphere";
-import { Assembly, box, capsule, cylinder, hairLock, limb, sphere, torus } from "./parts";
+import { type HairStyle, hairShell } from "./hair";
+import { Assembly, box, capsule, cylinder, limb, sphere, torus } from "./parts";
 
 /**
  * Mom, the safe adult (Game Bible 5.5). She sits on the porch bench with a mug
@@ -13,6 +14,34 @@ import { Assembly, box, capsule, cylinder, hairLock, limb, sphere, torus } from 
  *
  * Built seated. The root sits on the bench seat, facing +Z.
  */
+const smooth = (a: number, b: number, x: number): number => {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
+/** Mom's hair: neat locks swept from a side parting toward the back, where the bun sits. */
+const MOM_HAIR: HairStyle = {
+  center: [0, 0.158, -0.012],
+  radius: [0.178, 0.188, 0.176],
+  locks: 18,
+  reach: (a) => {
+    const k = Math.abs(a) / (Math.PI / 2);
+    return k < 1 ? 0.95 + 0.6 * smooth(0, 1, k) : 1.55 + 0.38 * smooth(1, 2, k);
+  },
+  tipDepth: 0.12,
+  tipSharp: 1.2,
+  groove: 0.04,
+  sweep: -0.55,
+  flare: 0,
+  thickness: 0.08,
+  messy: 0.1,
+  tilt: [-0.04, 0.26],
+  sheen: 0.15,
+  seed: 71,
+};
+let momHairGeometry: BufferGeometry | null = null;
+const momHair = (): BufferGeometry => (momHairGeometry ??= hairShell(MOM_HAIR));
+
 const P = {
   skin: "#B98263",
   hair: "#2F2420",
@@ -121,22 +150,10 @@ export class Mom {
     this.part(this.head, cylinder(12), P.skin, [0, 0.0, 0], [0.05, 0.08, 0.05]);
     this.part(this.head, sphere("high"), P.skin, [0, 0.15, 0], [0.165, 0.175, 0.16]);
     for (const side of [-1, 1]) this.part(this.head, sphere("low"), P.skin, [side * 0.163, 0.14, 0], [0.03, 0.042, 0.026]);
-    // Hair swept back from a side parting into a low bun, sculpted from locks.
-    this.part(this.head, sphere("high"), P.hair, [0, 0.2, -0.02], [0.172, 0.15, 0.166]);
-    const lock = (root: [number, number, number], dir: [number, number, number], length: number, width: number): void =>
-      hairLock(this.assembly, this.head, root, dir, length, width, P.hair, 0.6);
-    // A soft wave across the forehead from the parting, and locks tucked behind the ears.
-    lock([-0.05, 0.31, 0.1], [0.75, -0.35, 0.45], 0.17, 0.07);
-    lock([0.04, 0.31, 0.11], [0.7, -0.55, 0.35], 0.14, 0.06);
-    lock([-0.08, 0.3, 0.1], [-0.6, -0.6, 0.4], 0.12, 0.055);
-    for (const side of [-1, 1]) {
-      lock([side * 0.15, 0.24, 0.06], [side * 0.3, -0.6, -0.75], 0.17, 0.06);
-      lock([side * 0.12, 0.3, -0.04], [side * 0.25, -0.35, -0.9], 0.18, 0.07);
-    }
-    lock([0, 0.32, 0.0], [0, -0.2, -1], 0.2, 0.08);
+    // Hair swept back from a side parting into a low bun, in one sculpted piece (see hair.ts).
+    this.part(this.head, momHair(), P.hair, [0, 0, 0], 1);
     // The bun, wrapped round with a band.
-    this.part(this.head, sphere("mid"), P.hair, [0, 0.14, -0.17], [0.085, 0.08, 0.075]);
-    lock([0.03, 0.17, -0.2], [-0.8, -0.4, -0.3], 0.1, 0.05);
+    this.part(this.head, sphere("high"), P.hair, [0, 0.14, -0.175], [0.085, 0.08, 0.075]);
     this.part(this.head, torus(0.35), P.mugBand, [0, 0.16, -0.12], [0.05, 0.05, 0.05], [0.3, 0, 0]);
     for (const side of [-1, 1]) {
       const eye = joint("eye", side * 0.06, 0.15, 0.148);

@@ -37,8 +37,13 @@ function smooth(edge0: number, edge1: number, x: number): number {
 }
 
 /** Keeps only position, normal, color and sway, with an index, so any pieces can merge. */
+const lightPaint = new Color("#ffe8cc");
+const paint = new Color();
+
 function normalize(geometry: BufferGeometry, color: Color, sway: number): BufferGeometry {
   const g = geometry.clone();
+  // Optional per-vertex paint: above 0 lightens toward warm light, below 0 darkens (hair sheen and undersides).
+  const shade = g.getAttribute("aShade");
   for (const name of Object.keys(g.attributes)) {
     if (name !== "position" && name !== "normal") g.deleteAttribute(name);
   }
@@ -53,9 +58,12 @@ function normalize(geometry: BufferGeometry, color: Color, sway: number): Buffer
   const colors = new Float32Array(count * 3);
   const weights = new Float32Array(count);
   for (let i = 0; i < count; i += 1) {
-    colors[i * 3] = color.r;
-    colors[i * 3 + 1] = color.g;
-    colors[i * 3 + 2] = color.b;
+    const s = shade ? shade.getX(i) : 0;
+    if (s > 0) paint.copy(color).lerp(lightPaint, s);
+    else paint.copy(color).multiplyScalar(1 + s * 0.6);
+    colors[i * 3] = paint.r;
+    colors[i * 3 + 1] = paint.g;
+    colors[i * 3 + 2] = paint.b;
     // Unit shapes run from about -0.5 (or -1) to 0.5 (or 1) in Y.
     weights[i] = sway > 0 ? sway * smooth(-0.5, 0.7, position.getY(i)) : 0;
   }
