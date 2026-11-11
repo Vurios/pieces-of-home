@@ -558,91 +558,159 @@
         display: block;
       }
 
-      /* The stamp that turns on the light. Ink stamps are the buttons in Dad's notebook. */
+      /*
+       * The light switch. A real wall switch drawn on the page: everyone knows
+       * what to do with one. Flip it (click, tap or any key) and the lamp comes on.
+       */
       #boot .switch {
         margin-top: auto;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 10px 16px;
-        min-height: 66px;
+        min-height: 96px;
       }
       #light {
         position: relative;
-        display: inline-flex;
+        display: flex;
         align-items: center;
-        gap: 12px;
-        min-height: 56px;
-        padding: 10px 20px 9px 14px;
-        border: 3px solid currentColor;
-        border-radius: 7px;
-        background: transparent;
-        color: var(--clay);
-        font: 700 clamp(1.05rem, 1.5vw, 1.3rem) / 1 var(--slab);
-        letter-spacing: 0.09em;
-        text-transform: uppercase;
+        gap: 18px;
+        width: 100%;
+        padding: 6px 10px 6px 6px;
+        border: 0;
+        border-radius: 14px;
+        background: none;
+        color: var(--ink);
+        text-align: left;
         cursor: pointer;
-        visibility: hidden;
-        transform: rotate(-3deg);
-        -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='80'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.12' numOctaves='2' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.2 1.95'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
-        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='80'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.12' numOctaves='2' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.2 1.95'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E");
-        -webkit-mask-size: 100% 100%;
-        mask-size: 100% 100%;
-        transition:
-          background 0.2s,
-          transform 0.25s cubic-bezier(0.3, 1.5, 0.5, 1);
+        opacity: 0.38;
+        pointer-events: none;
+        transition: opacity 0.4s;
         -webkit-tap-highlight-color: transparent;
       }
-      #light::before {
-        content: "";
-        position: absolute;
-        inset: 4px;
-        border: 1.5px solid currentColor;
-        border-radius: 4px;
-        pointer-events: none;
-      }
-      #light svg {
-        width: 26px;
-        height: 26px;
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 2.4;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-      }
-      #light:hover {
-        background: rgba(177, 63, 44, 0.09);
-        transform: rotate(-1.5deg) scale(1.03);
+      #boot[data-prompt] #light {
+        opacity: 1;
+        pointer-events: auto;
       }
       #light:focus-visible {
-        outline: none;
-        box-shadow: 0 0 0 4px var(--paper), 0 0 0 6px var(--ink);
+        outline: 2.5px dashed rgba(43, 38, 34, 0.5);
+        outline-offset: 4px;
       }
-      #boot[data-prompt] #light {
-        visibility: visible;
-        animation: stamp 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+      /* The switch plate: cream, two screws, a slot, and a chunky lever. */
+      #light .plate {
+        position: relative;
+        flex: none;
+        width: 62px;
+        height: 92px;
+        box-sizing: border-box;
+        border: 2.6px solid var(--ink);
+        border-radius: 12px 10px 13px 11px;
+        background: linear-gradient(160deg, #fffaf0, #efe4cf);
+        box-shadow: 0 4px 0 var(--ink);
+        transform: rotate(-3deg);
+        transition: transform 0.25s cubic-bezier(0.3, 1.5, 0.5, 1);
       }
-      @keyframes stamp {
-        0% {
-          opacity: 0;
-          transform: scale(1.9) rotate(-9deg);
-        }
-        55% {
-          opacity: 1;
-          transform: scale(0.94) rotate(-3deg);
-        }
+      #light .screw {
+        position: absolute;
+        left: 50%;
+        width: 9px;
+        height: 9px;
+        margin-left: -4.5px;
+        border: 2px solid var(--ink);
+        border-radius: 50%;
+        background: linear-gradient(135deg, transparent 42%, var(--ink) 42% 58%, transparent 58%), #d9cdb5;
+      }
+      #light .screw.a {
+        top: 5px;
+      }
+      #light .screw.b {
+        bottom: 5px;
+      }
+      #light .slot {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 22px;
+        height: 46px;
+        margin: -23px 0 0 -11px;
+        border: 2.4px solid var(--ink);
+        border-radius: 7px;
+        background: #3b332c;
+      }
+      #light .lever {
+        position: absolute;
+        left: -2.4px;
+        right: -2.4px;
+        top: 18px;
+        height: 24px;
+        box-sizing: border-box;
+        border: 2.4px solid var(--ink);
+        border-radius: 6px;
+        background: linear-gradient(180deg, #fffaf0, #e4d6bb);
+        transition: top 0.18s cubic-bezier(0.3, 1.6, 0.5, 1), background 0.2s;
+      }
+      #boot[data-prompt] #light .lever {
+        animation: nudge-lever 2.2s 0.6s ease-in-out infinite;
+      }
+      @keyframes nudge-lever {
+        0%,
+        62%,
         100% {
-          transform: rotate(-3deg);
+          top: 18px;
         }
+        72% {
+          top: 11px;
+        }
+        82% {
+          top: 18px;
+        }
+      }
+      /* A warm ring pulses round the switch while it waits. */
+      #light .plate::after {
+        content: "";
+        position: absolute;
+        inset: -10px;
+        border: 3px solid rgba(242, 165, 65, 0.85);
+        border-radius: 18px;
+        opacity: 0;
+        pointer-events: none;
+      }
+      #boot[data-prompt] #light .plate::after {
+        animation: ring 2.2s 0.6s ease-out infinite;
+      }
+      @keyframes ring {
+        0% {
+          opacity: 0.9;
+          transform: scale(0.92);
+        }
+        70%,
+        100% {
+          opacity: 0;
+          transform: scale(1.25);
+        }
+      }
+      #light:hover .plate {
+        transform: rotate(-1deg) scale(1.05);
+      }
+      #light .words {
+        display: grid;
+        gap: 4px;
+      }
+      #light .say {
+        font: 700 clamp(1.45rem, 2.2vw, 2rem) / 1.05 var(--hand);
+        color: var(--ink);
       }
       #boot .hint {
-        font: 400 0.98rem/1.2 var(--hand);
+        font: 400 clamp(0.92rem, 1.2vw, 1.05rem) / 1.2 var(--hand);
         color: var(--pencil);
-        opacity: 0;
-        transition: opacity 0.4s 0.5s;
       }
-      #boot[data-prompt] .hint {
-        opacity: 1;
+      #light .say::after {
+        content: "";
+        display: block;
+        width: 0;
+        height: 8px;
+        margin-top: 2px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 10' preserveAspectRatio='none'%3E%3Cpath d='M2 6.5 C 40 3, 80 7.5, 120 4.6 C 150 2.8, 175 5.8, 198 4' fill='none' stroke='%23f2a541' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E") left center / 100% 100% no-repeat;
+        transition: width 0.6s 0.3s cubic-bezier(0.6, 0, 0.3, 1);
+      }
+      #boot[data-prompt] #light .say::after {
+        width: 92%;
       }
 
       /* No WebGL: a kind note and the Field Guide. */
@@ -746,9 +814,15 @@
         --sx: 3px;
         --sy: 10px;
       }
-      #boot[data-on] #light {
-        background: rgba(177, 63, 44, 0.14);
-        transform: rotate(-3deg) scale(0.95);
+      #boot[data-on] #light .lever {
+        top: 2px;
+        animation: none;
+        background: linear-gradient(180deg, #fff3c4, #f2c25a);
+      }
+      #boot[data-on] #light .plate {
+        transform: rotate(-3deg) scale(0.96);
+      }
+      #boot[data-on] #light .plate::after {
         animation: none;
       }
       #boot[data-on] .night {
@@ -931,7 +1005,8 @@
         #boot .f {
           animation: none;
         }
-        #boot[data-prompt] #light {
+        #boot[data-prompt] #light .lever,
+        #boot[data-prompt] #light .plate::after {
           animation: none;
         }
         #boot[data-on] .pool {
@@ -985,10 +1060,9 @@
               <p class="slow"><!--poh:slow--> <span id="pct">0</span>%</p>
               <div class="switch">
                 <button id="light" type="button">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" /></svg>
-                  <span><!--poh:prompt--></span>
+                  <span class="plate" aria-hidden="true"><i class="screw a"></i><span class="slot"><span class="lever"></span></span><i class="screw b"></i></span>
+                  <span class="words"><span class="say"><!--poh:prompt--></span><span class="hint"><!--poh:hint--></span></span>
                 </button>
-                <span class="hint"><!--poh:hint--></span>
               </div>
               <div class="nogl" role="alert">
                 <p><!--poh:nowebgl--></p>
@@ -1089,7 +1163,7 @@
           set(1);
           for (var i = 0; i < items.length; i++) milestone(i);
           boot.dataset.state = "ready";
-          live.textContent = light.textContent.trim();
+          live.textContent = light.querySelector(".say").textContent.trim();
           setTimeout(function () {
             boot.dataset.prompt = "";
             waiting = cb;

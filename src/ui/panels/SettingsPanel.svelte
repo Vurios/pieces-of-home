@@ -256,13 +256,15 @@
     grid-template-rows: minmax(0, 1fr);
     height: min(540px, calc(100dvh - 190px));
   }
+  /* The section list: index tabs down the side of the page. */
   .tabs {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding: 18px 12px;
-    background: var(--card-sunk);
-    border-right: 1px solid var(--line);
+    gap: 6px;
+    padding: 16px 14px 16px 16px;
+    background-color: #efe4cf;
+    background-image: var(--grain);
+    border-right: 2px dashed rgba(43, 38, 34, 0.18);
     overflow-y: auto;
   }
   .tabs button {
@@ -271,14 +273,20 @@
     gap: 12px;
     min-height: 48px;
     padding: 0 14px;
-    border: 0;
-    border-radius: 12px;
+    border: 2.2px solid transparent;
+    border-radius: 14px 11px 15px 10px;
     background: transparent;
     color: var(--ink-soft);
-    font: 600 1rem var(--read);
+    font: 700 1.12rem/1 var(--hand);
     text-align: left;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition:
+      background 0.15s,
+      color 0.15s,
+      transform 0.2s var(--ease-spring);
+  }
+  :global(:root[data-font="dyslexic"]) .tabs button {
+    font: 600 1rem var(--read);
   }
   .tabs button :global(.icon) {
     flex: none;
@@ -289,13 +297,15 @@
     stroke-linejoin: round;
   }
   .tabs button:hover {
-    background: rgba(43, 38, 34, 0.05);
     color: var(--ink);
+    transform: translateX(3px);
   }
   .tabs button.on {
-    background: #fff;
+    background: #fffaf0;
+    border-color: var(--ink);
+    box-shadow: var(--lift);
     color: var(--ink);
-    box-shadow: 0 1px 0 rgba(43, 38, 34, 0.08), 0 4px 12px -6px rgba(43, 38, 34, 0.3);
+    transform: rotate(-1deg);
   }
   .tabs button.on :global(.icon) {
     stroke: var(--amber-deep);
@@ -306,7 +316,7 @@
     align-items: center;
     gap: 12px;
     padding: 4px 0 16px;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1.5px dashed rgba(43, 38, 34, 0.16);
   }
   .again .help {
     color: var(--ink-soft);
@@ -326,7 +336,10 @@
   }
   h3 {
     margin: 0 0 14px;
-    font: 600 1.3rem/1.2 var(--serif);
+    font: 700 1.55rem/1.1 var(--hand);
+  }
+  :global(:root[data-font="dyslexic"]) h3 {
+    font: 700 1.3rem/1.2 var(--read);
   }
   .help {
     margin: 0 0 16px;
@@ -351,7 +364,7 @@
     min-height: 52px;
   }
   .slider .name {
-    font-weight: 600;
+    font-weight: 700;
   }
   .slider output {
     font: 700 0.95rem var(--read);
@@ -365,8 +378,9 @@
   .preview {
     margin: 22px 0 0;
     padding: 14px 16px;
-    border-radius: var(--radius-sm);
-    background: var(--card-sunk);
+    border: 2px dashed rgba(43, 38, 34, 0.3);
+    border-radius: 12px 10px 13px 9px;
+    background: #fffaf0;
     color: var(--ink);
     line-height: 1.5;
   }
@@ -381,8 +395,8 @@
     align-items: center;
     gap: 12px;
     min-height: 54px;
-    border-bottom: 1px solid var(--line);
-    font-weight: 600;
+    border-bottom: 1.5px dashed rgba(43, 38, 34, 0.16);
+    font-weight: 700;
   }
   .key {
     display: inline-flex;
@@ -392,20 +406,20 @@
     min-width: 7em;
     justify-content: flex-end;
     padding: 0 10px;
-    border: 1px solid transparent;
-    border-radius: 10px;
+    border: 2px solid transparent;
+    border-radius: 12px 10px 13px 9px;
     background: transparent;
     color: var(--ink);
     font: 600 0.92rem var(--read);
     cursor: pointer;
   }
   .key:hover {
-    border-color: var(--line-strong);
-    background: #fff;
+    border-color: var(--ink);
+    background: #fffaf0;
   }
   .key.listening {
-    border-color: var(--amber);
-    background: var(--amber-wash);
+    border-color: var(--ink);
+    background: #f9d79a;
   }
   .or {
     color: var(--pencil);
@@ -439,7 +453,7 @@
       overflow-x: auto;
       padding: 10px 12px;
       border-right: 0;
-      border-bottom: 1px solid var(--line);
+      border-bottom: 2px dashed rgba(43, 38, 34, 0.18);
     }
     .tabs button {
       flex: none;

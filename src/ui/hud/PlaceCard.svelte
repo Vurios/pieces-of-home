@@ -69,8 +69,9 @@
       in:fly={{ y: -10, duration: settings.reducedMotion ? 0 : 420 }}
       out:fade={{ duration: settings.reducedMotion ? 0 : 400 }}
     >
+      <span class="string" aria-hidden="true"></span>
       {#if shown.first}
-        <span class="kick"><i aria-hidden="true"></i>New place found<i aria-hidden="true"></i></span>
+        <span class="kick">New place found</span>
       {/if}
       <span class="name">{shown.name}</span>
       {#if shown.first}
@@ -87,58 +88,95 @@
 {/if}
 
 <style>
+  /* A paper tag that swings down on a string, the way Dad labels his models. */
   .place {
     position: fixed;
     left: 50%;
-    top: max(22px, env(safe-area-inset-top));
+    top: max(26px, env(safe-area-inset-top));
     translate: -50% 0;
     z-index: 3;
     display: grid;
     justify-items: center;
     gap: 4px;
     width: max-content;
-    max-width: min(560px, calc(100vw - 32px));
-    padding: 14px 34px 16px;
-    color: #fff7ea;
+    max-width: min(520px, calc(100vw - 40px));
+    box-sizing: border-box;
+    padding: 14px 30px 14px;
+    background-color: #fbf4e4;
+    background-image: var(--grain);
+    border: var(--outline);
+    border-radius: 10px 10px 14px 14px;
+    box-shadow: var(--lift), 0 26px 40px -20px rgba(10, 6, 20, 0.75);
+    color: var(--ink);
     text-align: center;
-    text-shadow: 0 2px 14px rgba(20, 12, 30, 0.6);
     pointer-events: none;
+    transform-origin: 50% -26px;
+    animation: swing 1.4s var(--ease-out) both;
   }
-  /* A soft pool of dusk behind the words, so they read over any part of the world. */
-  .place::before {
+  /* The string and the punched hole it hangs from. */
+  .string {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    width: 2px;
+    height: 36px;
+    margin-left: -1px;
+    background: #8c6a3a;
+  }
+  .string::after {
     content: "";
     position: absolute;
-    inset: -18px -40px;
-    z-index: -1;
-    background: radial-gradient(closest-side, rgba(22, 18, 44, 0.55), rgba(22, 18, 44, 0.32) 55%, transparent);
+    left: -6px;
+    bottom: -8px;
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: #6e5a44;
+  }
+  @keyframes swing {
+    0% {
+      opacity: 0;
+      transform: translateY(-40px) rotate(-8deg);
+    }
+    30% {
+      opacity: 1;
+      transform: translateY(0) rotate(5deg);
+    }
+    55% {
+      transform: rotate(-2.5deg);
+    }
+    78% {
+      transform: rotate(1deg);
+    }
+    100% {
+      transform: rotate(-0.5deg);
+    }
   }
   .kick {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font: 700 0.74rem/1 var(--read);
-    letter-spacing: 0.28em;
+    margin-top: 4px;
+    padding: 4px 10px 3px;
+    border: 2.5px solid var(--clay);
+    border-radius: 4px;
+    color: var(--clay);
+    font: 700 0.72rem/1 var(--label);
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: #f6c47c;
-  }
-  .kick i {
-    width: 7px;
-    height: 7px;
-    background: #f6c47c;
-    rotate: 45deg;
-    border-radius: 1px;
+    rotate: -2deg;
   }
   .name {
-    font: italic 400 1.7rem/1.1 var(--serif);
-    letter-spacing: -0.005em;
+    font: 700 1.6rem/1.1 var(--hand);
   }
   .first .name {
-    font-size: clamp(2rem, 4.4vw, 2.7rem);
+    font-size: clamp(2rem, 4.4vw, 2.6rem);
+  }
+  :global(:root[data-font="dyslexic"]) .name {
+    font-family: var(--read);
   }
   .line {
     max-width: 34ch;
-    font: 600 1rem/1.4 var(--read);
-    color: rgba(255, 247, 234, 0.9);
+    font: 400 1rem/1.4 var(--read);
+    color: var(--ink-soft);
   }
   .tally {
     display: flex;
@@ -148,55 +186,58 @@
   }
   .dots {
     display: flex;
-    gap: 5px;
+    gap: 4px;
   }
   .dots b {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
+    box-sizing: border-box;
+    border: 2px solid rgba(43, 38, 34, 0.35);
     border-radius: 50%;
-    border: 1.5px solid rgba(255, 247, 234, 0.45);
   }
   .dots b.on {
-    border-color: #f2a541;
-    background: #f2a541;
+    border-color: var(--ink);
+    background: var(--amber);
   }
   .dots b.new {
-    animation: found 0.9s 0.35s var(--ease-out) both;
+    animation: found 0.9s 0.5s var(--ease-out) both;
   }
   @keyframes found {
     from {
       transform: scale(0.2);
-      background: #fff7ea;
+      background: #fffaf0;
     }
     55% {
-      transform: scale(1.6);
+      transform: scale(1.7);
     }
   }
   .sum {
-    font: 700 0.78rem/1 var(--read);
-    letter-spacing: 0.04em;
-    color: rgba(255, 247, 234, 0.82);
+    font: 700 0.78rem/1 var(--label);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
   }
+  :global(:root[data-motion="reduce"]) .place,
   :global(:root[data-motion="reduce"]) .dots b.new {
     animation: none;
   }
   @media (max-width: 640px) {
     .place {
-      top: calc(max(12px, env(safe-area-inset-top)) + 186px);
+      top: calc(max(12px, env(safe-area-inset-top)) + 196px);
       padding: 10px 18px 12px;
     }
     .first .name {
-      font-size: 1.9rem;
+      font-size: 1.8rem;
     }
     .line {
-      font-size: 0.94rem;
+      font-size: 0.92rem;
     }
     .dots {
-      gap: 4px;
+      gap: 3px;
     }
     .dots b {
-      width: 7px;
-      height: 7px;
+      width: 8px;
+      height: 8px;
     }
   }
 </style>

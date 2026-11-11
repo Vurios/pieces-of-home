@@ -1,11 +1,11 @@
 /*
- * The game's visual system (Game Bible 11): warm cards at dusk.
- * Cream, ink and lamp amber lead, with the dusk indigo of the loader.
- * Four faces, all self-hosted and open:
- *   Fraunces: titles and headings
- *   Atkinson Hyperlegible Next: reading text and controls (OpenDyslexic as an option)
- *   Kalam: Dad's handwriting only
- *   Zilla Slab: museum tags and ink stamps
+ * The game's visual system (Game Bible 11): everything 2D lives on paper.
+ * Sheets of Dad's notebook paper with grain, washi tape, ink outlines with a
+ * hard offset shadow (like a cut-out sticker), and ink stamps as buttons.
+ * Three faces, all self-hosted and open:
+ *   Kalam: Dad's hand, used for titles, headings and buttons
+ *   Atkinson Hyperlegible Next: reading text (OpenDyslexic as an option)
+ *   Zilla Slab: museum tags, stamps and small labels
  */
 @font-face {
   font-family: "Atkinson Hyperlegible Next";
@@ -104,20 +104,29 @@
   /* Dusk, from the loader */
   --dusk: #1d1e3c;
   --dusk-2: #2b2c58;
-  --scrim: rgba(16, 15, 34, 0.5);
+  --scrim: rgba(24, 14, 10, 0.55);
   --grid: rgba(70, 110, 140, 0.1);
   --shadow: rgba(43, 38, 34, 0.32);
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 30px 60px -24px rgba(12, 10, 30, 0.6), 0 12px 24px -12px rgba(12, 10, 30, 0.35);
+  --shadow-card: 0 1px 0 #e3d6bd, 0 2px 0 #d6c6a6, 0 34px 60px -24px rgba(14, 8, 4, 0.7), 0 12px 24px -12px rgba(14, 8, 4, 0.4);
+  /* Paper grain, tape and the sticker edge every pressable thing has */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.32 0 0 0 0 0.2 0 0 0 0.13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --tape: rgba(238, 222, 170, 0.78);
+  --tape-edge: rgba(150, 128, 80, 0.22);
+  --outline: 2.4px solid var(--ink);
+  --lift: 0 3px 0 var(--ink);
+  --lift-hi: 0 5px 0 var(--ink);
+  --lift-lo: 0 1px 0 var(--ink);
+  --wobbly: 16px 13px 17px 12px / 13px 17px 12px 16px;
   /* Type */
-  --serif: "Fraunces", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --serif: "Kalam", "Segoe Print", "Bradley Hand", ui-rounded, sans-serif;
   --hand: "Kalam", "Segoe Print", "Bradley Hand", ui-rounded, sans-serif;
   --read: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", "Verdana", sans-serif;
   --label: "Zilla Slab", "Rockwell", "Georgia", serif;
   /* Motion and shape */
   --ease-spring: cubic-bezier(0.3, 1.45, 0.45, 1);
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --radius: 22px;
-  --radius-sm: 12px;
+  --radius: 6px;
+  --radius-sm: 10px;
   font-size: 17px;
 }
 :root[data-text="s"] { font-size: 15px; }
@@ -184,67 +193,113 @@
   background-color: var(--paper-light);
   background-image:
     linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 20px 20px;
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+    var(--grain);
+  background-size: 20px 20px, 20px 20px, 180px 180px;
   color: var(--ink);
-  box-shadow:
-    0 1px 0 var(--paper-edge),
-    0 18px 40px -18px rgba(30, 20, 10, 0.55),
-    0 4px 10px -4px rgba(30, 20, 10, 0.35);
+  box-shadow: var(--shadow-card);
 }
 
-/* A warm card, the base of every panel. */
+/* The base of every panel: a sheet of cream paper with a little grain. */
 .card {
-  background: var(--card);
+  background-color: var(--card);
+  background-image: var(--grain);
   color: var(--ink);
   border-radius: var(--radius);
   box-shadow: var(--shadow-card);
 }
 
-/* Buttons: a soft pill with a pressable bottom edge. */
+/* A strip of washi tape. Put it on any positioned element. */
+.tape {
+  position: absolute;
+  width: 96px;
+  height: 26px;
+  background: var(--tape);
+  box-shadow: inset 0 0 0 1px var(--tape-edge);
+  clip-path: polygon(2% 6%, 98% 0, 100% 34%, 97% 62%, 100% 100%, 3% 95%, 0 66%, 2% 36%);
+  pointer-events: none;
+}
+
+/* Buttons: a cut-out paper sticker with an ink outline that lifts and presses. */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5em;
   min-height: 48px;
-  padding: 0.55em 1.3em;
-  font: 700 1rem/1.1 var(--read);
+  padding: 0.4em 1.25em 0.45em;
+  font: 700 1.1rem/1.1 var(--hand);
   color: var(--ink);
-  background: #fff;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  box-shadow: 0 2px 0 rgba(43, 38, 34, 0.16), 0 6px 14px -8px rgba(43, 38, 34, 0.35);
+  background-color: #fffaf0;
+  background-image: var(--grain);
+  border: var(--outline);
+  border-radius: var(--wobbly);
+  box-shadow: var(--lift);
   cursor: pointer;
   text-decoration: none;
   transition:
-    transform 0.14s var(--ease-out),
-    box-shadow 0.14s var(--ease-out),
-    background 0.15s;
+    transform 0.16s var(--ease-spring),
+    box-shadow 0.16s var(--ease-out),
+    background-color 0.15s;
 }
 .btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 0 rgba(43, 38, 34, 0.16), 0 10px 18px -8px rgba(43, 38, 34, 0.4);
+  transform: translateY(-2px) rotate(-0.6deg);
+  box-shadow: var(--lift-hi);
 }
 .btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 0 rgba(43, 38, 34, 0.16), 0 2px 6px -4px rgba(43, 38, 34, 0.4);
+  transform: translateY(2px);
+  box-shadow: var(--lift-lo);
 }
 .btn.amber {
-  background: linear-gradient(180deg, #f8b75c, #ee9b33);
-  border-color: rgba(140, 70, 10, 0.45);
-  color: #2b1a08;
-  box-shadow: 0 2px 0 #b8661c, 0 8px 18px -8px rgba(184, 102, 28, 0.7);
+  background-color: #f4b04e;
 }
 .btn.amber:hover {
-  background: linear-gradient(180deg, #fac26e, #f0a23e);
+  background-color: #f7bd62;
 }
 .btn.quiet {
+  border-color: transparent;
   background: transparent;
   box-shadow: none;
+  text-decoration: underline 2px wavy rgba(43, 38, 34, 0.35);
+  text-underline-offset: 6px;
 }
 .btn.quiet:hover {
-  background: rgba(43, 38, 34, 0.05);
+  transform: none;
+  text-decoration-color: var(--amber-deep);
+}
+:root[data-font="dyslexic"] .btn {
+  font-family: var(--read);
+  font-size: 1rem;
+}
+
+/* An ink stamp: slab capitals in a rough ink frame. For the big "yes" moments. */
+.stamp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55em;
+  min-height: 50px;
+  padding: 0.3em 1.2em;
+  font: 700 1.02rem/1 var(--label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--clay-deep);
+  background: rgba(192, 87, 62, 0.07);
+  border: 3px solid currentColor;
+  border-radius: 6px;
+  outline: 1.5px solid currentColor;
+  outline-offset: -8px;
+  transform: rotate(-1.5deg);
+  cursor: pointer;
+  transition: transform 0.18s var(--ease-spring), background 0.15s;
+}
+.stamp-btn:hover {
+  transform: rotate(-1.5deg) scale(1.04);
+  background: rgba(192, 87, 62, 0.12);
+}
+.stamp-btn:active {
+  transform: rotate(-2.5deg) scale(0.95);
+  background: rgba(192, 87, 62, 0.2);
 }
 
 /* A museum tag: slab type on a cream label with a punched hole. */
@@ -275,31 +330,31 @@
   background: var(--paper-light);
 }
 
-/* Small caps label above a group of controls. */
+/* Small slab label above a group of controls. */
 .eyebrow {
   margin: 0 0 10px;
-  font: 700 0.72rem/1 var(--read);
+  font: 700 0.76rem/1 var(--label);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-soft);
 }
 
-/* A key cap for prompts and bindings. */
+/* A key cap, drawn: ink outline and a deeper bottom edge, like a real key. */
 .keycap {
   display: inline-grid;
   place-items: center;
   min-width: 1.9em;
   height: 1.9em;
-  padding: 0 0.4em;
+  padding: 0 0.45em;
   font: 700 0.9rem/1 var(--read);
   color: var(--ink);
-  background: linear-gradient(180deg, #fff, #efe6d6);
-  border: 1px solid var(--line-strong);
-  border-radius: 7px;
-  box-shadow: 0 2px 0 rgba(43, 38, 34, 0.28);
+  background: #fffaf0;
+  border: 2px solid var(--ink);
+  border-bottom-width: 4px;
+  border-radius: 8px 7px 9px 7px;
 }
 
-/* Toggle switch: a real checkbox with role="switch". */
+/* Toggle: a real checkbox with role="switch", drawn as a paper slider. */
 .switch-row {
   display: flex;
   align-items: center;
@@ -310,12 +365,12 @@
   cursor: pointer;
 }
 .switch-row + .switch-row {
-  border-top: 1px solid var(--line);
+  border-top: 1.5px dashed rgba(43, 38, 34, 0.16);
 }
 .switch-row .text {
   display: grid;
   gap: 2px;
-  font-weight: 600;
+  font-weight: 700;
 }
 .switch-row .help {
   font-weight: 400;
@@ -326,43 +381,40 @@ input.switch {
   appearance: none;
   flex: none;
   position: relative;
-  width: 50px;
-  height: 30px;
+  width: 56px;
+  height: 32px;
   margin: 0;
+  border: 2.2px solid var(--ink);
   border-radius: 999px;
-  background: #d6ccbb;
-  box-shadow: inset 0 1px 3px rgba(43, 38, 34, 0.3);
+  background: #e9dfcc;
+  box-shadow: 0 2px 0 var(--ink);
   cursor: pointer;
   transition: background 0.2s var(--ease-out);
 }
 input.switch::after {
   content: "";
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 24px;
-  height: 24px;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border: 2.2px solid var(--ink);
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 4px rgba(43, 38, 34, 0.35);
-  transition: transform 0.22s var(--ease-spring);
+  background: #fffaf0;
+  transition: transform 0.24s var(--ease-spring);
 }
 input.switch:checked {
   background: var(--amber);
 }
 input.switch:checked::after {
-  transform: translateX(20px);
+  transform: translateX(24px);
 }
 
-/* Segmented control: radios in a pill track. */
+/* Segmented control: radios as paper tabs, the chosen one outlined in ink. */
 .seg {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 14px;
-  background: var(--card-sunk);
-  box-shadow: inset 0 1px 2px rgba(43, 38, 34, 0.12);
+  gap: 6px;
 }
 .seg label {
   position: relative;
@@ -378,46 +430,51 @@ input.switch:checked::after {
 .seg span {
   display: inline-flex;
   align-items: center;
-  min-height: 40px;
+  min-height: 42px;
   padding: 0 14px;
-  border-radius: 10px;
+  border: 2px dashed rgba(43, 38, 34, 0.3);
+  border-radius: 12px 10px 13px 9px;
   font-size: 0.95rem;
   color: var(--ink-soft);
-  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  transition: background 0.15s, color 0.15s, transform 0.18s var(--ease-spring);
 }
 .seg label:hover span {
   color: var(--ink);
+  border-color: rgba(43, 38, 34, 0.55);
 }
 .seg input:checked + span {
-  background: #fff;
+  background: #f9d79a;
+  border: 2.2px solid var(--ink);
+  box-shadow: 0 2px 0 var(--ink);
   color: var(--ink);
   font-weight: 700;
-  box-shadow: 0 1px 0 rgba(43, 38, 34, 0.12), 0 2px 8px -2px rgba(43, 38, 34, 0.25);
+  transform: rotate(-1deg);
 }
 .seg input:focus-visible + span {
   outline: 3px solid var(--amber-deep);
   outline-offset: 2px;
 }
 
-/* Range slider with an amber fill up to its value (set --v from 0 to 1). */
+/* Range: an ink-outlined track that fills with amber, and a paper knob (set --v from 0 to 1). */
 .range {
   appearance: none;
   width: 100%;
-  height: 28px;
+  height: 32px;
   margin: 0;
   background: transparent;
   cursor: pointer;
 }
 .range::-webkit-slider-runnable-track {
-  height: 8px;
+  height: 12px;
+  border: 2px solid var(--ink);
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--amber) calc(var(--v, 0.5) * 100%), #e2d8c8 calc(var(--v, 0.5) * 100%));
-  box-shadow: inset 0 1px 2px rgba(43, 38, 34, 0.2);
+  background: linear-gradient(90deg, var(--amber) calc(var(--v, 0.5) * 100%), #efe6d4 calc(var(--v, 0.5) * 100%));
 }
 .range::-moz-range-track {
   height: 8px;
+  border: 2px solid var(--ink);
   border-radius: 999px;
-  background: #e2d8c8;
+  background: #efe6d4;
 }
 .range::-moz-range-progress {
   height: 8px;
@@ -426,24 +483,24 @@ input.switch:checked::after {
 }
 .range::-webkit-slider-thumb {
   appearance: none;
-  width: 22px;
-  height: 22px;
-  margin-top: -7px;
+  width: 26px;
+  height: 26px;
+  margin-top: -9px;
   border-radius: 50%;
-  background: #fff;
-  border: 1px solid rgba(43, 38, 34, 0.25);
-  box-shadow: 0 2px 6px rgba(43, 38, 34, 0.35);
+  background: #fffaf0;
+  border: 2.4px solid var(--ink);
+  box-shadow: 0 2px 0 var(--ink);
 }
 .range::-moz-range-thumb {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #fff;
-  border: 1px solid rgba(43, 38, 34, 0.25);
-  box-shadow: 0 2px 6px rgba(43, 38, 34, 0.35);
+  background: #fffaf0;
+  border: 2.4px solid var(--ink);
+  box-shadow: 0 2px 0 var(--ink);
 }
 
-/* A select that matches the cards. */
+/* A select drawn like the buttons. */
 .select {
   appearance: none;
   min-height: 46px;
@@ -451,24 +508,28 @@ input.switch:checked::after {
   font: 600 1rem var(--read);
   color: var(--ink);
   background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 L6 6.5 L11 1.5' fill='none' stroke='%232b2622' stroke-width='1.8' stroke-linecap='round'/%3E%3C/svg%3E") right 14px center / 12px 8px no-repeat,
-    #fff;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 1px 0 rgba(43, 38, 34, 0.08);
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 L6 6.5 L11 1.5' fill='none' stroke='%232b2622' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") right 14px center / 12px 8px no-repeat,
+    #fffaf0;
+  border: 2.2px solid var(--ink);
+  border-radius: 12px 10px 13px 9px;
+  box-shadow: 0 2px 0 var(--ink);
   cursor: pointer;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .btn,
   .btn:hover,
-  .btn:active {
+  .btn:active,
+  .stamp-btn,
+  .stamp-btn:hover {
     transition: none;
     transform: none;
   }
 }
 :root[data-motion="reduce"] .btn,
-:root[data-motion="reduce"] .btn:hover {
+:root[data-motion="reduce"] .btn:hover,
+:root[data-motion="reduce"] .stamp-btn,
+:root[data-motion="reduce"] .stamp-btn:hover {
   transition: none;
   transform: none;
 }

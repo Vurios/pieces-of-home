@@ -1,5 +1,6 @@
 import {
   AdditiveBlending,
+  BackSide,
   CanvasTexture,
   CatmullRomCurve3,
   Color,
@@ -124,7 +125,11 @@ export class TitleSequence {
       return m;
     };
     const wood = painted("#9C6A43");
-    const faces = [painted("#F4ECDD"), painted("#F2A541"), painted("#F4ECDD")];
+    const faces = [painted("#FFF6E4"), painted("#F7A93A"), painted("#FFF6E4")];
+    // A thick ink outline round every block letter, so the title reads against any sky.
+    const ink = new MeshBasicMaterial({ color: "#241c18", side: BackSide });
+    this.materials.push(ink);
+    const OUTLINE = 0.075;
 
     // Letters, line by line, centered. Lines stack from the top down.
     const lineHeight = (GLYPH_ROWS + 1.3) * CELL;
@@ -144,9 +149,18 @@ export class TitleSequence {
           const bulb = this.buildBulb(w);
           holder.add(bulb);
         } else {
-          const mesh = new Mesh(letterGeometry(ch, CELL, DEPTH), [faces[row]!, wood]);
+          const geometry = letterGeometry(ch, CELL, DEPTH);
+          const mesh = new Mesh(geometry, [faces[row]!, wood]);
           mesh.castShadow = false;
           holder.add(mesh);
+          geometry.computeBoundingBox();
+          const box3 = geometry.boundingBox!;
+          const size = box3.getSize(new Vector3());
+          const center = box3.getCenter(new Vector3());
+          const hull = new Mesh(geometry, ink);
+          hull.scale.set(1 + (2 * OUTLINE) / size.x, 1 + (2 * OUTLINE) / size.y, 1 + (2 * OUTLINE) / size.z);
+          hull.position.set(center.x * (1 - hull.scale.x), center.y * (1 - hull.scale.y), center.z * (1 - hull.scale.z));
+          holder.add(hull);
         }
         // A slight lean on some letters, the way wooden blocks never sit quite square.
         holder.rotation.z = ((order * 7919) % 7) / 7 > 0.6 ? (order % 2 ? 0.035 : -0.03) : 0;
@@ -229,13 +243,15 @@ export class TitleSequence {
     canvas.width = 256;
     canvas.height = 128;
     const c = canvas.getContext("2d")!;
-    c.fillStyle = "#F4ECDD";
+    c.fillStyle = "#FFF6E4";
     c.fillRect(0, 0, 256, 128);
-    c.strokeStyle = "#2B2622";
-    c.lineWidth = 5;
-    c.strokeRect(8, 8, 240, 112);
-    c.fillStyle = "#2B2622";
-    c.font = "700 64px 'Zilla Slab', Georgia, serif";
+    c.strokeStyle = "#B13F2C";
+    c.lineWidth = 8;
+    c.strokeRect(9, 9, 238, 110);
+    c.lineWidth = 3;
+    c.strokeRect(20, 20, 216, 88);
+    c.fillStyle = "#B13F2C";
+    c.font = "700 60px 'Zilla Slab', Georgia, serif";
     c.textAlign = "center";
     c.textBaseline = "middle";
     c.fillText("BEGIN", 128, 70);
@@ -262,8 +278,8 @@ export class TitleSequence {
     const card = new MeshToonMaterial({ map: this.tagTexture, gradientMap: this.toon.bands });
     this.materials.push(card);
     const face = new Mesh(box(0.02), [this.toon.toon({ color: "#E8DCC5" }), this.toon.toon({ color: "#E8DCC5" }), this.toon.toon({ color: "#E8DCC5" }), this.toon.toon({ color: "#E8DCC5" }), card, this.toon.toon({ color: "#E8DCC5" })]);
-    face.scale.set(1.5, 0.75, 0.03);
-    face.position.y = -0.44;
+    face.scale.set(1.9, 0.95, 0.03);
+    face.position.y = -0.54;
     const ring = new Mesh(torus(0.25), metal);
     ring.scale.setScalar(0.06);
     tag.add(face, ring);
@@ -277,7 +293,7 @@ export class TitleSequence {
   tagScreen(camera: PerspectiveCamera, width: number, height: number): { x: number; y: number; visible: boolean } {
     this.root.updateMatrixWorld();
     this.tag.updateMatrixWorld();
-    const p = this.scratch.set(0, -0.44, 0).applyMatrix4(this.tag.matrixWorld).project(camera);
+    const p = this.scratch.set(0, -0.54, 0).applyMatrix4(this.tag.matrixWorld).project(camera);
     return { x: (p.x * 0.5 + 0.5) * width, y: (-p.y * 0.5 + 0.5) * height, visible: this.chain.visible && p.z < 1 };
   }
 

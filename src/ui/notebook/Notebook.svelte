@@ -183,6 +183,22 @@
   </div>
   <p class="dedication">{COVER.dedication}</p>
   <p class="signature">{COVER.signature}</p>
+  <svg class="cover-doodle" viewBox="0 0 330 92" aria-hidden="true">
+    <g class="ink">
+      <path class="dash" d="M52 52 C 86 10, 140 6, 170 22" />
+      <path class="dash" d="M190 34 C 222 74, 260 78, 286 62" />
+      <circle cx="34" cy="62" r="22" class="paper" />
+      <path d="M14 68 C 26 62, 42 64, 56 58" />
+      <path d="M28 54 L 28 44 L 34 38 L 40 44 L 40 54 Z" class="paper" />
+      <circle cx="180" cy="26" r="14" class="paper" />
+      <path d="M174 17 C 183 21, 183 32, 174 35" />
+      <circle cx="304" cy="60" r="17" class="mars" />
+      <path d="M292 56 C 300 52, 308 59, 316 54" />
+      <g transform="translate(108 18) rotate(-16)"><rect x="-10" y="-7" width="20" height="14" rx="1.5" class="paper" /><path d="M-10 -7 L 0 1 L 10 -7" /></g>
+      <g transform="translate(240 70) rotate(12)"><rect x="-10" y="-7" width="20" height="14" rx="1.5" class="paper" /><path d="M-10 -7 L 0 1 L 10 -7" /></g>
+      <path d="M126 70 l 0 -8 M122 66 l 8 0 M250 14 l 0 -8 M246 10 l 8 0" />
+    </g>
+  </svg>
 {/snippet}
 
 {#snippet coverRight()}
@@ -408,16 +424,16 @@
     animation: lift 0.5s var(--ease-out) both;
     transform-style: preserve-3d;
   }
-  /* Cloth boards, deep green like the lamp's shade, with a fine weave. */
+  /* Leather boards, the same worn brown as the notebook on the loading bench, with stitching. */
   .board {
     position: absolute;
     top: 0;
     bottom: 0;
     width: 50%;
     background:
-      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px),
-      repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 3px),
-      linear-gradient(165deg, #3a5f52, #23403a 70%, #1e3832);
+      radial-gradient(ellipse 80% 50% at 30% 15%, rgba(255, 200, 150, 0.13), transparent 60%),
+      var(--grain),
+      linear-gradient(165deg, #6e3828, #4e271d 65%, #3f1f17);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.14),
       inset 0 -3px 8px rgba(0, 0, 0, 0.3),
@@ -431,6 +447,14 @@
   .board.r {
     right: 0;
     border-radius: 5px 16px 16px 5px;
+  }
+  .board::after {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    border: 1.6px dashed rgba(240, 200, 150, 0.4);
+    border-radius: inherit;
+    pointer-events: none;
   }
   /* The elastic band that keeps it shut, resting along the back board. */
   .band {
@@ -470,17 +494,26 @@
     line-height: 1.5;
     background-color: #fbf6ea;
   }
+  /* Left pages are Dad's drawing paper: a faint engineering grid. */
   .page.left {
     border-radius: 6px 0 0 6px;
     background-image:
       var(--grain),
-      linear-gradient(90deg, rgba(120, 90, 40, 0.06) 0, transparent 7%, transparent 80%, rgba(110, 80, 40, 0.1) 93%, rgba(70, 50, 24, 0.3) 100%);
+      linear-gradient(90deg, rgba(120, 90, 40, 0.06) 0, transparent 7%, transparent 80%, rgba(110, 80, 40, 0.1) 93%, rgba(70, 50, 24, 0.3) 100%),
+      linear-gradient(rgba(64, 108, 170, 0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(64, 108, 170, 0.1) 1px, transparent 1px);
+    background-size: 180px 180px, 100% 100%, 22px 22px, 22px 22px;
   }
+  /* Right pages are his writing paper: blue lines and a red margin. */
   .page.right {
     border-radius: 0 6px 6px 0;
     background-image:
       var(--grain),
-      linear-gradient(270deg, rgba(120, 90, 40, 0.06) 0, transparent 7%, transparent 80%, rgba(110, 80, 40, 0.1) 93%, rgba(70, 50, 24, 0.3) 100%);
+      linear-gradient(270deg, rgba(120, 90, 40, 0.06) 0, transparent 7%, transparent 80%, rgba(110, 80, 40, 0.1) 93%, rgba(70, 50, 24, 0.3) 100%),
+      linear-gradient(90deg, transparent 38px, rgba(196, 80, 60, 0.32) 38px 39.5px, transparent 39.5px),
+      repeating-linear-gradient(180deg, transparent 0 31px, rgba(64, 108, 170, 0.12) 31px 32px);
+    background-size: 180px 180px, 100% 100%, 100% 100%, 100% 100%;
+    background-position: 0 0, 0 0, 0 0, 0 20px;
   }
   /* A soft highlight where the paper curves up out of the gutter. */
   .page.left::after,
@@ -528,7 +561,7 @@
   .folio {
     position: absolute;
     bottom: 16px;
-    font: italic 400 0.85rem/1 var(--serif);
+    font: 700 1rem/1 var(--hand);
     color: #6f665b;
   }
   .page.left .folio {
@@ -544,7 +577,7 @@
   }
   .label {
     margin: 22px 0 8px;
-    font: 700 0.72rem/1 var(--read);
+    font: 700 0.78rem/1 var(--label);
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--clay-deep);
@@ -554,7 +587,7 @@
     align-items: center;
     gap: 10px;
     margin: 0 0 10px;
-    font: 700 0.72rem/1 var(--read);
+    font: 700 0.78rem/1 var(--label);
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--amber-ink);
@@ -576,7 +609,7 @@
   }
   .real {
     margin: 6px 0 0;
-    font: italic 400 1.02rem/1.35 var(--serif);
+    font: 400 1.12rem/1.35 var(--hand);
     color: var(--ink-soft);
   }
 
@@ -588,16 +621,33 @@
     justify-content: center;
     text-align: center;
   }
+  /* A bookplate label stuck on the first page, held with tape. */
   .plate {
     position: relative;
     display: grid;
     justify-items: center;
     width: min(360px, 88%);
-    padding: 24px 26px 26px;
-    border: 1.5px solid rgba(43, 38, 34, 0.55);
-    outline: 1px solid rgba(43, 38, 34, 0.3);
-    outline-offset: -7px;
-    border-radius: 3px;
+    padding: 26px 26px 24px;
+    background-color: #fffaf0;
+    background-image: var(--grain);
+    border: 2.4px solid var(--ink);
+    outline: 1.5px solid rgba(43, 38, 34, 0.45);
+    outline-offset: -9px;
+    border-radius: 6px;
+    box-shadow: 0 3px 0 var(--ink), 0 18px 26px -18px rgba(43, 38, 34, 0.6);
+    transform: rotate(-1.5deg);
+  }
+  .plate::before {
+    content: "";
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    width: 110px;
+    height: 26px;
+    margin-left: -55px;
+    background: rgba(238, 222, 170, 0.8);
+    box-shadow: inset 0 0 0 1px rgba(150, 128, 80, 0.22);
+    transform: rotate(3deg);
   }
   .plate-lamp {
     position: relative;
@@ -615,28 +665,18 @@
   }
   .plate-title {
     margin: 6px 0 0;
-    font: 600 2.15rem/1.05 var(--serif);
-    letter-spacing: -0.01em;
+    font: 700 2.7rem/1 var(--hand);
+    color: var(--ink);
   }
   .plate-rule {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 120px;
-    margin-top: 12px;
-  }
-  .plate-rule::before,
-  .plate-rule::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: rgba(43, 38, 34, 0.45);
+    display: block;
+    width: 170px;
+    height: 10px;
+    margin-top: 4px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 10' preserveAspectRatio='none'%3E%3Cpath d='M2 6.5 C 40 3, 80 7.5, 120 4.6 C 150 2.8, 175 5.8, 198 4' fill='none' stroke='%23f2a541' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
   }
   .plate-rule i {
-    width: 7px;
-    height: 7px;
-    background: var(--amber);
-    transform: rotate(45deg);
+    display: none;
   }
   .dedication {
     max-width: 17em;
@@ -651,10 +691,34 @@
     color: var(--dad-ink);
     transform: rotate(-5deg);
   }
+  .cover-doodle {
+    width: min(330px, 86%);
+    margin-top: 26px;
+    overflow: visible;
+  }
+  .cover-doodle .ink {
+    fill: none;
+    stroke: var(--dad-ink);
+    stroke-width: 2.2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .cover-doodle .dash {
+    stroke-dasharray: 2 7;
+    stroke-width: 2.6;
+  }
+  .cover-doodle .paper {
+    fill: #fffaf0;
+  }
+  .cover-doodle .mars {
+    fill: #e6a47a;
+  }
   .toc-title {
-    margin: 4px 0 18px;
-    font: 600 1.9rem/1.1 var(--serif);
-    letter-spacing: -0.01em;
+    display: inline-block;
+    margin: 0 0 16px;
+    padding: 0 6px;
+    font: 700 2.2rem/1.2 var(--hand);
+    background: linear-gradient(transparent 58%, rgba(242, 165, 65, 0.45) 58%, rgba(242, 165, 65, 0.45) 88%, transparent 88%);
   }
   .toc {
     list-style: none;
@@ -725,12 +789,12 @@
   .toc .pg {
     width: 1.6em;
     text-align: right;
-    font: italic 400 1rem/1 var(--serif);
+    font: 700 1.1rem/1 var(--hand);
     color: var(--ink-soft);
   }
   .memories-title {
     margin: 30px 0 12px;
-    font: italic 400 1.3rem/1.1 var(--serif);
+    font: 700 1.45rem/1.1 var(--hand);
   }
   .memories {
     display: grid;
@@ -752,7 +816,7 @@
   .drawing figcaption {
     margin-top: 2px;
     text-align: right;
-    font: italic 400 0.86rem/1.2 var(--serif);
+    font: 400 1rem/1.2 var(--hand);
     color: var(--ink-soft);
   }
   .for p {
@@ -879,7 +943,7 @@
     align-items: center;
     gap: 8px;
     min-height: 44px;
-    font: italic 400 1.08rem var(--serif);
+    font: 700 1.15rem var(--hand);
     color: var(--ink);
     cursor: pointer;
     list-style: none;
@@ -1173,9 +1237,9 @@
     place-items: center;
     border-radius: 5px 16px 16px 5px;
     background:
-      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px),
-      repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 3px),
-      linear-gradient(165deg, #3d6457, #26443d 70%, #203a34);
+      radial-gradient(ellipse 80% 50% at 30% 15%, rgba(255, 200, 150, 0.13), transparent 60%),
+      var(--grain),
+      linear-gradient(165deg, #6e3828, #4e271d 65%, #3f1f17);
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.14),
       inset 0 -3px 8px rgba(0, 0, 0, 0.3);
@@ -1186,10 +1250,10 @@
     gap: 8px;
     width: 46%;
     padding: 28px 18px 22px;
-    border: 1.5px solid rgba(255, 233, 196, 0.35);
+    border: 1.6px dashed rgba(240, 200, 150, 0.5);
     border-radius: 4px;
-    color: rgba(255, 236, 204, 0.85);
-    font: 600 1.6rem/1.1 var(--serif);
+    color: #f0c37a;
+    font: 700 2rem/1.1 var(--hand);
     text-align: center;
     text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.35);
   }
@@ -1199,9 +1263,9 @@
   .cover-leaf .inside {
     border-radius: 16px 5px 5px 16px;
     background:
-      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px),
-      repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 3px),
-      linear-gradient(165deg, #3a5f52, #23403a 70%, #1e3832);
+      radial-gradient(ellipse 80% 50% at 30% 15%, rgba(255, 200, 150, 0.13), transparent 60%),
+      var(--grain),
+      linear-gradient(165deg, #6e3828, #4e271d 65%, #3f1f17);
   }
   .cover-leaf .inside .page {
     position: absolute;
@@ -1250,18 +1314,17 @@
   }
 
   /* ---------- Controls ---------- */
+  /* The page controls: paper stickers on a strip of tape. */
   .bar {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px;
-    border-radius: 999px;
-    background: rgba(26, 24, 48, 0.74);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.6);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-    color: #fbf3e4;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 3px;
+    background: rgba(238, 222, 170, 0.92);
+    box-shadow: inset 0 0 0 1px rgba(150, 128, 80, 0.25), 0 14px 26px -14px rgba(0, 0, 0, 0.6);
+    color: var(--ink);
+    rotate: -0.6deg;
     animation: bar-in 0.5s 0.15s var(--ease-out) both;
   }
   .nav,
@@ -1270,65 +1333,68 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    height: 48px;
-    border: 0;
-    border-radius: 999px;
-    background: transparent;
-    color: inherit;
+    height: 46px;
+    border: 2.2px solid var(--ink);
+    border-radius: 50% 46% 52% 48%;
+    background: #fffaf0;
+    box-shadow: 0 3px 0 var(--ink);
+    color: var(--ink);
     cursor: pointer;
     transition:
       background 0.15s,
-      color 0.15s,
-      transform 0.15s var(--ease-spring);
+      box-shadow 0.15s,
+      transform 0.18s var(--ease-spring);
   }
   .nav {
     width: 48px;
   }
   .read {
     padding: 0 16px 0 12px;
-    font: 600 0.95rem var(--read);
+    border-radius: 14px 12px 15px 11px;
+    font: 700 1.05rem var(--hand);
   }
   .nav:hover:not(:disabled),
   .read:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffd79a;
+    background: #f9d79a;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 var(--ink);
   }
   .nav:active:not(:disabled),
   .read:active {
-    transform: scale(0.94);
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--ink);
   }
   .nav:disabled {
-    opacity: 0.32;
+    opacity: 0.35;
+    box-shadow: none;
     cursor: default;
   }
   .nav.next {
+    width: 54px;
+    height: 54px;
     background: var(--amber);
-    color: #2b1a06;
   }
   .nav.next:hover:not(:disabled) {
-    background: #f7b85e;
-    color: #2b1a06;
+    background: #f7bd62;
   }
   .nav.next:disabled {
-    background: transparent;
-    color: inherit;
+    background: #fffaf0;
   }
   .bar :global(:focus-visible) {
-    outline: 3px solid #ffd79a;
-    outline-offset: 2px;
+    outline: 3px solid var(--clay);
+    outline-offset: 3px;
   }
   .clip {
     min-width: 64px;
     text-align: center;
-    font: 600 1rem/1 var(--serif);
+    font: 700 1.25rem/1 var(--hand);
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.04em;
   }
   .divider {
-    width: 1px;
-    height: 26px;
-    margin: 0 4px;
-    background: rgba(255, 255, 255, 0.16);
+    width: 2px;
+    height: 30px;
+    margin: 0 2px;
+    background: repeating-linear-gradient(to bottom, rgba(43, 38, 34, 0.35) 0 4px, transparent 4px 8px);
   }
   @keyframes bar-in {
     from {

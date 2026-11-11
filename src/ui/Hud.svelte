@@ -6,9 +6,9 @@
   import { t } from "./settings.svelte";
 
   /**
-   * The play HUD: small panes of dusk glass at the edge (Notebook, Photo,
-   * Emote, Settings and Hint), the use prompt with the right key, tap or
-   * button glyph, and the touch stick and buttons.
+   * The play HUD: a column of postage stamps at the edge (Notebook, Photo,
+   * Emote, Settings and Hint), the use prompt on a paper tag with the right
+   * key, tap or button glyph, and the touch stick and buttons.
    */
   interface Props {
     engine: Engine;
@@ -84,12 +84,12 @@
     return () => cancelAnimationFrame(frame);
   });
 
-  type Stamp = { id: string; icon: IconName; label: string; key: string; act: () => void };
+  type Stamp = { id: string; icon: IconName; label: string; key: string; tint: string; tilt: number; act: () => void };
   const stamps = $derived<Stamp[]>([
-    { id: "notebook", icon: "book", label: t("hud.notebook"), key: "N", act: onnotebook },
-    { id: "photo", icon: "camera", label: t("hud.photo"), key: "C", act: onphoto },
-    { id: "emote", icon: "smile", label: t("hud.emote"), key: "G", act: onemote },
-    { id: "settings", icon: "gear", label: t("hud.settings"), key: "Esc", act: onsettings },
+    { id: "notebook", icon: "book", label: t("hud.notebook"), key: "N", tint: "#c9dcc0", tilt: -2, act: onnotebook },
+    { id: "photo", icon: "camera", label: t("hud.photo"), key: "C", tint: "#c3d7e6", tilt: 1.5, act: onphoto },
+    { id: "emote", icon: "smile", label: t("hud.emote"), key: "G", tint: "#f3cabd", tilt: -1, act: onemote },
+    { id: "settings", icon: "gear", label: t("hud.settings"), key: "Esc", tint: "#e6dcc4", tilt: 2, act: onsettings },
   ]);
 
   function onkey(event: KeyboardEvent): void {
@@ -109,15 +109,19 @@
 {#if !hidden}
   <nav class="tools" aria-label="Game">
     {#each stamps as s (s.id)}
-      <button type="button" class="tool" onclick={s.act} aria-keyshortcuts={s.key === "Esc" ? "Escape" : s.key}>
-        <Icon name={s.icon} size={22} />
-        <span class="label">{s.label}</span>
+      <button type="button" class="tool" style:--tint={s.tint} style:--tilt={s.tilt + "deg"} onclick={s.act} aria-keyshortcuts={s.key === "Esc" ? "Escape" : s.key}>
+        <span class="stamp">
+          <span class="art"><Icon name={s.icon} size={24} /></span>
+          <span class="label">{s.label}</span>
+        </span>
         {#if !touchCapable}<span class="key" aria-hidden="true">{device === "gamepad" ? PAD[s.id]!.glyph : s.key}</span>{/if}
       </button>
     {/each}
-    <button type="button" class="tool hint" onclick={onhint} aria-keyshortcuts="H">
-      <Icon name="question" size={22} />
-      <span class="label">{t("hud.hint")}</span>
+    <button type="button" class="tool hint" style:--tint="#f6c46e" style:--tilt="-1.5deg" onclick={onhint} aria-keyshortcuts="H">
+      <span class="stamp">
+        <span class="art"><Icon name="question" size={24} /></span>
+        <span class="label">{t("hud.hint")}</span>
+      </span>
       {#if !touchCapable && device !== "gamepad"}<span class="key" aria-hidden="true">H</span>{/if}
     </button>
   </nav>
@@ -169,80 +173,109 @@
 {/if}
 
 <style>
-  /* Tools: small panes of dusk glass, an icon, a word and the key that opens it. */
+  /* Tools: postage stamps stuck along the edge, each with its own colour. */
   .tools {
     position: fixed;
-    top: max(16px, env(safe-area-inset-top));
-    right: max(16px, env(safe-area-inset-right));
+    top: max(18px, env(safe-area-inset-top));
+    right: max(18px, env(safe-area-inset-right));
     display: flex;
     flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
+    align-items: center;
+    gap: 12px;
   }
   .tool {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 150px;
-    height: 46px;
-    padding: 0 8px 0 14px;
-    border: 1px solid rgba(255, 255, 255, 0.13);
-    border-radius: 999px;
-    background: rgba(24, 22, 48, 0.62);
-    box-shadow: 0 12px 24px -14px rgba(0, 0, 0, 0.6);
-    -webkit-backdrop-filter: blur(12px) saturate(1.1);
-    backdrop-filter: blur(12px) saturate(1.1);
-    color: #fbf3e4;
-    font: 600 0.95rem/1 var(--read);
+    position: relative;
+    display: block;
+    padding: 0;
+    border: 0;
+    background: none;
     cursor: pointer;
-    transition:
-      background 0.15s,
-      color 0.15s,
-      transform 0.18s var(--ease-spring);
+    filter: drop-shadow(0 2px 0 rgba(43, 38, 34, 0.55)) drop-shadow(0 8px 10px rgba(10, 6, 20, 0.35));
+    transform: rotate(var(--tilt));
+    transition: transform 0.22s var(--ease-spring);
   }
-  .tool :global(.icon) {
-    color: rgba(251, 243, 228, 0.78);
+  /* The stamp itself: perforated edges cut with a mask, a coloured picture, a white border. */
+  .stamp {
+    --r: 3.5px;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 4px;
+    width: 78px;
+    height: 80px;
+    box-sizing: border-box;
+    padding: 9px;
+    background: #fffaf0;
+    -webkit-mask:
+      radial-gradient(var(--r), #0000 97%, #000) round calc(-1.5 * var(--r)) calc(-1.5 * var(--r)) / calc(3 * var(--r)) calc(3 * var(--r)),
+      linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 3 * var(--r)) calc(100% - 3 * var(--r));
+    mask:
+      radial-gradient(var(--r), #0000 97%, #000) round calc(-1.5 * var(--r)) calc(-1.5 * var(--r)) / calc(3 * var(--r)) calc(3 * var(--r)),
+      linear-gradient(#000 0 0) no-repeat 50% / calc(100% - 3 * var(--r)) calc(100% - 3 * var(--r));
   }
-  .tool:hover {
-    background: rgba(40, 36, 76, 0.78);
-    color: #ffd79a;
-    transform: translateX(-3px);
-  }
-  .tool:hover :global(.icon) {
-    color: #ffd79a;
-  }
-  .tool:active {
-    transform: scale(0.96);
-  }
-  .tool:focus-visible {
-    outline: 3px solid #ffd79a;
-    outline-offset: 3px;
-  }
-  .label {
-    flex: 1;
-    text-align: left;
-  }
-  .key {
+  .art {
     display: grid;
     place-items: center;
-    min-width: 30px;
-    height: 30px;
-    padding: 0 7px;
+    width: 100%;
+    height: 38px;
+    box-sizing: border-box;
+    background-color: var(--tint);
+    background-image: var(--grain);
+    border: 1.6px solid rgba(43, 38, 34, 0.75);
+    color: var(--ink);
+  }
+  .art :global(.icon) {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .label {
+    font: 700 0.58rem/1 var(--label);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .tool:hover {
+    transform: rotate(0deg) translateY(-3px) scale(1.06);
+  }
+  .tool:active {
+    transform: rotate(0deg) scale(0.94);
+  }
+  .tool:focus-visible {
+    outline: 3px solid #fffaf0;
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+  /* The key that opens it, like a round sticker on the corner. */
+  .key {
+    position: absolute;
+    left: -11px;
+    bottom: -7px;
+    display: grid;
+    place-items: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    border: 2px solid var(--ink);
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.12);
-    color: rgba(251, 243, 228, 0.85);
-    font: 700 0.74rem/1 var(--read);
+    background: #fffaf0;
+    color: var(--ink);
+    font: 700 0.68rem/1 var(--read);
   }
-  .hint {
-    margin-top: 4px;
-    background: rgba(242, 165, 65, 0.2);
-    border-color: rgba(242, 165, 65, 0.45);
+  .hint .art {
+    animation: hint-glow 3.2s ease-in-out infinite;
   }
-  .hint :global(.icon) {
-    color: #ffd79a;
+  @keyframes hint-glow {
+    50% {
+      background-color: #fbd892;
+    }
   }
 
-  /* The use prompt, low and centered. */
+  /* The use prompt: a paper tag low and centered, with a drawn key cap. */
   .prompt {
     position: fixed;
     left: 50%;
@@ -251,18 +284,20 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 7px 20px 7px 7px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 999px;
-    background: rgba(24, 22, 48, 0.78);
-    box-shadow: 0 16px 30px -14px rgba(0, 0, 0, 0.7);
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-    color: #fff7ea;
-    font: 600 1.08rem/1.2 var(--read);
+    padding: 7px 20px 7px 8px;
+    border: var(--outline);
+    border-radius: var(--wobbly);
+    background-color: #fffaf0;
+    background-image: var(--grain);
+    box-shadow: var(--lift), 0 16px 26px -14px rgba(10, 6, 20, 0.7);
+    color: var(--ink);
+    font: 700 1.25rem/1.15 var(--hand);
     pointer-events: none;
     white-space: nowrap;
-    animation: pop 0.32s var(--ease-spring);
+    animation: pop 0.36s var(--ease-spring);
+  }
+  :global(:root[data-font="dyslexic"]) .prompt {
+    font: 700 1.05rem/1.2 var(--read);
   }
   .prompt.touch {
     bottom: calc(118px + env(safe-area-inset-bottom));
@@ -271,44 +306,61 @@
   .glyph {
     display: grid;
     place-items: center;
-    min-width: 38px;
-    height: 38px;
+    min-width: 40px;
+    height: 40px;
+    box-sizing: border-box;
     padding: 0 9px;
-    border-radius: 12px;
-    background: linear-gradient(180deg, #f8bb62, #ee9b33);
-    box-shadow:
-      inset 0 -3px 0 rgba(120, 60, 8, 0.35),
-      0 2px 0 rgba(0, 0, 0, 0.35);
-    color: #2b1a08;
-    font: 700 1rem/1 var(--read);
+    border: 2.2px solid var(--ink);
+    border-bottom-width: 5px;
+    border-radius: 10px 9px 11px 8px;
+    background: #f4b04e;
+    color: var(--ink);
+    font: 700 1.05rem/1 var(--read);
+    animation: tap-key 1.6s ease-in-out infinite;
+  }
+  @keyframes tap-key {
+    0%,
+    70%,
+    100% {
+      transform: translateY(0);
+    }
+    80% {
+      transform: translateY(2px);
+    }
   }
   .pad {
     border-radius: 50%;
-    background: linear-gradient(180deg, #6b95d6, #3f6fb2);
-    color: #fff;
+    border-bottom-width: 2.2px;
+    background: #8fb3e3;
+  }
+  .tap {
+    background: #fffaf0;
   }
   .meter {
-    width: 72px;
-    height: 8px;
-    border-radius: 4px;
+    width: 76px;
+    height: 12px;
+    box-sizing: border-box;
+    border: 2px solid var(--ink);
+    border-radius: 6px;
     overflow: hidden;
-    background: rgba(255, 255, 255, 0.18);
+    background: #efe6d4;
   }
   .meter span {
     display: block;
     height: 100%;
-    background: #f2a541;
+    background: var(--amber);
   }
 
-  /* Touch: a soft ring for the stick, and two round buttons. */
+  /* Touch: a pencilled ring for the stick, and two round paper buttons. */
   .stick {
     position: fixed;
     width: 112px;
     height: 112px;
     margin: -56px 0 0 -56px;
-    border: 2px solid rgba(255, 255, 255, 0.35);
+    box-sizing: border-box;
+    border: 3px dashed rgba(255, 250, 240, 0.7);
     border-radius: 50%;
-    background: rgba(24, 22, 48, 0.25);
+    background: rgba(255, 250, 240, 0.12);
     pointer-events: none;
     display: grid;
     place-items: center;
@@ -316,9 +368,11 @@
   .stick span {
     width: 50px;
     height: 50px;
+    box-sizing: border-box;
+    border: 2.4px solid var(--ink);
     border-radius: 50%;
-    background: rgba(251, 243, 228, 0.92);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+    background: #fffaf0;
+    box-shadow: var(--lift);
   }
   .buttons {
     position: fixed;
@@ -332,66 +386,63 @@
   .round {
     width: 66px;
     height: 66px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(24, 22, 48, 0.62);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    color: #fbf3e4;
-    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.6);
-    font: 700 1rem/1 var(--read);
+    border: var(--outline);
+    border-radius: 50% 47% 52% 48%;
+    background-color: #fffaf0;
+    background-image: var(--grain);
+    color: var(--ink);
+    box-shadow: var(--lift);
+    font: 700 1.1rem/1 var(--hand);
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
   }
   .round:active {
-    transform: scale(0.94);
+    transform: translateY(2px);
+    box-shadow: var(--lift-lo);
   }
   .act {
     width: 78px;
     height: 78px;
-    border-color: rgba(140, 70, 10, 0.5);
-    background: linear-gradient(180deg, #f8bb62, #ee9b33);
-    color: #2b1a08;
+    background-color: #f4b04e;
+    font-size: 1.25rem;
   }
   @keyframes pop {
     from {
-      transform: scale(0.88);
+      transform: scale(0.8) rotate(-3deg);
       opacity: 0;
     }
   }
-  :global(:root[data-motion="reduce"]) .prompt {
+  :global(:root[data-motion="reduce"]) .prompt,
+  :global(:root[data-motion="reduce"]) .cap,
+  :global(:root[data-motion="reduce"]) .glyph,
+  :global(:root[data-motion="reduce"]) .hint .art {
     animation: none;
   }
   @media (max-width: 640px) {
     .tools {
-      top: max(12px, env(safe-area-inset-top));
-      right: 12px;
-      left: 12px;
+      top: max(10px, env(safe-area-inset-top));
+      right: 10px;
+      left: 10px;
       flex-direction: row;
       justify-content: flex-end;
-      gap: 6px;
+      gap: 8px;
     }
-    .tool {
-      flex-direction: column;
-      justify-content: center;
-      gap: 3px;
-      min-width: 0;
-      width: 62px;
-      height: 50px;
-      padding: 0;
-      border-radius: 14px;
-      font-size: 0.66rem;
+    .stamp {
+      --r: 3px;
+      width: 56px;
+      height: 62px;
+      padding: 7px;
     }
-    .tool .label {
-      flex: none;
-      text-align: center;
+    .art {
+      height: 30px;
     }
-    .tool:hover {
-      transform: none;
+    .art :global(.icon) {
+      width: 20px;
+      height: 20px;
     }
-    .hint {
-      margin-top: 0;
+    .label {
+      font-size: 0.5rem;
     }
   }
 </style>

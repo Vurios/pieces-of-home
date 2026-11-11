@@ -98,9 +98,14 @@
     align-items: flex-start;
     gap: 6px;
     padding: 20px 20px 22px;
-    border-radius: 18px;
-    background: #fff;
-    border: 1px solid var(--line);
+    border-radius: 4px;
+    background-color: #fffdf6;
+    background-image: repeating-linear-gradient(180deg, transparent 0 27px, rgba(64, 108, 170, 0.12) 27px 28px);
+    border: 1.5px solid rgba(43, 38, 34, 0.18);
+    box-shadow: 0 2px 0 rgba(43, 38, 34, 0.1);
+  }
+  .option:nth-child(2) {
+    transform: rotate(0.5deg);
   }
   .mark {
     display: grid;
@@ -108,9 +113,10 @@
     width: 40px;
     height: 40px;
     margin-bottom: 4px;
-    border-radius: 12px;
-    background: var(--card-sunk);
-    color: var(--amber-deep);
+    border: 2.2px solid var(--ink);
+    border-radius: 50% 46% 52% 48%;
+    background: #f9d79a;
+    color: var(--ink);
   }
   .mark :global(.icon),
   .row :global(.icon),
@@ -123,7 +129,7 @@
   }
   h3 {
     margin: 0;
-    font: 600 1.25rem/1.2 var(--serif);
+    font: 700 1.45rem/1.15 var(--hand);
   }
   .help {
     margin: 0 0 12px;
@@ -144,9 +150,10 @@
   }
   .code span {
     padding: 8px 12px;
-    border-radius: 10px;
-    background: var(--amber-wash);
-    border: 1px solid rgba(184, 102, 28, 0.35);
+    border-radius: 10px 8px 11px 7px;
+    background: #f9d79a;
+    border: 2px solid var(--ink);
+    box-shadow: 0 2px 0 var(--ink);
     font: 700 1.1rem var(--read);
   }
   .row {

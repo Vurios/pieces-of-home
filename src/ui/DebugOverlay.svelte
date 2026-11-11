@@ -24,7 +24,7 @@ v${version}`}</pre>
   .debug {
     position: fixed;
     left: 8px;
-    top: 8px;
+    bottom: 8px;
     opacity: 0.85;
     margin: 0;
     padding: 6px 8px;

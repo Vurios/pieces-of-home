@@ -69,42 +69,60 @@
 </Panel>
 
 <style>
+  /* A yellow sticky note with the one thing every grown-up should know. */
   .note {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 8px 16px;
-    margin: 0 0 8px;
+    margin: 4px 0 8px;
     padding: 14px 18px;
-    border-radius: var(--radius-sm);
-    background: var(--amber-wash);
-    font-weight: 600;
+    background: #fbe7a4;
+    background-image: var(--grain);
+    box-shadow: 0 2px 0 rgba(43, 38, 34, 0.12), 0 10px 18px -12px rgba(43, 38, 34, 0.5);
+    transform: rotate(-0.6deg);
+    font-weight: 700;
     line-height: 1.4;
   }
   .note a {
-    color: var(--amber-deep);
-    font-weight: 700;
+    color: var(--clay-deep);
+    font: 700 1.05rem var(--hand);
+    text-decoration: underline 2px wavy;
+    text-underline-offset: 5px;
   }
   section {
-    margin-top: 22px;
+    margin-top: 24px;
   }
   .grid {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+    gap: 14px;
   }
+  /* Each credit is an index card: a red rule, blue lines, a little tilt. */
   .grid li {
     display: grid;
     gap: 4px;
     align-content: start;
-    padding: 14px 16px;
-    border-radius: var(--radius-sm);
-    background: #fff;
-    border: 1px solid var(--line);
+    padding: 14px 16px 12px;
+    background-color: #fffdf6;
+    background-image:
+      linear-gradient(90deg, rgba(196, 80, 60, 0.4), rgba(196, 80, 60, 0.4)),
+      repeating-linear-gradient(180deg, transparent 0 25px, rgba(64, 108, 170, 0.09) 25px 26px);
+    background-size: 100% 4px, 100% 100%;
+    background-position: 0 0, 0 13px;
+    background-repeat: no-repeat, repeat;
+    border: 1.5px solid rgba(43, 38, 34, 0.18);
+    box-shadow: 0 2px 0 rgba(43, 38, 34, 0.1);
+  }
+  .grid li:nth-child(3n + 1) {
+    transform: rotate(-0.5deg);
+  }
+  .grid li:nth-child(3n + 2) {
+    transform: rotate(0.4deg);
   }
   .what {
     font-weight: 700;
@@ -121,15 +139,19 @@
     align-items: center;
     justify-content: space-between;
     gap: 6px 12px;
-    margin-top: 6px;
+    margin-top: 8px;
     font-size: 0.82rem;
   }
+  /* The licence, inked on like a little stamp. */
   .license {
-    padding: 3px 8px;
-    border-radius: 999px;
-    background: var(--card-sunk);
-    color: var(--ink-soft);
-    font-weight: 600;
+    padding: 4px 8px 3px;
+    border: 2px solid var(--sage-deep);
+    border-radius: 4px;
+    color: var(--sage-deep);
+    font: 700 0.72rem/1 var(--label);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transform: rotate(-2deg);
   }
   .meta a {
     display: inline-flex;

@@ -43,9 +43,10 @@
     gap: 12px;
     min-height: 64px;
     padding: 8px 10px 8px 16px;
-    border-radius: 14px;
-    background: #fff;
-    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #fffdf6;
+    border: 1.5px solid rgba(43, 38, 34, 0.18);
+    box-shadow: 0 2px 0 rgba(43, 38, 34, 0.1);
   }
   li.soon {
     background: transparent;
@@ -54,7 +55,7 @@
     justify-self: start;
   }
   .name {
-    font: 600 1.05rem/1.3 var(--serif);
+    font: 700 1.2rem/1.2 var(--hand);
   }
   .soon .name {
     color: var(--ink-soft);
