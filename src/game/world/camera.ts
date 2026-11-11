@@ -37,6 +37,8 @@ export class FollowCamera {
   private readonly focus = new Vector3();
   private readonly lead = new Vector3();
   private distance = DEFAULT_DISTANCE;
+  /** The player's own zoom, from the mouse wheel. */
+  private zoom = 1;
   private sinceLook = 10;
   private started = false;
   private readonly scratch = new Vector3();
@@ -80,8 +82,10 @@ export class FollowCamera {
       this.sinceLook += dt;
     }
 
+    if (input.zoom !== 0) this.zoom = Math.max(0.6, Math.min(1.55, this.zoom * (1 + input.zoom)));
+
     let wantedPitch = DEFAULT_PITCH;
-    let wantedDistance = DEFAULT_DISTANCE;
+    let wantedDistance = DEFAULT_DISTANCE * this.zoom;
 
     if (hint) {
       // A place has a view it prefers. Ease toward it.
@@ -90,7 +94,7 @@ export class FollowCamera {
         this.turnToward(this.scratch.normalize(), damp(2.4, dt));
       }
       wantedPitch = hint.pitch;
-      wantedDistance = hint.distance;
+      wantedDistance = hint.distance * Math.min(1.2, this.zoom);
       this.pitch += (wantedPitch - this.pitch) * damp(2.4, dt);
     } else if (this.sinceLook > RECENTER_DELAY && player.pace > 0.3) {
       // Drift back behind the player, but only when they walk mostly away from us.
@@ -110,7 +114,20 @@ export class FollowCamera {
       this.focus.copy(this.target);
       this.started = true;
     } else {
-      this.focus.lerp(this.target, damp(9, dt));
+      // Follow closely across the ground, but let a jump rise in front of the lens
+      // instead of bouncing the whole view with it.
+      this.scratch.copy(this.target).sub(this.focus);
+      const rise = this.scratch.dot(this.up);
+      this.scratch.addScaledVector(this.up, -rise);
+      this.focus.addScaledVector(this.scratch, damp(9, dt)).addScaledVector(this.up, rise * damp(player.grounded ? 8 : 2.4, dt));
+    }
+
+    // A touch more lens when running, for a sense of speed.
+    const base = (this.camera.userData["baseFov"] as number | undefined) ?? this.camera.fov;
+    const fov = base + (player.running && player.pace > 1.2 ? 3.5 : 0);
+    if (Math.abs(fov - this.camera.fov) > 0.01) {
+      this.camera.fov += (fov - this.camera.fov) * damp(3, dt);
+      this.camera.updateProjectionMatrix();
     }
 
     // Pull in if a prop or a hill is in the way. Come in fast, ease back out slowly.

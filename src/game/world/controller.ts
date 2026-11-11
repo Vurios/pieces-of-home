@@ -45,6 +45,10 @@ export class PlayerController {
   frozen = 0;
 
   private stepDistance = 0;
+  /** A jump still works for a moment after walking off an edge... */
+  private coyote = 0;
+  /** ...and a press just before landing is kept until the feet touch down. */
+  private jumpBuffer = 0;
   private readonly desired = new Vector3();
   private readonly oldUp = new Vector3();
   private readonly platform = new Vector3();
@@ -97,10 +101,14 @@ export class PlayerController {
       this.forward.normalize();
     }
 
-    // 3. Jump.
-    if (active && input.jumpPressed && this.grounded) {
+    // 3. Jump, forgiving by a fraction of a second either side, so it never feels like a missed press.
+    this.coyote = this.grounded ? 0.12 : Math.max(0, this.coyote - dt);
+    this.jumpBuffer = active && input.jumpPressed ? 0.14 : Math.max(0, this.jumpBuffer - dt);
+    if (active && this.jumpBuffer > 0 && (this.grounded || this.coyote > 0)) {
       this.verticalSpeed = JUMP_SPEED;
       this.grounded = false;
+      this.coyote = 0;
+      this.jumpBuffer = 0;
       this.bus.emit("player:jump", {});
     }
 

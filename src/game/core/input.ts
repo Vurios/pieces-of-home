@@ -58,6 +58,8 @@ export interface InputFrame {
   /** Camera orbit this frame, in radians. */
   lookX: number;
   lookY: number;
+  /** Zoom this frame: above 0 pulls the camera back, below 0 brings it in. */
+  zoom: number;
 }
 
 export interface TouchStick {
@@ -86,6 +88,12 @@ export class Input {
   bindings: KeyBindings = loadBindings();
   readonly stick: TouchStick = { active: false, originX: 0, originY: 0, x: 0, y: 0 };
   device: InputDevice = "keyboard";
+  /** Mouse wheel zoom collected since the last frame. */
+  private zoom = 0;
+  private onWheel = (event: WheelEvent): void => {
+    const lines = event.deltaMode === 1 ? 32 : event.deltaMode === 2 ? 400 : 1;
+    this.zoom += Math.max(-0.5, Math.min(0.5, (event.deltaY * lines) / 900));
+  };
   /** How far the player has turned the camera, in total. The tips use it to see that "look" was learned. */
   lookTravel = 0;
 
@@ -114,6 +122,7 @@ export class Input {
     element.addEventListener("pointerup", this.onPointerUp, { signal });
     element.addEventListener("pointercancel", this.onPointerUp, { signal });
     element.addEventListener("contextmenu", (event) => event.preventDefault(), { signal });
+    element.addEventListener("wheel", this.onWheel, { signal, passive: true });
     window.addEventListener("gamepadconnected", () => this.setDevice("gamepad"), { signal });
   }
 
@@ -193,7 +202,9 @@ export class Input {
       interactHeld: this.held("interact") || (pad?.interact ?? false),
       lookX,
       lookY,
+      zoom: this.zoom,
     };
+    this.zoom = 0;
     this.pressed.clear();
     return frame;
   }

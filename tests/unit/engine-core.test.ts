@@ -157,7 +157,7 @@ describe("key bindings", () => {
 
 describe("interaction", () => {
   const frame = (over: Partial<InputFrame> = {}): InputFrame => ({
-    moveX: 0, moveY: 0, run: false, jumpPressed: false, interactPressed: false, interactHeld: false, lookX: 0, lookY: 0, ...over,
+    moveX: 0, moveY: 0, run: false, jumpPressed: false, interactPressed: false, interactHeld: false, lookX: 0, lookY: 0, zoom: 0, ...over,
   });
 
   it("fires a press prompt only in reach, and a hold prompt after holding", () => {

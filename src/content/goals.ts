@@ -109,7 +109,7 @@ export function tipFor(id: TipId, device: InputDevice, bindings: Record<string, 
     case "look":
       if (device === "touch") return { id, keys: [], text: "Drag on the right side of the screen to look around." };
       if (device === "gamepad") return { id, keys: ["Right stick"], text: "Look around." };
-      return { id, keys: ["Mouse"], text: "Click and drag to look around." };
+      return { id, keys: ["Mouse"], text: "Click and drag to look around. Scroll to zoom." };
     case "arrow":
       return { id, keys: [], text: "See the paper arrow by your feet? It always points to your goal." };
     case "use":

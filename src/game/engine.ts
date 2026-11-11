@@ -388,6 +388,7 @@ export class Engine {
     this.camera.aspect = width / height;
     // Portrait screens get a slightly wider lens so the planet still fits.
     this.camera.fov = this.camera.aspect < 0.8 ? 52 : 40;
+    this.camera.userData["baseFov"] = this.camera.fov;
     this.camera.updateProjectionMatrix();
     const ratio = this.renderer.getPixelRatio();
     this.post.setSize(width * ratio, height * ratio);
