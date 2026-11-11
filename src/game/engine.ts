@@ -15,7 +15,7 @@ import { Character } from "./actors/character";
 import { PaperArrow, createEnvelope } from "./actors/props";
 import { EventBus, type GameEvents, type QualityTier } from "./core/events";
 import { Input } from "./core/input";
-import { FrameWatchdog, QUALITY, type QualitySettings, detectTier, lowerTier, readDeviceHints, readTierOverride, writeTierOverride } from "./core/quality";
+import { FrameWatchdog, QUALITY, ResolutionGovernor, type QualitySettings, detectTier, lowerTier, readDeviceHints, readTierOverride, writeTierOverride } from "./core/quality";
 import { SAVE_KEY, StateStore, readStorage, writeStorage } from "./core/state";
 import { Puffs } from "./render/particles";
 import { PostPipeline } from "./render/post";
@@ -78,6 +78,7 @@ export class Engine {
   private puffs: Puffs;
   private timer = new Timer();
   private watchdog = new FrameWatchdog();
+  private governor = new ResolutionGovernor();
   private textureLoader: TextureLoader;
   private reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   private bookmark: Bookmark | null = null;
@@ -126,6 +127,7 @@ export class Engine {
     this.autoQuality = override === null;
     const tier: QualityTier = override ?? detectTier(readDeviceHints(renderer.getContext()));
     this.quality = QUALITY[tier];
+    this.governor.reset();
     this.applyRendererQuality();
     this.post = new PostPipeline(renderer, this.quality);
     this.post.setReducedMotion(this.reducedMotion);
@@ -258,7 +260,7 @@ export class Engine {
   }
 
   private applyRendererQuality(): void {
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.quality.maxPixelRatio));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.quality.maxPixelRatio) * this.governor.scale);
     this.renderer.shadowMap.enabled = this.quality.shadowMap > 0;
     this.renderer.shadowMap.type = PCFShadowMap;
   }
@@ -274,6 +276,7 @@ export class Engine {
   private changeTier(tier: QualityTier, auto: boolean): void {
     if (tier === this.quality.tier) return;
     this.quality = QUALITY[tier];
+    this.governor.reset();
     this.applyRendererQuality();
     this.post.dispose();
     this.post = new PostPipeline(this.renderer, this.quality);
@@ -407,7 +410,8 @@ export class Engine {
     // Under the notebook or a panel the world stands still. On a slow device a
     // full render can take longer than a frame, which starves the 2D layer and
     // the gamepad on top, so the frozen world is redrawn only now and then.
-    if (this.paused && !this.bookmark && this.renderCost > 40 && time - this.lastRender < this.renderCost * 4) {
+    // Under the notebook or a panel the frozen world needs only a few frames a second.
+    if (this.paused && !this.bookmark && time - this.lastRender < Math.max(100, this.renderCost * 4)) {
       this.afterFrame(dt);
       return;
     }
@@ -524,6 +528,13 @@ export class Engine {
     if (this.saveTimer > 0) {
       this.saveTimer -= dt;
       if (this.saveTimer <= 0) writeStorage(SAVE_KEY, this.store.serialize());
+    }
+    if (this.autoQuality && !this.bookmark && this.mode === "play" && !this.paused) {
+      const scale = this.governor.update(dt);
+      if (scale !== null) {
+        this.applyRendererQuality();
+        this.resize();
+      }
     }
     if (this.autoQuality && !this.bookmark && this.mode === "play" && this.quality.tier !== "low" && this.watchdog.update(dt)) {
       this.changeTier(lowerTier(this.quality.tier), true);

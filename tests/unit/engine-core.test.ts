@@ -2,7 +2,7 @@ import { Color, Matrix4, Vector3 } from "three";
 import { describe, expect, it } from "vitest";
 import { EventBus, type GameEvents } from "../../src/game/core/events";
 import { DEFAULT_BINDINGS, type InputFrame, reviveBindings } from "../../src/game/core/input";
-import { FrameWatchdog, detectTier, lowerTier } from "../../src/game/core/quality";
+import { FrameWatchdog, ResolutionGovernor, detectTier, lowerTier } from "../../src/game/core/quality";
 import { StateStore, createInitialState, reviveState } from "../../src/game/core/state";
 import { gradeColor } from "../../src/game/render/grade";
 import { createColliderGroup, pointInsideColliders, resolveColliders } from "../../src/game/world/colliders";
@@ -201,5 +201,22 @@ describe("color grade", () => {
     expect(b).toBeCloseTo(0.9, 5);
     const lifted = gradeColor(0, 0, 0, { ...neutral, lift: 0.06 }, grey, grey);
     expect(lifted[0]).toBeCloseTo(0.06, 5);
+  });
+});
+
+describe("resolution governor", () => {
+  it("draws fewer pixels when slow and wins them back when there is room", () => {
+    const governor = new ResolutionGovernor();
+    const run = (fps: number, seconds: number): void => {
+      for (let i = 0; i < fps * seconds; i += 1) governor.update(1 / fps);
+    };
+    run(30, 1.05);
+    expect(governor.scale).toBeCloseTo(0.9);
+    run(30, 6);
+    expect(governor.scale).toBeCloseTo(0.6);
+    run(60, 12);
+    expect(governor.scale).toBeGreaterThan(0.6);
+    run(60, 40);
+    expect(governor.scale).toBe(1);
   });
 });

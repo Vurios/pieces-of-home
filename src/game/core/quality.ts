@@ -144,6 +144,47 @@ export function lowerTier(tier: QualityTier): QualityTier {
  * a few seconds it asks to drop one tier. It never raises the tier by itself,
  * so quality does not flicker.
  */
+/**
+ * Keeps play smooth by drawing fewer pixels when frames run slow, and more
+ * again when there is room. It acts before the watchdog drops a whole tier,
+ * so a busy moment costs a little sharpness instead of the shadows.
+ */
+export class ResolutionGovernor {
+  scale = 1;
+  private sampleTime = 0;
+  private frames = 0;
+  private fastSamples = 0;
+
+  /** Returns the new scale when it changes, otherwise null. */
+  update(dt: number): number | null {
+    this.sampleTime += dt;
+    this.frames += 1;
+    if (this.sampleTime < 1) return null;
+    const fps = this.frames / this.sampleTime;
+    this.sampleTime = 0;
+    this.frames = 0;
+    if (fps < 50 && this.scale > 0.6) {
+      this.fastSamples = 0;
+      this.scale = Math.max(0.6, Math.round((this.scale - 0.1) * 100) / 100);
+      return this.scale;
+    }
+    this.fastSamples = fps > 58 ? this.fastSamples + 1 : 0;
+    if (this.fastSamples >= 3 && this.scale < 1) {
+      this.fastSamples = 0;
+      this.scale = Math.min(1, Math.round((this.scale + 0.05) * 100) / 100);
+      return this.scale;
+    }
+    return null;
+  }
+
+  reset(): void {
+    this.scale = 1;
+    this.sampleTime = 0;
+    this.frames = 0;
+    this.fastSamples = 0;
+  }
+}
+
 export class FrameWatchdog {
   private slowTime = 0;
   private sampleTime = 0;

@@ -360,3 +360,39 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 **Decision:** The amber pill and dusk-glass list read as a generic app menu and broke the Game Bible's "never glassmorphism" rule. The menu is now Dad's notebook peeking in from the right edge of the screen, with each choice a paper index tab sticking out of its pages (Game Bible 10, item 7). Each tab has its own paper colour, a doodle in Dad's hand (a sealed letter, two kids holding hands, a magnifier over a leaf, a wrench, a heart) and a Kalam label. The first tab is the big one, with a short line under it ("Dad's letters are waiting" or "Pick up where you left off"). Hover or focus slides a tab out and a pencil arrow points at it. Starting again over a save asks on a note taped over the page, with a stamp to confirm and Escape to cancel. The 3D title now shrinks about its baseline on tall phones, so every letter fits the screen.
 
 **Alternatives considered:** a full open notebook page with a written list (hides the planet, which is the best thing on screen); keeping the pill and restyling the list only (still reads as an app).
+
+## 36. One paper language for every 2D screen
+
+**Date:** 2026-11-11
+
+**Decision:** The team found the panels, HUD and notebook generic. Every 2D surface now follows Game Bible 11 literally. Panels are sheets of Dad's notebook paper taped over the world, titled in Kalam with a pencil underline. HUD tools are postage stamps (the game is about letters) with their keys on round stickers. The use prompt is a paper tag with a drawn key cap. The goal is a note pinned in the corner with drawn step boxes. Tips are a taped card with W, A, S, D laid out like real keys, or a drawn mouse, stick or finger. Places hang on a swinging paper tag. Buttons, switches, sliders, tabs and selects share one style: an ink outline with a hard offset shadow, like a cut-out sticker. Fraunces and every frosted-glass surface are gone; Kalam leads, Atkinson stays for reading, Zilla Slab for stamps and tags. With the dyslexia font on, Kalam headings switch to the reading face.
+
+**Alternatives considered:** keeping the dusk-glass HUD for contrast over the world (the Bible rules out glassmorphism, and paper with an ink outline reads just as well over any background).
+
+## 37. A short storybook before a new story
+
+**Date:** 2026-11-11
+
+**Decision:** New story now opens with six of Dad's drawings that ink themselves in, each with one or two short lines: Home, the workbench, the workshop door, the letters, Milo in pieces, and the plan. It says plainly that Dad died (Game Bible 5.9), then turns to the task. Pages turn on their own after time to read (a base plus a little per word), and Next, a click, a tap, a key or the pad turns them sooner. Skip story, Escape and gamepad B skip it. Captions are live text and are read aloud when that setting is on.
+
+**Alternatives considered:** an in-engine camera cutscene (slower to load, harder to read, and the notebook drawings are the game's voice); a video (weight, and no captions by default).
+
+## 38. The loader's prompt is a light switch; the title gets ink outlines
+
+**Date:** 2026-11-11
+
+**Decision:** "Turn on the light" is now a drawn wall switch with a chunky lever that nudges up while it waits, inside a pulsing warm ring. Everyone knows what to do with a light switch. The 3D title letters get a thick ink outline (an inverted shell on each block) so they read against the dusk sky, and the BEGIN tag is bigger with a pulsing ring and a paper "Pull the chain" label.
+
+## 39. Hair from locks, bodies with shape
+
+**Date:** 2026-11-11
+
+**Decision:** Hair was a sphere cap that read as a helmet. Each hairstyle is now built from overlapping teardrop locks (`hairLock` in `actors/parts.ts`), with a slightly lighter shade where the light catches. The top is a lathe with soft shoulders and a hem, and a rounded seat joins the legs to the body. Everything still merges into one mesh per joint.
+
+**Alternatives considered:** modeled glTF characters (a modeling pass for five people and a skinning rig, and the procedural kids already animate well).
+
+## 40. Smoother play on slower machines
+
+**Date:** 2026-11-11
+
+**Decision:** A resolution governor draws fewer pixels when play drops under 50 fps and wins them back above 58, before the watchdog drops a whole tier. The frozen world under the notebook and panels redraws at most ten times a second. The opening's shaders compile while loading, so the light switch answers at once. Looping UI animations only move by transform. Jumps forgive a late or early press by a fraction of a second, the camera lets a jump rise in front of the lens instead of bouncing the view, the mouse wheel zooms, and the lens opens slightly while running.

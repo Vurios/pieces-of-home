@@ -116,7 +116,12 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Opening redone as Dad's notebook on a moonlit workbench: self-drawing lamp sketch, travel doodle, hand-inked title, ticked list, ink stamp, light that fills the screen (DECISIONS #34)
 - [x] Main menu redone as paper index tabs in Dad's notebook, with doodles and a pencil arrow; title fits tall phones (DECISIONS #35)
 - [x] Screens in `docs/screens/pass5/` (desktop and phone)
-- [ ] Follow-up: the HUD and panels still use the dusk-glass style; move them onto paper to match the Game Bible
+- [x] HUD, panels, notebook, goal, tips and place tags moved onto paper; postage-stamp tools (DECISIONS #36)
+- [x] Short storybook before a new story (DECISIONS #37)
+- [x] Light-switch prompt on the loader; ink-outlined 3D title and clearer pull chain (DECISIONS #38)
+- [x] Sculpted hair and shaped bodies for the kids and Mom (DECISIONS #39)
+- [x] Resolution governor, frozen-world frame cap, shader warm-up, forgiving jumps, steadier camera, wheel zoom (DECISIONS #40)
+- [x] Screens in `docs/screens/pass6/`; typecheck, 56 unit tests, 22 Playwright tests and check:facts pass
 
 ## Phase 04: Music, sound effects and voices in JavaScript
 
