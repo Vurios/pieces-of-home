@@ -4,13 +4,13 @@
       "id": "a11-lrrr-placed",
       "kid": "Neil Armstrong and Buzz Aldrin set up the mirror panel near the end of their moonwalk.",
       "deeper": "",
-      "value": "July 21, 1969 (UTC)",
+      "value": "July 21, 1969 (UTC), about an hour before the end of the moonwalk",
       "date": "1969-07-21",
-      "sourceTitle": "NASA Science: Apollo 11 Experiment Still Running (2004), archived copy",
-      "sourceUrl": "https://ieeemilestones.ethw.org/w/images/6/65/Ref8-NASA-Apollo11-2004.pdf",
+      "sourceTitle": "JPL: Apollo 11 Experiment Still Going Strong after 35 Years (July 20, 2004)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/apollo-11-experiment-still-going-strong-after-35-years/",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"On July 21, about an hour before the end of their final moonwalk, they left an experiment on the lunar surface.\" The old archived copy on ieeemilestones.ethw.org now returns 404, so the source moved to this JPL page."
     },
     {
       "id": "a11-lrrr-cubes",
@@ -18,11 +18,11 @@
       "deeper": "",
       "value": "100 cubes; panel about 46 cm square; each cube about 3.8 cm across",
       "date": null,
-      "sourceTitle": "JPL: Earth-Moon System",
+      "sourceTitle": "JPL: Earth-Moon System (July 17, 1989)",
       "sourceUrl": "https://www.jpl.nasa.gov/news/earth-moon-system",
       "status": "checked",
-      "checkedOn": null,
-      "note": "",
+      "checkedOn": "2026-11-12",
+      "note": "Source: 100 fused silica half cubes, called corner cubes, in a 46-centimeter (18-inch) square aluminum panel; each corner cube is 3.8 centimeters (1.5 inches) in diameter.",
       "short": "100 little mirrors at Tranquility Base."
     },
     {
@@ -31,35 +31,35 @@
       "deeper": "",
       "value": "",
       "date": null,
-      "sourceTitle": "JPL: Earth-Moon System",
+      "sourceTitle": "JPL: Earth-Moon System (July 17, 1989)",
       "sourceUrl": "https://www.jpl.nasa.gov/news/earth-moon-system",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"this reflector requires no power.\" JPL 2019 also says \"The arrays themselves require no power.\""
     },
     {
       "id": "lrrr-still-used",
       "kid": "Scientists still bounce lasers off it today.",
       "deeper": "",
-      "value": "ongoing",
+      "value": "ongoing: lasers fired from observatories in New Mexico, France, Italy and Germany",
       "date": null,
-      "sourceTitle": "JPL: The Apollo Experiment That Keeps on Giving (2019)",
+      "sourceTitle": "JPL: The Apollo Experiment That Keeps on Giving (July 24, 2019)",
       "sourceUrl": "https://www.jpl.nasa.gov/news/the-apollo-experiment-that-keeps-on-giving/",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Source: the experiment \"continues producing results to this day\" (2019). Newer NASA confirmation: NASA (Aug. 10, 2020) says scientists \"continue to rely on the surface reflectors\", https://www.nasa.gov/missions/laser-beams-reflected-between-earth-and-moon-boost-science/ . No NASA page newer than 2020 found."
     },
     {
       "id": "lrrr-others",
       "kid": "Apollo 14 and Apollo 15 left mirror panels too.",
       "deeper": "",
-      "value": "Apollo 14: 100 cubes; Apollo 15: 300 cubes",
+      "value": "Apollo 11 and Apollo 14: 100 cubes each; Apollo 15: 300 cubes",
       "date": null,
-      "sourceTitle": "JPL: The Apollo Experiment That Keeps on Giving (2019)",
+      "sourceTitle": "JPL: The Apollo Experiment That Keeps on Giving (July 24, 2019)",
       "sourceUrl": "https://www.jpl.nasa.gov/news/the-apollo-experiment-that-keeps-on-giving/",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"The Apollo 11 and 14 arrays have 100 quartz glass prisms\" and \"the array of Apollo 15 has 300.\""
     },
     {
       "id": "moon-recede",
@@ -67,11 +67,11 @@
       "deeper": "",
       "value": "about 3.8 cm per year (1.5 in)",
       "date": null,
-      "sourceTitle": "JPL: The Apollo Experiment That Keeps on Giving (2019)",
+      "sourceTitle": "JPL: The Apollo Experiment That Keeps on Giving (July 24, 2019)",
       "sourceUrl": "https://www.jpl.nasa.gov/news/the-apollo-experiment-that-keeps-on-giving/",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Source: the distance \"increases by 1.5 inches (3.8 centimeters) a year.\" NASA 2020 gives the same rate. JPL 1989 (Earth-Moon System) gave about 3.7 cm."
     },
     {
       "id": "moon-distance",
@@ -79,47 +79,47 @@
       "deeper": "",
       "value": "about 385,000 km (239,000 mi)",
       "date": null,
-      "sourceTitle": "JPL: The Apollo Experiment That Keeps on Giving (2019)",
+      "sourceTitle": "JPL: The Apollo Experiment That Keeps on Giving (July 24, 2019)",
       "sourceUrl": "https://www.jpl.nasa.gov/news/the-apollo-experiment-that-keeps-on-giving/",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"an average distance of 239,000 miles (385,000 kilometers).\""
     },
     {
       "id": "light-roundtrip",
       "kid": "A laser flash takes about 2.5 seconds to reach the mirrors and come back.",
       "deeper": "",
-      "value": "2 x 385,000 km / 299,792 km per s = about 2.57 s",
+      "value": "about 2.5 seconds on average (NASA); check: 2 x 385,000 km / 299,792 km per s = about 2.57 s",
       "date": null,
-      "sourceTitle": "JPL: The Apollo Experiment That Keeps on Giving (2019)",
-      "sourceUrl": "https://www.jpl.nasa.gov/news/the-apollo-experiment-that-keeps-on-giving/",
+      "sourceTitle": "NASA: Laser Beams Reflected Between Earth and Moon Boost Science (Aug. 10, 2020)",
+      "sourceUrl": "https://www.nasa.gov/missions/laser-beams-reflected-between-earth-and-moon-boost-science/",
       "status": "checked",
-      "checkedOn": null,
-      "note": "Computed from moon-distance and the speed of light."
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"By measuring how long it takes laser light to bounce back, about 2.5 seconds on average\". Previously only computed; now stated by NASA."
     },
     {
       "id": "a11-descent-stage",
-      "kid": "Eagle's bottom half stayed on the Moon and worked as the launch pad for the trip home.",
+      "kid": "Eagle's bottom half stayed on the Moon. It worked as the launch pad when the top half lifted off.",
       "deeper": "",
-      "value": "",
+      "value": "descent stage left on the Moon; ascent stage launched from it",
       "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Find a NASA page."
+      "sourceTitle": "NSSDCA: Apollo 11 Lunar Module / EASEP",
+      "sourceUrl": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059C",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"The descent stage served as a platform for launching the ascent stage and was left behind on the Moon.\""
     },
     {
       "id": "a11-seismometer",
-      "kid": "A seismometer listened for moonquakes.",
+      "kid": "A seismometer listened for moonquakes. It ran on sunlight and sent data for about three weeks.",
       "deeper": "",
-      "value": "how long it worked",
+      "value": "solar powered, so it worked only in lunar daytime; stopped responding to commands at 04:00 UT on August 25, 1969",
       "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Find a NASA or LPI page on the Passive Seismic Experiment."
+      "sourceTitle": "NASA Science: Apollo 11 Seismic Experiment",
+      "sourceUrl": "https://science.nasa.gov/resource/apollo-11-seismic-experiment/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"It detected lunar moonquakes\"; \"powered by two panels of solar cells\"; \"The Apollo 11 seismometer returned data for just three weeks\"; stopped responding \"probably from overheating from the hot midday sun.\" NSSDCA (1969-059C) says the package stopped accepting commands on August 27, 1969, so the kid text avoids an exact end date."
     },
     {
       "id": "a15-lrv-distance",
@@ -130,8 +130,8 @@
       "sourceTitle": "NSSDCA: The Apollo Lunar Roving Vehicle",
       "sourceUrl": "https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo_lrv.html",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"On Apollo 15 the LRV was driven a total of 27.8 km in 3 hours, 2 minutes of driving time. The longest single traverse was 12.5 km and the maximum range from the LM was 5.0 km.\""
     },
     {
       "id": "lrv-wheels",
@@ -142,80 +142,80 @@
       "sourceTitle": "NSSDCA: The Apollo Lunar Roving Vehicle",
       "sourceUrl": "https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo_lrv.html",
       "status": "checked",
-      "checkedOn": null,
-      "note": "Also Smithsonian NASM wheel: https://airandspace.si.edu/collection-objects/wheel-lunar-rover/nasm_A19750830000 (the chevron pattern kept the wheels from sinking into soft soil)."
+      "checkedOn": "2026-11-12",
+      "note": "Source: tire \"made of zinc coated woven 0.083 cm diameter steel strands\"; \"Titanium chevrons covered 50% of the contact area to provide traction.\" Also Smithsonian NASM wheel: https://airandspace.si.edu/collection-objects/wheel-lunar-rover/nasm_A19750830000 (not reopened in this pass)."
     },
     {
       "id": "lrv-first-drive",
-      "kid": "The rover first rolled out on the Moon on July 31, 1971.",
+      "kid": "The rover's first drive on the Moon was on July 31, 1971.",
       "deeper": "",
-      "value": "July 31, 1971",
+      "value": "July 31, 1971; first moonwalk 13:13:10 to 19:45:59 UT",
       "date": "1971-07-31",
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Secondary source only. Confirm in the Apollo 15 Lunar Surface Journal."
+      "sourceTitle": "NSSDCA: Apollo 15 Lunar Module / ALSEP",
+      "sourceUrl": "https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1971-063C",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"The first moonwalk EVA was on 31 July from 13:13:10 UT to 19:45:59 UT, during which time the LRV was unloaded, deployed, and driven.\""
     },
     {
       "id": "lrv-crew",
       "kid": "Dave Scott and Jim Irwin drove the Apollo 15 rover.",
       "deeper": "",
-      "value": "",
+      "value": "Commander David R. Scott and Lunar Module Pilot James B. Irwin",
       "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Confirm on a NASA Apollo 15 page."
+      "sourceTitle": "NSSDCA: The Apollo Lunar Roving Vehicle",
+      "sourceUrl": "https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo_lrv.html",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: the Apollo 15 rover was driven by \"astronauts David Scott and Jim Irwin\". NSSDCA 1971-063C names \"Commander David R. Scott and LM pilot James B. Irwin\"."
     },
     {
       "id": "lrv-rear-steer",
       "kid": "On the first drive the front steering didn't work, so they steered with the rear wheels.",
       "deeper": "",
-      "value": "",
+      "value": "front steering out on the first drive; rear-wheel steering only; fixed by the next day",
       "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Secondary source only. Confirm in the Apollo 15 Lunar Surface Journal."
+      "sourceTitle": "NASA: This Week in NASA History: Apollo 15 Astronauts Deploy First Lunar Roving Vehicle, July 31, 1971 (2016)",
+      "sourceUrl": "https://www.nasa.gov/image-article/this-week-nasa-history-apollo-15-astronauts-deploy-first-lunar-roving-vehicle-july-31-1971/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: the only rover problem was \"the brief inoperability of the front steering mechanism\"; the crew went on \"using only the rear-wheel steering.\" Apollo Lunar Surface Journal, EVA-1, 121:27:32, CAPCOM Joe Allen: \"There is something wrong with the forward steering\" and \"We still have good rear steering.\" https://www.apollojournals.org/alsj/a15/a15.trv1prep.html"
     },
     {
       "id": "lrv-tracks-orbit",
-      "kid": "The rover's tracks can be seen from orbit.",
+      "kid": "The rover's tracks can be seen in pictures taken from orbit.",
       "deeper": "",
-      "value": "",
+      "value": "Lunar Reconnaissance Orbiter Narrow Angle Camera; tracks visible between stations 9A and 10",
       "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Find the LROC featured image of the Apollo 15 site."
+      "sourceTitle": "NASA Science Photojournal: Retracing the Steps of Apollo 15 (PIA13058)",
+      "sourceUrl": "https://science.nasa.gov/photojournal/retracing-the-steps-of-apollo-15",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Caption: \"Rover tracks are visible between stations 9A and 10.\" Credit: NASA/GSFC/Arizona State University. Also LROC \"Follow the Tracks\" (March 5, 2012), https://lroc.im-ldi.com/posts/491 (lroc.asu.edu now redirects there): tracks are visible about half of the time and usually only near the lander."
     },
     {
       "id": "opp-landing",
-      "kid": "Opportunity landed at Meridiani Planum on Mars.",
+      "kid": "Opportunity landed at Meridiani Planum on Mars in January 2004.",
       "deeper": "",
-      "value": "January 25, 2004 (UTC); January 24 in US Pacific time",
+      "value": "January 25, 2004, 04:54 UT (January 24, 2004 in US Pacific time)",
       "date": "2004-01-25",
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Confirm on a NASA/JPL mission page."
+      "sourceTitle": "JPL: NASA's Opportunity Rover Mission on Mars Comes to End (Feb. 13, 2019)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/nasas-opportunity-rover-mission-on-mars-comes-to-end/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"Opportunity landed in the Meridiani Planum region of Mars on Jan. 24, 2004\" (US time). NSSDCA (2003-032A): landing 04:54:22.7 UT on 25 January 2004. JPL (April 21, 2017): \"Jan. 25, 2004, Universal Time (Jan. 24, PST)\"."
     },
     {
       "id": "opp-planned",
       "kid": "It was planned to work for 90 Martian days.",
       "deeper": "",
-      "value": "90 sols (about 92 Earth days)",
+      "value": "90 sols (Martian days)",
       "date": null,
-      "sourceTitle": "NASA/JPL: Six things to know about NASA's Opportunity Mars rover (2019), reprint on Phys.org",
-      "sourceUrl": "https://phys.org/news/2019-02-nasa-opportunity-mars-rover.html",
+      "sourceTitle": "NASA Science: Opportunity mission page",
+      "sourceUrl": "https://science.nasa.gov/mission/mer-opportunity/",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"designed to last just 90 Martian days\". JPL (Feb. 13, 2019) also calls it the \"original 90-day mission\". Moved from the Phys.org reprint to a NASA page."
     },
     {
       "id": "opp-years",
@@ -223,11 +223,11 @@
       "deeper": "",
       "value": "more than 14 years",
       "date": null,
-      "sourceTitle": "NASA/JPL: Six things to know about NASA's Opportunity Mars rover (2019), reprint on Phys.org",
-      "sourceUrl": "https://phys.org/news/2019-02-nasa-opportunity-mars-rover.html",
+      "sourceTitle": "JPL: Six Things to Know About NASA's Opportunity Mars Rover (Feb. 13, 2019)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/six-things-to-know-about-nasas-opportunity-mars-rover/",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"Opportunity worked longer on the surface of Mars than any other robot - more than 14 years.\" Moved from the Phys.org reprint to JPL."
     },
     {
       "id": "opp-distance",
@@ -235,11 +235,11 @@
       "deeper": "",
       "value": "45.16 km (28.06 mi)",
       "date": null,
-      "sourceTitle": "NASA/JPL: Six things to know about NASA's Opportunity Mars rover (2019), reprint on Phys.org",
-      "sourceUrl": "https://phys.org/news/2019-02-nasa-opportunity-mars-rover.html",
+      "sourceTitle": "JPL: Six Things to Know About NASA's Opportunity Mars Rover (Feb. 13, 2019)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/six-things-to-know-about-nasas-opportunity-mars-rover/",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"it also drove a total of 28.06 miles (45.16 kilometers)\". Marathon: NASA (March 2015) says it passed marathon distance, 26.219 miles (42.195 kilometers): https://www.nasa.gov/news-release/nasas-opportunity-mars-rover-finishes-marathon-clocks-in-at-just-over-11-years/"
     },
     {
       "id": "opp-blueberries",
@@ -247,59 +247,59 @@
       "deeper": "",
       "value": "",
       "date": null,
-      "sourceTitle": "NASA/JPL: Six things to know about NASA's Opportunity Mars rover (2019), reprint on Phys.org",
-      "sourceUrl": "https://phys.org/news/2019-02-nasa-opportunity-mars-rover.html",
+      "sourceTitle": "JPL: Six Things to Know About NASA's Opportunity Mars Rover (Feb. 13, 2019)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/six-things-to-know-about-nasas-opportunity-mars-rover/",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"small spheres of hematite nicknamed 'blueberries' that formed late from rising, acidic groundwater.\" Moved from the Phys.org reprint to JPL."
     },
     {
       "id": "opp-last-contact",
-      "kid": "Its last message came during a planet-wide dust storm.",
+      "kid": "Its last message came on June 10, 2018, during a dust storm that covered the whole planet.",
       "deeper": "",
       "value": "June 10, 2018",
       "date": "2018-06-10",
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Confirm on a NASA/JPL page."
+      "sourceTitle": "JPL: NASA's Opportunity Rover Mission on Mars Comes to End (Feb. 13, 2019)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/nasas-opportunity-rover-mission-on-mars-comes-to-end/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"The solar-powered rover's final communication was received June 10\" (2018), during a \"Mars-wide dust storm\". NASA Science: \"The last signal from the spacecraft was heard on June 10, 2018.\""
     },
     {
       "id": "opp-end",
-      "kid": "NASA kept calling for months, then said goodbye.",
+      "kid": "NASA kept calling for months. It sent more than a thousand commands. Then, in February 2019, NASA said goodbye.",
       "deeper": "",
-      "value": "mission declared complete February 13, 2019; more than 1,000 recovery commands",
+      "value": "last attempt late on Feb. 12, 2019; mission declared complete Feb. 13, 2019; more than a thousand recovery commands",
       "date": "2019-02-13",
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Confirm on a NASA/JPL page."
+      "sourceTitle": "JPL: NASA's Opportunity Rover Mission on Mars Comes to End (Feb. 13, 2019)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/nasas-opportunity-rover-mission-on-mars-comes-to-end/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"After more than a thousand commands to restore contact\". NASA Science Opportunity page: \"When NASA declared the mission complete on Feb. 13, 2019\"."
     },
     {
       "id": "opp-cleaning",
-      "kid": "Wind sometimes blew dust off its solar panels.",
+      "kid": "Wind sometimes blew dust off its solar panels. That gave it more power.",
       "deeper": "",
-      "value": "\"cleaning events\"",
+      "value": "wind events in March 2014 removed much of the dust and boosted its electricity",
       "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Find a NASA/JPL page."
+      "sourceTitle": "JPL: NASA Rover Opportunity's Selfie Shows Clean Machine (April 17, 2014)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/news.php?feature=4112",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"Cleaning effects of wind events in March boosted the amount of electricity available for the rover's work.\" The exact phrase \"cleaning events\" is not on this page. NASA Science Opportunity page: the wind \"had cleaned much of the dust off the rover's solar panels.\""
     },
     {
       "id": "opp-hole-in-one",
-      "kid": "It bounced inside airbags and rolled into a small crater.",
+      "kid": "It landed inside airbags. It bounced and rolled right into a small crater.",
       "deeper": "",
-      "value": "Eagle crater",
+      "value": "Eagle Crater, about 22 m (72 ft) across; NASA calls it a hole-in-one landing",
       "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Find a NASA/JPL page."
+      "sourceTitle": "JPL: New Look at 2004's Martian Hole-in-One Site (April 21, 2017)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/new-look-at-2004s-martian-hole-in-one-site/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"A series of bounces and tumbles after initial touchdown plunked the airbag-cushioned lander into the crater\"; the crater is \"a mere 72 feet (22 meters) across.\" Image credit on that page: NASA/JPL-Caltech/Univ. of Arizona."
     },
     {
       "id": "opp-quote-myth",
@@ -311,19 +311,19 @@
       "sourceUrl": "",
       "status": "verify",
       "checkedOn": null,
-      "note": "Do not use until confirmed. Find a reliable source (news fact-check or NASA statement)."
+      "note": "Unverified (2026-11-12): no NASA or JPL statement found. Snopes (https://www.snopes.com/fact-check/opportunity-rovers-final-words/) and LAist (https://laist.com/news/jpl-mars-rover-opportunity-battery-is-low-and-its-getting-dark) say reporter Jacob Margolis wrote the line as a poetic translation of the rover's last data. Not a primary source, so do not show the quote or the myth in the game."
     },
     {
       "id": "mars-blue-sunset",
-      "kid": "Sunsets on Mars look blue near the Sun.",
+      "kid": "On Mars, the sky near the setting Sun looks blue.",
       "deeper": "",
-      "value": "",
-      "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Find a NASA image page (Photojournal)."
+      "value": "Curiosity photographed it at the end of sol 956 (April 15, 2015); the rest of the sky is yellow to orange",
+      "date": "2015-04-15",
+      "sourceTitle": "JPL: NASA's Curiosity Rover Views Serene Sundown on Mars (May 8, 2015)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/nasas-curiosity-rover-views-serene-sundown-on-mars/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"the very fine dust is the right size so that blue light penetrates the atmosphere slightly more efficiently\"; Mark Lemmon: \"The rest of the sky is yellow to orange\". Only the part of the sky near the Sun is blue."
     },
     {
       "id": "ing-first-flight",
@@ -331,11 +331,11 @@
       "deeper": "",
       "value": "April 19, 2021",
       "date": "2021-04-19",
-      "sourceTitle": "NASA APPEL: NASA's Ingenuity Rotorcraft Makes Final Landing on Mars (2024)",
-      "sourceUrl": "https://appel.nasa.gov/2024/02/23/nasas-ingenuity-rotorcraft-makes-final-landing-on-mars/",
+      "sourceTitle": "JPL: After Three Years on Mars, NASA's Ingenuity Helicopter Mission Ends (Jan. 25, 2024)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/after-three-years-on-mars-nasas-ingenuity-helicopter-mission-ends",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"the first powered, controlled flight on another planet on April 19, 2021.\" The old NASA APPEL link now redirects to nasa.gov/appel, so it was replaced."
     },
     {
       "id": "ing-wright",
@@ -346,202 +346,202 @@
       "sourceTitle": "JPL PIA24434: The Wright Brothers",
       "sourceUrl": "https://www.jpl.nasa.gov/images/pia24434-the-wright-brothers/",
       "status": "checked",
-      "checkedOn": null,
-      "note": "Also NASA APPEL: https://appel.nasa.gov/2024/02/23/nasas-ingenuity-rotorcraft-makes-final-landing-on-mars/"
+      "checkedOn": "2026-11-12",
+      "note": "Caption: the swatch is wrapped with insulative tape \"around a cable located underneath the helicopter's solar panel.\" The fabric came from the wing covering of Flyer 1 (December 17, 1903, Kitty Hawk). Image credit: Library of Congress. JPL (Jan. 25, 2024) also mentions \"a swatch from the original Wright Flyer.\""
     },
     {
       "id": "ing-plan",
-      "kid": "It was planned for about 5 flights in 30 days.",
+      "kid": "It was planned for up to five test flights in 30 days.",
       "deeper": "",
-      "value": "about 5 flights over 30 days",
+      "value": "up to five experimental test flights over 30 days",
       "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Secondary sources quoting NASA's January 2024 briefing. Confirm on a NASA page."
+      "sourceTitle": "JPL: After Three Years on Mars, NASA's Ingenuity Helicopter Mission Ends (Jan. 25, 2024)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/after-three-years-on-mars-nasas-ingenuity-helicopter-mission-ends",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"Originally designed as a technology demonstration to perform up to five experimental test flights over 30 days\". Same wording on the April 16, 2024 JPL page."
     },
     {
       "id": "ing-72",
-      "kid": "It flew 72 times, more than 2 hours in all, 14 times farther than planned.",
+      "kid": "It flew 72 times, for more than 2 hours in all. It flew more than 14 times farther than planned.",
       "deeper": "",
-      "value": "72 flights; more than 2 h; 14x planned distance",
+      "value": "72 flights; more than 2 h total flight time; more than 14 times the planned distance",
       "date": null,
       "sourceTitle": "JPL: NASA's Ingenuity Mars Helicopter Team Says Goodbye ... for Now (April 16, 2024)",
       "sourceUrl": "https://www.jpl.nasa.gov/news/nasas-ingenuity-mars-helicopter-team-says-goodbye-for-now",
       "status": "checked",
-      "checkedOn": null,
-      "note": "Reprint: https://phys.org/news/2024-04-nasa-ingenuity-mars-helicopter-team.html"
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"72 flights\"; \"logged more than two hours of total flight time\"; \"flew more than 14 times farther than the distance expected\"."
     },
     {
       "id": "ing-final",
       "kid": "Its last flight damaged its rotor blades.",
       "deeper": "",
-      "value": "final flight January 18, 2024; mission ended January 25, 2024",
+      "value": "last flight January 18, 2024; end of mission announced January 25, 2024",
       "date": "2024-01-18",
-      "sourceTitle": "JPL: NASA's Ingenuity Mars Helicopter Team Says Goodbye ... for Now (April 16, 2024)",
-      "sourceUrl": "https://www.jpl.nasa.gov/news/nasas-ingenuity-mars-helicopter-team-says-goodbye-for-now",
+      "sourceTitle": "JPL: After Three Years on Mars, NASA's Ingenuity Helicopter Mission Ends (Jan. 25, 2024)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/after-three-years-on-mars-nasas-ingenuity-helicopter-mission-ends",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"NASA's Ingenuity Mars Helicopter flew for the last time on Jan. 18, 2024\"; \"one or more of its rotor blades sustained damage during landing\"; \"NASA announced the end of mission for Ingenuity on Jan. 25, 2024.\""
     },
     {
       "id": "ing-testbed",
-      "kid": "It stays at \"Valinor Hills\" and keeps saving data for future visitors. Its memory could hold about 20 years of daily data.",
+      "kid": "It stays at \"Valinor Hills\" and keeps collecting data for future explorers. Its memory could hold about 20 years of daily data.",
       "deeper": "",
       "value": "",
       "date": null,
       "sourceTitle": "JPL: NASA's Ingenuity Mars Helicopter Team Says Goodbye ... for Now (April 16, 2024)",
       "sourceUrl": "https://www.jpl.nasa.gov/news/nasas-ingenuity-mars-helicopter-team-says-goodbye-for-now",
       "status": "checked",
-      "checkedOn": null,
-      "note": "",
+      "checkedOn": "2026-11-12",
+      "note": "Source: it \"will remain at 'Valinor Hills'\"; \"to serve as a stationary testbed, collecting data that could benefit future explorers of the Red Planet\"; \"Ingenuity's memory could potentially hold about 20 years' worth of daily data.\"",
       "short": "Ingenuity, saving notes."
     },
     {
       "id": "ing-daily",
-      "kid": "Each day it wakes up, takes a picture and records the temperature.",
+      "kid": "It wakes up each day to check itself. It also takes pictures and records the temperature.",
       "deeper": "",
       "value": "",
       "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Secondary source. Confirm on the JPL page."
+      "sourceTitle": "JPL: NASA's Ingenuity Mars Helicopter Team Says Goodbye ... for Now (April 16, 2024)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/nasas-ingenuity-mars-helicopter-team-says-goodbye-for-now",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"Ingenuity will now wake up daily, activate its flight computers, and test the performance of its solar panel\" ... \"In addition, the helicopter will take a picture of the surface with its color camera and collect temperature data\". The page does not say the picture is taken every day, so the kid text does not either."
     },
     {
       "id": "ing-mass",
-      "kid": "It weighs about as much as a bag of sugar.",
+      "kid": "It weighs about 1.8 kilograms (4 pounds) on Earth.",
       "deeper": "",
-      "value": "about 1.8 kg (4 lb)",
+      "value": "about 4.0 pounds (1.8 kilograms) on Earth; about 1.5 pounds (0.68 kilograms) on Mars",
       "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Confirm on a NASA page."
+      "sourceTitle": "JPL: Ingenuity Mars Helicopter Landing Press Kit, Quick Facts",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/press_kits/ingenuity/landing/quick_facts/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"Weight: About 4.0 pounds (1.8 kilograms) on Earth, and about 1.5 pounds (0.68 kilograms) on Mars\". The old \"bag of sugar\" comparison is not in any NASA source, so it was dropped."
     },
     {
       "id": "ing-first-flight-length",
-      "kid": "Its first flight lasted 39 seconds at Wright Brothers Field.",
+      "kid": "Its first flight lasted about 39 seconds. It rose about 3 meters (10 feet). The spot is now called Wright Brothers Field.",
       "deeper": "",
-      "value": "39 s; about 3 m high",
-      "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Confirm on a NASA page."
+      "value": "39.1 s in all; climbed to 10 feet (3 meters); hovered 30 s; airborne at 3:34 a.m. EDT, April 19, 2021",
+      "date": "2021-04-19",
+      "sourceTitle": "NASA: NASA's Ingenuity Mars Helicopter Succeeds in Historic First Flight (April 19, 2021)",
+      "sourceUrl": "https://www.nasa.gov/news-release/nasas-ingenuity-mars-helicopter-succeeds-in-historic-first-flight/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"a total of 39.1 seconds of flight\"; \"prescribed maximum altitude of 10 feet (3 meters)\"; \"this first of many airfields on other worlds will now be known as Wright Brothers Field.\""
     },
     {
       "id": "mars-thin-air",
-      "kid": "Mars air is very thin, about 1% as dense as Earth's.",
+      "kid": "The air on Mars is very thin, only about 1% as dense as the air on Earth.",
       "deeper": "",
       "value": "about 1%",
       "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Confirm on a NASA Ingenuity page."
+      "sourceTitle": "JPL: Ingenuity Mars Helicopter Landing Press Kit, Quick Facts",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/press_kits/ingenuity/landing/quick_facts/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"Atmosphere: About 1% the density of Earth's atmosphere at the surface\". NASA Science Ingenuity page: \"less than 1 percent as dense as Earth's\"."
     },
     {
       "id": "ing-rotor-speed",
-      "kid": "Its blades spin very fast to make enough lift.",
+      "kid": "Its blades spin very fast, about 2,400 times a minute.",
       "deeper": "",
-      "value": "rpm value",
+      "value": "roughly 2,400 rpm; two 4-foot (1.2-meter) counter-rotating rotors",
       "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Confirm on a NASA Ingenuity page."
+      "sourceTitle": "JPL: Ingenuity Mars Helicopter Landing Press Kit, Quick Facts",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/press_kits/ingenuity/landing/quick_facts/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"two 4-foot-long (1.2-meter-long) counter-rotating rotors that spin at roughly 2,400 rpm\". This is the press-kit design figure; actual flight settings were higher, so keep the word \"about\"."
     },
     {
       "id": "v1-launch",
       "kid": "Voyager 1 launched in 1977.",
       "deeper": "",
-      "value": "September 5, 1977",
+      "value": "September 5, 1977, 12:56:01 UT",
       "date": "1977-09-05",
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Confirm on a NASA/JPL Voyager page."
+      "sourceTitle": "NASA Science: Voyager 1 mission page",
+      "sourceUrl": "https://science.nasa.gov/mission/voyager/voyager-1/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: launch \"Sept. 5, 1977 / 12:56:01 UT\"."
     },
     {
       "id": "v1-interstellar",
-      "kid": "It left the Sun's bubble and entered interstellar space.",
+      "kid": "It left the Sun's bubble and entered interstellar space in 2012.",
       "deeper": "",
-      "value": "2012",
-      "date": null,
-      "sourceTitle": "",
-      "sourceUrl": "",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Confirm on a NASA/JPL Voyager page."
+      "value": "August 25, 2012 (the date the team generally accepts; announced September 12, 2013)",
+      "date": "2012-08-25",
+      "sourceTitle": "JPL: NASA Spacecraft Embarks on Historic Journey Into Interstellar Space (Sept. 12, 2013)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/nasa-spacecraft-embarks-on-historic-journey-into-interstellar-space/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: changes in energetic particles \"first detected on Aug. 25, 2012\", which the team accepts as the arrival date; the heliosphere is \"the bubble of charged particles surrounding the sun\"."
     },
     {
       "id": "v1-light-day",
-      "kid": "Voyager 1 becomes the first human-made object one light-day from Earth: its signals take a whole day to reach us.",
+      "kid": "Voyager 1 becomes the first human-made object one light-day from Earth. Light from Earth takes a whole day to reach it.",
       "deeper": "",
-      "value": "November 18, 2026, 12:16:07 a.m. CST (06:16:07 UTC); about 25.9 billion km (16.1 billion mi), 173.14 AU",
+      "value": "Wednesday, November 18, 2026, 5:16:07 a.m. EST (10:16:07 UTC); 16,094,799,096 miles (25,902,068,356 km); 49 years, 2 months and 11 days after launch",
       "date": "2026-11-18",
-      "sourceTitle": "EarthSky: Voyager 1 will be 1 light-day from Earth (citing NASA's June 17, 2026 statement)",
-      "sourceUrl": "https://earthsky.org/space/voyager-1-1-light-day-from-earth-november-17-18-2026/",
+      "sourceTitle": "NASA Science: Voyager 1: What Is a Light-Day (updated Nov. 10, 2026)",
+      "sourceUrl": "https://science.nasa.gov/mission/voyager/voyager-1/voyager-1-what-is-a-light-day/",
       "status": "checked",
-      "checkedOn": null,
-      "note": "Secondary sources. Also IFLScience (confirmed with the Voyager team): https://iflscience.com/its-official-voyager-1-will-cross-the-1-light-day-threshold-on-november-18-2026-82733 . Find the NASA/JPL primary page.",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"Wednesday, Nov. 18, 2026, at 5:16:07 a.m. EST\"; a mile marker \"reached by no other human-made object\". NASA release M26-086 (Nov. 10, 2026): any light from Earth would take 24 hours to reach the spacecraft, https://www.nasa.gov/news-release/nasa-invites-media-public-to-join-voyager-1-one-light-day-activities/ . CORRECTION: the old value (12:16:07 a.m. CST, 06:16:07 UTC, from EarthSky) does not match NASA. Code that hardcodes T06:16:07Z (src/content/notebook.ts, scripts/vite/pages-plugin.ts) should use T10:16:07Z.",
       "short": "Voyager 1, still sending."
     },
     {
       "id": "v2-light-day",
-      "kid": "Voyager 2 won't reach one light-day until around 2035.",
+      "kid": "Voyager 2 is on pace to be one light-day from Earth in November 2035.",
       "deeper": "",
       "value": "November 2035",
       "date": null,
-      "sourceTitle": "EarthSky: Voyager 1 will be 1 light-day from Earth (citing NASA's June 17, 2026 statement)",
-      "sourceUrl": "https://earthsky.org/space/voyager-1-1-light-day-from-earth-november-17-18-2026/",
+      "sourceTitle": "NASA Science: Voyager 1: What Is a Light-Day (updated Nov. 10, 2026)",
+      "sourceUrl": "https://science.nasa.gov/mission/voyager/voyager-1/voyager-1-what-is-a-light-day/",
       "status": "checked",
-      "checkedOn": null,
-      "note": "Secondary source."
+      "checkedOn": "2026-11-12",
+      "note": "Source: Voyager 2 \"is on pace to be one light-day away from Earth in nine more years, in November 2035.\""
     },
     {
       "id": "golden-record",
       "kid": "Each Voyager carries a Golden Record with greetings in 55 languages, pictures, music and sounds of Earth.",
       "deeper": "",
-      "value": "12-inch gold-plated copper disk; 55 languages; 115 images; committee chaired by Carl Sagan",
+      "value": "12-inch gold-plated copper disk; greetings in 55 languages; 115 images; natural sounds; music; committee chaired by Carl Sagan of Cornell University",
       "date": null,
-      "sourceTitle": "The Planetary Society: The Voyager Golden Record",
-      "sourceUrl": "https://www.planetary.org/space-images/the-voyager-golden-record",
+      "sourceTitle": "NASA Science: Golden Record Contents",
+      "sourceUrl": "https://science.nasa.gov/mission/voyager/golden-record-contents/",
       "status": "checked",
-      "checkedOn": null,
-      "note": "Secondary source. Confirm on NASA's Golden Record page."
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"selected for NASA by a committee chaired by Carl Sagan of Cornell University\"; \"assembled 115 images\"; \"spoken greetings from Earth-people in fifty-five languages\". 12-inch gold-plated copper disk: NASA Science Golden Record Overview, https://science.nasa.gov/mission/voyager/voyager-golden-record-overview/ . Note: NASA Night Sky Notes (Nov. 2026) says 116 images and a 1977 NASA release says 60 languages; use 55 and 115 as NASA's current Golden Record pages do."
     },
     {
       "id": "sur3-visit",
       "kid": "Surveyor 3 is the only robot probe people have visited on another world. Apollo 12 landed within walking distance.",
       "deeper": "",
-      "value": "Apollo 12 landing November 19, 1969",
+      "value": "Apollo 12 landed November 19, 1969, about 170 yards (155 m) away",
       "date": "1969-11-19",
-      "sourceTitle": "Space.com / collectSPACE: Apollo 12 and Surveyor 3 parts, 50 years on",
-      "sourceUrl": "https://www.space.com/apollo-12-surveyor-3-parts-50-years.html",
+      "sourceTitle": "NASA Science: Footpads and Footprints: Humans and Machine Meet on the Moon (2015)",
+      "sourceUrl": "https://science.nasa.gov/solar-system/moon/footpads-and-footprints-humans-and-machine-meet-on-the-moon/",
       "status": "checked",
-      "checkedOn": null,
-      "note": "Secondary source. Confirm on NASA."
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"It was the first and only time this has ever happened. So far.\" NSSDCA (1967-035A) says the LM landed \"within about 180 m\"; the NASA Science Surveyor 3 page also says about 180 m."
     },
     {
       "id": "sur3-parts",
-      "kid": "The astronauts brought back its camera and other parts so engineers could study how they aged on the Moon.",
+      "kid": "The astronauts brought back its camera and other parts so scientists could study how years on the Moon changed them.",
       "deeper": "",
-      "value": "more than 80 researchers studied the parts",
+      "value": "parts including the soil scoop and camera system; about 10 kg in all (NSSDCA)",
       "date": null,
-      "sourceTitle": "Space.com / collectSPACE: Apollo 12 and Surveyor 3 parts, 50 years on",
-      "sourceUrl": "https://www.space.com/apollo-12-surveyor-3-parts-50-years.html",
+      "sourceTitle": "NASA Science: Footpads and Footprints: Humans and Machine Meet on the Moon (2015)",
+      "sourceUrl": "https://science.nasa.gov/solar-system/moon/footpads-and-footprints-humans-and-machine-meet-on-the-moon/",
       "status": "checked",
-      "checkedOn": null,
-      "note": "Secondary source."
+      "checkedOn": "2026-11-12",
+      "note": "Source: they \"removed parts from Surveyor 3, including the soil scoop and camera system\" so scientists could \"study the effects of years of exposure on the Moon's surface.\" The old \"more than 80 researchers\" figure is not on a NASA page and was removed. NSSDCA: the camera is now on display at the Smithsonian National Air and Space Museum."
     },
     {
       "id": "sur3-microbe",
@@ -551,9 +551,9 @@
       "date": null,
       "sourceTitle": "Space.com / collectSPACE: Apollo 12 and Surveyor 3 parts, 50 years on",
       "sourceUrl": "https://www.space.com/apollo-12-surveyor-3-parts-50-years.html",
-      "status": "checked",
+      "status": "verify",
       "checkedOn": null,
-      "note": "Secondary source."
+      "note": "Unverified (2026-11-12): NASA sources disagree. Glavin et al. 2010 (NASA GSFC, https://ntrs.nasa.gov/api/citations/20100036597/downloads/20100036597.pdf) says it has been suggested the foam was contaminated during analysis in the Lunar Receiving Laboratory; a NASA educator guide says the accepted view is that germs got on the camera before launch. Do not use. Previous secondary source: Space.com."
     },
     {
       "id": "soj-mission",
@@ -564,8 +564,8 @@
       "sourceTitle": "NASA Science: Pathfinder Sol 8",
       "sourceUrl": "https://science.nasa.gov/resource/pathfinder-sol-8/",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"Sojourner spent 83 days of a planned seven-day mission\"; \"Sol 1 began on July 4, 1997\"; final data at 10:23 UTC on September 27, 1997. First rover on Mars: NASA Science Mars Pathfinder page says Pathfinder would \"deliver the first-ever robotic rover, Sojourner, to the Martian surface\", https://science.nasa.gov/mission/mars-pathfinder/"
     },
     {
       "id": "soj-lasers",
@@ -576,8 +576,8 @@
       "sourceTitle": "NASA Science: Pathfinder Sol 8",
       "sourceUrl": "https://science.nasa.gov/resource/pathfinder-sol-8/",
       "status": "checked",
-      "checkedOn": null,
-      "note": ""
+      "checkedOn": "2026-11-12",
+      "note": "Caption: \"hazard-detecting laser stripes\"."
     },
     {
       "id": "a11-site",
@@ -605,7 +605,7 @@
       "sourceUrl": "https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html",
       "status": "checked",
       "checkedOn": "2026-11-10",
-      "note": "Table row: Lunar Module 26.13239 3.63330. Kid wording about the rille is not from this page; confirm before use."
+      "note": "Table row: Lunar Module 26.13239 3.63330. LROC \"Follow the Tracks\" (https://lroc.im-ldi.com/posts/491): Falcon set down on the Hadley plains \"a mere 2 kilometers from Hadley Rille.\" \"Long winding valley\" is not quoted from a source; confirm before use."
     },
     {
       "id": "opp-site",
@@ -629,11 +629,59 @@
       "lat": 18.49727,
       "lon": 77.32253,
       "date": "2024-01-18",
-      "sourceTitle": "NASA Mars 2020 helicopter waypoints data feed",
+      "sourceTitle": "NASA Mars 2020 helicopter flight waypoints data (MMGIS)",
       "sourceUrl": "https://mars.nasa.gov/mmgis-maps/M20/Layers/json/m20_heli_waypoints.json",
-      "status": "verify",
-      "checkedOn": null,
-      "note": "Flight 72 record, Sol 1036. The press kit gives about 18 N, 77 E for Jezero: https://www.jpl.nasa.gov/news/press_kits/mars_2020/landing/mission/landing_site/ . Confirm a prose NASA page before use."
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Flight 72 record: Sol 1036, Earth date Jan. 18, 2024, Airfield Chi, lat 18.49726866, lon 77.32253449. Jezero Crater confirmed in prose on NASA Science's Ingenuity page (destination: \"Jezero Crater, Mars\"): https://science.nasa.gov/mission/mars-2020-perseverance/ingenuity-mars-helicopter/"
+    },
+    {
+      "id": "rec-mars-wind",
+      "kid": "This is real wind on Mars. Perseverance's microphone recorded it on February 22, 2021.",
+      "deeper": "The SuperCam microphone sits high on the rover's mast. This clip was made on the rover's fourth day on Mars, after the mast was raised. Listen near 20 seconds.",
+      "value": "Recorded Feb. 22, 2021 (sol 4) by the SuperCam microphone after the mast was deployed; wind clearest around 20 s in. Credit: NASA/JPL-Caltech/LANL/CNES/CNRS/ISAE-Supaero",
+      "date": "2021-02-22",
+      "sourceTitle": "JPL: Perseverance Rover's SuperCam Science Instrument Delivers First Results (March 10, 2021)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/perseverance-rovers-supercam-science-instrument-delivers-first-results/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"This recording was made on Feb. 22, 2021, on the fourth sol (Martian day)\" \"after deployment of the rover's mast\"; \"Some wind can be heard, especially around 20 seconds into the recording.\" An earlier clip (Feb. 19, 2021, sol 1, about 18 hours after landing, mast still stowed) has \"just a little wind\". Use the sol 4 clip from this page and its credit line."
+    },
+    {
+      "id": "rec-ingenuity-hum",
+      "kid": "Perseverance's microphone heard Ingenuity's blades humming during its fourth flight, on April 30, 2021.",
+      "deeper": "The rover was parked 80 meters (262 feet) away. Scientists picked out the hum of the blades and made it louder. It was the first time a spacecraft on another planet recorded the sound of another spacecraft.",
+      "value": "Flight 4, April 30, 2021; rover 80 m (262 ft) from the takeoff spot; SuperCam microphone; 84 Hz blade hum kept (80 to 90 Hz) and amplified. Credit: NASA/JPL-Caltech/ASU/MSSS/LANL/CNES/CNRS/ISAE-SUPAERO",
+      "date": "2021-04-30",
+      "sourceTitle": "JPL: NASA's Perseverance Captures Video, Audio of Fourth Ingenuity Flight (May 7, 2021)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/nasas-perseverance-captures-video-audio-of-fourth-ingenuity-flight/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"For the first time, a spacecraft on another planet has recorded the sounds of a separate spacecraft.\" \"With Perseverance parked 262 feet (80 meters) from the helicopter's takeoff and landing spot\"; recorded with \"a microphone included with the SuperCam instrument\". The clip is filtered and amplified, so say so in the caption or deeper text."
+    },
+    {
+      "id": "rec-voyager-plasma",
+      "kid": "This sound comes from Voyager 1 in interstellar space. Its antennas picked up waves in the thin gas around it. Scientists played those waves through a speaker.",
+      "deeper": "Space has almost no air, so this is not sound you could hear there. The waves were picked up in 2012 and 2013. The rising tone shows the gas around Voyager 1 was getting denser.",
+      "value": "PIA17045, released September 12, 2013; plasma wave instrument data from October to November 2012 and April to May 2013. Credit: NASA/JPL-Caltech/University of Iowa",
+      "date": "2013-09-12",
+      "sourceTitle": "NASA Science Photojournal: Voyager Captures Sounds of Interstellar Space (PIA17045)",
+      "sourceUrl": "https://science.nasa.gov/photojournal/voyager-captures-sounds-of-interstellar-space/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: \"Voyager 1's plasma wave instrument detected the vibrations of dense interstellar plasma, or ionized gas\" \"from October to November 2012 and April to May 2013\"; \"The waves detected by the instrument antennas can be simply amplified and played through a speaker.\" Rising tones mean increasing density. NASA Science \"The Sounds of Interstellar Space\" explains the instrument does not detect sound waves. Audio: https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia17/pia17045/PIA17045_20130906-640.mp4"
+    },
+    {
+      "id": "rec-apollo11-landed",
+      "kid": "Neil Armstrong radioed from the Moon, \"Houston, Tranquility Base here. The Eagle has landed.\" It was July 20, 1969.",
+      "deeper": "",
+      "value": "102:45:58 mission elapsed time; lunar module landed at 4:17 p.m. EDT, July 20, 1969",
+      "date": "1969-07-20",
+      "sourceTitle": "NASA: July 20, 1969: One Giant Leap For Mankind",
+      "sourceUrl": "https://www.nasa.gov/history/july-20-1969-one-giant-leap-for-mankind/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Source: Neil Armstrong radios \"Houston, Tranquility Base here. The Eagle has landed.\" after the lunar module lands at 4:17 p.m. EDT. Apollo Lunar Surface Journal: Armstrong at 102:45:58, https://www.apollojournals.org/alsj/a11/a11.landing.html . NSSDCA audio clip: http://nssdc.gsfc.nasa.gov/planetary/lunar/a11landing.aiff (listed on https://nssdc.gsfc.nasa.gov/planetary/sound/index.html)."
     }
   ]
 }

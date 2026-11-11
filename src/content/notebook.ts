@@ -157,7 +157,7 @@ export const SPREADS: MachineSpread[] = [
 /** A fact's kid wording, made date-aware where the fact has a future date. */
 export function factText(entry: FactEntry, today = new Date()): string {
   if (entry.id === "v1-light-day" && entry.date) {
-    const when = new Date(`${entry.date}T06:16:07Z`);
+    const when = new Date(`${entry.date}T10:16:07Z`);
     const day = formatDate(entry.date);
     if (today < when) return `On ${day}, Voyager 1 becomes the first human-made object one light-day from Earth: its signals will take a whole day to reach us.`;
     return `On ${day}, Voyager 1 became the first human-made object one light-day from Earth. Its signals now take more than a day to reach us.`;

@@ -51,7 +51,7 @@ function guideBody(today: Date): string {
   const item = (f: FactEntry): string => {
     if (f.id === "v1-light-day" && f.date) {
       const after = factText(f, new Date(8.64e15));
-      return `<li><span data-when="${f.date}T06:16:07Z" data-after="${esc(after)}">${esc(factText(f, today))}</span>${cite(f)}</li>`;
+      return `<li><span data-when="${f.date}T10:16:07Z" data-after="${esc(after)}">${esc(factText(f, today))}</span>${cite(f)}</li>`;
     }
     return `<li>${esc(factText(f, today))}${cite(f)}</li>`;
   };
