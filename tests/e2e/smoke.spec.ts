@@ -32,7 +32,8 @@ test("health endpoint answers", async ({ request }) => {
 test("a room WebSocket connects", async ({ page }, testInfo) => {
   const room = `smoke-${testInfo.project.name}-${Date.now() % 100000}`;
   await page.goto(`/?room=${room}&test&quality=low`);
-  await expect(page.locator("html")).toHaveAttribute("data-net", "connected", { timeout: 20_000 });
+  // CPU-drawn WebGL plus a trace recording can hold the page's first frames for a while.
+  await expect(page.locator("html")).toHaveAttribute("data-net", "connected", { timeout: 40_000 });
   await expect(page.locator("html")).toHaveAttribute("data-players", "1");
 });
 

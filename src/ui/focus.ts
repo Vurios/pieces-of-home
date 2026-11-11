@@ -95,8 +95,13 @@ export function gamepadNav(getRoot: () => HTMLElement | null, onBack: () => void
     }
     return false;
   };
+  let last = performance.now();
   const tick = (): void => {
     const now = performance.now();
+    // After a stall (one slow frame of the 3D world), a held direction starts
+    // its repeat wait again, so a single press never jumps two places.
+    if (now - last > 150) for (const key of held.keys()) held.set(key, now);
+    last = now;
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     const pad = [...pads].find((p) => p && p.connected);
     const root = getRoot();

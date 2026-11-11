@@ -84,6 +84,13 @@ export class Engine {
   private statsTime = 0;
   private frames = 0;
   /** How long the last world render took on the main thread, in ms, and when it ran. */
+  /**
+   * True while the paper loader covers the canvas. The world is drawn a few
+   * times to warm up shaders and textures, then not at all until the loader
+   * lifts, so the loader and its controls stay smooth on a slow device.
+   */
+  veiled = false;
+  private warmFrames = 4;
   private renderCost = 0;
   private lastRender = 0;
   private saveTimer = 0;
@@ -389,6 +396,13 @@ export class Engine {
     if (this.paused && !this.bookmark && this.renderCost > 40 && time - this.lastRender < this.renderCost * 4) {
       this.afterFrame(dt);
       return;
+    }
+    if (this.veiled) {
+      if (this.warmFrames <= 0) {
+        this.afterFrame(dt);
+        return;
+      }
+      this.warmFrames -= 1;
     }
     this.renderer.info.reset();
 

@@ -1,15 +1,18 @@
 import { readFileSync } from "node:fs";
 import type { Plugin } from "vite";
 import { LOADER } from "../../src/content/loader";
+import { checkbox, deskItems, moonlight, pencil, postmark, titleArt, travelDoodle } from "./loader-art";
 
 /**
  * Draws the loading page into `index.html` at build time (and in dev), so the
- * page paints before any script runs:
+ * page paints before any script runs. It is Dad's notebook open on his bench
+ * at night (see `loader-art.ts` for the bench and the title):
  *
  * - Dad's desk lamp as five ink strokes (base, arm, joint, shade, bulb). Each
  *   stroke comes in three hand-wobbled copies that swap at about 10 frames a
  *   second, the "boiling line" of hand-drawn animation.
- * - The "Things that kept working" list, each line a fact's short wording.
+ * - The "Things that kept working" list, each line a fact's short wording,
+ *   ticked off in pencil as the game loads.
  */
 interface FactRow {
   id: string;
@@ -108,12 +111,7 @@ export function lampSvg(): string {
   // Construction lines come first, the way a drawing starts: a compass circle, center marks, a ground line.
   const guides = `<g class="guides"><circle cx="200" cy="222" r="176"/><path d="M200 30 L 200 66 M200 378 L 200 414 M6 222 L 42 222 M358 222 L 394 222"/><path d="M-70 353 L 470 353"/></g>`;
   const halo = `<defs><radialGradient id="bulb-glow"><stop offset="0" stop-color="#fff0c8" stop-opacity="1"/><stop offset="0.3" stop-color="#ffc66e" stop-opacity="0.5"/><stop offset="1" stop-color="#ffae48" stop-opacity="0"/></radialGradient></defs><circle class="halo" cx="278" cy="204" r="130" fill="url(#bulb-glow)"/>`;
-  return `<svg id="lamp" viewBox="-120 24 640 400" aria-hidden="true" focusable="false">${halo}${guides}${groups.join("")}${notes}</svg>`;
-}
-
-/** The engineer's title block in the corner of the drawing. */
-export function titleBlockHtml(): string {
-  return LOADER.titleBlock.map(([k, v]) => `<div><dt>${escape(k)}</dt><dd>${escape(v)}</dd></div>`).join("");
+  return `<svg id="lamp" viewBox="-84 30 594 380" aria-hidden="true" focusable="false">${halo}${guides}${groups.join("")}${notes}</svg>`;
 }
 
 function escape(text: string): string {
@@ -129,7 +127,12 @@ export function listHtml(facts: FactRow[]): string {
     return fact.short;
   });
   items.push(LOADER.last);
-  return items.map((text, i) => `<li data-step="${i}"><svg class="tick" viewBox="0 0 20 20" aria-hidden="true"><path pathLength="1" d="M3 11 C 5 13, 7 15, 8 16 C 11 11, 14 7, 18 3"/></svg><span>${escape(text)}</span></li>`).join("");
+  return items.map((text, i) => `<li data-step="${i}">${checkbox(31 + i * 7)}<span>${escape(text)}</span></li>`).join("");
+}
+
+/** The dedication, one span per letter, so it can write itself in from left to right on any number of lines. */
+export function writtenHtml(text: string): string {
+  return [...text].map((ch, i) => (ch === " " ? " " : `<span style="--i:${i}">${escape(ch)}</span>`)).join("");
 }
 
 export function loaderPlugin(): Plugin {
@@ -142,12 +145,15 @@ export function loaderPlugin(): Plugin {
         const facts = (JSON.parse(readFileSync(new URL("../../src/data/facts.json", import.meta.url), "utf8")) as { facts: FactRow[] }).facts;
         return html
           .replace("<!--poh:lamp-->", lampSvg())
-          .replace("<!--poh:kicker-->", escape(LOADER.kicker))
-          .replace("<!--poh:title-->", escape(LOADER.title))
-          .replace("<!--poh:titleblock-->", titleBlockHtml())
+          .replace("<!--poh:postmark-->", postmark(escape(LOADER.kicker.toUpperCase())))
+          .replace("<!--poh:title-->", `<h1 id="boot-title" class="sr">${escape(LOADER.title)}</h1>${titleArt()}`)
+          .replace("<!--poh:desk-->", deskItems())
+          .replace("<!--poh:moon-->", moonlight())
+          .replace("<!--poh:travel-->", travelDoodle())
+          .replace("<!--poh:pencil-->", pencil)
           .replace("<!--poh:list-->", listHtml(facts))
           .replace("<!--poh:heading-->", escape(LOADER.heading))
-          .replace("<!--poh:ready-->", escape(LOADER.ready))
+          .replace("<!--poh:ready-->", writtenHtml(LOADER.ready))
           .replace("<!--poh:prompt-->", escape(LOADER.prompt))
           .replace("<!--poh:hint-->", escape(LOADER.promptHint))
           .replace("<!--poh:slow-->", escape(LOADER.slow))

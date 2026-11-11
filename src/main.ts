@@ -104,10 +104,12 @@ async function boot(): Promise<void> {
   }
 
   // The camera waits on the lamp's glow behind the paper until the light is turned on.
+  engine.veiled = Boolean(loader);
   engine.startTitle();
   engine.start();
   flow.setStage("waiting");
   loader?.ready(() => {
+    engine.veiled = false;
     // Inside the click, tap or key press: sound is allowed from here on.
     void audio.unlock().then(() => {
       audio.lampClick();
