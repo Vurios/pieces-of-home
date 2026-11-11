@@ -124,6 +124,14 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Resolution governor, frozen-world frame cap, shader warm-up, forgiving jumps, steadier camera, wheel zoom (DECISIONS #40)
 - [x] Screens in `docs/screens/pass6/`; typecheck, 56 unit tests, 22 Playwright tests and check:facts pass
 
+## Pass 7 (with Phase 04, at the team's request)
+
+- [x] Desktop-only screenshots; more air in the loader title (DECISIONS #41)
+- [x] Hair as one sculpted shell for every character (DECISIONS #43)
+- [x] Space mail envelopes, round postal cancellation stamps, mission patches, notebook type and ink colours (DECISIONS #44)
+- [x] The mission layer: patches, "Your mission" tab, the dish that listens, and the Phase 05 plan with game references in Game Bible 7.1 (DECISIONS #45)
+- [x] Screens in `docs/screens/pass7/` (`scripts/screens-notebook.ts` captures the notebook and the stamp moment)
+
 ## Phase 04: Music, sound effects and voices in JavaScript
 
 - [x] Audio Director: six buses, compressor and limiter, room (convolution on Medium and High, echo on Low), cue registry with anti-spam, positional emitters (HRTF, equal power, mono by tier), zone ambience, per-step footsteps by surface, voice ducking, notebook muffle, suspend with the tab (DECISIONS #42)

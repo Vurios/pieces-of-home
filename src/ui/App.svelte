@@ -84,6 +84,20 @@
         flow.setStage("play");
         greet();
       }),
+      // Dad's dish on the hill: it turns, the radio hisses, a few faint blips come in.
+      engine.bus.on("interact:done", ({ id }) => {
+        if (id !== "dish") return;
+        const at = engine.world?.anchor("dish") ?? null;
+        audio.play("dish-servo", { at });
+        window.setTimeout(() => {
+          const hiss = audio.loop("radio-hiss", 0.8, at);
+          for (const delay of [0.6, 1.5, 1.9, 2.8]) audio.play("call-blip", { at, delay, level: 0.5 });
+          window.setTimeout(() => {
+            hiss?.stop();
+            engine.bus.emit("toast", { text: t("toast.dish") });
+          }, 3400);
+        }, 1200);
+      }),
       engine.bus.on("letter:delivered", ({ letter }) => {
         if (letter !== "to-the-lamp") return;
         const lamp = engine.world?.anchor("lamp");

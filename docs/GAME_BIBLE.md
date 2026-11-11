@@ -287,6 +287,33 @@ Surveyor 3 is the only robotic probe that people have visited on another world `
 - **Save:** automatic after each delivery and stamp. Continue from the title. Chapter select unlocks after the prologue. An *Explore freely* setting unlocks everything for teachers and judges.
 - **The workshop changes** after each chapter: a new photo on the wall, Milo's new part, a glowing dome, a fuller museum shelf.
 
+
+### 7.1 The mission layer
+
+The machines are real spacecraft, so the game should feel like a small, homemade space program run from Dad's workshop. Everything stays warm, handmade and honest: Dad's own patches and stamps, never an agency's marks, and every number from `facts.json`.
+
+**Built (pass 7):**
+
+- **Mission patches.** Each machine has an embroidered patch of Dad's own design (twill, satin-stitch rim, the machine in thread, its kid name round the edge). The stamp moment ends with the patch flying in; the notebook's contents show each patch in thread once earned and as a pencil circle before. Dad's notebook has its own patch on the first page.
+- **Space mail.** Dad's letters are airmail envelopes with a clay and night-blue edge, "By lamplight" in the corner, a perforated postage stamp engraved with the destination (Home, Moon, Mars, Deep space) and an amber wax seal with the lamp pressed in. Delivered letters get a round postmark and a red "Delivered" stamp.
+- **Postal cancellations.** Chapter stamps are round post-office cancellations: "Delivered by Remi" round the top, the post office round the bottom (Home Post, Moon Post, Mars Post, Deep Space Post), the two stamp lines in the middle and wavy cancel lines.
+- **Your mission.** The goal card carries a small red "Your mission" tab, like a checklist tab in a flight binder.
+- **Dad's dish listens.** Pointing the backyard dish turns its motor, then radio hiss and a few faint blips come in: "Just stars and static tonight." It sets up the Finale, where the same dish finds Voyager 1.
+
+**Next (Phase 05 and later), each borrowed from a game that does it well:**
+
+| Idea | What players do | Borrowed from | Notes |
+|---|---|---|---|
+| Lamp countdown | Travel through the Looking Lamp starts with "3, 2, 1" while the bulb brightens and the room hums, then the iris closes | Kerbal Space Program's launch moment | Never a fail state. In co-op each friend presses "Go!" first, like a flight director's poll, and the count starts when everyone is ready |
+| Soft landing | On arrival, ease the lamp's light down onto a dotted landing circle; it always lands | Lunar Lander, made gentle | P1. Skippable, and off in reduced motion |
+| Light delay | Sending a pulse or a call shows a dotted signal crossing space and the answer arrives after the real light time | The game's own Chapter 1 laser ping | Moon round trip from `light-roundtrip`; Mars and Voyager delays only from sourced, date-aware facts |
+| Telemetry gauges | The notebook shows "planned" and "actual" as hand-drawn gauges (90 sols planned, more than 14 years worked) | Mission control readouts, drawn by hand | Every value from `facts.json` |
+| Rover camera | In photo mode on the Moon and Mars, a grainy black-and-white frame with a hand-drawn crosshair | Real rover cameras, as a filter | Always an illustration of the model world, never passed off as a real image |
+| Clue string | Deeper notes connect machines with red string (Opportunity to Ingenuity to Perseverance) | Outer Wilds' ship log | P2 |
+| Mission timeline | A ribbon across the workshop wall from 1969 to today, a pin per machine | Museum timelines | Dates from `facts.json` |
+
+Cozy rules from other games that this layer keeps: no timers and no failing (A Short Hike), a world small enough to know by heart (Messenger), objects that tell the story without words (Unpacking), friends who help by being there (Astroneer's tethered co-op).
+
 ---
 
 ## 8. Co-op and kid safety

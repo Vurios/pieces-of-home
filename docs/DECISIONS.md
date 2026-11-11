@@ -428,3 +428,23 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 **Why:** The team asked for smoother, better hair. Stylized game characters model hair as one sculpted mass with grooves, not as separate blobs; one smooth surface has no seams, takes the ink outline cleanly, and costs fewer triangles than twenty-five lock spheres.
 
 **Alternatives considered:** Metaballs or marching cubes (heavier to build and harder to art-direct), hair cards with textures (does not fit the painted toon look), more locks (more seams and triangles).
+
+## 44. Space mail, postal stamps and mission patches in Dad's notebook
+
+**Date:** 2026-11-12
+
+**Decision:** Dad's letters are airmail envelopes ("By lamplight", a clay and night-blue edge, a perforated postage stamp engraved for the destination, an amber wax seal with the lamp, a round postmark once delivered). Chapter stamps are round post-office cancellations (`InkStamp.svelte`). Each machine has an embroidered mission patch of our own design (`MissionPatch.svelte`); the notebook's first page carries the notebook's patch on a paper ribbon, the contents show each machine's patch (pencil circle until earned) and a coloured destination tag, and the stamp moment lands on a sheet of Dad's paper with the patch flying in after. Dad's handwriting moves to a deeper fountain-pen blue-black (`--dad-ink: #233f73`), page numbers to red pencil, and labels get a small star.
+
+**Why:** The team asked for a better mail and stamp design, better notebook type and colour, and a stronger space feel. Patches, airmail and cancellations are the real visual language of space missions and of post, so they carry both the delivery story and the space theme without any agency marks.
+
+**Alternatives considered:** A bookplate and rectangular rubber stamps (the previous design, too generic), NASA-style logos (not allowed), photographic stamps (would look like real artefacts).
+
+## 45. A mission layer across the game
+
+**Date:** 2026-11-12
+
+**Decision:** Added Game Bible section 7.1, the mission layer: what is built now (patches, space mail, cancellations, the "Your mission" tab, the backyard dish listening to stars and static) and what Phase 05 builds next, each idea tied to a game that does it well (a lamp countdown with a co-op "Go!" poll, a gentle landing, light-delay signals, hand-drawn telemetry gauges, a rover-camera photo frame, a clue string, a mission timeline). The player never sees the name of the challenge, and every number still comes from `facts.json`.
+
+**Why:** The team asked for the game to feel more like a space program, in idea, design and play, with other games as reference, without naming the hackathon.
+
+**Alternatives considered:** A sci-fi restyle (would lose the warm, handmade tone), real mission logos (not allowed), timed challenges (against the no-fail pillar).

@@ -22,7 +22,8 @@ async function toMenu(page: Page): Promise<void> {
   await expect(stage(page)).toHaveAttribute("data-stage", "waiting", { timeout: 60_000 });
   await expect(page.locator("#boot")).toHaveAttribute("data-prompt", "", { timeout: 10_000 });
   await page.keyboard.press("Space");
-  await expect(stage(page)).toHaveAttribute("data-stage", "title");
+  // Under a full parallel run the CPU renderer and two live sound engines share the machine, so allow more than the default.
+  await expect(stage(page)).toHaveAttribute("data-stage", "title", { timeout: 15_000 });
   // Any key skips the flight; then the chain waits for a pull.
   await page.waitForTimeout(400);
   await page.keyboard.press("KeyX");

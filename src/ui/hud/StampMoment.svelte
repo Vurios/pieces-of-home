@@ -1,26 +1,43 @@
 <script lang="ts">
   import { audio } from "../../audio/audio";
   import type { Engine } from "../../game/engine";
+  import InkStamp from "../notebook/InkStamp.svelte";
+  import MissionPatch, { type PatchId } from "../notebook/MissionPatch.svelte";
   import { t } from "../settings.svelte";
 
   /**
-   * The stamp moment: a big ink stamp thunks onto the screen when a chapter
-   * or beat is complete. Brief, and any key, click or tap skips it.
+   * The stamp moment: a big round ink stamp thunks onto the screen when a
+   * chapter or beat is complete, like a post office cancelling a letter.
+   * Then that machine's mission patch flies in, to be sewn into Dad's
+   * notebook. Brief, and any key, click or tap skips it.
    */
   interface Props {
     engine: Engine;
   }
   let { engine }: Props = $props();
-  let current = $state<{ key: number; lines: [string, string] } | null>(null);
+
+  /** Which patch and which post office each stamp belongs to. */
+  const STAMPS: Record<string, { patch: PatchId; post: string }> = {
+    prologue: { patch: "lamp", post: "HOME POST" },
+    "chapter-1": { patch: "lrrr", post: "MOON POST" },
+    "chapter-2": { patch: "lrv", post: "MOON POST" },
+    "chapter-3": { patch: "opportunity", post: "MARS POST" },
+    "chapter-4": { patch: "ingenuity", post: "MARS POST" },
+    finale: { patch: "voyager", post: "DEEP SPACE POST" },
+  };
+
+  let current = $state<{ key: number; id: string; lines: [string, string] } | null>(null);
   let timer = 0;
   let counter = 0;
+  const info = $derived(current ? (STAMPS[current.id] ?? null) : null);
 
   $effect(() =>
-    engine.bus.on("stamp", ({ lines }) => {
-      current = { key: counter++, lines };
-      window.setTimeout(() => audio.ui("stamp"), 260);
+    engine.bus.on("stamp", ({ id, lines }) => {
+      current = { key: counter++, id, lines };
+      window.setTimeout(() => audio.ui("stamp"), 430);
+      if (STAMPS[id]) window.setTimeout(() => audio.play("part-clunk", { level: 0.6 }), 1250);
       window.clearTimeout(timer);
-      timer = window.setTimeout(() => (current = null), 3200);
+      timer = window.setTimeout(() => (current = null), STAMPS[id] ? 4200 : 3200);
     }),
   );
 
@@ -40,9 +57,17 @@
   {#key current.key}
     <div class="moment" role="status" aria-live="assertive">
       <button type="button" class="hit" onclick={skip} aria-label={t("stamp.skip")}></button>
-      <div class="stamp" aria-hidden="false">
-        <span class="l1">{current.lines[0]}</span>
-        <span class="l2">{current.lines[1]}</span>
+      <div class="press">
+        <span class="sheet" aria-hidden="true"></span>
+        <div class="stamp">
+          <InkStamp lines={current.lines} bottom={info?.post ?? "HOME POST"} size="min(64vmin, 470px)" tilt={-7} label={`${current.lines[0]} ${current.lines[1]}`} />
+        </div>
+        {#if info}
+          <div class="patch">
+            <MissionPatch id={info.patch} size={150} tilt={8} />
+            <p>{t("stamp.patch")}</p>
+          </div>
+        {/if}
       </div>
       <p class="skip">{t("stamp.skip")}</p>
     </div>
@@ -64,30 +89,50 @@
     border: 0;
     cursor: pointer;
   }
-  .stamp {
+  .press {
     position: relative;
     display: grid;
-    gap: 6px;
-    justify-items: center;
-    padding: 22px 38px 18px;
-    color: #a83a28;
-    border: 7px solid #a83a28;
-    outline: 3px solid #a83a28;
-    outline-offset: 6px;
-    border-radius: 10px;
-    font: 700 clamp(2rem, 6vw, 4.4rem) / 0.95 var(--label);
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    text-align: center;
-    background: rgba(251, 246, 234, 0.08);
+    place-items: center;
     pointer-events: none;
-    /* Worn rubber: a little noise eats the ink. */
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.2 2.1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    animation: thunk 0.55s cubic-bezier(0.5, 0, 0.3, 1.4) both;
-    transform: rotate(-7deg);
   }
-  .l2 {
-    font-size: 0.62em;
+  /* A page of Dad's paper slides in first, so the red ink has something to land on. */
+  .sheet {
+    position: absolute;
+    inset: -8% -6% -8% -6%;
+    background-color: #fbf6ea;
+    background-image:
+      var(--grain),
+      repeating-linear-gradient(180deg, transparent 0 27px, rgba(64, 108, 170, 0.12) 27px 28px);
+    border-radius: 4px;
+    box-shadow:
+      0 2px 0 #e2d4b8,
+      0 30px 60px -20px rgba(0, 0, 0, 0.7);
+    transform: rotate(2deg);
+    animation: sheet-in 0.35s var(--ease-out) both;
+  }
+  .stamp {
+    position: relative;
+    animation: thunk 0.55s 0.18s cubic-bezier(0.5, 0, 0.3, 1.4) both;
+  }
+  /* The patch flies in from the side and settles at the stamp's corner. */
+  .patch {
+    position: absolute;
+    right: -70px;
+    bottom: -40px;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    animation: patch-in 0.7s 1.1s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+  }
+  .patch p {
+    margin: 0;
+    padding: 4px 10px;
+    background: var(--paper-light);
+    border-radius: 3px;
+    box-shadow: 0 2px 0 rgba(43, 38, 34, 0.5);
+    font: 700 1rem/1.2 var(--hand);
+    color: var(--ink);
+    transform: rotate(-3deg);
   }
   .skip {
     position: absolute;
@@ -100,18 +145,32 @@
   }
   @keyframes thunk {
     0% {
-      transform: scale(2.6) rotate(-14deg);
+      transform: scale(2.6) rotate(-7deg);
       opacity: 0;
     }
     55% {
-      transform: scale(0.94) rotate(-7deg);
+      transform: scale(0.94);
       opacity: 1;
     }
     100% {
-      transform: scale(1) rotate(-7deg);
+      transform: scale(1);
     }
   }
-  :global(:root[data-motion="reduce"]) .stamp {
+  @keyframes sheet-in {
+    from {
+      opacity: 0;
+      transform: translateY(30px) rotate(-2deg);
+    }
+  }
+  @keyframes patch-in {
+    from {
+      opacity: 0;
+      transform: translate(120px, 40px) rotate(40deg) scale(0.6);
+    }
+  }
+  :global(:root[data-motion="reduce"]) .stamp,
+  :global(:root[data-motion="reduce"]) .sheet,
+  :global(:root[data-motion="reduce"]) .patch {
     animation: none;
   }
 </style>

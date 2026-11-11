@@ -8,6 +8,8 @@
   import Icon from "../Icon.svelte";
   import { settings, t } from "../settings.svelte";
   import Envelope from "./Envelope.svelte";
+  import InkStamp from "./InkStamp.svelte";
+  import MissionPatch, { type PatchId } from "./MissionPatch.svelte";
   import Polaroid from "./Polaroid.svelte";
   import Underline from "./Underline.svelte";
 
@@ -173,13 +175,19 @@
 </script>
 
 {#snippet coverLeft()}
-  <div class="plate">
-    <div class="plate-lamp">
-      <span class="glow" aria-hidden="true"></span>
-      <Sketch id="cover-lamp" prims={DRAWINGS.lamp} seed={11} color="var(--dad-ink)" />
-    </div>
-    <h2 class="plate-title">{COVER.title}</h2>
-    <span class="plate-rule" aria-hidden="true"><i></i></span>
+  <!-- Dad's own patch for the notebook, sewn on the first page, with the title on a paper ribbon. -->
+  <div class="emblem">
+    <span class="emblem-tape" aria-hidden="true"></span>
+    <MissionPatch id="notebook" size={208} tilt={-4} />
+    <h2 class="plate-title">
+      <svg class="ribbon" viewBox="0 0 320 64" preserveAspectRatio="none" aria-hidden="true">
+        <path class="tail" d="M4 22 L 40 22 L 40 58 L 4 58 L 16 40 Z" />
+        <path class="tail" d="M316 22 L 280 22 L 280 58 L 316 58 L 304 40 Z" />
+        <path class="fold" d="M40 50 L 52 58 L 52 50 Z M280 50 L 268 58 L 268 50 Z" />
+        <path class="band" d="M30 8 C 110 2, 210 2, 290 8 L 290 50 C 210 44, 110 44, 30 50 Z" />
+      </svg>
+      <span>{COVER.title}</span>
+    </h2>
   </div>
   <p class="dedication">{COVER.dedication}</p>
   <p class="signature">{COVER.signature}</p>
@@ -203,17 +211,16 @@
 
 {#snippet coverRight()}
   <h2 class="toc-title">{COVER.contentsTitle}</h2>
+  <p class="log">{t("notebook.log")}</p>
   <ol class="toc">
     {#each SPREADS as s, i (s.id)}
       {@const done = isComplete(s, game)}
       <li>
         <button type="button" onclick={() => goTo(i + 1)}>
-          <span class="box" class:done aria-hidden="true">
-            {#if done}<svg viewBox="0 0 24 24"><path d="M4 13 C 6 15, 8 17, 9.6 19.4 C 12.6 13.4, 16 8.6, 21 4.2" /></svg>{/if}
-          </span>
+          <span class="patch-slot" aria-hidden="true"><MissionPatch id={s.id as PatchId} earned={done} size={40} tilt={[-6, 4, -3, 5, -4, 3][i]} /></span>
           <span class="nick">{s.nickname}</span>
           <span class="dots" aria-hidden="true"></span>
-          <span class="world">{s.world}</span>
+          <span class={`world w-${s.world.toLowerCase()}`}>{s.world}</span>
           <span class="pg" aria-hidden="true">{(i + 1) * 2 + 1}</span>
           <span class="sr-only">{done ? "Done" : ""}</span>
         </button>
@@ -289,7 +296,7 @@
       </details>
     {/if}
     {#if spread.id === "lamp"}
-      <p class="stamp-mark" aria-label="Stamp: Left on. Still shining.">Left on.<br />Still shining.</p>
+      <div class="stamp-mark"><InkStamp lines={["Left on.", "Still shining."]} top="DELIVERED BY REMI" bottom="HOME POST" size={150} tilt={-7} label="Stamp: Left on. Still shining." /></div>
       <section class="letters">
         <h3 class="label">{t("notebook.letters")}</h3>
         <p class="help">{t("notebook.lettersHelp")}</p>
@@ -582,6 +589,11 @@
     text-transform: uppercase;
     color: var(--clay-deep);
   }
+  .label::before {
+    content: "★";
+    margin-right: 7px;
+    color: var(--amber-deep);
+  }
   .kicker {
     display: flex;
     align-items: center;
@@ -621,75 +633,89 @@
     justify-content: center;
     text-align: center;
   }
-  /* A bookplate label stuck on the first page, held with tape. */
-  .plate {
+  /* Dad's notebook patch, taped to the first page, with the title on a paper ribbon across it. */
+  .emblem {
     position: relative;
     display: grid;
     justify-items: center;
-    width: min(360px, 88%);
-    padding: 26px 26px 24px;
-    background-color: #fffaf0;
-    background-image: var(--grain);
-    border: 2.4px solid var(--ink);
-    outline: 1.5px solid rgba(43, 38, 34, 0.45);
-    outline-offset: -9px;
-    border-radius: 6px;
-    box-shadow: 0 3px 0 var(--ink), 0 18px 26px -18px rgba(43, 38, 34, 0.6);
-    transform: rotate(-1.5deg);
+    width: 100%;
+    margin-top: 6px;
   }
-  .plate::before {
-    content: "";
+  .emblem-tape {
     position: absolute;
-    top: -14px;
+    top: -10px;
     left: 50%;
-    width: 110px;
-    height: 26px;
-    margin-left: -55px;
-    background: rgba(238, 222, 170, 0.8);
-    box-shadow: inset 0 0 0 1px rgba(150, 128, 80, 0.22);
-    transform: rotate(3deg);
-  }
-  .plate-lamp {
-    position: relative;
-    width: 200px;
-  }
-  .glow {
-    position: absolute;
-    left: 66%;
-    top: 46%;
-    width: 120px;
-    height: 120px;
-    translate: -50% -50%;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(242, 165, 65, 0.42), rgba(242, 165, 65, 0) 68%);
+    z-index: 1;
+    width: 96px;
+    height: 24px;
+    margin-left: -48px;
+    background: var(--tape);
+    box-shadow: inset 0 0 0 1px var(--tape-edge);
+    transform: rotate(4deg);
   }
   .plate-title {
-    margin: 6px 0 0;
-    font: 700 2.7rem/1 var(--hand);
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: min(360px, 98%);
+    height: 72px;
+    margin: -26px 0 0;
+    font: 700 2.15rem/1 var(--hand);
+    white-space: nowrap;
     color: var(--ink);
+    transform: rotate(-1.5deg);
   }
-  .plate-rule {
-    display: block;
-    width: 170px;
-    height: 10px;
-    margin-top: 4px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 10' preserveAspectRatio='none'%3E%3Cpath d='M2 6.5 C 40 3, 80 7.5, 120 4.6 C 150 2.8, 175 5.8, 198 4' fill='none' stroke='%23f2a541' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  .plate-title span {
+    position: relative;
+    margin-top: -6px;
   }
-  .plate-rule i {
-    display: none;
+  .ribbon {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 3px 0 rgba(43, 38, 34, 0.9));
   }
+  .ribbon path {
+    stroke: var(--ink);
+    stroke-width: 2.4;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+  }
+  .ribbon .band {
+    fill: #fffaf0;
+  }
+  .ribbon .tail {
+    fill: #f2a541;
+  }
+  .ribbon .fold {
+    fill: #a4621b;
+  }
+  /* Dad's own words, in fountain-pen ink. */
   .dedication {
-    max-width: 17em;
-    margin: 30px 0 0;
-    font: 400 1.5rem/1.35 var(--hand);
+    max-width: 16em;
+    margin: 22px 0 0;
+    font: 400 1.55rem/1.36 var(--hand);
     color: var(--dad-ink);
+    text-wrap: balance;
   }
   .signature {
     align-self: flex-end;
-    margin: 6px 14% 0 0;
-    font: 700 1.7rem/1 var(--hand);
+    position: relative;
+    margin: 4px 14% 0 0;
+    font: 700 1.8rem/1 var(--hand);
     color: var(--dad-ink);
     transform: rotate(-5deg);
+  }
+  .signature::after {
+    content: "";
+    position: absolute;
+    left: -8px;
+    right: -14px;
+    bottom: -8px;
+    height: 9px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 10' preserveAspectRatio='none'%3E%3Cpath d='M2 7 C 20 2, 44 9, 60 4 C 66 2, 72 3, 78 6' fill='none' stroke='%23233f73' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
   }
   .cover-doodle {
     width: min(330px, 86%);
@@ -715,7 +741,7 @@
   }
   .toc-title {
     display: inline-block;
-    margin: 0 0 16px;
+    margin: 0;
     padding: 0 6px;
     font: 700 2.2rem/1.2 var(--hand);
     background: linear-gradient(transparent 58%, rgba(242, 165, 65, 0.45) 58%, rgba(242, 165, 65, 0.45) 88%, transparent 88%);
@@ -747,31 +773,28 @@
   .toc button:hover {
     background: rgba(242, 165, 65, 0.13);
   }
-  .toc .box {
+  /* "Mission log, kept by Dad": typed on a label strip under the title. */
+  .log {
+    margin: 6px 0 14px 6px;
+    font: 700 0.74rem/1 var(--label);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--clay-deep);
+  }
+  .log::before {
+    content: "★";
+    margin-right: 8px;
+    color: var(--amber-deep);
+  }
+  /* Each machine's patch: in thread once earned, a pencil circle until then. */
+  .toc .patch-slot {
     align-self: center;
     flex: none;
-    display: grid;
-    place-items: center;
-    width: 20px;
-    height: 20px;
-    border: 1.5px solid rgba(43, 38, 34, 0.5);
-    border-radius: 4px 5px 4px 5px;
-  }
-  .toc .box.done {
-    border-color: var(--clay);
-  }
-  .toc .box svg {
-    width: 24px;
-    height: 24px;
-    margin: -6px -4px 0 0;
-    fill: none;
-    stroke: var(--clay);
-    stroke-width: 2.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    width: 40px;
+    height: 40px;
   }
   .toc .nick {
-    font: 400 1.3rem/1.2 var(--hand);
+    font: 700 1.32rem/1.2 var(--hand);
     color: var(--dad-ink);
   }
   .toc .dots {
@@ -780,17 +803,39 @@
     border-bottom: 2px dotted rgba(43, 38, 34, 0.25);
     transform: translateY(-4px);
   }
+  /* Destination tags, like luggage labels: one colour per world. */
   .toc .world {
-    font: 700 0.66rem/1 var(--read);
-    letter-spacing: 0.14em;
+    align-self: center;
+    padding: 4px 8px 3px;
+    border: 1.5px solid currentColor;
+    border-radius: 3px;
+    font: 700 0.64rem/1 var(--label);
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: var(--ink-soft);
+    transform: rotate(-2deg);
   }
+  .toc .w-home {
+    color: #8f4c10;
+    background: rgba(242, 165, 65, 0.16);
+  }
+  .toc .w-moon {
+    color: #33507e;
+    background: rgba(142, 164, 192, 0.2);
+  }
+  .toc .w-mars {
+    color: #9a3a22;
+    background: rgba(217, 130, 95, 0.18);
+  }
+  .toc .w-space {
+    color: #333d78;
+    background: rgba(76, 90, 154, 0.14);
+  }
+  /* Page numbers in red pencil. */
   .toc .pg {
     width: 1.6em;
     text-align: right;
-    font: 700 1.1rem/1 var(--hand);
-    color: var(--ink-soft);
+    font: 700 1.15rem/1 var(--hand);
+    color: #b5523a;
   }
   .memories-title {
     margin: 30px 0 12px;
@@ -972,21 +1017,10 @@
     font-size: 0.88rem;
   }
   .stamp-mark {
-    width: max-content;
-    margin: 6px auto 0;
-    padding: 10px 18px 8px;
-    border: 3px solid #b0402b;
-    outline: 1.5px solid #b0402b;
-    outline-offset: 3px;
-    border-radius: 3px;
-    color: #b0402b;
-    font: 700 1.4rem/1.05 var(--label);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    text-align: center;
-    transform: rotate(-5deg);
-    mix-blend-mode: multiply;
-    opacity: 0.88;
+    display: flex;
+    justify-content: center;
+    margin: 22px 0 0;
+    opacity: 0.92;
   }
   .letters {
     margin-top: 18px;

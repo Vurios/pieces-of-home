@@ -4,7 +4,7 @@
   import type { InputDevice, PromptInfo } from "../../game/core/events";
   import type { GameState } from "../../game/core/state";
   import type { Engine } from "../../game/engine";
-  import { settings } from "../settings.svelte";
+  import { settings, t } from "../settings.svelte";
 
   /**
    * Tells the player what to do. Three parts:
@@ -158,7 +158,7 @@
   <section class="goal" class:done={celebrating !== null} aria-labelledby="goal-title" in:fly={{ x: -16, duration: settings.reducedMotion ? 0 : 400, delay: 300 }}>
     <span class="pin" aria-hidden="true"></span>
     <p class="eyebrow-row">
-      <span class="chap">{card.chapter}</span>
+      <span class="chap"><span class="mission">{t("goal.mission")}</span>{card.chapter}</span>
       <span class="count" aria-label={`Step ${card.step} of ${card.steps}`}>
         {#each Array.from({ length: card.steps }, (_, i) => i) as i (i)}<i class:on={i < filled} class:now={i === filled && card.id !== "explore"}></i>{/each}
       </span>
@@ -331,10 +331,22 @@
     margin: 0 0 4px;
   }
   .chap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
     font: 700 0.7rem/1 var(--label);
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--clay-deep);
+  }
+  /* "Your mission", typed on a little red label like a flight checklist tab. */
+  .mission {
+    padding: 3px 6px 2px;
+    border-radius: 2px;
+    background: var(--clay-deep);
+    color: var(--paper-light);
+    letter-spacing: 0.14em;
   }
   /* Steps as little drawn boxes: ticked, the one you're on, and to come. */
   .count {

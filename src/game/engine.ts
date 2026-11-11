@@ -585,6 +585,8 @@ export class Engine {
       /** Draw calls and triangles of the last frame, every pass included. */
       stats: () => ({ calls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles }),
       setQuality: (tier: QualityTier | null) => this.setQuality(tier),
+      /** Sends a game event, for screenshots of moments such as the stamp. */
+      emit: <K extends keyof GameEvents>(type: K, payload: GameEvents[K]) => this.bus.emit(type, payload),
       travel: (id: string) => this.travel(id),
       /** Stands the player next to an interactable, facing it. */
       teleportTo: (id: string): boolean => {

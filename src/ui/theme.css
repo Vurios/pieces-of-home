@@ -91,7 +91,8 @@
   --ink: #2b2622;
   --ink-soft: #62574d;
   --pencil: #8c8173;
-  --dad-ink: #2f4a7a;
+  /* Dad's fountain pen: a deep blue-black. */
+  --dad-ink: #233f73;
   /* Lamp and earth */
   --amber: #f2a541;
   --amber-deep: #b8661c;
