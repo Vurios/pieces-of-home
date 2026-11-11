@@ -113,6 +113,10 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Slow-device fixes: frozen world redrawn rarely under overlays, menu pad polled on a timer (DECISIONS #33)
 - [x] Screens in `docs/screens/pass4/` (desktop)
 - [x] Typecheck, svelte-check, 54 unit tests, 22 Playwright tests, check:facts pass
+- [x] Opening redone as Dad's notebook on a moonlit workbench: self-drawing lamp sketch, travel doodle, hand-inked title, ticked list, ink stamp, light that fills the screen (DECISIONS #34)
+- [x] Main menu redone as paper index tabs in Dad's notebook, with doodles and a pencil arrow; title fits tall phones (DECISIONS #35)
+- [x] Screens in `docs/screens/pass5/` (desktop and phone)
+- [ ] Follow-up: the HUD and panels still use the dusk-glass style; move them onto paper to match the Game Bible
 
 ## Phase 04: Music, sound effects and voices in JavaScript
 

@@ -342,3 +342,21 @@ Dad's desk lamp was rebuilt for the opening close-up: weighted base, twin lower 
 **Decision:** When the notebook or a panel covers the world, the engine redraws the frozen world only now and then if a render takes longer than 40 ms, so a slow device keeps the notebook and its gamepad controls smooth. Menu gamepad input is polled on a 40 ms timer instead of once per frame, so a press is never missed between two slow frames. The gamepad test lets the page time each press itself, so a slow test runner cannot turn a tap into a held, repeating D-pad.
 
 **Alternatives considered:** pausing rendering entirely under overlays (the world behind the scrim would never update after a resize).
+
+## 34. The loader is Dad's notebook, open on his workbench at night
+
+**Date:** 2026-11-11
+
+**Decision:** The team found the first loader plain and generic, so the opening is now a scene. Dad's leather notebook lies open on a walnut bench, lit by moonlight through the workshop window. On the left page his sketch of the lamp draws itself as the game loads, his notes appear beside each part, and a doodled map shows letters travelling from home to the Moon and Mars. On the right page the title is set in hand-inked block letters (the O of HOME is a bulb), a postmark is stamped in the corner, and a pencil ticks off "Things that kept working". Round the book sit a mug, two letters addressed to the Moon and Mars, a ruler and a few of Milo's spare parts. "Turn on the light" is an ink stamp. Pressing it flicks the lamp on: the moonlight leaves, the bench turns warm, and the light grows from the sketch's bulb to fill the screen. Everything is inline SVG and CSS drawn by us and built into `index.html`, so it shows before any script runs. On phones the book becomes a top-bound sketchbook with two stacked pages.
+
+The loader is kept cheap so it never slows the game loading underneath it: shadows switch at once when the lamp turns on (a real lamp does that anyway), the light is a soft burst and a fade that only change transform and opacity, the sketch boils at about 5 frames a second, and nothing else moves. While the paper covers the canvas, the engine draws the 3D world a few times to warm up and then waits until the light is turned on. A gamepad direction held through a slow frame starts its repeat wait again, so one press never jumps two places. Together these halved the time of the local Playwright run.
+
+**Alternatives considered:** a 3D desk scene (needs the 3D engine before anything shows, against the instant-paper rule in Game Bible 10); a downloaded illustration pack (none matched the art direction, and the drawing is the story).
+
+## 35. The main menu is a row of index tabs in Dad's notebook
+
+**Date:** 2026-11-11
+
+**Decision:** The amber pill and dusk-glass list read as a generic app menu and broke the Game Bible's "never glassmorphism" rule. The menu is now Dad's notebook peeking in from the right edge of the screen, with each choice a paper index tab sticking out of its pages (Game Bible 10, item 7). Each tab has its own paper colour, a doodle in Dad's hand (a sealed letter, two kids holding hands, a magnifier over a leaf, a wrench, a heart) and a Kalam label. The first tab is the big one, with a short line under it ("Dad's letters are waiting" or "Pick up where you left off"). Hover or focus slides a tab out and a pencil arrow points at it. Starting again over a save asks on a note taped over the page, with a stamp to confirm and Escape to cancel. The 3D title now shrinks about its baseline on tall phones, so every letter fits the screen.
+
+**Alternatives considered:** a full open notebook page with a written list (hides the planet, which is the best thing on screen); keeping the pill and restyling the list only (still reads as an app).
