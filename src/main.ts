@@ -127,15 +127,15 @@ async function boot(): Promise<void> {
   flow.setStage("waiting");
   loader?.ready(() => {
     engine.veiled = false;
-    // Inside the click, tap or key press: sound is allowed from here on.
-    void audio.unlock().then(() => {
-      audio.lampClick();
-      audio.setHum(1);
-    });
     settings.apply();
     loader.leave();
     flow.setStage("title");
     engine.playTitle();
+    // Still inside the click, tap or key press: sound is allowed from here on.
+    void audio.unlock().then(() => {
+      audio.lampClick();
+      audio.setHum(1);
+    });
   });
 }
 

@@ -6,7 +6,7 @@ There is no deadline. The full scope in the Game Bible gets built: P0, then P1, 
 - **Repo:** https://github.com/Vurios/pieces-of-home (public). No CI: the team asked for straight pushes to `main`. Run typecheck, tests and e2e locally before pushing.
 - **Team rule for this run:** the agent asks the team before starting each next phase prompt.
 
-**Next up:** Phase 04, music, sound effects and voices (waiting for the team's go-ahead).
+**Now:** Phase 04 (audio) is built and deployed. Also in this pass, at the team's request: smoother sculpted hair, a notebook mail and stamp redesign, and a stronger space-mission layer across the game (DECISIONS #41 to #45). **Next up:** Phase 05, the story, the worlds and the puzzles (ask the team first).
 
 ## State summary (2026-11-11)
 
@@ -22,7 +22,8 @@ Things a new session should know:
 - Co-op is solo by default. Add `?room=some-code` to open a room socket. The page mirrors state on `<html data-net data-players data-stage data-tier>` for tests.
 - URL switches: `?quality=low|medium|high`, `?shot=wide|orbit-back|orbit-west|orbit-east|orbit-north|orbit-south|porch|mom|workshop|bench|character` (fixed camera bookmarks) or `?shot=play-yard|play-garden|play-shed|play-hill|play-meadow|play-treehouse|play-pond|play-camp|play-weather|play-playground|play-rocket|play-orchard|play-windpump|play-balloon` (player placed, normal camera), `?debug` (fps overlay, always on in dev), `?test` (exposes `window.__poh`).
 - Home layout lives in `src/game/worlds/home/layout.ts` (sites, trails, places, terrain). Places are built in `places.ts`, paths in `paths.ts`, place names and lines in `src/content/places.ts`.
-- Screenshots: `npx tsx scripts/screens.ts <folder> [shots] [url] [quality] [desktop]` with the dev server running. Latest set is in `docs/screens/pass4/` (desktop only, at the team's request).
+- Screenshots: `npx tsx scripts/screens.ts <folder> [shots] [url] [quality]` with the dev server running. Desktop only, 1440x900 (DECISIONS #41). Latest set is in `docs/screens/pass7/`. Character close-ups: `?shot=character|character-back|character-side|friend-nori|friend-lumi|friend-theo|mom`.
+- Audio: `src/audio/` (see DECISIONS #42). Review every sound at `/audio-lab/`: buttons per cue, music and ambience switches, a live meter, "Measure every effect and voice" (offline peak, loudness and click check) and a one-minute recorder. Dad's real voice lines go in `public/audio/vo/<line>.ogg` (the first is `prologue-lamp-thanks`).
 - Playwright runs with 2 workers, and walk tests use the Low tier (`DECISIONS.md` #8, #18).
 - NASA models: `npx tsx scripts/assets/nasa-models.ts build` (output to `.cache/` until a phase ships one).
 - Facts: 52 (30 checked, 22 verify). Location facts carry `lat`/`lon`. Opening every source and filling `checkedOn` is the first job of Phase 05.
@@ -125,11 +126,14 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 
 ## Phase 04: Music, sound effects and voices in JavaScript
 
-- [ ] Audio Director
-- [ ] Generative, adaptive music on the six-note motif
-- [ ] Sound effect recipes
-- [ ] Voices (gibberish babble, captions)
-- [ ] Mix, verify, deploy
+- [x] Audio Director: six buses, compressor and limiter, room (convolution on Medium and High, echo on Low), cue registry with anti-spam, positional emitters (HRTF, equal power, mono by tier), zone ambience, per-step footsteps by surface, voice ducking, notebook muffle, suspend with the tab (DECISIONS #42)
+- [x] Generative, adaptive music on the six-note motif (`src/audio/motif.ts`): Title, Home, Moon, Mars and Finale arrangements; focus pulse; discovery sting on the beat; one layer per co-op friend; the Long Storm (thin, silence, Dad's note); the Finale's statement
+- [x] Every effect in the Phase 04 list, each with a comment on how it is built (`src/audio/sfx.ts`)
+- [x] Voices: formant babble per character with question rises, Dad's hum or recording, Milo's bleeps, captions as before
+- [x] Audio lab at `/audio-lab/` for human review, with an offline loudness and click check and a one-minute recorder
+- [x] Mix check: every effect and voice peaks between -8 and -36 dBFS; music peaks between -11 and -18 dBFS; no unintended clicks
+- [x] Deployed and smoke-tested live
+- Still for people: listen on laptop and phone speakers, and record Dad's lines if a teammate wants to
 
 ## Phase 05: The story, the worlds and the puzzles
 

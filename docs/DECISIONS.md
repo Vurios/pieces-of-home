@@ -406,3 +406,25 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 **Why:** The team asked to drop the phone screenshot process and focus review on the desktop view, and said the title's letters and words almost touched.
 
 **Alternatives considered:** Keeping phone captures but not reviewing them (wasted time and repo weight). The game still lays out and plays on phones; only the screenshot review changed.
+
+## 42. Phase 04 audio: raw Web Audio, per-step feet, a look-ahead score
+
+**Date:** 2026-11-11
+
+**Decision:** All sound is synthesized with the raw Web Audio API, with no Tone.js and no ZzFX. The Audio Director (`src/audio/audio.ts`) owns one AudioContext, six buses (master, music, ambience, effects, voices, ui) through a gentle compressor and a limiter, a synthesized convolution room on Medium and High (a soft echo on Low), voice ducking of about 5 dB and the notebook muffle (a lowpass that slowly closes on ambience and effects). Cues are registered by name with volume, random pitch and loudness, a minimum gap and a voice limit. Positional emitters use PannerNodes (HRTF on High, equal power on Medium, distance-only mono on Low) with the camera as the listener. Ambience beds are computed in plain JavaScript while the page loads, loop without a seam, and crossfade by where the player stands. Footsteps are synthesized per step from the controller's stride events, by surface. The score is a look-ahead scheduler on the audio clock: world and harmony changes wait for the bar line, layers fade on slow curves, and there is one extra instrument per co-op friend (bells, plucks, a counter-melody). Voices are one continuous formant-filtered oscillator per line, with the pitch shaped by punctuation. Dad's lines play `/audio/vo/<line>.ogg` when it exists and his hum otherwise. An audio lab page (`/audio-lab/`) lists every cue and measures each offline.
+
+**Why:** Raw Web Audio keeps the bundle small (Tone.js is about 300 kB) and gives exact control of envelopes so nothing clicks. Per-step footsteps line up with the feet better than a synced loop on a small planet where pace changes often. Beds made ahead of time cost nothing per frame, so audio holds the frame rate on Low.
+
+**Measured:** Offline renders of every effect and voice peak between -8 and -36 dBFS with no unintended clicks (the only large sample jumps are the deliberate switch, shutter and snap transients). Live music peaks stay between -11 and -18 dBFS in every world.
+
+**Alternatives considered:** Tone.js for the music (heavier, and its Transport would duplicate our own clock). A synced footstep loop as in Messenger (felt loose on the curve of a tiny planet). Recorded samples (would need licensing and grow the download).
+
+## 43. Hair as one sculpted shell
+
+**Date:** 2026-11-11
+
+**Decision:** Each character's hair is one parametric surface (`src/game/actors/hair.ts`): a shell a little larger than the head that follows a hairline, splits into locks with soft grooves, ends in pointed or rounded tips, can sweep its fringe, hang straight (bobs), curl, or tilt its crown for a side parting. A thin inner surface gives the edge thickness. Per-vertex paint adds a light band where the lamp light catches the crown and darkens the underside. Remi, Nori, Lumi, Theo and Mom each have a style; the overlapping lock blobs from DECISIONS #39 are gone, except Remi's single cowlick.
+
+**Why:** The team asked for smoother, better hair. Stylized game characters model hair as one sculpted mass with grooves, not as separate blobs; one smooth surface has no seams, takes the ink outline cleanly, and costs fewer triangles than twenty-five lock spheres.
+
+**Alternatives considered:** Metaballs or marching cubes (heavier to build and harder to art-direct), hair cards with textures (does not fit the painted toon look), more locks (more seams and triangles).

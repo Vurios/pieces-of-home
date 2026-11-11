@@ -128,9 +128,8 @@ export class AudioEngine {
   }
 
   private build(ctx: AudioContext): void {
-    const mx = new Mixer(ctx);
+    const mx = new Mixer(ctx, this.tier);
     this.mx = mx;
-    mx.setTier(this.tier);
     for (const bus of BUSES) mx.setVolume(bus, this.volumes[bus]);
     mx.muffle(this.muffled);
     this.score = new Score(mx, this.crackleBed ?? undefined);

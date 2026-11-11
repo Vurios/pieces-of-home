@@ -38,7 +38,7 @@ export class Mixer {
   /** Everything ends here before the speakers; the audio lab records from it. */
   readonly out: GainNode;
 
-  constructor(ctx: AudioContext) {
+  constructor(ctx: AudioContext, tier: AudioTier = "high") {
     this.ctx = ctx;
     const compressor = ctx.createDynamicsCompressor();
     compressor.threshold.value = -18;
@@ -87,7 +87,7 @@ export class Mixer {
       this.inputs.set(bus, input);
       this.faders.set(bus, fader);
     }
-    this.setTier("high");
+    this.setTier(tier);
     for (const bus of BUSES) this.apply(bus, true);
   }
 
