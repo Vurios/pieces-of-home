@@ -4,6 +4,7 @@ import { STORY_COPY } from "../../content/chapters/common";
 import { fact } from "../../content/facts";
 import type { GameState } from "../../game/core/state";
 import type { Engine } from "../../game/engine";
+import { audio } from "../../audio/audio";
 
 /**
  * The story director plays the chapter scripts (src/content/chapters/):
@@ -92,6 +93,13 @@ export class StoryDirector {
       });
       // As long as the bubble stays up (see Speech.svelte), and a breath after.
       return sleep((Math.max(2.8, line.say.length * 0.065 + 1.8) + 0.3) * 1000);
+    }
+    if ("recording" in line) {
+      // A real mission recording: the caption shows the words exactly as heard.
+      this.engine.bus.emit("say", { speaker: "radio", name: `${line.name} (real recording)`, text: line.caption, at: null, recording: true });
+      const reading = (Math.max(3, line.caption.length * 0.07 + 1.8) + 0.4) * 1000;
+      await Promise.all([audio.clip(line.recording), sleep(reading)]);
+      return;
     }
     if ("note" in line) return this.card("note", line.note);
     return this.card("fact", fact(line.fact).kid, line.fact);

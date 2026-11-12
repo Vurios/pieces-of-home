@@ -1,5 +1,7 @@
 import {
   Fog,
+  Matrix4,
+  Quaternion,
   type LoadingManager,
   PCFShadowMap,
   PerspectiveCamera,
@@ -102,6 +104,10 @@ export class Engine {
   private running = false;
   private elapsed = 0;
   private readonly sunDir = new Vector3();
+  /** A short cinematic view and when it started, blended over the follow camera. */
+  private cine: { position: Vector3; target: Vector3; up: Vector3; seconds: number; age: number } | null = null;
+  private readonly cineQuat = new Quaternion();
+  private readonly cineMatrix = new Matrix4();
   private readonly scratch = new Vector3();
 
   static create(options: EngineOptions): Engine | null {
@@ -168,6 +174,9 @@ export class Engine {
       if (speed > 3) this.puffs.emit(this.player.position, this.player.up, Math.min(10, Math.round(speed)), Math.min(2, speed * 0.2));
     });
     this.bus.on("interact:done", () => this.kid.play("interact"));
+    this.bus.on("camera:cinematic", ({ position, target, up, seconds }) => {
+      this.cine = { position: new Vector3(...position), target: new Vector3(...target), up: up ? new Vector3(...up) : new Vector3(...position).normalize(), seconds, age: 0 };
+    });
     this.bus.on("letter:delivered", () => this.kid.play("celebrate"));
 
     window.addEventListener("resize", this.resize);
@@ -513,6 +522,20 @@ export class Engine {
       }
     } else {
       this.follow.update(dt, this.player, input, world.terrain, world.cameraColliders, world.cameraHint(this.player));
+    }
+
+    // A cinematic view eases in over the follow camera, holds, and eases back out.
+    if (this.cine && !shot && !titling) {
+      const c = this.cine;
+      c.age += dt;
+      const ease = this.reducedMotion ? 0.25 : 0.8;
+      const w = Math.min(1, c.age / ease, Math.max(0, (c.seconds - c.age) / ease));
+      const k = w * w * (3 - 2 * w);
+      this.cineMatrix.lookAt(c.position, c.target, c.up);
+      this.cineQuat.setFromRotationMatrix(this.cineMatrix);
+      this.camera.position.lerp(c.position, k);
+      this.camera.quaternion.slerp(this.cineQuat, k);
+      if (c.age >= c.seconds) this.cine = null;
     }
 
     // The low key light leans the same way wherever the player stands.

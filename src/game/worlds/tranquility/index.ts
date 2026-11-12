@@ -1,4 +1,5 @@
 import { Color, DirectionalLight, Group, HemisphereLight, Mesh, Vector3 } from "three";
+import { cylinder, torus } from "../../actors/parts";
 import { Batcher } from "../../render/kit";
 import { type ColliderGroup, createColliderGroup } from "../../world/colliders";
 import { createRandom, fbm3 } from "../../world/noise";
@@ -115,9 +116,13 @@ export function createTranquility(ctx: WorldContext): World {
   // ---- The ground ----
   const geometry = buildPlanetGeometry(terrain, Math.round(quality.terrainDetail * 0.85), (dir, r, normal, out) => {
     const n = fbm3(dir.x * 4, dir.y * 4, dir.z * 4, 3, 8);
-    const fine = fbm3(dir.x * 17, dir.y * 17, dir.z * 17, 2, 4);
-    out.copy(DUST_A).lerp(DUST_B, Math.max(0, Math.min(1, 0.5 + n * 1.6)));
-    if (fine > 0.25) out.lerp(DUST_LIGHT, Math.min(0.5, (fine - 0.25) * 2));
+    const fine = fbm3(dir.x * 23, dir.y * 23, dir.z * 23, 3, 4);
+    const grit = fbm3(dir.x * 61, dir.y * 61, dir.z * 61, 2, 11);
+    // Soft maria-like patches, then fine speckle so the dust never reads as smooth clay.
+    out.copy(DUST_A).lerp(DUST_B, Math.max(0, Math.min(1, 0.5 + n * 1.2)));
+    if (fine > 0.18) out.lerp(DUST_LIGHT, Math.min(0.45, (fine - 0.18) * 2.2));
+    else if (fine < -0.22) out.lerp(DUST_DARK, Math.min(0.3, (-0.22 - fine) * 1.8));
+    out.multiplyScalar(1 + grit * 0.12);
     // Bright ejecta round each crater, darker dust in the bowl.
     for (const c of spec.craters ?? []) {
       const t = (angleBetween(dir, c.center) * MOON_RADIUS) / c.radius;
@@ -134,7 +139,8 @@ export function createTranquility(ctx: WorldContext): World {
     out.multiplyScalar(1 - Math.min(0.3, slope * 2.6));
     void r;
   });
-  const planet = new Mesh(geometry, toon.toon({ vertexColors: true, paint: 0.06, rim: 0.12, nearFade: false }));
+  // A grainier paint than Home's lawn, so the dust has tooth up close.
+  const planet = new Mesh(geometry, toon.toon({ vertexColors: true, paint: 0.16, rim: 0.12, nearFade: false }));
   planet.name = "planet";
   planet.receiveShadow = true;
   root.add(planet);
@@ -201,11 +207,42 @@ export function createTranquility(ctx: WorldContext): World {
     if (size > 0.3) colliders.push(createColliderGroup(s.matrix, [{ kind: "circle", x: 0, z: 0, radius: size * 0.8, height: size }]));
   }
 
+  // Little craters everywhere: a raised rim of bright dust round a darker bowl, inked like a drawing.
+  const craterRandom = createRandom(77);
+  for (let i = 0; i < 160; i += 1) {
+    const dir = d(craterRandom() * 176 - 88, craterRandom() * 360 - 180);
+    const r = 0.16 + craterRandom() ** 2 * 0.6;
+    if (clear.some((k) => angleBetween(dir, k) * MOON_RADIUS < 1.3 + r) || trackDistance(dir) < 0.4 + r) continue;
+    const s = siteOn(terrain, (Math.asin(dir.y) * 180) / Math.PI, (Math.atan2(dir.x, dir.z) * 180) / Math.PI, craterRandom() * 360, 0);
+    // The ground curves away under a flat piece, so lift it by that sag.
+    const lift = (r * r) / (2 * MOON_RADIUS) + 0.012;
+    b.place(torus(0.24), craterRandom() < 0.5 ? "#B7B2AA" : "#ABA69E", [0, lift + 0.008, 0], [Math.PI / 2, 0, 0], [r, r, 0.32 * r + 0.035], s.matrix);
+    b.place(cylinder(18), "#7E7A75", [0, lift, 0], [0, 0, 0], [r * 0.9, 0.012, r * 0.9], s.matrix);
+    b.place(cylinder(14), "#6F6B66", [r * 0.14, lift + 0.004, -r * 0.12], [0, 0, 0], [r * 0.5, 0.012, r * 0.5], s.matrix);
+  }
+
   // ---- Dad's practice corner, the Earth console and the spare mirrors ----
   const consoleSite = site(SPOTS.console, face(SPOTS.console, SPOTS.rig) + 180);
   const holderA = site(SPOTS.holderA, face(SPOTS.holderA, SPOTS.rig) + 180);
   const holderB = site(SPOTS.holderB, face(SPOTS.holderB, SPOTS.rig) + 180);
-  const activity = new SendALight({ ctx, b, root, terrain, rig: rigSite, console: consoleSite, holders: [holderA, holderB], earth, earthRadius: EARTH_RADIUS, glints: array.glints });
+  const activity = new SendALight({
+    ctx,
+    b,
+    root,
+    terrain,
+    rig: rigSite,
+    console: consoleSite,
+    holders: [holderA, holderB],
+    earth,
+    earthRadius: EARTH_RADIUS,
+    glints: array.glints,
+    views: {
+      // From behind the console: the corner, the beam and Earth in one frame.
+      pulse: { position: at(consoleSite, 1.6, 2.4, 5.2), target: at(rigSite, 0, 1.2, 0).lerp(earth.root.position, 0.08) },
+      // Low in front of the little mirrors, looking at their hundred cubes.
+      glint: { position: at(mirrorsSite, 0.5, 1.5, 2.3), target: at(mirrorsSite, 0, 0.35, 0) },
+    },
+  });
   add(rigSite, activity.shapes.rig, true);
   add(consoleSite, activity.shapes.console);
   add(holderA, activity.shapes.holder);
@@ -358,6 +395,7 @@ export function createTranquility(ctx: WorldContext): World {
         return true;
       },
       fire: () => activity.fire(),
+      beam: () => activity.debugBeam(),
       arrive: () => {
         store.update((s) => {
           if (!s.flags.includes("chapter-1:arrived")) s.flags.push("chapter-1:arrived");

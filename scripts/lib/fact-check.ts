@@ -30,8 +30,8 @@ export interface FactReport {
   used: string[];
 }
 
-// Chapter scripts name facts in lines like `{ fact: "fact-id" }`, so those count too.
-const REFERENCE_PATTERNS = [/[[{]F:([a-z0-9-]+)[\]}]/g, /\bfact\(\s*["'`]([a-z0-9-]+)["'`]\s*\)/g, /\{\s*fact:\s*["'`]([a-z0-9-]+)["'`]\s*\}/g];
+// Chapter scripts name facts as `fact: "fact-id"` inside their lines, so those count too.
+const REFERENCE_PATTERNS = [/[[{]F:([a-z0-9-]+)[\]}]/g, /\bfact\(\s*["'`]([a-z0-9-]+)["'`]\s*\)/g, /\bfact:\s*["'`]([a-z0-9-]+)["'`]/g];
 const ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 export function findFactReferences(text: string): string[] {

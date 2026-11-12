@@ -54,6 +54,8 @@ export interface SendALightSpec {
   earthRadius: number;
   /** The real array's hundred cubes, for the glint at the end. */
   glints: InstancedMesh;
+  /** Camera views for the two big moments: the pulse flying to Earth, and the glint. */
+  views: { pulse: { position: Vector3; target: Vector3 }; glint: { position: Vector3; target: Vector3 } };
 }
 
 export class SendALight implements Activity {
@@ -104,6 +106,8 @@ export class SendALight implements Activity {
     const pivot = new Group();
     pivot.matrixAutoUpdate = false;
     pivot.matrix.copy(m);
+    // A fixed matrix never marks itself dirty, so say so once, or the first trace runs at the planet's center.
+    pivot.matrixWorldNeedsUpdate = true;
     pivot.add(this.frame);
     root.add(pivot);
     const brass = ctx.toon.toon({ color: "#C9A04A", objectSpace: true, paint: 0.08 });
@@ -317,7 +321,9 @@ export class SendALight implements Activity {
     for (let i = 1; i < this.path.length; i += 1) length += this.path[i]!.distanceTo(this.path[i - 1]!);
     const time = returned ? seconds : (seconds / 2) * (length / toMoon);
     this.sfx("laser-ping", this.consolePoint);
-    this.spec.ctx.bus.emit("say", { speaker: "remi", name: "Remi", text: "Ping...", at: null });
+    this.view("pulse", time + 1.6);
+    const head = this.consolePoint.clone().addScaledVector(this.spec.console.dir, 1.7);
+    this.spec.ctx.bus.emit("say", { speaker: "remi", name: "Remi", text: "Ping...", at: [head.x, head.y, head.z] });
     this.pulse.fire(this.path, time, () => {
       if (!returned) {
         this.beat("pulse-miss");
@@ -325,7 +331,7 @@ export class SendALight implements Activity {
       }
       this.sfx("laser-pong", this.consolePoint);
       this.flash = 1;
-      this.spec.ctx.bus.emit("say", { speaker: "remi", name: "Remi", text: "...pong!", at: null });
+      this.spec.ctx.bus.emit("say", { speaker: "remi", name: "Remi", text: "...pong!", at: [head.x, head.y, head.z] });
       if (this.mirrorCount === 3 && this.setFlag(stepFlag(ID, "pulse"))) this.spec.ctx.bus.emit("activity:step", { id: ID, step: "pulse" });
       this.checkDone();
     });
@@ -337,8 +343,20 @@ export class SendALight implements Activity {
     // The finale: every cube of the real array glints back at Earth, row by row.
     window.setTimeout(() => {
       this.glint = 0;
-      this.sfx("corner-sparkle", this.spec.glints.position);
+      this.view("glint", 4.2);
+      this.sfx("corner-sparkle", this.spec.views.glint.target);
     }, 1400);
+  }
+
+  /** For tests: the beam's path and whether it reaches Earth. */
+  debugBeam(): { home: boolean; mirrors: number; yaw: number; points: number[][] } {
+    return { home: this.home, mirrors: this.mirrorCount, yaw: this.yaw, points: this.path.map((p) => p.toArray().map((x) => Math.round(x * 100) / 100)) };
+  }
+
+  /** A short camera move to one of the activity's views. */
+  private view(name: "pulse" | "glint", seconds: number): void {
+    const v = this.spec.views[name];
+    this.spec.ctx.bus.emit("camera:cinematic", { position: v.position.toArray(), target: v.target.toArray(), seconds });
   }
 
   /** Rebuilds the mirrors and traces the beam again. */
@@ -351,7 +369,8 @@ export class SendALight implements Activity {
     PANELS.forEach((p, i) => (this.held[i]!.visible = !this.placed(p) && carrying !== `mirror:${p}`));
 
     this.frame.rotation.y = (this.yaw * Math.PI) / 180;
-    this.frame.updateMatrixWorld(true);
+    // Parents too: on the first trace the pivot has not been drawn yet.
+    this.frame.updateWorldMatrix(true, true);
     const world = this.frame.matrixWorld;
     const axes = this.axes.map((a) => a.clone().transformDirection(world)) as [Vector3, Vector3, Vector3];
     const vertex = this.vertex.clone().applyMatrix4(world);
@@ -382,7 +401,8 @@ export class SendALight implements Activity {
       p.copy(from).addScaledVector(dir, d);
       const r = p.length();
       if (r < this.spec.terrain.radiusAt(p.clone().normalize())) return p;
-      if (r > this.spec.terrain.radius + 6) return from.clone().addScaledVector(dir, length);
+      // Far out and heading away: it will never come down.
+      if (r > this.spec.terrain.radius + 6 && dir.dot(p) > 0) return from.clone().addScaledVector(dir, length);
     }
     return from.clone().addScaledVector(dir, length);
   }
@@ -464,6 +484,7 @@ export class SendALight implements Activity {
     this.beam.show(true);
     this.refresh();
     this.glint = 0;
+    this.view("glint", 4.2);
   }
 
   resize(pixelHeight: number): void {

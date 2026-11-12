@@ -122,7 +122,7 @@ export class LampBeam {
     );
     this.glow.renderOrder = 9;
     this.root.add(this.glow);
-    this.ring = new Mesh(torus(0.04), toon.glow("#FFD08A"));
+    this.ring = new Mesh(torus(0.022), toon.glow("#FFD08A"));
     this.ring.rotation.x = Math.PI / 2;
     this.ring.scale.setScalar(1.05);
     this.ring.position.y = 0.05;

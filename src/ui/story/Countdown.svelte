@@ -16,7 +16,8 @@
 
   $effect(() => {
     const quick = settings.reducedMotion;
-    audio.play("tick");
+    audio.play("latch");
+    audio.play("tick", { delay: 0.15 });
     if (quick) {
       const t = window.setTimeout(ondone, 350);
       return () => window.clearTimeout(t);

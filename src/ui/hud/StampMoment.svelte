@@ -46,6 +46,15 @@
     window.clearTimeout(timer);
   }
 
+  // While the stamp lands, a key press skips it; it must not also use something in the world.
+  $effect(() => {
+    if (!current) return;
+    engine.interactions.blocked = true;
+    return () => {
+      engine.interactions.blocked = false;
+    };
+  });
+
   function onkey(event: KeyboardEvent): void {
     if (current && event.key !== "Tab") skip();
   }

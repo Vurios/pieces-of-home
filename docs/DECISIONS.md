@@ -448,3 +448,63 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 **Why:** The team asked for the game to feel more like a space program, in idea, design and play, with other games as reference, without naming the hackathon.
 
 **Alternatives considered:** A sci-fi restyle (would lose the warm, handmade tone), real mission logos (not allowed), timed challenges (against the no-fail pillar).
+
+## 46. Chapters as typed data, played by a story director
+
+**Date:** 2026-11-12
+
+**Decision:** Each chapter is one typed file in `src/content/chapters/` (arrival, Dad's tag, three letters with their beats, the activity, Milo's part, the memory and the stamp). Scripts are lists of lines: speech, Dad's note cards, fact cards (a fact's own kid wording from `facts.json`), pauses and real mission recordings with captions. A story director (`src/ui/story/director.ts`) plays them and moves the chapter on; one function, `chapterStep`, decides where a save stands, for the goal card, the paper arrow and the story alike. Cards wait for the player ("Got it", E, Enter, Space or the gamepad's A), and while one is up the interact key belongs to the card. The fact check now also counts `fact: "id"` in script lines.
+
+**Why:** Copy stays in one place per chapter, ready for a Filipino version later, and the game never has two opinions about what comes next. Cards that wait respect the no-timer pillar and every reading speed.
+
+**Alternatives considered:** All strings in one JSON file (harder to read beside the beats they belong to; a locale layer can map the same ids later), cards that close on a timer (rushes slow readers).
+
+## 47. Chapter 1: Tranquility Base and Send a Light
+
+**Date:** 2026-11-12
+
+**Decision:** The Moon world keeps the real site's arrangement, squeezed: the descent stage in the middle, the flag and the TV camera to the north-west, the moonquake listener and the little mirrors to the south, Little West crater to the east, boot prints between them. Dad's practice corner, two spare mirrors on easels and an Earth console stand apart, so the activity never touches the model of the real things. Earth hangs low (12 degrees) behind the corner, so it stays in view. The activity uses real ray math (`src/game/puzzles/optics.ts`): one mirror bounces the light away, two still miss, three in a corner send it home from every turn of the frame; the corner's twist was chosen by a unit test that checks exactly that. The pulse takes the sourced round trip (`light-roundtrip`), with a short camera move so the player sees it reach Earth, then all hundred cubes glint.
+
+**Why:** The Game Bible asks for the insight to come from play: the beam visibly misses until the third mirror, and turning the frame proves the trick. Low Earth keeps the beam and the planet in one frame.
+
+**Alternatives considered:** Earth high overhead as at the real site (off screen in a follow camera), a flat mirror the player can aim (teaches aiming, not retroreflection), a fake beam that always returns (not honest).
+
+## 48. Milo's parts come home as parcels
+
+**Date:** 2026-11-12
+
+**Decision:** When a chapter's activity is done, a parcel with Milo's name waits by Dad's tag. Remi carries it home through the Looking Lamp and gives it to Milo on the workbench; the part clicks in, Remi remembers, and the stamp lands in the workshop. Domes on the workbench take you into each world after a "3, 2, 1" lamp countdown, glow once their stamp is earned, and the next one breathes softly.
+
+**Why:** It reuses the core verb (carry and deliver) for the biggest moment of each chapter, and it makes the workshop change after every chapter, as the Game Bible asks.
+
+**Alternatives considered:** Fitting the part inside the chapter world (Milo would have to travel before he has wheels), an automatic upgrade (no moment of giving).
+
+## 49. Recorded sound on top of the sounds made in code
+
+**Date:** 2026-11-12
+
+**Decision:** A subagent sourced 72 short files (about 1.46 MB): Kenney's CC0 footsteps, pages, cloth and clicks; single notes of a real piano, harp, ocarina, glockenspiel and hand chimes from the CC0 Versilian Community Sample Library, retuned to within 3 cents; and four NASA mission recordings. `src/audio/samples.ts` loads them after the first click. Footsteps and paper sounds play a different take each time with a little pitch drift; the score plays each note from the nearest real sample; the code-made sounds play until the files arrive and still layer under a few cues. Every take was measured offline in the audio lab and its gain set to match the loudness of the sound it replaces. Speech babble now follows the real words, one syllable per vowel group, with each letter nudging the pitch the same way every time (the trick Animal Crossing's voices use). Chapter 1 plays the real "Tranquility Base here. The Eagle has landed." with a caption and a sourced fact card. The credits list the recordings one by one and the sample packs by name.
+
+**Why:** The team asked for better audio in everything, using modern games as reference or real recordings. Round-robin foley and sampled instruments are what modern games use; real mission audio is the most honest sound this game can play.
+
+**Alternatives considered:** Only synthesis (thin next to real takes), large commercial libraries (licences not allowed), streaming music (size, licences).
+
+## 50. Fact check results shape the design
+
+**Date:** 2026-11-12
+
+**Decision:** 21 of 22 open facts are checked. `opp-quote-myth` could not be confirmed by NASA or JPL, so Chapter 3 drops both the quote and the myth and shows only the rover's last data. `sur3-microbe` is now unverified (NASA sources disagree), so the bonus chapter will not mention it. `lrv-rear-steer` is confirmed, so Chapter 2 may say the first drive steered with the rear wheels. The Voyager 1 light-day moment is 10:16:07 UTC (NASA), not 06:16:07 UTC, and the notebook and field guide now switch their wording then. `mars-blue-sunset` is allowed only for the sky near the Sun.
+
+**Why:** Every claim a player sees must have a primary source.
+
+**Alternatives considered:** Rewording unverified claims more vaguely (the rules say remove, not soften).
+
+## 51. Short cinematic camera moves
+
+**Date:** 2026-11-12
+
+**Decision:** Game code can ask for a short camera view (`camera:cinematic`). The engine eases it in over the follow camera, holds, and eases back out, so the player never loses their place. Used for the pulse flying to Earth and the glint of the hundred cubes. Under reduced motion the ease is quick.
+
+**Why:** The two best moments of Chapter 1 happen away from where the player stands.
+
+**Alternatives considered:** Fixed cutscenes (take control away), leaving the camera alone (the payoff happens off screen).

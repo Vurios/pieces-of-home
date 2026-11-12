@@ -29,6 +29,8 @@ export const TRANQUILITY: ChapterDef = {
       letter: "You stayed behind so the top half could fly home. That is what good friends do.",
       beat: [
         { say: "So this is where the lander's legs stayed.", who: "remi", at: "descent" },
+        { say: "Dad's radio has a real recording from here!", who: "remi" },
+        { recording: "eagle-landed", name: "Neil Armstrong", caption: "Tranquility Base here. The Eagle has landed.", fact: "rec-apollo11-landed" },
         { fact: "a11-descent-stage" },
         { say: "It helped them leave by staying put. Huh.", who: "remi" },
       ],

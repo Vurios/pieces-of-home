@@ -220,7 +220,7 @@
   }
 
   function toggleNotebook(open: boolean): void {
-    audio.ui("page");
+    audio.play(open ? "book-open" : "book-close");
     flow.setNotebook(open);
   }
 

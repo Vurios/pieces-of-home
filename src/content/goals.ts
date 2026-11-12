@@ -62,6 +62,8 @@ function chapterGoal(chapter: ChapterDef, state: Readonly<GameState>): Goal {
       return { ...base, id: "home", step: 5, title: "Take the part home to Milo", detail: "Step into the lamp light to go back to the workshop.", hint: "The lamp light shines down where you landed. Follow the arrow." };
     case "part-give":
       return { ...base, id: "part", step: 5, title: chapter.partPrompt, detail: "Milo waits on Dad's workbench.", hint: "Milo is on the workbench, next to the glass domes." };
+    case "memory":
+      return { ...base, id: "part", step: 5, title: "Milo has his new part", detail: "Listen. Remi remembers something.", hint: "Stay with Milo for a moment." };
     case "done":
       return { ...base, id: "home", step: 5, title: chapter.goals.home, detail: "Step into the lamp light to go back.", hint: "The lamp light shines down where you landed." };
   }
@@ -72,6 +74,9 @@ export function goalFor(state: Readonly<GameState>, device: InputDevice): Goal {
   if (here) return chapterGoal(here, state);
   const carried = chapterForPart(state.carrying);
   if (carried) return chapterGoal(carried, state);
+  // Back home with Milo's part fitted: the memory plays before the stamp.
+  const remembering = CHAPTERS.find((c) => chapterStep(c, state).kind === "memory");
+  if (remembering) return chapterGoal(remembering, state);
   const base = { chapter: PROLOGUE.chapter, steps: 3 };
   if (state.carrying === LETTER_TO_THE_LAMP) {
     return {

@@ -98,6 +98,8 @@ export interface GameEvents {
   travel: { to: string; entry?: string };
   /** Open Dad's notebook at a spread. */
   "notebook:open": { spread: string };
+  /** A short camera move to show something (a pulse flying to Earth), blended in and out of the follow camera. */
+  "camera:cinematic": { position: [number, number, number]; target: [number, number, number]; up?: [number, number, number]; seconds: number };
   /** A one-shot sound from game code (see src/audio/cues.ts). */
   sfx: { name: string; at?: [number, number, number] | null; param?: number; delay?: number; level?: number };
   "debug:stats": { fps: number; calls: number; triangles: number; geometries: number; textures: number; tier: QualityTier };

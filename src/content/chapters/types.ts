@@ -19,7 +19,12 @@ export type Line =
   /** A fact card: the fact's kid wording, from facts.json. */
   | { fact: string }
   /** A pause, in seconds. */
-  | { wait: number };
+  | { wait: number }
+  /**
+   * A real mission recording (src/data/audio-assets.json) with its caption,
+   * the words exactly as heard, and the fact that sources who said it.
+   */
+  | { recording: string; name: string; caption: string; fact: string };
 
 export interface LetterDef {
   /** Saved in `delivered` when given. */

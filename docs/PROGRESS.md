@@ -6,7 +6,7 @@ There is no deadline. The full scope in the Game Bible gets built: P0, then P1, 
 - **Repo:** https://github.com/Vurios/pieces-of-home (public). No CI: the team asked for straight pushes to `main`. Run typecheck, tests and e2e locally before pushing.
 - **Team rule for this run:** the agent asks the team before starting each next phase prompt.
 
-**Now:** Phase 04 (audio) is built and deployed. Also in this pass, at the team's request: smoother sculpted hair, a notebook mail and stamp redesign, and a stronger space-mission layer across the game (DECISIONS #41 to #45). **Next up:** Phase 05, the story, the worlds and the puzzles (ask the team first).
+**Now:** Phase 05 in progress. Chapter 1 (Tranquility Base) is playable from the dome to the stamp, with the content system, story director, fact and note cards, hints in three tiers, the dome countdown, Milo's first part and a full playthrough test. All open facts are checked but two. Recorded sound (CC0 foley and instruments, four NASA recordings) is in, with word-following voices (DECISIONS #46 to #51). **Next up:** Chapter 3 (Meridiani Planum), then the Finale, then Chapters 2 and 4, then P2.
 
 ## State summary (2026-11-11)
 
@@ -26,7 +26,8 @@ Things a new session should know:
 - Audio: `src/audio/` (see DECISIONS #42). Review every sound at `/audio-lab/`: buttons per cue, music and ambience switches, a live meter, "Measure every effect and voice" (offline peak, loudness and click check) and a one-minute recorder. Dad's real voice lines go in `public/audio/vo/<line>.ogg` (the first is `prologue-lamp-thanks`).
 - Playwright runs with 2 workers, and walk tests use the Low tier (`DECISIONS.md` #8, #18).
 - NASA models: `npx tsx scripts/assets/nasa-models.ts build` (output to `.cache/` until a phase ships one).
-- Facts: 52 (30 checked, 22 verify). Location facts carry `lat`/`lon`. Opening every source and filling `checkedOn` is the first job of Phase 05.
+- Facts: 56 (54 checked). Location facts carry `lat`/`lon`. Report: `docs/research/facts-check-2026-11.md`.
+- Chapters: `?world=tranquility` (with `?test`) starts in a chapter world. Hooks: `__poh.teleportTo(id)`, `__poh.world("solve"|"deliver"|"fire"|"beam")`, `__poh.patch({...})`, `__poh.travel(id, entry)`.
 - Engine map: `src/game/engine.ts` (loop), `core/` (events, input, quality, state), `world/` (sphere math, terrain, colliders, controller, camera, interaction), `render/` (toon, post, grade, sky, particles, kit), `actors/` (kids, Milo, props), `worlds/home/`.
 
 ## Phase 01: Setup, skills, scaffold and first deploy
@@ -145,16 +146,17 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 
 ## Phase 05: The story, the worlds and the puzzles
 
-- [ ] Verify every fact (subagent), fill `checkedOn` and `deeper`
-- [ ] Content system
+- [x] Verify every fact (subagent), fill `checkedOn` and `deeper` (54 of 56 checked; `opp-quote-myth` and `sur3-microbe` stay out of the game, DECISIONS #50)
+- [x] Content system (`src/content/chapters/`, story director, cards, hints, `chapterStep`)
 - [ ] Real images and data (NASA images, Horizons table for Voyager 1)
 - [ ] Prologue: The Workshop (P0)
-- [ ] Chapter 1: Tranquility Base (P0)
+- [x] Chapter 1: Tranquility Base (P0): world, three letters, seismograph, Send a Light, Milo's eyes, memory, stamp; `tests/e2e/chapters.spec.ts`; screens in `docs/screens/phase05/` (`npx tsx scripts/screens-chapters.ts`)
 - [ ] Chapter 3: Meridiani Planum (P0)
 - [ ] Finale: The Long Light (P0)
 - [ ] Chapter 2: Hadley-Apennine (P1)
 - [ ] Chapter 4: Valinor Hills (P1)
 - [ ] Archive cards and the Surveyor 3 bonus chapter (P2)
+- [x] Audio pass: recorded foley and instruments, NASA recordings with captions, word-following voices (DECISIONS #49)
 - [ ] Writing pass
 - [ ] Photo mode, hints, save, museum free roam
 - [ ] Automated playthroughs, deploy

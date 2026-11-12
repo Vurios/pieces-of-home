@@ -572,8 +572,14 @@ export function createHome(ctx: WorldContext): World {
     update(dt: number, frame: FrameInfo) {
       const feet = frame.player.position;
       // Hysteresis, so standing in the doorway never flickers the walls.
+      const wasInside = inside;
       if (!inside && shop.isInside(feet, -0.15)) inside = true;
       else if (inside && !shop.isInside(feet, 0.55)) inside = false;
+      // The front swings down with a creak, and shuts with a soft knock.
+      if (inside !== wasInside) {
+        const door = local(SITES.shed, 0, 1.2, SHED.halfDepth ?? 2.5);
+        bus.emit("sfx", { name: inside ? "shed-open" : "shed-close", at: [door.x, door.y, door.z] });
+      }
 
       const target = inside ? 1 : 0;
       open += (target - open) * damp(frame.reducedMotion ? 30 : 5, dt);

@@ -33,13 +33,15 @@ export type ChapterStep =
   | { kind: "part-take" }
   | { kind: "part-home" }
   | { kind: "part-give" }
+  /** Milo has his new part; the memory and the stamp are still to come. */
+  | { kind: "memory" }
   | { kind: "done" };
 
 /** Where a chapter stands in a save. One place decides, for the goal card, the arrow and the story. */
 export function chapterStep(chapter: ChapterDef, state: Readonly<GameState>): ChapterStep {
   if (state.stamps.includes(chapter.id)) return { kind: "done" };
   if (state.carrying === partId(chapter)) return state.world === "home" ? { kind: "part-give" } : { kind: "part-home" };
-  if (state.miloStage >= chapter.milo && state.flags.includes(doneFlag(chapter.activity))) return { kind: "done" };
+  if (state.miloStage >= chapter.milo && state.flags.includes(doneFlag(chapter.activity))) return { kind: "memory" };
   if (state.flags.includes(doneFlag(chapter.activity))) return { kind: "part-take" };
   const next = chapter.letters.findIndex((l) => !state.delivered.includes(l.id));
   if (next < 0) {
