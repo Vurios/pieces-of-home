@@ -120,8 +120,10 @@
   let endTimer = 0;
   function startEnding(): void {
     scene = "picture";
+    // The closing picture is the real little world: the camera lifts away from Remi.
+    engine.bus.emit("camera:farewell", { on: true });
     window.clearTimeout(endTimer);
-    endTimer = window.setTimeout(() => (scene = "credits"), settings.reducedMotion ? 4000 : 7000);
+    endTimer = window.setTimeout(() => (scene = "credits"), settings.reducedMotion ? 4000 : 9000);
   }
   // The credits scroll by themselves; the wheel or a drag still works.
   $effect(() => {
@@ -142,21 +144,6 @@
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
   });
-  // The four friends in the closing picture: Remi with the backpack, then Nori, Lumi and Theo.
-  const FRIENDS = [
-    { x: 330, c: "#C8553D", h: 0, skin: "#C98B62", hair: "messy", hc: "#2A2030", pack: true },
-    { x: 384, c: "#5E8BB0", h: 6, skin: "#E9B98F", hair: "curls", hc: "#C8743A", pack: false },
-    { x: 436, c: "#E0B34A", h: -4, skin: "#8E5A3C", hair: "bun", hc: "#2E2230", pack: false },
-    { x: 488, c: "#7FA36B", h: 3, skin: "#F0C9A0", hair: "cap", hc: "#3E5A7A", pack: false },
-  ];
-  const ENDING_STARS = Array.from({ length: 46 }, (_, i) => {
-    const r = (n: number): number => {
-      const x = Math.sin(i * 91.7 + n * 17.3) * 43758.5453;
-      return x - Math.floor(x);
-    };
-    return { x: r(1) * 800, y: r(2) * 230, r: 0.8 + r(3) * 1.6, o: 0.35 + r(4) * 0.6, d: r(5) * 4 };
-  });
-
   const sources = [...new Map((factData.facts as { sourceTitle: string; sourceUrl: string; status: string }[]).filter((f) => f.status === "checked").map((f) => [f.sourceTitle, f])).values()];
   const mediaCredits = [...new Set(credits.media.map((m) => m.credit))];
   const dataCredits = (credits as { data?: { name: string; by: string }[] }).data ?? [];
@@ -208,6 +195,7 @@
       cancelAnimationFrame(frame);
       window.clearTimeout(showTimer);
       window.clearTimeout(endTimer);
+      if (id === "ending") engine.bus.emit("camera:farewell", { on: false });
     };
   });
 </script>
@@ -289,64 +277,9 @@
         </div>
       </div>
     {:else if game.id === "ending"}
-      <div class="ending" role="dialog" aria-modal="true" aria-label="The end">
+      <div class="ending" class:credits={scene === "credits"} role="dialog" aria-modal="true" aria-label="The end">
         {#if scene === "picture"}
           <div class="picture">
-            <svg viewBox="0 0 800 420" aria-hidden="true">
-              {#each ENDING_STARS as s, i (i)}<circle cx={s.x} cy={s.y} r={s.r} fill="#FFF6E0" opacity={s.o} class="end-star" style:animation-delay="{-s.d}s" />{/each}
-              <circle cx="96" cy="70" r="20" fill="#FFF6E0" opacity="0.9" />
-              <circle cx="104" cy="64" r="18" fill="#0B1030" />
-              <defs>
-                <radialGradient id="end-glow" cx="0.5" cy="0.5" r="0.5">
-                  <stop offset="0" stop-color="#FFD98A" stop-opacity="0.9" />
-                  <stop offset="1" stop-color="#FFD98A" stop-opacity="0" />
-                </radialGradient>
-              </defs>
-              <!-- The little world's curve, the workshop with its lamp on, and a dome ahead. -->
-              <path d="M-20 420 Q 400 250 820 420 Z" fill="#3E5A44" stroke="#2B2622" stroke-width="4" />
-              <g transform="translate(150 286) rotate(-8)">
-                <rect x="-62" y="-62" width="124" height="70" fill="#9A4A36" stroke="#2B2622" stroke-width="4" />
-                <path d="M-74 -60 L0 -112 L74 -60 Z" fill="#4E6B57" stroke="#2B2622" stroke-width="4" stroke-linejoin="round" />
-                <rect x="-20" y="-44" width="40" height="30" fill="#FFD98A" stroke="#2B2622" stroke-width="3" />
-                <circle cx="0" cy="-29" r="44" fill="url(#end-glow)" />
-              </g>
-              <g transform="translate(640 270)">
-                <circle r="58" fill="url(#end-glow)" opacity="0.5" />
-                <path d="M-44 10 A 44 44 0 0 1 44 10 Z" fill="#CFE3EE" fill-opacity="0.35" stroke="#FFF6E0" stroke-width="4" />
-                <rect x="-52" y="8" width="104" height="12" rx="3" fill="#6E4E36" stroke="#2B2622" stroke-width="3" />
-              </g>
-              <!-- Four friends and Milo, walking to the next dome. -->
-              {#each FRIENDS as k, i (i)}
-                <g transform="translate({k.x} {300 + k.h})">
-                  <g class="walker" style:animation-delay="{-i * 0.18}s">
-                    {#if k.pack}<rect x="-19" y="-38" width="12" height="24" rx="4" fill="#7A3B2E" stroke="#2B2622" stroke-width="3" />{/if}
-                    <rect x="-13" y="-40" width="26" height="34" rx="9" fill={k.c} stroke="#2B2622" stroke-width="3" />
-                    <circle cy="-54" r="15" fill={k.skin} stroke="#2B2622" stroke-width="3" />
-                    {#if k.hair === "curls"}
-                      {#each [-12, -4, 4, 12] as hx (hx)}<circle cx={hx} cy={-66 + Math.abs(hx) * 0.3} r="7" fill={k.hc} stroke="#2B2622" stroke-width="2.5" />{/each}
-                    {:else if k.hair === "bun"}
-                      <circle cy="-74" r="7" fill={k.hc} stroke="#2B2622" stroke-width="2.5" />
-                      <path d="M-15 -56 Q 0 -78 15 -56" fill={k.hc} stroke="#2B2622" stroke-width="3" />
-                    {:else if k.hair === "cap"}
-                      <path d="M-15 -58 Q 0 -78 15 -58 Z" fill={k.hc} stroke="#2B2622" stroke-width="3" />
-                      <path d="M10 -60 L24 -58" stroke="#2B2622" stroke-width="4" stroke-linecap="round" />
-                    {:else}
-                      <path d="M-16 -54 Q -14 -76 2 -72 Q 14 -76 16 -54 L 10 -62 L 4 -56 L -2 -63 L -8 -56 Z" fill={k.hc} stroke="#2B2622" stroke-width="2.5" stroke-linejoin="round" />
-                    {/if}
-                    <path d="M-7 -6 L-9 10 M7 -6 L9 10" stroke="#2B2622" stroke-width="4" stroke-linecap="round" />
-                  </g>
-                </g>
-              {/each}
-              <g transform="translate(548 300)"><g class="walker">
-                <rect x="-14" y="-30" width="28" height="24" rx="5" fill="#B9B4AA" stroke="#2B2622" stroke-width="3" />
-                <circle cx="0" cy="-18" r="5" fill="#E0B34A" stroke="#2B2622" stroke-width="2" />
-                <path d="M0 -30 L0 -44 L12 -52" fill="none" stroke="#2B2622" stroke-width="3" stroke-linecap="round" />
-                <path d="M8 -58 L22 -50 L12 -40 Z" fill="#5F7F7A" stroke="#2B2622" stroke-width="3" stroke-linejoin="round" />
-                <circle cx="16" cy="-46" r="4" fill="#FFD98A" />
-                <circle cx="-8" cy="-2" r="6" fill="#6E6A66" stroke="#2B2622" stroke-width="2.5" />
-                <circle cx="8" cy="-2" r="6" fill="#6E6A66" stroke="#2B2622" stroke-width="2.5" />
-              </g></g>
-            </svg>
             <p class="end-line">Remi and friends opened Dad's workshop as a little museum.</p>
             <p class="end-line soft">The lamp stays on.</p>
             <p class="stamp-line" aria-hidden="true">{STAMP[0]} {STAMP[1]}</p>
@@ -592,41 +525,30 @@
     margin-top: 14px;
   }
   /* ---------- The ending ---------- */
+  /* The closing picture is the 3D world itself (the engine's farewell shot), so the
+     screen only darkens toward the bottom, where the words sit. The credits roll
+     over a deeper night. */
   .ending {
     position: fixed;
     inset: 0;
     z-index: 55;
     display: grid;
     grid-template-rows: 1fr auto;
-    background-color: #0b1030;
-    background-image:
-      radial-gradient(ellipse at 50% 30%, rgba(255, 217, 138, 0.12), transparent 60%),
-      var(--grain);
+    background: linear-gradient(to bottom, rgba(8, 10, 32, 0) 45%, rgba(8, 10, 32, 0.78) 100%);
     color: #fff6e0;
-    animation: dim 1.2s ease both;
+    transition: background-color 1.2s ease;
+  }
+  .ending.credits {
+    background-color: rgba(8, 10, 32, 0.62);
   }
   .picture {
     display: grid;
-    place-content: center;
+    align-content: end;
     justify-items: center;
     gap: 6px;
-    padding: 24px;
+    padding: 24px 24px 8px;
     text-align: center;
-  }
-  .picture svg {
-    width: min(1040px, 94vw);
-    height: auto;
-  }
-  .end-star {
-    animation: end-twinkle 3.2s ease-in-out infinite;
-  }
-  @keyframes end-twinkle {
-    50% {
-      opacity: 0.15;
-    }
-  }
-  .walker {
-    animation: walk 0.9s ease-in-out infinite;
+    text-shadow: 0 2px 16px rgba(8, 10, 32, 0.8);
   }
   .end-line {
     margin: 0;
@@ -730,11 +652,6 @@
     from {
       opacity: 0;
       transform: translateY(10px);
-    }
-  }
-  @keyframes walk {
-    50% {
-      transform: translateY(-4px);
     }
   }
   :global(:root[data-motion="reduce"]) .ending *,

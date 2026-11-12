@@ -26,6 +26,7 @@ import { PostPipeline } from "./render/post";
 import { Sky } from "./render/sky";
 import { behindPlanet } from "./render/kit";
 import { ToonLibrary } from "./render/toon";
+import { TRIP_LOOK, TripScene } from "./render/trip";
 import { FollowCamera } from "./world/camera";
 import { PlayerController } from "./world/controller";
 import { InteractionSystem } from "./world/interaction";
@@ -118,6 +119,20 @@ export class Engine {
   private cine: { position: Vector3; target: Vector3; up: Vector3; seconds: number; age: number } | null = null;
   private readonly cineQuat = new Quaternion();
   private readonly cineMatrix = new Matrix4();
+  /**
+   * The closing shot: the camera lifts away from Remi until the whole little
+   * world shows against the stars, then turns slowly around it. `weight`
+   * eases it in over the follow camera and back out when it ends.
+   */
+  private farewell: { on: boolean; age: number; weight: number; back: Vector3 } | null = null;
+  private readonly farewellPos = new Vector3();
+  private readonly farewellTarget = new Vector3();
+  /** The 3D trip between worlds (render/trip.ts), built once on first use. */
+  private trip: TripScene | null = null;
+  /** True while the trip is on screen instead of a world. */
+  private tripping = false;
+  /** While the light closes at the end of a trip, it closes on the world ahead. */
+  private irisOnTrip = false;
   private readonly scratch = new Vector3();
 
   static create(options: EngineOptions): Engine | null {
@@ -195,6 +210,14 @@ export class Engine {
       this.cine = { position: new Vector3(...position), target: new Vector3(...target), up: up ? new Vector3(...up) : new Vector3(...position).normalize(), seconds, age: 0 };
     });
     this.bus.on("letter:delivered", () => this.kid.play("celebrate"));
+    this.bus.on("camera:farewell", ({ on }) => {
+      if (on) {
+        // "Back" is away from where the camera looks, flat on the ground, so the lift starts behind Remi.
+        const back = projectOnTangent(this.camera.position.clone().sub(this.player.position), this.player.up, new Vector3());
+        if (back.lengthSq() < 1e-6) back.set(0, 0, 1);
+        this.farewell = { on: true, age: 0, weight: this.farewell?.weight ?? 0, back: back.normalize() };
+      } else if (this.farewell) this.farewell.on = false;
+    });
 
     window.addEventListener("resize", this.onWindowResize);
     document.addEventListener("visibilitychange", this.onVisibility);
@@ -451,28 +474,108 @@ export class Engine {
   holdStill = 0;
 
   /** Closes the Looking Lamp iris, swaps worlds, and opens it again. */
+  /**
+   * Carries Remi to another little world. The lamp light closes on the world
+   * here, the next world loads behind the light, and then the light opens on
+   * the trip: the two little worlds in the night and the lamp's light flying
+   * between them (render/trip.ts). As the light reaches the world ahead, it
+   * closes on it, and opens again on the world itself. With reduced motion,
+   * there is no flight: the light closes, holds a moment and opens.
+   */
   async travel(id: string, entry?: string): Promise<void> {
     if (this.traveling) return;
     this.traveling = true;
+    const from = this.world?.id ?? null;
     try {
-      this.bus.emit("travel:start", { from: this.world?.id ?? null, to: id });
+      this.bus.emit("travel:start", { from, to: id });
+      this.post.irisCenter.set(0.5, 0.5);
       await this.animateIris(0, 1, 0.7);
       const shut = performance.now();
       await this.loadWorld(id, entry, false);
-      // Compile the new world's shaders while the iris is still shut, so it opens smoothly.
+      // Compile the new world's shaders while the light is still shut, so it opens smoothly.
       await this.prepareShaders();
-      // The travel screen gets a moment even when loading is quick, so a trip reads as a trip.
-      const hold = (this.reducedMotion ? 0.4 : 2.1) * 1000 - (performance.now() - shut);
-      if (hold > 0) await new Promise((resolve) => window.setTimeout(resolve, hold));
+      if (this.reducedMotion) {
+        const hold = 400 - (performance.now() - shut);
+        if (hold > 0) await new Promise((resolve) => window.setTimeout(resolve, hold));
+      } else {
+        const trip = this.ensureTrip();
+        trip.begin(from, id);
+        this.post.setLook(TRIP_LOOK);
+        this.tripping = true;
+        this.bus.emit("travel:flight", { from, to: id });
+        await this.animateIris(1, 0, 0.5);
+        await this.until(() => trip.progress >= 0.8 || !this.tripping);
+        this.irisOnTrip = true;
+        await this.animateIris(0, 1, 0.55);
+        this.irisOnTrip = false;
+        this.tripping = false;
+        if (this.world) this.post.setLook(this.world.look);
+        this.post.irisCenter.set(0.5, 0.5);
+      }
       this.bus.emit("travel:arrive", { to: id });
       this.bus.emit("world:ready", { id });
       await this.animateIris(1, 0, 0.8);
     } finally {
+      if (this.tripping) {
+        this.tripping = false;
+        if (this.world) this.post.setLook(this.world.look);
+      }
+      this.irisOnTrip = false;
       this.traveling = false;
       // Always, even if loading failed, so the travel screen never stays up.
       this.post.iris = 0;
+      this.post.irisCenter.set(0.5, 0.5);
       this.bus.emit("travel:end", { to: id });
     }
+  }
+
+  /** The closing shot (see `farewell`). */
+  private farewellShot(dt: number, world: World): void {
+    const f = this.farewell!;
+    f.age += dt;
+    const fade = this.reducedMotion ? 0.3 : 1.6;
+    f.weight = f.on ? Math.min(1, f.weight + dt / fade) : Math.max(0, f.weight - dt / fade);
+    if (!f.on && f.weight <= 0) {
+      this.farewell = null;
+      return;
+    }
+    const R = world.terrain.radius;
+    const up = this.player.up;
+    // The lift: from just behind Remi to far enough out that the whole little world shows.
+    const lift = this.reducedMotion ? 1 : Math.min(1, f.age / 6.5);
+    const k = lift * lift * (3 - 2 * lift);
+    const spin = this.reducedMotion ? 0 : Math.max(0, f.age - 2.5) * 0.04;
+    const tilt = 0.95 - 0.4 * k;
+    const side = this.scratch.crossVectors(up, f.back).normalize();
+    const around = f.back.clone().multiplyScalar(Math.cos(spin)).addScaledVector(side, Math.sin(spin));
+    const dir = up.clone().multiplyScalar(Math.cos(tilt)).addScaledVector(around, Math.sin(tilt)).normalize();
+    const distance = R + 7 + (R * 2.3 - 7) * k;
+    this.farewellPos.copy(dir).multiplyScalar(distance);
+    this.farewellTarget.copy(this.player.position).addScaledVector(up, 1.1).lerp(up.clone().multiplyScalar(R * 0.62), k);
+    this.cineMatrix.lookAt(this.farewellPos, this.farewellTarget, up);
+    this.cineQuat.setFromRotationMatrix(this.cineMatrix);
+    const w = f.weight * f.weight * (3 - 2 * f.weight);
+    this.camera.position.lerp(this.farewellPos, w);
+    this.camera.quaternion.slerp(this.cineQuat, w);
+  }
+
+  private ensureTrip(): TripScene {
+    if (!this.trip) {
+      this.trip = new TripScene(this.toon);
+      this.trip.resize(window.innerWidth, window.innerHeight);
+    }
+    return this.trip;
+  }
+
+  /** Resolves on the first animation frame where the test passes. */
+  private until(test: () => boolean): Promise<void> {
+    return new Promise((resolve) => {
+      const step = (): void => {
+        if (test()) resolve();
+        else requestAnimationFrame(step);
+      };
+      step();
+    });
   }
 
   private animateIris(from: number, to: number, seconds: number): Promise<void> {
@@ -498,6 +601,12 @@ export class Engine {
   async warm(): Promise<void> {
     try {
       await this.prepareShaders();
+      // The trip's shaders too, so the first trip never stutters.
+      if (!this.reducedMotion) {
+        const trip = this.ensureTrip();
+        trip.begin("home", "tranquility");
+        await this.renderer.compileAsync(trip.scene, trip.camera);
+      }
     } catch {
       // Older drivers without parallel compile simply compile on first draw.
     }
@@ -540,6 +649,7 @@ export class Engine {
     this.post.setSize(width * ratio, height * ratio);
     this.puffs.setScale(height * ratio);
     this.world?.resize(height * ratio);
+    this.trip?.resize(width, height);
   };
 
   private frame = (time: number): void => {
@@ -576,6 +686,18 @@ export class Engine {
       this.resize();
     }
     this.renderer.info.reset();
+
+    // Between worlds, the trip is drawn instead of a world. It runs on the real clock,
+    // so a slow device sees fewer frames of it, never a longer trip.
+    if (this.tripping && this.trip) {
+      const trip = this.trip;
+      trip.update(Math.min(0.25, this.timer.getDelta()), this.reducedMotion);
+      if (this.irisOnTrip) trip.targetOnScreen(this.post.irisCenter);
+      this.post.focus = 0.5;
+      this.post.render(trip.scene, trip.camera, this.elapsed);
+      this.afterFrame(dt);
+      return;
+    }
 
     const input = this.input.read();
     const shot = this.bookmark;
@@ -662,6 +784,8 @@ export class Engine {
       this.camera.quaternion.slerp(this.cineQuat, k);
       if (c.age >= c.seconds) this.cine = null;
     }
+
+    if (this.farewell && !shot && !titling) this.farewellShot(dt, world);
 
     // The low key light leans the same way wherever the player stands.
     const up = this.player.up;
@@ -768,6 +892,20 @@ export class Engine {
       /** Sends a game event, for screenshots of moments such as the stamp. */
       emit: <K extends keyof GameEvents>(type: K, payload: GameEvents[K]) => this.bus.emit(type, payload),
       travel: (id: string, entry?: string) => this.travel(id, entry),
+      /** Holds the trip between two worlds still at one moment (0 to 1), for screenshots; null puts the world back. */
+      tripAt: (from: string, to: string, t: number | null) => {
+        if (t === null) {
+          this.tripping = false;
+          if (this.world) this.post.setLook(this.world.look);
+          return;
+        }
+        const trip = this.ensureTrip();
+        trip.begin(from, to);
+        trip.seek(t);
+        trip.frozen = true;
+        this.post.setLook(TRIP_LOOK);
+        this.tripping = true;
+      },
       /** Runs a world's test hook, for example "solve" or "deliver". */
       world: (command: string) => this.world?.debug?.[command]?.() ?? false,
       worldId: () => this.world?.id ?? null,
@@ -797,6 +935,7 @@ export class Engine {
     this.input.dispose();
     this.world?.dispose();
     this.sky?.dispose();
+    this.trip?.dispose();
     this.post.dispose();
     this.puffs.dispose();
     this.arrow.dispose();

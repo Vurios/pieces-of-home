@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { banners } from "./hud/banners.svelte";
   import { untrack } from "svelte";
   import { audio } from "../audio/audio";
   import type { GameState } from "../game/core/state";
@@ -263,7 +264,7 @@
 
 <Hud
   {engine}
-  hidden={flow.stage !== "play" || flow.covered}
+  hidden={flow.stage !== "play" || flow.covered || banners.traveling || banners.screens > 0}
   onnotebook={() => toggleNotebook(true)}
   onphoto={photo}
   onemote={() => (flow.emotes = !flow.emotes)}
@@ -271,8 +272,8 @@
   onhint={hint}
   onmap={() => engine.mapView() && flow.open("map")}
 />
-<MiniMap {engine} {game} hidden={flow.stage !== "play" || flow.covered || !settings.value.miniMap} onopen={() => flow.open("map")} />
-<Guide {engine} {game} hidden={flow.stage !== "play" || flow.covered} notebookOpen={flow.notebook} />
+<MiniMap {engine} {game} hidden={flow.stage !== "play" || flow.covered || banners.traveling || banners.screens > 0 || !settings.value.miniMap} onopen={() => flow.open("map")} />
+<Guide {engine} {game} hidden={flow.stage !== "play" || flow.covered || banners.traveling || banners.screens > 0} notebookOpen={flow.notebook} />
 <PlaceCard {engine} hidden={flow.stage !== "play" || flow.covered || flow.notebook} />
 <Speech {engine} />
 <StoryCards {engine} />

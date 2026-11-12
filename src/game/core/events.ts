@@ -117,11 +117,15 @@ export interface GameEvents {
   "story:banner": { label: string; name: string };
   /** The dish is aimed with Dad's last letter in hand (Finale). */
   "finale:aim": Record<string, never>;
+  /** The light has opened on the 3D trip between worlds (not sent with reduced motion). */
+  "travel:flight": { from: string | null; to: string };
   "travel:arrive": { to: string };
   "travel:end": { to: string };
   /** Open Dad's notebook at a spread. */
   "notebook:open": { spread: string };
   /** A short camera move to show something (a pulse flying to Earth), blended in and out of the follow camera. */
+  /** The closing shot: the camera lifts away until the whole little world shows (on), then returns (off). */
+  "camera:farewell": { on: boolean };
   "camera:cinematic": { position: [number, number, number]; target: [number, number, number]; up?: [number, number, number]; seconds: number };
   /** A one-shot sound from game code (see src/audio/cues.ts). */
   sfx: { name: string; at?: [number, number, number] | null; param?: number; delay?: number; level?: number };

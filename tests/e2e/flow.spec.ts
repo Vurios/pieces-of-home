@@ -80,7 +80,7 @@ test("the mission note folds and opens, and a trip shows the travel screen", asy
   await expect(fold).toHaveAttribute("aria-expanded", "true");
 
   await page.evaluate("void window.__poh.travel('tranquility')");
-  const screen = page.locator(".trip-screen");
+  const screen = page.locator(".trip-words");
   await expect(screen).toBeVisible({ timeout: 10_000 });
   await expect(screen).toContainText("Tranquility Base");
   await expect(screen).toBeHidden({ timeout: 60_000 });
