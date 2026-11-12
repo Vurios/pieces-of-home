@@ -34,9 +34,45 @@
   let trip = $state<{ name: string; where: string } | null>(null);
   let flying = $state(false);
   let slow = $state(false);
+  let skipped = $state(false);
+
+  /** E, Enter, Space, a click or the A button skips ahead to the landing. */
+  function skip(): void {
+    if (!flying || skipped) return;
+    skipped = true;
+    engine.bus.emit("travel:skip", {});
+  }
+  $effect(() => {
+    if (!trip || !flying) return;
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.code === "KeyE" || e.code === "Enter" || e.code === "Space") {
+        e.preventDefault();
+        skip();
+      }
+    };
+    const onClick = (): void => skip();
+    let frame = 0;
+    let was = true;
+    const poll = (): void => {
+      frame = requestAnimationFrame(poll);
+      const a = Boolean(navigator.getGamepads?.().find((g) => g)?.buttons[0]?.pressed);
+      if (a && !was) skip();
+      was = a;
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onClick);
+    frame = requestAnimationFrame(poll);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onClick);
+      cancelAnimationFrame(frame);
+    };
+  });
 
   $effect(() => {
     let slowTimer = 0;
+    let launchTimer = 0;
+    let landTimer = 0;
     const offs = [
       engine.bus.on("travel:start", ({ to }) => {
         trip = named(to);
@@ -51,7 +87,10 @@
         window.clearTimeout(slowTimer);
         slow = false;
         flying = true;
-        audio.play("solar-rise", { level: 0.35 });
+        skipped = false;
+        // The rocket's sounds follow its beats (see src/game/render/trip.ts): lift-off, then landing.
+        launchTimer = window.setTimeout(() => audio.play("rocket-launch", { level: 0.6 }), 1500);
+        landTimer = window.setTimeout(() => audio.play("rocket-land", { level: 0.55 }), 4950);
       }),
       engine.bus.on("travel:arrive", () => {
         window.clearTimeout(slowTimer);
@@ -67,6 +106,8 @@
     ];
     return () => {
       window.clearTimeout(slowTimer);
+      window.clearTimeout(launchTimer);
+      window.clearTimeout(landTimer);
       offs.forEach((off) => off());
       banners.traveling = false;
     };
@@ -80,21 +121,23 @@
     {#if trip.where}<p class="where">{trip.where}</p>{/if}
     <p class="slow" class:on={slow} aria-hidden={!slow}>{t("travel.almost")}</p>
   </div>
+  {#if flying && !skipped}
+    <p class="skip" in:fade={{ duration: 300, delay: 1200 }}>Skip <kbd>E</kbd></p>
+  {/if}
 {/if}
 
 <style>
   .trip-words {
     position: fixed;
-    left: 50%;
-    bottom: clamp(28px, 8vh, 84px);
+    left: clamp(20px, 4vw, 56px);
+    top: clamp(20px, 5vh, 52px);
     z-index: 60;
     display: grid;
-    justify-items: center;
+    justify-items: start;
     gap: 4px;
-    width: min(560px, calc(100vw - 32px));
-    translate: -50% 0;
+    width: min(460px, calc(100vw - 32px));
     color: #3a2a1c;
-    text-align: center;
+    text-align: left;
     pointer-events: none;
     transition: color 0.6s ease;
   }
@@ -117,7 +160,7 @@
   }
   .to {
     margin: 6px 0 0;
-    font: 700 clamp(2.4rem, 5vw, 3.8rem) / 1 var(--hand);
+    font: 700 clamp(2rem, 4vw, 3rem) / 1 var(--hand);
     animation: rise 0.7s var(--ease-spring) 0.3s both;
   }
   .flying .to {
@@ -142,6 +185,26 @@
   }
   .slow.on {
     opacity: 0.7;
+  }
+  .skip {
+    position: fixed;
+    right: 22px;
+    bottom: 20px;
+    z-index: 60;
+    margin: 0;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: rgba(10, 8, 30, 0.45);
+    color: #fff6e0;
+    font: 700 0.9rem/1 var(--read);
+    pointer-events: none;
+  }
+  .skip kbd {
+    margin-left: 4px;
+    padding: 1px 6px;
+    border: 1.5px solid currentColor;
+    border-radius: 4px;
+    font: 700 0.75rem/1.2 var(--label);
   }
   @keyframes rise {
     from {

@@ -316,6 +316,24 @@ export const RECIPES: Record<string, Recipe> = {
     tone(c, "sine", 330, 520, 0.004, 0.12, 0.2, 0.32, 0.15);
   },
 
+  // ---- The trip between worlds ----
+
+  /** Dad's toy rocket lifting off: a soft roar that swells and rumbles away, and a little whoosh on top. */
+  "rocket-launch": (c) => {
+    const roar = burst(c, "brown", "lowpass", 220, 0.7, 0.35, 0.5, 2.6);
+    roar.frequency.exponentialRampToValueAtTime(520 * c.rate, c.at + 1.2);
+    roar.frequency.exponentialRampToValueAtTime(160 * c.rate, c.at + 2.6);
+    burst(c, "pink", "bandpass", 1400, 1.2, 0.5, 0.12, 1.6, 0.25);
+    tone(c, "sine", 70, 46, 0.2, 0.18, 2.2);
+  },
+
+  /** The rocket settling down on its fins: a braking hiss and a soft bump. */
+  "rocket-land": (c) => {
+    burst(c, "pink", "bandpass", 900, 0.9, 0.2, 0.22, 1.1);
+    burst(c, "brown", "lowpass", 260, 0.8, 0.005, 0.35, 0.3, 1.0);
+    tone(c, "sine", 110, 60, 0.005, 0.25, 0.25, 1.0);
+  },
+
   // ---- Finale ----
 
   /** The dish turning: a geared motor (a square through a bandpass, chopped like teeth on a gear) that ends with a clunk. */

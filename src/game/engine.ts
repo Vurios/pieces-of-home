@@ -210,6 +210,9 @@ export class Engine {
       this.cine = { position: new Vector3(...position), target: new Vector3(...target), up: up ? new Vector3(...up) : new Vector3(...position).normalize(), seconds, age: 0 };
     });
     this.bus.on("letter:delivered", () => this.kid.play("celebrate"));
+    this.bus.on("travel:skip", () => {
+      if (this.tripping) this.trip?.skip();
+    });
     this.bus.on("camera:farewell", ({ on }) => {
       if (on) {
         // "Back" is away from where the camera looks, flat on the ground, so the lift starts behind Remi.
@@ -504,7 +507,7 @@ export class Engine {
         this.tripping = true;
         this.bus.emit("travel:flight", { from, to: id });
         await this.animateIris(1, 0, 0.5);
-        await this.until(() => trip.progress >= 0.8 || !this.tripping);
+        await this.until(() => trip.progress >= trip.closeAt || !this.tripping);
         this.irisOnTrip = true;
         await this.animateIris(0, 1, 0.55);
         this.irisOnTrip = false;

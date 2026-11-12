@@ -119,6 +119,8 @@ export interface GameEvents {
   "finale:aim": Record<string, never>;
   /** The light has opened on the 3D trip between worlds (not sent with reduced motion). */
   "travel:flight": { from: string | null; to: string };
+  /** The player asked to skip ahead to the landing. */
+  "travel:skip": Record<string, never>;
   "travel:arrive": { to: string };
   "travel:end": { to: string };
   /** Open Dad's notebook at a spread. */
