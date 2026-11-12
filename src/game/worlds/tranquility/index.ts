@@ -307,6 +307,7 @@ export function createTranquility(ctx: WorldContext): World {
   let pixelHeight = 900;
   const world: World = {
     id: "tranquility",
+    suits: true,
     root,
     terrain,
     colliders,

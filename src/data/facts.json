@@ -194,6 +194,18 @@
       "note": "Caption: \"Rover tracks are visible between stations 9A and 10.\" Credit: NASA/GSFC/Arizona State University. Also LROC \"Follow the Tracks\" (March 5, 2012), https://lroc.im-ldi.com/posts/491 (lroc.asu.edu now redirects there): tracks are visible about half of the time and usually only near the lander."
     },
     {
+      "id": "a15-rille-edge",
+      "kid": "On their third and last trip outside, the astronauts went to the edge of Hadley Rille.",
+      "deeper": "",
+      "value": "third EVA; stations 9 and 9A at the rille edge",
+      "date": null,
+      "sourceTitle": "NASA Science Photojournal: Retracing the Steps of Apollo 15 (PIA13058)",
+      "sourceUrl": "https://science.nasa.gov/photojournal/retracing-the-steps-of-apollo-15",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Caption: \"The third and final EVA of Apollo 15 brought the astronauts to the edge of Hadley Rille (lower left).\""
+    },
+    {
       "id": "opp-landing",
       "kid": "Opportunity landed at Meridiani Planum on Mars in January 2004.",
       "deeper": "",

@@ -7,6 +7,7 @@ import {
   Euler,
   LatheGeometry,
   type Material,
+  type Mesh,
   type Object3D,
   Quaternion,
   SphereGeometry,
@@ -180,11 +181,16 @@ export class Assembly {
     batch.place(geometry, color, position, rotation, scale);
   }
 
-  /** Builds every joint added since the last flush. */
-  flush(castShadow = true): void {
+  /** Builds every joint added since the last flush, and returns the meshes it made. */
+  flush(castShadow = true): Mesh[] {
+    const made: Mesh[] = [];
     for (const [parent, batch] of this.pending) {
-      for (const mesh of batch.build({ solid: this.material }, { castShadow, receiveShadow: false })) parent.add(mesh);
+      for (const mesh of batch.build({ solid: this.material }, { castShadow, receiveShadow: false })) {
+        parent.add(mesh);
+        made.push(mesh);
+      }
     }
     this.pending.clear();
+    return made;
   }
 }

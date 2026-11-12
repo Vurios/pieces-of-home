@@ -220,6 +220,37 @@ function beside(nodes: Vector3[], t: number, side: number): Vector3 {
   return a.clone().lerp(b, at - i).normalize().addScaledVector(normal, side / HOME_RADIUS).normalize();
 }
 
+/** Every trail, sampled finely, with its half width: for keeping props off the paths. */
+const FINE_TRAILS = TRAIL_SPECS.map((spec) => ({ points: sampleTrail(spec, 0.25), halfWidth: spec.halfWidth }));
+
+/**
+ * Moves a spot off every path, so a prop never stands in the way: at least
+ * `margin` meters from a path's edge. Spots already clear come back as they are.
+ */
+export function clearOfTrails(dir: Vector3, margin = 0.6): Vector3 {
+  const out = dir.clone().normalize();
+  for (let round = 0; round < 8; round += 1) {
+    let worst = 0;
+    let from: Vector3 | null = null;
+    for (const t of FINE_TRAILS) {
+      for (const p of t.points) {
+        const gap = t.halfWidth + margin - Math.acos(Math.max(-1, Math.min(1, out.dot(p)))) * HOME_RADIUS;
+        if (gap > worst) {
+          worst = gap;
+          from = p;
+        }
+      }
+    }
+    if (!from) return out;
+    // Step straight away from the nearest bit of path.
+    const away = out.clone().sub(from);
+    away.addScaledVector(out, -away.dot(out));
+    if (away.lengthSq() < 1e-10) away.copy(headingToTangent(out, 90));
+    out.addScaledVector(away.normalize(), (worst + 0.05) / HOME_RADIUS).normalize();
+  }
+  return out;
+}
+
 /** Lamp posts along the long trails, so the way to every place glows at dusk. */
 export const TRAIL_LAMPS: Vector3[] = [
   beside(TRAILS[9]!, 0.5, 0.95),

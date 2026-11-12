@@ -186,6 +186,26 @@
     });
   });
 
+  /** Long valleys: the same pencil line as a route, as wide as the valley. */
+  const valleys = $derived.by(() => {
+    if (!map) return [];
+    const m = map;
+    return (m.valleys ?? []).map((v) => {
+      let d = "";
+      let pen = false;
+      for (const p of v.path) {
+        const g = onGlobe(view, p);
+        if (g.z < 0.02) {
+          pen = false;
+          continue;
+        }
+        d += `${pen ? "L" : "M"}${(g.x * S).toFixed(1)} ${(-g.y * S).toFixed(1)}`;
+        pen = true;
+      }
+      return { d, w: (v.width / m.radius) * S };
+    });
+  });
+
   /** A round thing on the ground, squashed toward the rim as the globe curves away. */
   const ellipse = (at: Vector3, radius: number): { x: number; y: number; rx: number; ry: number; angle: number } | null => {
     if (!map) return null;
@@ -234,7 +254,7 @@
       const x = g.x * S;
       const y = -g.y * S;
       if (Math.hypot(x, y) > R - 5) continue;
-      out.push({ id: m.id, label: known(m) ? m.label : "?", icon: known(m) ? m.icon : "unknown", x, y, z: g.z, size: 15 + 7 * g.z, letter: Boolean(m.letters?.some((l) => !delivered.includes(l))), tag: null });
+      out.push({ id: m.id, label: known(m) ? m.label : "?", icon: known(m) ? m.icon : "unknown", x, y, z: g.z, size: 17 + 8 * g.z, letter: Boolean(m.letters?.some((l) => !delivered.includes(l))), tag: null });
     }
     // Labels never pile up: nearest places choose first (below, above, right, left), and
     // a label with no room left stays off (the place list still names it).
@@ -299,7 +319,7 @@
   const hidden = $derived(map ? map.marks.length - list.length : 0);
 </script>
 
-<Panel title={map?.title ?? t("map.title")} lede={t("map.lede")} icon="pin" size="lg" {onclose}>
+<Panel title={map?.title ?? t("map.title")} lede={t("map.lede")} icon="pin" size="xl" {onclose}>
   {#if map}
     <div class="layout">
       <!-- A custom widget: drag or arrow keys spin it, and the place list does the same with plain buttons. -->
@@ -346,6 +366,13 @@
               stroke={s.kind === "patch" ? "none" : map.colors.ink}
               stroke-width="0.9"
             />
+          {/each}
+          {#each valleys as v, i (i)}
+            {#if v.d}
+              <path d={v.d} fill="none" stroke={map.colors.ink} stroke-width={v.w + 2} stroke-linecap="round" stroke-linejoin="round" opacity="0.8" />
+              <path d={v.d} fill="none" stroke={map.colors.shade} stroke-width={v.w} stroke-linecap="round" stroke-linejoin="round" />
+              <path d={v.d} fill="none" stroke={map.colors.ink} stroke-width="0.6" stroke-dasharray="1 3" opacity="0.4" />
+            {/if}
           {/each}
           {#each routes as d, i (i)}
             {#if d}
@@ -441,8 +468,8 @@
 <style>
   .layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-    gap: 22px;
+    grid-template-columns: minmax(0, 1.75fr) minmax(280px, 1fr);
+    gap: 28px;
     align-items: start;
   }
   .frame {
@@ -465,7 +492,7 @@
   .globe {
     display: block;
     width: 100%;
-    max-height: min(62vh, 520px);
+    max-height: min(74vh, 720px);
     touch-action: none;
     cursor: grab;
     border-radius: 50%;
@@ -478,7 +505,7 @@
     outline-offset: 2px;
   }
   .label {
-    font: 700 7.5px/1 var(--hand);
+    font: 700 8px/1 var(--hand);
     text-anchor: middle;
     pointer-events: none;
   }

@@ -47,6 +47,7 @@
   let map = $state.raw<WorldMap | null>(null);
   let marks = $state<Drawn[]>([]);
   let paths = $state<string[]>([]);
+  let valleys = $state<{ d: string; w: number }[]>([]);
   let blobs = $state<{ x: number; y: number; r: number; kind: "crater" | "water" | "patch"; color: string }[]>([]);
   /** The next stop, in anchor units, or null. */
   let goalAt = $state<{ x: number; y: number } | null>(null);
@@ -89,6 +90,22 @@
       if (d) lines.push(d);
     }
     paths = lines;
+    const cuts: { d: string; w: number }[] = [];
+    for (const v of m.valleys ?? []) {
+      let d = "";
+      let pen = false;
+      for (const p of v.path) {
+        const g = onGround(view, p);
+        if (g.distance > RANGE * 2.2) {
+          pen = false;
+          continue;
+        }
+        d += `${pen ? "L" : "M"}${(g.x * SCALE).toFixed(1)} ${(-g.y * SCALE).toFixed(1)}`;
+        pen = true;
+      }
+      if (d) cuts.push({ d, w: v.width * SCALE });
+    }
+    valleys = cuts;
     const round: typeof blobs = [];
     const add = (list: { at: Vector3; radius: number; color?: string }[] | undefined, kind: "crater" | "water" | "patch", color: string): void => {
       for (const c of list ?? []) {
@@ -196,6 +213,10 @@
               <circle cx={b.x} cy={b.y} r={b.r} fill={b.color} opacity="0.55" />
             {/if}
           {/each}
+          {#each valleys as v, i (i)}
+            <path d={v.d} fill="none" stroke={map.colors.ink} stroke-width={v.w + 2.4} stroke-linecap="round" stroke-linejoin="round" opacity="0.8" />
+            <path d={v.d} fill="none" stroke={map.colors.shade} stroke-width={v.w} stroke-linecap="round" stroke-linejoin="round" />
+          {/each}
           {#each paths as d, i (i)}
             <path {d} fill="none" stroke={map.colors.path ?? map.colors.shade} stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />
             <path {d} fill="none" stroke={map.colors.ink} stroke-width="1" stroke-dasharray="3 5" stroke-linecap="round" opacity="0.45" />
@@ -246,8 +267,8 @@
     position: fixed;
     left: max(18px, env(safe-area-inset-left));
     bottom: max(18px, env(safe-area-inset-bottom));
-    width: 184px;
-    height: 184px;
+    width: 212px;
+    height: 212px;
     padding: 0;
     border: 0;
     border-radius: 50%;

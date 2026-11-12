@@ -88,6 +88,13 @@ export class Engine {
   private timer = new Timer();
   private watchdog = new FrameWatchdog();
   private governor = new ResolutionGovernor();
+  /**
+   * Resolution and tier changes wait for the start of the next drawn frame.
+   * Resizing the canvas clears it, so a change made after drawing would show
+   * one black frame: the flicker players saw.
+   */
+  private pendingScale = false;
+  private pendingTier: QualityTier | null = null;
   private textureLoader: TextureLoader;
   private reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   private bookmark: Bookmark | null = null;
@@ -179,13 +186,17 @@ export class Engine {
     this.bus.on("player:land", ({ speed }) => {
       if (speed > 3) this.puffs.emit(this.player.position, this.player.up, Math.min(10, Math.round(speed)), Math.min(2, speed * 0.2));
     });
+    this.bus.on("dust:puff", ({ at, count, spread }) => {
+      this.scratch.set(at[0], at[1], at[2]);
+      this.puffs.emit(this.scratch, this.scratch.clone().normalize(), count, spread);
+    });
     this.bus.on("interact:done", () => this.kid.play("interact"));
     this.bus.on("camera:cinematic", ({ position, target, up, seconds }) => {
       this.cine = { position: new Vector3(...position), target: new Vector3(...target), up: up ? new Vector3(...up) : new Vector3(...position).normalize(), seconds, age: 0 };
     });
     this.bus.on("letter:delivered", () => this.kid.play("celebrate"));
 
-    window.addEventListener("resize", this.resize);
+    window.addEventListener("resize", this.onWindowResize);
     document.addEventListener("visibilitychange", this.onVisibility);
     window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", (event) => {
       this.systemReducedMotion = event.matches;
@@ -379,6 +390,7 @@ export class Engine {
     this.post.setLook(world.look);
     this.scene.fog = world.fog ? new Fog(world.fog.color, world.fog.near, world.fog.far) : null;
     this.puffs.setColor(world.dustColor);
+    this.kid.setSuit(world.suits === true);
     world.resize(this.renderer.domElement.height);
 
     this.bookmark = this.options.shot ? (world.bookmarks[this.options.shot] ?? null) : null;
@@ -511,6 +523,10 @@ export class Engine {
     }
   };
 
+  private onWindowResize = (): void => {
+    this.pendingScale = true;
+  };
+
   private resize = (): void => {
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -549,6 +565,16 @@ export class Engine {
       }
       this.warmFrames -= 1;
     }
+    if (this.pendingTier) {
+      const tier = this.pendingTier;
+      this.pendingTier = null;
+      this.changeTier(tier, true);
+    }
+    if (this.pendingScale) {
+      this.pendingScale = false;
+      this.applyRendererQuality();
+      this.resize();
+    }
     this.renderer.info.reset();
 
     const input = this.input.read();
@@ -561,14 +587,16 @@ export class Engine {
       input.jumpPressed = false;
       input.lookX = 0;
       input.lookY = 0;
+      input.zoom = 0;
       if (this.holdStill > 0) {
         input.interactPressed = false;
         input.interactHeld = false;
       }
     }
 
-    // Movement is relative to the camera's flattened heading.
-    this.player.update(dt, input, this.follow.forward, this.follow.right, world);
+    // Movement is relative to the camera's flattened heading. In a ride, the world moves the player.
+    const riding = !shot && !titling && (world.ride?.(dt, input, this.player) ?? false);
+    if (!riding) this.player.update(dt, input, this.follow.forward, this.follow.right, world);
     world.update(dt, { player: this.player, carrying: this.store.value.carrying, time: this.elapsed, reducedMotion: this.reducedMotion });
     this.interactions.update(dt, this.player.position, this.player.forward, input);
     // Which named place the player is in, for the place-name card.
@@ -598,6 +626,7 @@ export class Engine {
       sinceLanding: this.player.sinceLanding,
       landingSpeed: this.player.landingSpeed,
       carrying: this.store.value.carrying !== null,
+      seated: riding,
     }, this.reducedMotion);
 
     // Camera.
@@ -688,14 +717,10 @@ export class Engine {
       if (this.saveTimer <= 0) writeStorage(SAVE_KEY, this.store.serialize());
     }
     if (this.autoQuality && !this.bookmark && this.mode === "play" && !this.paused) {
-      const scale = this.governor.update(dt);
-      if (scale !== null) {
-        this.applyRendererQuality();
-        this.resize();
-      }
+      if (this.governor.update(dt) !== null) this.pendingScale = true;
     }
     if (this.autoQuality && !this.bookmark && this.mode === "play" && this.quality.tier !== "low" && this.watchdog.update(dt)) {
-      this.changeTier(lowerTier(this.quality.tier), true);
+      this.pendingTier = lowerTier(this.quality.tier);
     }
     this.frames += 1;
     this.statsTime += dt;
@@ -767,7 +792,7 @@ export class Engine {
 
   dispose(): void {
     this.stop();
-    window.removeEventListener("resize", this.resize);
+    window.removeEventListener("resize", this.onWindowResize);
     document.removeEventListener("visibilitychange", this.onVisibility);
     this.input.dispose();
     this.world?.dispose();

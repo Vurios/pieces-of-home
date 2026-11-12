@@ -14,11 +14,17 @@ export interface CameraHint {
 }
 
 const DEFAULT_PITCH = 0.5;
-const MIN_PITCH = 0.14;
-const MAX_PITCH = 1.25;
+/** From almost level with the ground to nearly straight down. */
+const MIN_PITCH = 0.05;
+const MAX_PITCH = 1.42;
 const DEFAULT_DISTANCE = 7.2;
+/** The player's zoom: close up to a view of half the little world. */
+export const MIN_ZOOM = 0.4;
+export const MAX_ZOOM = 2.4;
 /** Wait this long after the player stops steering the camera before it drifts back behind them. */
-const RECENTER_DELAY = 1.4;
+const RECENTER_DELAY = 3.5;
+/** A place's preferred view waits this long after the player turned the camera themselves. */
+const HINT_RESPECT = 5;
 
 /**
  * Third-person camera for a tiny planet. It keeps a calm horizon by using the
@@ -37,8 +43,9 @@ export class FollowCamera {
   private readonly focus = new Vector3();
   private readonly lead = new Vector3();
   private distance = DEFAULT_DISTANCE;
-  /** The player's own zoom, from the mouse wheel. */
+  /** The player's own zoom (mouse wheel, + and -, a pinch), eased toward its target. */
   private zoom = 1;
+  private zoomTarget = 1;
   private sinceLook = 10;
   private started = false;
   private readonly scratch = new Vector3();
@@ -82,25 +89,26 @@ export class FollowCamera {
       this.sinceLook += dt;
     }
 
-    if (input.zoom !== 0) this.zoom = Math.max(0.6, Math.min(1.55, this.zoom * (1 + input.zoom)));
+    if (input.zoom !== 0) this.zoomTarget = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, this.zoomTarget * (1 + input.zoom)));
+    this.zoom += (this.zoomTarget - this.zoom) * damp(9, dt);
 
     let wantedPitch = DEFAULT_PITCH;
     let wantedDistance = DEFAULT_DISTANCE * this.zoom;
 
     if (hint) {
-      // A place has a view it prefers. Ease toward it.
+      // A place has a view it prefers. Ease toward it, unless the player has just chosen their own.
+      const free = this.sinceLook > HINT_RESPECT;
       projectOnTangent(hint.forward, this.up, this.scratch);
-      if (this.scratch.lengthSq() > 1e-6) {
-        this.turnToward(this.scratch.normalize(), damp(2.4, dt));
+      if (free && this.scratch.lengthSq() > 1e-6) {
+        this.turnToward(this.scratch.normalize(), damp(2.0, dt));
       }
       wantedPitch = hint.pitch;
-      wantedDistance = hint.distance * Math.min(1.2, this.zoom);
-      this.pitch += (wantedPitch - this.pitch) * damp(2.4, dt);
+      wantedDistance = hint.distance * this.zoom;
+      if (free) this.pitch += (wantedPitch - this.pitch) * damp(2.0, dt);
     } else if (this.sinceLook > RECENTER_DELAY && player.pace > 0.3) {
-      // Drift back behind the player, but only when they walk mostly away from us.
+      // Drift back behind the player, gently, and only when they walk mostly away from us.
       const facing = this.forward.dot(player.forward);
-      if (facing > -0.35) this.turnToward(player.forward, damp(0.9 + facing * 0.6, dt));
-      this.pitch += (wantedPitch - this.pitch) * damp(0.8, dt);
+      if (facing > -0.2) this.turnToward(player.forward, damp(0.45 + facing * 0.35, dt));
     }
 
     // Tall screens need the camera farther back to show the same ground.

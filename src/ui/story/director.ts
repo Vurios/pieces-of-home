@@ -1,5 +1,6 @@
 import { ACTIVITIES } from "../../content/chapters/activities";
-import { CHAPTERS, type ChapterDef, type Line, type Speaker, arrivedFlag, chapterForWorld, partId } from "../../content/chapters";
+import { CHAPTERS, type ChapterDef, type Line, type Speaker, arrivedFlag, chapterForWorld, chapterStep, partId } from "../../content/chapters";
+import { startedFlag } from "../../content/chapters/activities";
 import { STORY_COPY } from "../../content/chapters/common";
 import { fact } from "../../content/facts";
 import {
@@ -62,11 +63,15 @@ export class StoryDirector {
       }),
       bus.on("world:ready", ({ id }) => {
         void this.arrive(id);
+        this.resumeChapters(id);
         if (id === "home") void this.resumeFinale();
       }),
       bus.on("finale:aim", () => void this.aim()),
-      // A save that opens in the Finale picks it up once play begins.
-      bus.on("title:done", () => void this.resumeFinale()),
+      // A save that opens part way (the Finale, or a reload mid-chapter) picks up once play begins.
+      bus.on("title:done", () => {
+        this.resumeChapters(engine.world?.id);
+        void this.resumeFinale();
+      }),
       bus.on("letter:delivered", ({ letter }) => this.delivered(letter)),
       bus.on("letter:taken", ({ letter }) => {
         const chapter = CHAPTERS.find((c) => partId(c) === letter);
@@ -74,9 +79,11 @@ export class StoryDirector {
         if (letter === V1_LETTER) void this.play(LETTER_TAKEN);
       }),
       bus.on("activity:beat", ({ id, beat }) => {
-        const line = ACTIVITIES[id]?.beats[beat];
+        const found = ACTIVITIES[id]?.beats[beat];
         // Beats are little reactions: skip them if a script is already talking.
-        if (line && this.depth === 0) void this.play(["note" in line ? line : { say: line.say, who: line.who }]);
+        if (!found || this.depth > 0) return;
+        const lines = (Array.isArray(found) ? found : [found]).map((line): Line => ("say" in line ? { say: line.say, who: line.who } : line));
+        void this.play(lines);
       }),
       bus.on("activity:done", ({ id }) => {
         const chapter = CHAPTERS.find((c) => c.activity === id);
@@ -90,7 +97,9 @@ export class StoryDirector {
     );
     // Already playing (a reload, or a test that skips the title): pick the Finale up now.
     window.setTimeout(() => {
-      if (engine.mode === "play") void this.resumeFinale();
+      if (engine.mode !== "play") return;
+      this.resumeChapters(engine.world?.id);
+      void this.resumeFinale();
     }, 1200);
   }
 
@@ -182,12 +191,18 @@ export class StoryDirector {
     this.toast(`${STORY_COPY.nextLetter} ${next.address}`);
   }
 
+  private arriving = new Set<string>();
   private async arrive(world: string): Promise<void> {
     const chapter = chapterForWorld(world);
-    if (!chapter) return;
+    if (!chapter || this.arriving.has(chapter.id)) return;
     const s = this.engine.store.value;
     if (s.flags.includes(arrivedFlag(chapter))) return;
-    await this.play(chapter.arrival);
+    this.arriving.add(chapter.id);
+    try {
+      await this.play(chapter.arrival);
+    } finally {
+      this.arriving.delete(chapter.id);
+    }
     this.update((d) => {
       if (!d.flags.includes(arrivedFlag(chapter))) d.flags.push(arrivedFlag(chapter));
     });
@@ -206,8 +221,41 @@ export class StoryDirector {
     } else this.giveNext(chapter);
   }
 
+  /**
+   * Picks up a chapter that a reload cut short: the activity that never
+   * started (closed during the last letter's beat), or Milo's memory and the
+   * stamp (closed right after his new part clicked in).
+   */
+  private resuming = new Set<string>();
+  private resumeChapters(world: string | undefined): void {
+    if (!world) return;
+    const s = this.engine.store.value;
+    const here = chapterForWorld(world);
+    // A save that opens inside a chapter world before its arrival finished.
+    if (here && !s.flags.includes(arrivedFlag(here))) void this.arrive(world);
+    if (here && here.letters.every((l) => s.delivered.includes(l.id)) && !s.flags.includes(startedFlag(here.activity)) && !this.resuming.has(here.id)) {
+      this.resuming.add(here.id);
+      this.engine.bus.emit("activity:start", { id: here.activity });
+      void this.play(here.activityStart).finally(() => this.resuming.delete(here.id));
+    }
+    if (world === "home") {
+      for (const chapter of CHAPTERS) if (chapterStep(chapter, s).kind === "memory") void this.fitted(chapter);
+    }
+  }
+
   /** Milo's new part clicked in: Remi's lines, the memory, then the stamp. */
+  private fitting = new Set<string>();
   private async fitted(chapter: ChapterDef): Promise<void> {
+    if (this.fitting.has(chapter.id)) return;
+    this.fitting.add(chapter.id);
+    try {
+      await this.fittedScript(chapter);
+    } finally {
+      this.fitting.delete(chapter.id);
+    }
+  }
+
+  private async fittedScript(chapter: ChapterDef): Promise<void> {
     await this.play([{ wait: 1.2 }, ...chapter.partFitted, { wait: 0.6 }, ...chapter.memory]);
     this.engine.bus.emit("stamp", { id: chapter.id, lines: chapter.stamp });
     this.update((d) => {

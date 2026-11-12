@@ -43,7 +43,7 @@
    * comes (a prompt is up, the letter is delivered); the rest go in order.
    */
   const tipId = $derived.by((): TipId | null => {
-    if (!settings.value.tips || hidden || showChapter || banners.screens > 0) return null;
+    if (!settings.value.tips || hidden || showChapter || banners.screens > 0 || banners.riding) return null;
     if (prompt && !done.has("use")) return "use";
     if (goal.id === "notebook" && !done.has("notebook")) return "notebook";
     for (const id of ["move", "look", "arrow"] as const) {

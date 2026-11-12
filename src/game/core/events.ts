@@ -101,6 +101,10 @@ export interface GameEvents {
   "activity:done": { id: string };
   /** Something in an activity worth saying out loud, for example "miss" or "home". The story director picks the words. */
   "activity:beat": { id: string; beat: string };
+  /** A ride (Chapter 2's Moon buggy): someone is driving, which leg of the trip, and how far along Dad's route, 0 to 1. */
+  "ride:state": { riding: boolean; leg: "out" | "back"; progress: number };
+  /** Kicks up a little dust (wheels, landings). */
+  "dust:puff": { at: [number, number, number]; count: number; spread: number };
   /** Ask to go to another little world through the Looking Lamp. `entry` picks where to stand there. */
   travel: { to: string; entry?: string };
   /**

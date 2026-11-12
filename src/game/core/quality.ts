@@ -154,24 +154,37 @@ export class ResolutionGovernor {
   private sampleTime = 0;
   private frames = 0;
   private fastSamples = 0;
+  private slowSamples = 0;
+  /** Seconds to wait after a change before another, so the scale never seesaws. */
+  private calm = 0;
+  private downs = 0;
 
   /** Returns the new scale when it changes, otherwise null. */
   update(dt: number): number | null {
+    this.calm = Math.max(0, this.calm - dt);
     this.sampleTime += dt;
     this.frames += 1;
     if (this.sampleTime < 1) return null;
     const fps = this.frames / this.sampleTime;
     this.sampleTime = 0;
     this.frames = 0;
-    if (fps < 50 && this.scale > 0.6) {
+    // A single slow second (a shader warming up, a new world) is not a reason to blur the picture.
+    this.slowSamples = fps < 48 ? this.slowSamples + 1 : 0;
+    this.fastSamples = fps > 57 ? this.fastSamples + 1 : 0;
+    if (this.calm > 0) return null;
+    if (this.slowSamples >= 2 && this.scale > 0.6) {
+      this.slowSamples = 0;
       this.fastSamples = 0;
+      this.downs += 1;
       this.scale = Math.max(0.6, Math.round((this.scale - 0.1) * 100) / 100);
+      this.calm = 3;
       return this.scale;
     }
-    this.fastSamples = fps > 58 ? this.fastSamples + 1 : 0;
-    if (this.fastSamples >= 3 && this.scale < 1) {
+    // Coming back up waits longer each time it had to come down, so it settles.
+    if (this.fastSamples >= 4 + Math.min(12, this.downs * 3) && this.scale < 1) {
       this.fastSamples = 0;
       this.scale = Math.min(1, Math.round((this.scale + 0.05) * 100) / 100);
+      this.calm = 4;
       return this.scale;
     }
     return null;
@@ -182,6 +195,9 @@ export class ResolutionGovernor {
     this.sampleTime = 0;
     this.frames = 0;
     this.fastSamples = 0;
+    this.slowSamples = 0;
+    this.calm = 0;
+    this.downs = 0;
   }
 }
 

@@ -18,7 +18,7 @@
     icon?: IconName;
     onclose: () => void;
     children: Snippet;
-    size?: "sm" | "md" | "lg";
+    size?: "sm" | "md" | "lg" | "xl";
     /** The body handles its own layout and scrolling (settings). */
     flush?: boolean;
     wide?: boolean;
@@ -127,6 +127,13 @@
   }
   .lg {
     max-width: 880px;
+  }
+  /* Dad's map: as big as the screen allows. */
+  .xl {
+    max-width: min(1280px, calc(100vw - 48px));
+  }
+  .sheet.xl {
+    max-height: min(900px, calc(100dvh - 32px));
   }
   .tape {
     position: absolute;

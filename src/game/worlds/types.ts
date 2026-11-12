@@ -1,5 +1,6 @@
 import type { DirectionalLight, Group, HemisphereLight, Texture, Vector3 } from "three";
 import type { GameBus } from "../core/events";
+import type { InputFrame } from "../core/input";
 import type { QualitySettings } from "../core/quality";
 import type { StateStore } from "../core/state";
 import type { LookSpec } from "../render/post";
@@ -81,7 +82,9 @@ export type MapIcon =
   | "rocks"
   | "bounce"
   | "pennant"
-  | "corner";
+  | "corner"
+  | "wheel"
+  | "buggy";
 
 /** One labelled place on a world's map. */
 export interface MapMark {
@@ -109,6 +112,8 @@ export interface WorldMap {
   marks: MapMark[];
   craters?: { at: Vector3; radius: number }[];
   paths?: Vector3[][];
+  /** Long valleys (Hadley Rille): drawn as a dark band `width` world units wide. */
+  valleys?: { path: Vector3[]; width: number }[];
   water?: { at: Vector3; radius: number }[];
   patches?: { at: Vector3; radius: number; color: string }[];
 }
@@ -148,6 +153,14 @@ export interface World {
   spawn: { dir: Vector3; forward: Vector3 };
   /** Named places to arrive at, for example "bench" when coming back from a dome. */
   entries?: Record<string, { dir: Vector3; forward: Vector3 }>;
+  /**
+   * A ride (Chapter 2's Moon buggy). While it returns true, the world has
+   * moved the player this frame (sitting in a seat), so walking is skipped
+   * and the kid sits.
+   */
+  ride?(dt: number, input: InputFrame, player: PlayerController): boolean;
+  /** Kids wear their space suits here (the Moon and Mars). */
+  suits?: boolean;
   /** A sky that changes while you play (a dust storm), or null when it holds still. */
   liveSky?(): SkySpec | null;
   /** A colour grade that changes while you play, or null. Return one only when it really changed: each costs a new lookup table. */

@@ -33,6 +33,8 @@
   import StoryGames from "./story/StoryGames.svelte";
   import DishGame from "./story/DishGame.svelte";
   import FinaleGames from "./story/FinaleGames.svelte";
+  import WheelGame from "./story/WheelGame.svelte";
+  import DriveCard from "./story/DriveCard.svelte";
   import { V1_LETTER } from "../content/finale";
   import ActivityMeter from "./story/ActivityMeter.svelte";
   import { settings, t } from "./settings.svelte";
@@ -277,6 +279,8 @@
 <StoryGames {engine} />
 <DishGame {engine} />
 <FinaleGames {engine} />
+<WheelGame {engine} />
+<DriveCard {engine} />
 <ActivityMeter {engine} />
 <Seismograph {engine} {game} />
 {#if trip}

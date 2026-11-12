@@ -69,9 +69,9 @@ export class InteractionSystem {
       if (distance > item.radius) continue;
       const label = item.label();
       if (!label) continue;
-      // Prefer things in front. Things behind count as a little farther away.
+      // Prefer what the player faces: things off to the side count as a little farther away, things behind more.
       const facing = distance > 0.01 ? this.toItem.divideScalar(distance).dot(forward) : 1;
-      const score = distance * (facing > 0 ? 1 : 1.8);
+      const score = distance * (facing > 0 ? 1 + (1 - facing) * 0.9 : 2.2);
       if (score < bestScore) {
         bestScore = score;
         best = item;

@@ -94,11 +94,11 @@ export const SPREADS: MachineSpread[] = [
     world: "Moon",
     drawing: "lrv",
     forWhat: "Letting astronauts drive farther than they could walk.",
-    learned: [fact("lrv-wheels"), fact("a15-lrv-distance")],
+    learned: [fact("lrv-wheels"), fact("a15-lrv-distance"), fact("lrv-rear-steer"), fact("lrv-tracks-orbit")],
     thenNow: [],
-    deeper: [],
+    deeper: [fact("lrv-crew"), fact("lrv-first-drive"), fact("a15-rille-edge")],
     dadNote: "You don't always steer from the front. Sometimes someone steadies you from behind.",
-    images: pics("apollo15-lrv"),
+    images: pics("apollo15-lrv", "apollo15-lroc"),
     completeWhen: { stamp: "chapter-2" },
     chapter: "Chapter 2: Hadley-Apennine",
   },
@@ -156,6 +156,37 @@ export const SPREADS: MachineSpread[] = [
 ];
 
 /** A fact's kid wording, made date-aware where the fact has a future date. */
+/** What a true-story card shows with a fact: the machine it belongs to, a real picture, and the details. */
+export interface FactStory {
+  spread: MachineSpread | null;
+  image: NotebookImage | null;
+  /** "Hadley-Apennine, 1971". */
+  where: string | null;
+  /** The sourced details behind the kid wording, one line each. */
+  details: string[];
+  when: string | null;
+}
+
+export function factStory(id: string): FactStory {
+  const entry = fact(id);
+  const has = (s: MachineSpread): boolean => [...s.learned, ...s.thenNow, ...s.deeper].some((f) => f.id === id) || s.place?.id === id;
+  // A few Finale facts live on the Voyager page; everything else on its machine's page.
+  const spread = SPREADS.find(has) ?? (id.startsWith("v1-") || id === "golden-record" ? (SPREADS.find((s) => s.id === "voyager") ?? null) : null);
+  const year = spread ? spreadYear(spread) : null;
+  // The place from the chapter's name ("Chapter 2: Hadley-Apennine"), else the world.
+  const place = spread && spread.world !== "Space" && spread.world !== "Home" ? (spread.chapter.split(": ")[1] ?? null) : null;
+  const where = spread ? [place ? `${place}, ${spread.world === "Moon" ? "the Moon" : spread.world}` : spread.world === "Space" ? "Deep space" : spread.world, year].filter(Boolean).join(", ") : null;
+  const details: string[] = [];
+  const clean = (text: string): string => text.trim().replace(/^./, (c) => c.toUpperCase());
+  if (entry.lat !== undefined) details.push(`Map spot: ${entry.value.trim()}`);
+  else for (const part of entry.value.split(";")) if (part.trim()) details.push(clean(part));
+  if (entry.deeper.trim() && entry.lat === undefined) details.push(clean(entry.deeper));
+  // Facts on the same page take turns with its pictures.
+  const pictures = spread?.images ?? [];
+  const turn = [...id].reduce((sum, c) => sum + c.charCodeAt(0), 0);
+  return { spread, image: pictures.length ? pictures[turn % pictures.length]! : null, where, details: details.slice(0, 4), when: entry.date ? formatDate(entry.date) : null };
+}
+
 export function factText(entry: FactEntry, today = new Date()): string {
   if (entry.id === "v1-light-day" && entry.date) {
     const when = new Date(`${entry.date}T10:16:07Z`);

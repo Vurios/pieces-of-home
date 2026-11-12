@@ -175,6 +175,11 @@ export class Input {
     let lookY = this.lookY;
     this.lookX = 0;
     this.lookY = 0;
+    // Keys for the camera: < and > turn it, - and + zoom it.
+    const turn = (this.keys.has("Period") ? 1 : 0) - (this.keys.has("Comma") ? 1 : 0);
+    lookX += turn * 0.04;
+    const zoomKeys = (this.keys.has("Minus") || this.keys.has("NumpadSubtract") ? 1 : 0) - (this.keys.has("Equal") || this.keys.has("NumpadAdd") ? 1 : 0);
+    this.zoom += zoomKeys * 0.03;
 
     const pad = this.readGamepad();
     if (pad) {
@@ -182,6 +187,7 @@ export class Input {
       moveY += pad.moveY;
       lookX += pad.lookX;
       lookY += pad.lookY;
+      this.zoom += pad.zoom;
       run = run || pad.run;
     }
 
@@ -295,6 +301,18 @@ export class Input {
     }
     const last = this.lookPointers.get(event.pointerId);
     if (!last) return;
+    // Two fingers on the look side: pinch to zoom instead of turning.
+    if (this.lookPointers.size === 2) {
+      const other = [...this.lookPointers.entries()].find(([id]) => id !== event.pointerId)?.[1];
+      if (other) {
+        const before = Math.hypot(last.x - other.x, last.y - other.y);
+        const after = Math.hypot(event.clientX - other.x, event.clientY - other.y);
+        this.zoom += Math.max(-0.2, Math.min(0.2, (before - after) / 260));
+      }
+      last.x = event.clientX;
+      last.y = event.clientY;
+      return;
+    }
     const scale = event.pointerType === "touch" ? 0.006 : 0.0045;
     this.lookX += (event.clientX - last.x) * scale;
     this.lookY += (event.clientY - last.y) * scale;
@@ -310,7 +328,7 @@ export class Input {
     this.lookPointers.delete(event.pointerId);
   };
 
-  private readGamepad(): { moveX: number; moveY: number; lookX: number; lookY: number; run: boolean; interact: boolean } | null {
+  private readGamepad(): { moveX: number; moveY: number; lookX: number; lookY: number; zoom: number; run: boolean; interact: boolean } | null {
     const pads = typeof navigator.getGamepads === "function" ? navigator.getGamepads() : [];
     let pad: Gamepad | null = null;
     for (const candidate of pads) {
@@ -345,6 +363,8 @@ export class Input {
       moveY,
       lookX: axis(2) * 0.045,
       lookY: axis(3) * 0.03,
+      // LB pulls the camera back, LT brings it in.
+      zoom: (button(4) ? 0.03 : 0) - (pad.buttons[6]?.value ?? 0) * 0.03,
       run,
       interact: button(2) || button(1),
     };

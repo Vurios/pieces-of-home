@@ -1,5 +1,6 @@
 import type { GameState } from "../../game/core/state";
 import { ACTIVITIES, type ActivityStep, doneFlag, stepFlag } from "./activities";
+import { HADLEY } from "./hadley";
 import { MERIDIANI } from "./meridiani";
 import { TRANQUILITY } from "./tranquility";
 import type { ChapterDef, LetterDef } from "./types";
@@ -7,7 +8,7 @@ import type { ChapterDef, LetterDef } from "./types";
 export type { ChapterDef, LetterDef, Line, Speaker } from "./types";
 
 /** Every built chapter, in story order. */
-export const CHAPTERS: ChapterDef[] = [TRANQUILITY, MERIDIANI];
+export const CHAPTERS: ChapterDef[] = [TRANQUILITY, HADLEY, MERIDIANI];
 
 export function chapterById(id: string): ChapterDef | null {
   return CHAPTERS.find((c) => c.id === id) ?? null;
@@ -18,6 +19,33 @@ export function chapterForWorld(world: string): ChapterDef | null {
 }
 
 export const arrivedFlag = (chapter: ChapterDef): string => `${chapter.id}:arrived`;
+/** Set when Milo gets this chapter's part. Chapters can be played in any order, so each part has its own flag. */
+export const fittedFlag = (chapter: ChapterDef): string => `${chapter.id}:fitted`;
+
+/** True once Milo has this chapter's part: it was fitted, or the chapter is stamped (saves from before the flag). */
+export function hasPart(chapter: ChapterDef, state: Readonly<GameState>): boolean {
+  return state.stamps.includes(chapter.id) || state.flags.includes(fittedFlag(chapter));
+}
+
+/** Which of Milo's parts a save has, for his model (Game Bible 5.6). */
+export interface MiloParts {
+  eyes: boolean;
+  wheels: boolean;
+  heart: boolean;
+  rotor: boolean;
+  record: boolean;
+}
+
+const PART_OF: Record<number, keyof MiloParts> = { 1: "eyes", 2: "wheels", 3: "heart", 4: "rotor" };
+
+export function miloParts(state: Readonly<GameState>): MiloParts {
+  const parts: MiloParts = { eyes: false, wheels: false, heart: false, rotor: false, record: state.miloStage >= 5 };
+  for (const chapter of CHAPTERS) {
+    const part = PART_OF[chapter.milo];
+    if (part && hasPart(chapter, state)) parts[part] = true;
+  }
+  return parts;
+}
 export const partId = (chapter: ChapterDef): string => `part:${chapter.id}`;
 
 /** The chapter a carried part belongs to. */
@@ -42,7 +70,7 @@ export type ChapterStep =
 export function chapterStep(chapter: ChapterDef, state: Readonly<GameState>): ChapterStep {
   if (state.stamps.includes(chapter.id)) return { kind: "done" };
   if (state.carrying === partId(chapter)) return state.world === "home" ? { kind: "part-give" } : { kind: "part-home" };
-  if (state.miloStage >= chapter.milo && state.flags.includes(doneFlag(chapter.activity))) return { kind: "memory" };
+  if (state.flags.includes(fittedFlag(chapter))) return { kind: "memory" };
   if (state.flags.includes(doneFlag(chapter.activity))) return { kind: "part-take" };
   const next = chapter.letters.findIndex((l) => !state.delivered.includes(l.id));
   if (next < 0) {

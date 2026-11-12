@@ -382,6 +382,7 @@ export function createMeridiani(ctx: WorldContext): World {
   let pixelHeight = 900;
   const world: World = {
     id: "meridiani",
+    suits: true,
     root,
     terrain,
     colliders,

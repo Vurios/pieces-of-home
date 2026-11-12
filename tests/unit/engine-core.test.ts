@@ -210,13 +210,26 @@ describe("resolution governor", () => {
     const run = (fps: number, seconds: number): void => {
       for (let i = 0; i < fps * seconds; i += 1) governor.update(1 / fps);
     };
+    // One slow second is forgiven (a shader warming up); two in a row are not.
+    run(30, 1.05);
+    expect(governor.scale).toBe(1);
     run(30, 1.05);
     expect(governor.scale).toBeCloseTo(0.9);
-    run(30, 6);
+    run(30, 20);
     expect(governor.scale).toBeCloseTo(0.6);
-    run(60, 12);
+    run(60, 30);
     expect(governor.scale).toBeGreaterThan(0.6);
-    run(60, 40);
+    run(60, 200);
     expect(governor.scale).toBe(1);
+  });
+
+  it("never changes twice within a few seconds, so the picture does not seesaw", () => {
+    const governor = new ResolutionGovernor();
+    let changes = 0;
+    for (let s = 0; s < 20; s += 1) {
+      const fps = s % 2 ? 30 : 60;
+      for (let i = 0; i < fps; i += 1) if (governor.update(1 / fps) !== null) changes += 1;
+    }
+    expect(changes).toBeLessThanOrEqual(2);
   });
 });

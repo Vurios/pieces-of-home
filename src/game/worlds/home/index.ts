@@ -11,12 +11,12 @@ import { angleBetween, damp, headingToTangent, latLonToDir, surfaceMatrix } from
 import { Terrain, buildPlanetGeometry } from "../../world/terrain";
 import type { Bookmark, FrameInfo, MapIcon, World, WorldContext } from "../types";
 import { PLACE_COPY, placeFlag } from "../../../content/places";
-import { CHAPTERS, chapterForPart } from "../../../content/chapters";
+import { CHAPTERS, chapterForPart, fittedFlag, miloParts } from "../../../content/chapters";
 import { STORY_COPY } from "../../../content/chapters/common";
 import { FINALE_BEGUN, FINALE_COPY, MILO_VOICE, RECORD, V1_LETTER, finaleStep } from "../../../content/finale";
 import { torus } from "../../actors/parts";
 import { C, buildDish, buildHouse, buildLampPost, buildMailbox } from "./buildings";
-import { GROUND_PATCHES, type Site, HILL, HILL_TOP, HOME_RADIUS, MAILBOX, MEADOW, ORCHARD, PATH_HALF_WIDTH, PLACES, POND, POND_RADIUS, SITES, TERRAIN, TRAILS, TRAIL_LAMPS, local, site } from "./layout";
+import { GROUND_PATCHES, type Site, HILL, HILL_TOP, HOME_RADIUS, MAILBOX, MEADOW, ORCHARD, PATH_HALF_WIDTH, PLACES, POND, POND_RADIUS, SITES, TERRAIN, TRAILS, TRAIL_LAMPS, clearOfTrails, local, site } from "./layout";
 import { buildGarden, buildMeadow, groundMatrix, pathDistance, planTrees, scatterNature, treeShade } from "./nature";
 import { buildPaths } from "./paths";
 import { buildPlaces } from "./places";
@@ -139,7 +139,8 @@ export function createHome(ctx: WorldContext): World {
 
   // Lamp posts along the paths. The one by the workshop is placed in the shed's own frame, outside its door.
   const lampDirs = [latLonToDir(-2.2, 1.6), latLonToDir(18, 3), local(SITES.shed, 2.6, 0, 5.4).normalize(), ...TRAIL_LAMPS];
-  for (const dir of lampDirs) {
+  for (const spot of lampDirs) {
+    const dir = clearOfTrails(spot);
     const m = groundMatrix(terrain, dir, 0, 0.02);
     colliders.push(createColliderGroup(m, buildLampPost(b, { dir, forward: new Vector3(), origin: new Vector3(), matrix: m })));
   }
@@ -214,7 +215,7 @@ export function createHome(ctx: WorldContext): World {
   const milo = new Milo(toon);
   surfaceMatrix(shop.miloSpot.position, shedDir, shop.miloSpot.forward, milo.root.matrix);
   milo.root.matrix.decompose(milo.root.position, milo.root.quaternion, milo.root.scale);
-  milo.setStage(ctx.store.value.miloStage);
+  milo.setParts(miloParts(ctx.store.value));
   root.add(milo.root);
 
   const friendIds: KidId[] = ["nori", "lumi", "theo"];
@@ -380,11 +381,12 @@ export function createHome(ctx: WorldContext): World {
       store.update((s) => {
         s.carrying = null;
         s.miloStage = Math.max(s.miloStage, chapter.milo);
+        if (!s.flags.includes(fittedFlag(chapter))) s.flags.push(fittedFlag(chapter));
       });
       bus.emit("milo:stage", { stage: chapter.milo });
     },
   });
-  const offStage = bus.on("milo:stage", ({ stage }) => milo.setStage(stage));
+  const offStage = bus.on("milo:stage", () => milo.setParts(miloParts(store.value)));
 
   // ---- Bookmarks for screenshots and the title sequence ----
   const spawnDir = latLonToDir(SITES.spawn.lat, SITES.spawn.lon);

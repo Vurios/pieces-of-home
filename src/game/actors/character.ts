@@ -43,6 +43,8 @@ export interface Motion {
   sinceLanding: number;
   landingSpeed: number;
   carrying: boolean;
+  /** Sitting in a seat (the Moon buggy): knees up, hands on the controls. */
+  seated?: boolean;
 }
 
 export type Action = "none" | "interact" | "emote" | "celebrate";
@@ -185,6 +187,9 @@ export class Character {
   private brows: Group[] = [];
   /** Parts are painted with vertex colors and merged per joint: one draw call per joint. */
   private assembly: Assembly;
+  /** The space suit, worn on the Moon and Mars: its own merged pieces, the bubble helmet and the life-support pack. */
+  private suitParts: Object3D[] = [];
+  private suited = false;
   /** Secondary motion: the backpack and hair lag behind the body a little. */
   private trail: Group | null = null;
   private trailSwing = 0;
@@ -305,6 +310,84 @@ export class Character {
 
     this.dress(id, p);
     this.assembly.flush();
+    this.buildSuit(p);
+  }
+
+  /**
+   * A kid-sized space suit over the clothes: white shells on the body, arms
+   * and legs, big grey boots and gloves, a stripe in the kid's own colour on
+   * each arm so friends can tell each other apart, a life-support pack, and a
+   * clear bubble helmet so faces stay easy to read. Hidden until a world asks.
+   */
+  private buildSuit(p: Palette): void {
+    const suit = new Assembly(this.toon.toon({ vertexColors: true, objectSpace: true, paint: 0.08 }));
+    const WHITE = "#EEEBE4";
+    const SHADE = "#D6D2C9";
+    const GREY = "#A9A59D";
+    const DARK = "#55514C";
+    const put = (parent: Object3D, geometry: BufferGeometry, color: string, position: [number, number, number], scale: number | [number, number, number], rotation: [number, number, number] = [0, 0, 0]): void =>
+      suit.add(parent, geometry, color, position, scale, rotation);
+
+    // Body, with a belt and the chest controls.
+    put(this.torso, torsoShape(), WHITE, [0, 0.0, 0], [0.197, 0.43, 0.168]);
+    put(this.hips, sphere("mid"), WHITE, [0, 0.0, 0], [0.178, 0.1, 0.152]);
+    put(this.torso, cylinder(16), GREY, [0, 0.045, 0], [0.2, 0.045, 0.172]);
+    put(this.torso, box(0.02), SHADE, [0, 0.2, 0.16], [0.16, 0.1, 0.06]);
+    for (const [x, c] of [[-0.045, "#C8553D"], [0, "#F2A541"], [0.045, "#5E8BB0"]] as const) put(this.torso, cylinder(10), c, [x, 0.2, 0.193], [0.016, 0.01, 0.016], [Math.PI / 2, 0, 0]);
+    for (const side of [-1, 1]) put(this.torso, sphere("mid"), WHITE, [side * 0.168, 0.315, 0], 0.083);
+    // The neck ring the helmet locks onto.
+    put(this.torso, torus(0.28), GREY, [0, 0.445, 0], [0.19, 0.19, 0.2], [Math.PI / 2, 0, 0]);
+
+    // Arms: white sleeves, the kid's colour stripe, puffy gloves.
+    for (const [arm, elbow] of [
+      [this.armL, this.elbowL],
+      [this.armR, this.elbowR],
+    ] as const) {
+      limb(suit, arm, [0, 0.005, 0], [0, -0.105, 0], 0.064, WHITE);
+      limb(suit, elbow, [0, 0, 0], [0, -0.07, 0], 0.06, WHITE);
+      put(arm, cylinder(14), p.accent, [0, -0.035, 0], [0.068, 0.03, 0.068]);
+      put(elbow, cylinder(12), GREY, [0, -0.082, 0], [0.066, 0.03, 0.066]);
+      put(elbow, sphere("mid"), SHADE, [0, -0.13, 0.006], [0.07, 0.075, 0.066]);
+    }
+    // Legs: white trousers, knee rings, big moon boots.
+    for (const [leg, knee] of [
+      [this.legL, this.kneeL],
+      [this.legR, this.kneeR],
+    ] as const) {
+      limb(suit, leg, [0, 0.01, 0], [0, -0.135, 0], 0.077, WHITE);
+      limb(suit, knee, [0, 0, 0], [0, -0.07, 0], 0.072, WHITE);
+      put(knee, torus(0.3), GREY, [0, 0.0, 0], [0.074, 0.074, 0.06], [Math.PI / 2, 0, 0]);
+      put(knee, sphere("mid"), SHADE, [0, -0.118, 0.022], [0.086, 0.066, 0.118]);
+      put(knee, box(0.03), DARK, [0, -0.156, 0.03], [0.158, 0.04, 0.252]);
+    }
+    // The life-support pack, with two hoses round to the chest.
+    put(this.torso, box(0.06), WHITE, [0, 0.25, -0.215], [0.36, 0.4, 0.17]);
+    put(this.torso, box(0.04), SHADE, [0, 0.45, -0.215], [0.32, 0.06, 0.15]);
+    put(this.torso, box(0.01), p.accent, [0, 0.3, -0.302], [0.16, 0.05, 0.01]);
+    for (const side of [-1, 1]) put(this.torso, cylinder(8), "#7E95B0", [side * 0.15, 0.17, 0.04], [0.018, 0.34, 0.018], [1.2, 0, side * 0.35]);
+    const shells = suit.flush();
+    for (const mesh of shells) {
+      mesh.visible = false;
+      this.suitParts.push(mesh);
+    }
+
+    // The bubble helmet: clear glass, a little blue at the edges, one painted highlight.
+    const helmet = new Mesh(sphere("high"), this.toon.glass("#E4EEFF"));
+    helmet.position.set(0, 0.215, 0.015);
+    helmet.scale.setScalar(0.43);
+    helmet.renderOrder = 10;
+    helmet.visible = false;
+    this.head.add(helmet);
+    this.suitParts.push(helmet);
+  }
+
+  /** Puts the space suit on (Moon and Mars) or takes it off (home). */
+  setSuit(on: boolean): void {
+    if (on === this.suited) return;
+    this.suited = on;
+    for (const part of this.suitParts) part.visible = on;
+    // Remi's big backpack would poke through the life-support pack.
+    if (this.trail) this.trail.visible = !on;
   }
 
   /** Adds a painted shape to a joint. Shapes merge when the assembly is flushed. */
@@ -561,6 +644,23 @@ export class Character {
       armRz = 0.22;
       elbowL = -0.75;
       elbowR = -0.75;
+    }
+
+    if (motion.seated) {
+      // Thighs forward, shins down, hands reaching for the controller.
+      legL = -1.45;
+      legR = -1.45;
+      kneeL = 1.35;
+      kneeR = 1.35;
+      armL = -0.95;
+      armR = -0.95;
+      armLz = -0.12;
+      armRz = 0.12;
+      elbowL = -0.6;
+      elbowR = -0.6;
+      bob = breathe;
+      this.idleQuirk = 0;
+      this.idleTime = 0;
     }
 
     // Personality idles.

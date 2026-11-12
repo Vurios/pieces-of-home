@@ -258,13 +258,113 @@ test("Chapter 3: from the dome to the stamp", async ({ page }, info) => {
   expect(errors).toEqual([]);
 });
 
+test("Chapter 2: from the dome to the stamp", async ({ page }, info) => {
+  test.skip(info.project.name === "phone", "one full playthrough on desktop is enough");
+  test.setTimeout(480_000);
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+  await page.addInitScript((save) => {
+    if (!sessionStorage.getItem("seeded")) {
+      localStorage.setItem("poh.save.v1", JSON.stringify(save));
+      sessionStorage.setItem("seeded", "1");
+    }
+  }, AFTER_CHAPTER_1);
+  await page.goto("/?test&quality=low");
+  await expect(page.locator("html")).toHaveAttribute("data-stage", "ready", { timeout: 60_000 });
+  const ride = (): Promise<{ riding: boolean; speed: number; steps: string[] }> =>
+    page.evaluate(() => (window as unknown as { __poh: { world(c: string): unknown } }).__poh.world("state")) as never;
+  const world = (command: string): Promise<unknown> => page.evaluate((c) => (window as unknown as { __poh: { world(c: string): unknown } }).__poh.world(c), command);
+
+  // Into the Hadley dome (the middle of Dad's workbench, between two others).
+  await goTo(page, "dome-hadley");
+  await use(page);
+  await page.waitForFunction(() => (window as unknown as { __poh: Poh }).__poh.worldId() === "hadley", null, { timeout: 30_000 });
+  await playUntil(page, (s) => s.carrying === "a15-letter-wheels", 90_000);
+
+  // Three letters: the woven wheels, the two seats, the tracks.
+  for (const [target, letter, next] of [
+    ["wheels", "a15-letter-wheels", "a15-letter-seats"],
+    ["seats", "a15-letter-seats", "a15-letter-tracks"],
+  ] as const) {
+    await useUntil(page, `letter-${target}`, (s) => s.delivered.includes(letter));
+    await playUntil(page, (s) => s.carrying === next, 90_000);
+  }
+  await useUntil(page, "letter-tracks", (s) => s.delivered.includes("a15-letter-tracks"));
+  await playUntil(page, (s) => s.flags.includes("steer-from-the-back:started"), 90_000);
+
+  // Dad's wheel test: push all three wheels, then the chevrons win.
+  await playUntil(page, () => true);
+  const end = Date.now() + 60_000;
+  while (!(await page.locator(".game.wheels").count()) && Date.now() < end) {
+    await goTo(page, "wheel-test");
+    await use(page);
+    await page.waitForTimeout(800);
+  }
+  await expect(page.locator(".game.wheels")).toBeVisible();
+  for (const key of ["Digit1", "Digit2", "Digit3"]) {
+    await page.keyboard.press(key);
+    await page.keyboard.press("KeyE");
+    await page.waitForTimeout(3600);
+  }
+  await page.locator(".game.wheels .got").click();
+  await playUntil(page, (s) => s.flags.includes("steer-from-the-back:wheels"));
+
+  // The drive: into the driver's seat, roll forward on the real keys, then out to the rille and back.
+  for (let i = 0; i < 8 && !(await ride()).riding; i += 1) {
+    await playUntil(page, () => true);
+    await goTo(page, "buggy-seat");
+    await use(page);
+    await page.waitForTimeout(600);
+  }
+  expect((await ride()).riding).toBe(true);
+  await expect(page.locator(".drive")).toBeVisible();
+  await page.keyboard.down("KeyW");
+  await page.waitForTimeout(1200);
+  expect((await ride()).speed).toBeGreaterThan(0);
+  await page.keyboard.up("KeyW");
+  await world("to-overlook");
+  await page.waitForTimeout(400);
+  await playUntil(page, (s) => s.flags.includes("steer-from-the-back:drive"), 30_000);
+  await world("to-park");
+  await page.keyboard.down("KeyW");
+  await page.waitForTimeout(1200);
+  await page.keyboard.up("KeyW");
+  await playUntil(page, (s) => s.flags.includes("steer-from-the-back:done"), 60_000);
+  expect((await ride()).riding).toBe(false);
+
+  // Milo's mesh wheels, home through the lamp light.
+  await playUntil(page, () => false, 8_000).catch(() => undefined);
+  await useUntil(page, "parcel", (s) => s.carrying === "part:chapter-2");
+  await goTo(page, "lamp-home");
+  await use(page);
+  await page.waitForFunction(() => (window as unknown as { __poh: Poh }).__poh.worldId() === "home", null, { timeout: 30_000 });
+  await page.waitForTimeout(800);
+  await useUntil(page, "milo", (s) => s.flags.includes("chapter-2:fitted"));
+  await playUntil(page, (s) => s.stamps.includes("chapter-2"), 60_000);
+  const after = await state(page);
+  expect(after.miloStage).toBe(2);
+  expect(errors).toEqual([]);
+});
+
 const AFTER_CHAPTER_3 = {
   version: 1,
   world: "home",
   miloStage: 3,
   carrying: null,
-  delivered: ["to-the-lamp", "a11-letter-descent", "a11-letter-seismometer", "a11-letter-mirrors", "opp-letter-bounce", "opp-letter-grinder", "opp-letter-panels"],
-  stamps: ["prologue", "chapter-1", "chapter-3"],
+  delivered: [
+    "to-the-lamp",
+    "a11-letter-descent",
+    "a11-letter-seismometer",
+    "a11-letter-mirrors",
+    "a15-letter-wheels",
+    "a15-letter-seats",
+    "a15-letter-tracks",
+    "opp-letter-bounce",
+    "opp-letter-grinder",
+    "opp-letter-panels",
+  ],
+  stamps: ["prologue", "chapter-1", "chapter-2", "chapter-3"],
   flags: ["seen-notebook"],
 };
 

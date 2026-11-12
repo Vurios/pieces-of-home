@@ -588,3 +588,23 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 **Why:** The Finale is the last P0 piece (Game Bible 5.8 and 6). Live data ties the story to the real Voyager 1 tonight, and a radio search is something a kid can feel without numbers.
 
 **Alternatives considered:** Showing Voyager 1's dot from the start (no search), a 3D sky dome in the game world (camera fights the tiny planet), free-text adventure names (privacy), a scripted cutscene with the friends walking (far more animation work for the same moment; an illustration reads as an illustration).
+
+## 60. Chapter 2: Hadley-Apennine and the rideable Moon buggy
+
+**Date:** 2026-11-12
+
+**Decision:** Chapter 2 is built (`src/game/worlds/hadley/`, `src/content/chapters/hadley.ts`, `src/game/puzzles/steer-from-the-back.ts`). The little world has the lander Falcon, a flag, the science station with boot prints, Mount Hadley and Hadley Delta, and Hadley Rille as a real valley cut into the terrain (a new `channels` feature in `Terrain`, kept shallower than the horizon-culling margin). Letters go to the woven wheels, the two seats and the tracks. The activity has three steps: Dad's wheel test (a small game: smooth, plain mesh and chevron mesh wheels pushed across a dust tray; it makes no claim about rubber tires), the drive, and parking. The buggy is the first machine you ride: a world `ride` hook moves the seated kid, the front axle rolls straight and only the back wheels steer (fact `lrv-rear-steer`), so the back swings out on turns. The rille's rim, steep slopes and props stop it gently. Dad's taped LROC photo of the real tracks (PIA13058, NASA/GSFC/Arizona State University) is the map, with his pencil route and a dot for how far along the buggy is. Parking either way round inside the chalk marks counts. A new fact `a15-rille-edge` comes from the same photo's caption. Chapters can now be played in any order: Milo's parts are tracked per chapter (`chapter-N:fitted`) instead of by one stage number, and a reload part way through a chapter picks up the arrival, the activity start, or the memory and stamp.
+
+**Why:** P1 in the Game Bible, and the most physical idea in the game. Steering from the back is something a kid feels in the first two seconds.
+
+**Alternatives considered:** A scripted drive on rails (no feel of the rear steering), real car physics (overkill, and easy to tip on a tiny planet), the photo as a full-screen map (hides the world while driving).
+
+## 61. Opening scene, no black flicker, freer camera, bigger map, richer true stories, space suits
+
+**Date:** 2026-11-12
+
+**Decision:** (1) The page opens on a CSS-only night scene (stars come out, the workshop window lights up on the little home world, the title writes in) that glides through the lit window to Dad's bench, where the notebook finishes loading. (2) The black flicker came from resizing the canvas after a frame was drawn whenever the resolution governor changed its scale: changes now wait for the start of the next drawn frame, and the governor needs two slow seconds to step down and waits a few seconds between changes. (3) The camera tilts from nearly level to nearly straight down, zooms much further both ways (mouse wheel, + and -, pinch, LB and LT, eased), turns with < and >, no longer swings back behind the player after a short pause, and a place's preferred view waits while the player has just chosen their own. (4) Dad's map panel is now up to 1280 px wide with a globe up to 720 px, bigger pins and labels, and a bigger corner map. (5) True-story cards are big taped index cards with a real picture of the machine and its credit, the place, the story in large type, a "More about it" list of the sourced details and the source. (6) Kids wear space suits on the Moon and Mars: white shells, moon boots, gloves, a life-support pack, a stripe in each kid's own colour and a clear bubble helmet so faces stay readable. (7) Lamp posts are pushed clear of every path (one stood in the middle of the north road). (8) A prompt prefers what the player faces, so neighbouring domes on the workbench no longer steal each other's prompt.
+
+**Why:** Team feedback after playing: the book appeared instantly, black flashes, camera limits, small map and cards, a lamp post in the road, and kids in street clothes on the Moon.
+
+**Alternatives considered:** A JS-driven splash (would wait for code to load), switching off the resolution governor (loses smoothness on slow devices), an opaque visor (hides faces), a separate facts screen (breaks the flow of play).

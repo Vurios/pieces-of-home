@@ -27,6 +27,9 @@ export class Milo {
   stage = 0;
   /** True while Milo stands on his workbench stand. */
   onStand = true;
+  /** Lit up (he has his eyes), and spinning his rotor. */
+  private awake = false;
+  private spinning = false;
 
   private body = new Group();
   private neck = new Group();
@@ -183,19 +186,29 @@ export class Milo {
   }
 
   setStage(stage: number): void {
-    this.stage = Math.max(0, Math.min(MILO_STAGES, Math.floor(stage)));
-    const s = this.stage;
-    this.onStand = s < 2;
+    const s = Math.max(0, Math.min(MILO_STAGES, Math.floor(stage)));
+    this.setParts({ eyes: s >= 1, wheels: s >= 2, heart: s >= 3, rotor: s >= 4, record: s >= 5 });
+  }
+
+  /**
+   * Shows the parts Milo has. Chapters can be played in any order, so each
+   * part is its own switch; `stage` counts them.
+   */
+  setParts(parts: { eyes: boolean; wheels: boolean; heart: boolean; rotor: boolean; record: boolean }): void {
+    this.stage = [parts.eyes, parts.wheels, parts.heart, parts.rotor, parts.record].filter(Boolean).length;
+    this.awake = parts.eyes;
+    this.spinning = parts.rotor;
+    this.onStand = !parts.wheels;
     this.parts.stand.visible = this.onStand;
-    this.parts.feet.visible = s < 2;
-    this.parts.eyes.visible = s >= 1;
-    this.parts.wheels.visible = s >= 2;
-    this.parts.heart.visible = s >= 3;
-    this.parts.rotor.visible = s >= 4;
-    this.parts.record.visible = s >= 5;
+    this.parts.feet.visible = !parts.wheels;
+    this.parts.eyes.visible = parts.eyes;
+    this.parts.wheels.visible = parts.wheels;
+    this.parts.heart.visible = parts.heart;
+    this.parts.rotor.visible = parts.rotor;
+    this.parts.record.visible = parts.record;
     this.body.position.y = this.onStand ? 0.0 : -0.06;
-    this.bulb.material = s >= 1 ? this.bulbLit : this.bulbDark;
-    this.light.intensity = s >= 1 ? 0.8 : 0;
+    this.bulb.material = parts.eyes ? this.bulbLit : this.bulbDark;
+    this.light.intensity = parts.eyes ? 0.8 : 0;
   }
 
   /** Milo turns his lamp head toward a point, such as the nearest player. */
@@ -212,7 +225,7 @@ export class Milo {
     this.time += dt;
     this.hum += (nearness - this.hum) * damp(2, dt);
 
-    if (this.stage === 0) {
+    if (!this.awake) {
       // Dark and still. The faintest tremble when Remi is close.
       const tremble = reducedMotion ? 0 : Math.sin(this.time * 40) * 0.004 * this.hum;
       this.head.rotation.set(0.45 + tremble, 0, 0);
@@ -229,7 +242,7 @@ export class Milo {
     }
     this.head.rotation.y += (yaw - this.head.rotation.y) * damp(5, dt);
     this.head.rotation.x += (pitch - this.head.rotation.x) * damp(5, dt);
-    if (this.stage >= 4) this.rotor.rotation.y += dt * (reducedMotion ? 2 : 10);
+    if (this.spinning) this.rotor.rotation.y += dt * (reducedMotion ? 2 : 10);
   }
 
   /** Spins the wheels by the distance travelled. */

@@ -35,6 +35,17 @@ export interface Crater {
   rim?: number;
 }
 
+/**
+ * A long winding valley cut into the ground, like Hadley Rille: a path of
+ * unit directions, a width (rim to rim, world units) and a depth. The floor is
+ * flat and the walls slope up to the rims.
+ */
+export interface Channel {
+  path: Vector3[];
+  width: number;
+  depth: number;
+}
+
 export interface TerrainSpec {
   radius: number;
   seed: number;
@@ -45,6 +56,20 @@ export interface TerrainSpec {
   pads?: Pad[];
   bumps?: Bump[];
   craters?: Crater[];
+  channels?: Channel[];
+}
+
+/** One stretch of a channel, with a quick bounding cap so far points skip it. */
+interface Stretch {
+  a: Vector3;
+  b: Vector3;
+  n: Vector3;
+  ab: number;
+  mid: Vector3;
+  /** Cosine of the cap round `mid` that holds the stretch and its walls. */
+  reachCos: number;
+  half: number;
+  depth: number;
 }
 
 export class Terrain {
@@ -52,12 +77,56 @@ export class Terrain {
   private pads: Pad[];
   private bumps: Bump[];
   private craters: Crater[];
+  private stretches: Stretch[] = [];
 
   constructor(readonly spec: TerrainSpec) {
     this.radius = spec.radius;
     this.pads = spec.pads ?? [];
     this.bumps = spec.bumps ?? [];
     this.craters = spec.craters ?? [];
+    for (const channel of spec.channels ?? []) {
+      for (let i = 0; i + 1 < channel.path.length; i += 1) {
+        const a = channel.path[i]!.clone().normalize();
+        const b = channel.path[i + 1]!.clone().normalize();
+        const ab = Math.acos(Math.max(-1, Math.min(1, a.dot(b))));
+        const half = channel.width / 2 / spec.radius;
+        this.stretches.push({
+          a,
+          b,
+          n: new Vector3().crossVectors(a, b).normalize(),
+          ab,
+          mid: a.clone().add(b).normalize(),
+          reachCos: Math.cos(ab / 2 + half * 1.3),
+          half,
+          depth: channel.depth,
+        });
+      }
+    }
+  }
+
+  /** How far `dir` is from the nearest channel, in channel half-widths (0 on the center line), and that channel's depth. */
+  channelAt(dir: Vector3): { t: number; depth: number } {
+    let best = Infinity;
+    let depth = 0;
+    for (const s of this.stretches) {
+      if (dir.dot(s.mid) < s.reachCos) continue;
+      // The closest point on the great circle through a and b, if it falls between them.
+      const off = dir.dot(s.n);
+      closest.copy(dir).addScaledVector(s.n, -off);
+      let angle: number;
+      if (closest.lengthSq() > 1e-12) {
+        closest.normalize();
+        const ac = Math.acos(Math.max(-1, Math.min(1, s.a.dot(closest))));
+        const cb = Math.acos(Math.max(-1, Math.min(1, closest.dot(s.b))));
+        angle = Math.abs(ac + cb - s.ab) < 1e-4 ? Math.asin(Math.min(1, Math.abs(off))) : Math.min(Math.acos(Math.min(1, dir.dot(s.a))), Math.acos(Math.min(1, dir.dot(s.b))));
+      } else angle = Math.PI;
+      const t = angle / s.half;
+      if (t < best) {
+        best = t;
+        depth = s.depth;
+      }
+    }
+    return { t: best, depth };
   }
 
   /** Distance from the planet center to the ground along the unit direction `dir`. */
@@ -86,6 +155,12 @@ export class Terrain {
       const rim = crater.rim ?? crater.depth * 0.35;
       const rimShape = Math.exp(-((t - 1) * (t - 1)) / 0.045);
       r += rim * rimShape;
+    }
+
+    if (this.stretches.length) {
+      const { t, depth } = this.channelAt(dir);
+      // A flat floor, steep walls, and a soft lip at the rim.
+      if (t < 1.25) r -= depth * (1 - smoothstep(0.38, 1.0, t)) - depth * 0.05 * Math.exp(-((t - 1.08) * (t - 1.08)) / 0.01);
     }
 
     for (const pad of this.pads) {
@@ -131,6 +206,7 @@ export class Terrain {
 }
 
 const AXIS_Y = new Vector3(0, 1, 0);
+const closest = new Vector3();
 const scratchEast = new Vector3();
 const scratchNorth = new Vector3();
 const sampleA = new Vector3();

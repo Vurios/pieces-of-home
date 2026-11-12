@@ -14,10 +14,13 @@ export interface ActivityStep {
   hints: [string, string, string];
 }
 
+/** One line of a beat: Remi or Milo says something, Dad's note, or a fact card. */
+export type BeatLine = { who: "remi" | "milo"; say: string } | { note: string } | { fact: string };
+
 export interface ActivityDef {
   id: string;
-  /** Lines the story director says at named moments, keyed by beat. */
-  beats: Record<string, { who: "remi" | "milo"; say: string } | { note: string }>;
+  /** Lines the story director says at named moments, keyed by beat. A beat can be one line or a few. */
+  beats: Record<string, BeatLine | BeatLine[]>;
   steps: ActivityStep[];
 }
 
@@ -98,8 +101,57 @@ export const WAIT_FOR_THE_WIND: ActivityDef = {
   ],
 };
 
+export const STEER_FROM_THE_BACK: ActivityDef = {
+  id: "steer-from-the-back",
+  beats: {
+    ready: { who: "remi", say: "The mesh wheel with chevrons wins! Now let's drive the buggy." },
+    seat: [{ who: "remi", say: "The front wheels won't turn. Only the back ones do!" }, { fact: "lrv-rear-steer" }],
+    swing: { who: "remi", say: "Whoa! The back swings out when I turn." },
+    edge: { who: "remi", say: "Too close! The rille is steep. Back up a little." },
+    overlook: [
+      { who: "remi", say: "There it is. Hadley Rille!" },
+      { fact: "a15-rille-edge" },
+      { who: "remi", say: "Now let's take the buggy back to its spot." },
+    ],
+    "park-near": { who: "remi", say: "Slow, slow... right in the lines." },
+  },
+  steps: [
+    {
+      id: "wheels",
+      title: "Test Dad's wheels",
+      detail: "Dad's long tray is full of soft dust. Push each wheel across. Which one grips?",
+      hints: [
+        "Soft dust is slippery. What kind of wheel could grip it?",
+        "Dad's wheel test is the long wooden tray near the buggy.",
+        "Follow the arrow to the tray, then push all three wheels.",
+      ],
+    },
+    {
+      id: "drive",
+      title: "Drive to the rille",
+      detail: "Sit in the driver's seat. Only the back wheels steer! Follow Dad's photo to the red flag at the rille.",
+      hints: [
+        "The back wheels do the steering, so the back swings out. Turn gently.",
+        "Dad's taped photo shows the way. The red flag marks the edge of the rille.",
+        "Follow the arrow. Hold forward and tap left or right to turn.",
+      ],
+    },
+    {
+      id: "park",
+      title: "Park it back in its spot",
+      detail: "Drive back and stop inside Dad's chalk marks.",
+      hints: [
+        "Every good driver parks the buggy where they found it.",
+        "The chalk marks are next to the lander. Come in slowly.",
+        "Follow the arrow to the chalk marks. Slow down when you get close and it rolls in.",
+      ],
+    },
+  ],
+};
+
 export const ACTIVITIES: Record<string, ActivityDef> = {
   [SEND_A_LIGHT.id]: SEND_A_LIGHT,
+  [STEER_FROM_THE_BACK.id]: STEER_FROM_THE_BACK,
   [WAIT_FOR_THE_WIND.id]: WAIT_FOR_THE_WIND,
 };
 
