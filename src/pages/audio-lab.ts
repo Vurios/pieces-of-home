@@ -9,6 +9,7 @@ import { audio, BUSES, type Bus } from "../audio/audio";
 import { CUES } from "../audio/cues";
 import { Mixer } from "../audio/mixer";
 import { RECIPES } from "../audio/sfx";
+import { SampleBank } from "../audio/samples";
 import { speak } from "../audio/voices";
 import type { Scene, StormStage } from "../audio/music";
 import type { LoopHandle } from "../audio/sfx";
@@ -187,6 +188,30 @@ async function measure(): Promise<void> {
     if (spec.loop) continue;
     const recipe = RECIPES[spec.recipe]!;
     await render(name, (mx) => recipe({ mx, out: mx.input(spec.bus), at: 0.05, level: spec.volume, rate: 1, param: name === "laser" ? roundTrip : 6 }), name === "laser" ? 4 : 2.5);
+  }
+  // Recorded takes, at the gain the game uses, so each sits at its recipe's loudness.
+  const probe = new OfflineAudioContext(2, 44100, 44100);
+  const bank = new SampleBank(probe);
+  await bank.load("sfx");
+  for (const [name, spec] of Object.entries(CUES)) {
+    if (!spec.sample) continue;
+    const take = bank.take(spec.sample);
+    if (!take) continue;
+    await render(`take: ${name}`, (mx) => {
+      const source = mx.ctx.createBufferSource();
+      source.buffer = take;
+      source.playbackRate.value = spec.sampleRate ?? 1;
+      const g = mx.ctx.createGain();
+      g.gain.value = spec.volume * (spec.sampleGain ?? 0.15);
+      let node: AudioNode = source;
+      if (spec.sampleTone) {
+        const lp = mx.ctx.createBiquadFilter();
+        lp.frequency.value = spec.sampleTone;
+        node = node.connect(lp);
+      }
+      node.connect(g).connect(mx.input(spec.bus));
+      source.start(0.05);
+    }, 2);
   }
   for (const [speaker, , text] of lines) await render(`voice: ${speaker}`, (mx) => speak(mx, mx.input("voices"), speaker, text, 0.05), 3);
   table.replaceChildren(

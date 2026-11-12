@@ -11,6 +11,27 @@
   let { onclose }: Props = $props();
 
   const host = (url: string): string => new URL(url).hostname.replace(/^www\./, "");
+  type Media = (typeof credits.media)[number];
+  /** "Impact Sounds" from a Kenney page, "Concert Harp" from a sample library folder. */
+  const packName = (page: string): string => {
+    const parts = decodeURIComponent(new URL(page).pathname).split("/").filter((p) => p && p !== "Sustains" && p !== "Sus");
+    const last = parts[parts.length - 1] ?? "";
+    return last.includes("-") ? last.split("-").map((w) => (w === "rpg" ? "RPG" : w[0]!.toUpperCase() + w.slice(1))).join(" ") : last;
+  };
+  const isAudio = (m: Media): boolean => m.file.startsWith("audio/");
+  const pictures = credits.media.filter((m) => !isAudio(m));
+  // NASA recordings are listed one by one; sound packs as one line each, with how many sounds came from them.
+  const recordings = credits.media.filter((m) => m.file.startsWith("audio/nasa/"));
+  const packs = Object.values(
+    credits.media
+      .filter((m) => isAudio(m) && !m.file.startsWith("audio/nasa/"))
+      .reduce<Record<string, { key: string; name: string; credit: string; license: string; page: string; count: number }>>((all, m) => {
+        const key = `${m.credit}|${m.page}`;
+        all[key] ??= { key, name: packName(m.page), credit: m.credit, license: m.license, page: m.page, count: 0 };
+        all[key].count += 1;
+        return all;
+      }, {}),
+  );
 </script>
 
 <Panel title={t("credits.title")} lede={t("credits.lede")} icon="star" size="lg" {onclose}>
@@ -22,13 +43,39 @@
   <section aria-labelledby="cr-pics">
     <h3 id="cr-pics" class="eyebrow">{t("credits.images")}</h3>
     <ul class="grid">
-      {#each credits.media as m (m.id)}
+      {#each pictures as m (m.id)}
         <li>
           <span class="what">{m.title}</span>
           <span class="who">{m.credit}</span>
           <span class="meta">
             <span class="license">{m.license.split(" (")[0]}</span>
             <a href={m.page} target="_blank" rel="noopener noreferrer">{host(m.page)} <Icon name="external" size={13} /></a>
+          </span>
+        </li>
+      {/each}
+    </ul>
+  </section>
+
+  <section aria-labelledby="cr-sounds">
+    <h3 id="cr-sounds" class="eyebrow">Sounds and recordings</h3>
+    <ul class="grid">
+      {#each recordings as m (m.id)}
+        <li>
+          <span class="what">{m.title}</span>
+          <span class="who">{m.credit}</span>
+          <span class="meta">
+            <span class="license">{m.license.split(" (")[0]}</span>
+            <a href={m.page} target="_blank" rel="noopener noreferrer">{host(m.page)} <Icon name="external" size={13} /></a>
+          </span>
+        </li>
+      {/each}
+      {#each packs as p (p.key)}
+        <li>
+          <span class="what">{p.name} ({p.count} {p.count === 1 ? "sound" : "sounds"})</span>
+          <span class="who">{p.credit}</span>
+          <span class="meta">
+            <span class="license">{p.license.split(" (")[0]}</span>
+            <a href={p.page} target="_blank" rel="noopener noreferrer">{host(p.page)} <Icon name="external" size={13} /></a>
           </span>
         </li>
       {/each}

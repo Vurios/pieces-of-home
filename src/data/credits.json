@@ -100,6 +100,726 @@
       "sourceUrl": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia17/pia17035/PIA17035.jpg",
       "page": "https://science.nasa.gov/photojournal/mementos-of-earth/",
       "changes": "Resized and cropped for the notebook (900 px or less, JPEG)"
+    },
+    {
+      "id": "audio-step-grass-1",
+      "file": "audio/sfx/step-grass-1.mp3",
+      "title": "Footstep on grass (footstep_grass_000.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_grass_000.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-step-grass-2",
+      "file": "audio/sfx/step-grass-2.mp3",
+      "title": "Footstep on grass (footstep_grass_001.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_grass_001.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-step-grass-3",
+      "file": "audio/sfx/step-grass-3.mp3",
+      "title": "Footstep on grass (footstep_grass_003.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_grass_003.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-step-grass-4",
+      "file": "audio/sfx/step-grass-4.mp3",
+      "title": "Footstep on grass (footstep_grass_004.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_grass_004.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-step-wood-1",
+      "file": "audio/sfx/step-wood-1.mp3",
+      "title": "Footstep on wood (footstep_wood_000.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_wood_000.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-step-wood-2",
+      "file": "audio/sfx/step-wood-2.mp3",
+      "title": "Footstep on wood (footstep_wood_001.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_wood_001.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-step-wood-3",
+      "file": "audio/sfx/step-wood-3.mp3",
+      "title": "Footstep on wood (footstep_wood_002.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_wood_002.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-step-wood-4",
+      "file": "audio/sfx/step-wood-4.mp3",
+      "title": "Footstep on wood (footstep_wood_004.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_wood_004.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-step-gravel-1",
+      "file": "audio/sfx/step-gravel-1.mp3",
+      "title": "Footstep (footstep04.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-step-gravel-2",
+      "file": "audio/sfx/step-gravel-2.mp3",
+      "title": "Footstep (footstep05.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-step-gravel-3",
+      "file": "audio/sfx/step-gravel-3.mp3",
+      "title": "Footstep (footstep06.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-step-gravel-4",
+      "file": "audio/sfx/step-gravel-4.mp3",
+      "title": "Footstep (footstep09.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-step-snow-1",
+      "file": "audio/sfx/step-snow-1.mp3",
+      "title": "Footstep in snow (footstep_snow_001.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_snow_001.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-step-snow-2",
+      "file": "audio/sfx/step-snow-2.mp3",
+      "title": "Footstep in snow (footstep_snow_002.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_snow_002.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-step-snow-3",
+      "file": "audio/sfx/step-snow-3.mp3",
+      "title": "Footstep in snow (footstep_snow_003.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_snow_003.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-step-snow-4",
+      "file": "audio/sfx/step-snow-4.mp3",
+      "title": "Footstep in snow (footstep_snow_004.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_snow_004.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-step-carpet-1",
+      "file": "audio/sfx/step-carpet-1.mp3",
+      "title": "Footstep on carpet (footstep_carpet_000.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_carpet_000.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-step-carpet-2",
+      "file": "audio/sfx/step-carpet-2.mp3",
+      "title": "Footstep on carpet (footstep_carpet_001.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_carpet_001.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-step-carpet-3",
+      "file": "audio/sfx/step-carpet-3.mp3",
+      "title": "Footstep on carpet (footstep_carpet_003.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/footstep_carpet_003.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-land-soft-1",
+      "file": "audio/sfx/land-soft-1.mp3",
+      "title": "Soft landing thud (impact_soft_medium_001.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/impact_soft_medium_001.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-land-soft-2",
+      "file": "audio/sfx/land-soft-2.mp3",
+      "title": "Soft landing thud (impact_soft_medium_003.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/impact_soft_medium_003.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-tap-wood-1",
+      "file": "audio/sfx/tap-wood-1.mp3",
+      "title": "Light tap on wood (impact_wood_light_001.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/impact_wood_light_001.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-tap-wood-2",
+      "file": "audio/sfx/tap-wood-2.mp3",
+      "title": "Light tap on wood (impact_wood_light_003.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/impact_wood_light_003.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-page-1",
+      "file": "audio/sfx/page-1.mp3",
+      "title": "Page flip (bookFlip1.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-page-2",
+      "file": "audio/sfx/page-2.mp3",
+      "title": "Page flip (bookFlip2.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-page-3",
+      "file": "audio/sfx/page-3.mp3",
+      "title": "Page flip (bookFlip3.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-book-open",
+      "file": "audio/sfx/book-open.mp3",
+      "title": "Book opening (bookOpen.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-book-close",
+      "file": "audio/sfx/book-close.mp3",
+      "title": "Book closing (bookClose.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-cloth-1",
+      "file": "audio/sfx/cloth-1.mp3",
+      "title": "Cloth rustle (cloth1.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-cloth-2",
+      "file": "audio/sfx/cloth-2.mp3",
+      "title": "Cloth rustle (cloth2.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-cloth-3",
+      "file": "audio/sfx/cloth-3.mp3",
+      "title": "Cloth rustle (cloth3.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-metal-click-1",
+      "file": "audio/sfx/metal-click-1.mp3",
+      "title": "Metal click (metalClick.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-metal-click-2",
+      "file": "audio/sfx/metal-click-2.mp3",
+      "title": "Light metal tap (impact_metal_light_004.ogg), Impact Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://github.com/Boyquotes/kenney-impact-sounds-for-godot/blob/main/addons/kenney%20impact%20sounds/impact_metal_light_004.ogg",
+      "page": "https://kenney.nl/assets/impact-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; taken from a CC0 GitHub copy of the pack (kenney-impact-sounds-for-godot)"
+    },
+    {
+      "id": "audio-latch",
+      "file": "audio/sfx/latch.mp3",
+      "title": "Metal latch (metalLatch.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-creak",
+      "file": "audio/sfx/creak.mp3",
+      "title": "Wood creak (creak2.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-door-open",
+      "file": "audio/sfx/door-open.mp3",
+      "title": "Door opening (doorOpen_1.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-door-close",
+      "file": "audio/sfx/door-close.mp3",
+      "title": "Door closing (doorClose_4.ogg), RPG Audio",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/RPGsounds_Kenney.zip",
+      "page": "https://kenney.nl/assets/rpg-audio",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-ui-click-1",
+      "file": "audio/sfx/ui-click-1.mp3",
+      "title": "Soft switch click (switch_002.ogg), Interface Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/kenney_interfaceSounds.zip",
+      "page": "https://kenney.nl/assets/interface-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-ui-click-2",
+      "file": "audio/sfx/ui-click-2.mp3",
+      "title": "Soft switch click (switch_004.ogg), Interface Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/kenney_interfaceSounds.zip",
+      "page": "https://kenney.nl/assets/interface-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-ui-click-3",
+      "file": "audio/sfx/ui-click-3.mp3",
+      "title": "Soft switch click (switch_007.ogg), Interface Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/kenney_interfaceSounds.zip",
+      "page": "https://kenney.nl/assets/interface-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-ui-pop-1",
+      "file": "audio/sfx/ui-pop-1.mp3",
+      "title": "Drop pop (drop_002.ogg), Interface Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/kenney_interfaceSounds.zip",
+      "page": "https://kenney.nl/assets/interface-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-ui-pop-2",
+      "file": "audio/sfx/ui-pop-2.mp3",
+      "title": "Drop pop (drop_003.ogg), Interface Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/kenney_interfaceSounds.zip",
+      "page": "https://kenney.nl/assets/interface-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-ui-toggle-1",
+      "file": "audio/sfx/ui-toggle-1.mp3",
+      "title": "Toggle (toggle_001.ogg), Interface Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/kenney_interfaceSounds.zip",
+      "page": "https://kenney.nl/assets/interface-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-ui-toggle-2",
+      "file": "audio/sfx/ui-toggle-2.mp3",
+      "title": "Toggle (toggle_002.ogg), Interface Sounds",
+      "credit": "Kenney (kenney.nl)",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://opengameart.org/sites/default/files/kenney_interfaceSounds.zip",
+      "page": "https://kenney.nl/assets/interface-sounds",
+      "changes": "Trimmed to start at the attack, 5 ms fade-in, short fade-out, peak-normalized to -3 dBFS, mono MP3 64 kbps; from Kenney's own upload on OpenGameArt"
+    },
+    {
+      "id": "audio-glockenspiel-79",
+      "file": "audio/inst/glockenspiel-79.mp3",
+      "title": "Glockenspiel, soft mallet, G5 (glock_soft_G4_01.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Idiophones/Struck%20Idiophones/Glockenspiel/glock_soft_G4_01.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Idiophones/Struck%20Idiophones/Glockenspiel",
+      "changes": "Sounds as G5 (MIDI 79), checked by pitch analysis; stereo downmixed to mono; high-pass at 250 Hz; retuned -8.3 cents to A440, trimmed to 2.8 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-glockenspiel-84",
+      "file": "audio/inst/glockenspiel-84.mp3",
+      "title": "Glockenspiel, soft mallet, C6 (glock_soft_C5_02.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Idiophones/Struck%20Idiophones/Glockenspiel/glock_soft_C5_02.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Idiophones/Struck%20Idiophones/Glockenspiel",
+      "changes": "Sounds as C6 (MIDI 84), checked by pitch analysis; stereo downmixed to mono; high-pass at 250 Hz; retuned -12.2 cents to A440, trimmed to 2.8 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-glockenspiel-91",
+      "file": "audio/inst/glockenspiel-91.mp3",
+      "title": "Glockenspiel, soft mallet, G6 (glock_soft_G5_01.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Idiophones/Struck%20Idiophones/Glockenspiel/glock_soft_G5_01.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Idiophones/Struck%20Idiophones/Glockenspiel",
+      "changes": "Sounds as G6 (MIDI 91), checked by pitch analysis; stereo downmixed to mono; high-pass at 250 Hz; retuned -12.1 cents to A440, trimmed to 2.8 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-glockenspiel-96",
+      "file": "audio/inst/glockenspiel-96.mp3",
+      "title": "Glockenspiel, soft mallet, C7 (glock_soft_C6_01.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Idiophones/Struck%20Idiophones/Glockenspiel/glock_soft_C6_01.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Idiophones/Struck%20Idiophones/Glockenspiel",
+      "changes": "Sounds as C7 (MIDI 96), checked by pitch analysis; stereo downmixed to mono; high-pass at 250 Hz; retuned -15.5 cents to A440, trimmed to 2.8 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-glockenspiel-103",
+      "file": "audio/inst/glockenspiel-103.mp3",
+      "title": "Glockenspiel, soft mallet, G7 (glock_soft_G6_01.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Idiophones/Struck%20Idiophones/Glockenspiel/glock_soft_G6_01.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Idiophones/Struck%20Idiophones/Glockenspiel",
+      "changes": "Sounds as G7 (MIDI 103), checked by pitch analysis; stereo downmixed to mono; high-pass at 250 Hz; retuned -15.8 cents to A440, trimmed to 2.8 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-piano-55",
+      "file": "audio/inst/piano-55.mp3",
+      "title": "Upright piano (Yamaha), softest layer, G3 (Upright1_Sus_G2_vl1_rr1.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains/Upright1_Sus_G2_vl1_rr1.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains",
+      "changes": "Sounds as G3 (MIDI 55), checked by pitch analysis; left channel only; high-pass at 35 Hz; trimmed to 3.2 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-piano-60",
+      "file": "audio/inst/piano-60.mp3",
+      "title": "Upright piano (Yamaha), softest layer, C4 (Upright1_Sus_C3_vl1_rr1.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains/Upright1_Sus_C3_vl1_rr1.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains",
+      "changes": "Sounds as C4 (MIDI 60), checked by pitch analysis; left channel only; high-pass at 35 Hz; trimmed to 3.2 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-piano-67",
+      "file": "audio/inst/piano-67.mp3",
+      "title": "Upright piano (Yamaha), softest layer, G4 (Upright1_Sus_G3_vl1_rr1.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains/Upright1_Sus_G3_vl1_rr1.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains",
+      "changes": "Sounds as G4 (MIDI 67), checked by pitch analysis; left channel only; high-pass at 35 Hz; trimmed to 3.2 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-piano-72",
+      "file": "audio/inst/piano-72.mp3",
+      "title": "Upright piano (Yamaha), softest layer, C5 (Upright1_Sus_C4_vl1_rr1.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains/Upright1_Sus_C4_vl1_rr1.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains",
+      "changes": "Sounds as C5 (MIDI 72), checked by pitch analysis; left channel only; high-pass at 35 Hz; trimmed to 3.2 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-piano-79",
+      "file": "audio/inst/piano-79.mp3",
+      "title": "Upright piano (Yamaha), softest layer, G5 (Upright1_Sus_G4_vl1_rr1.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains/Upright1_Sus_G4_vl1_rr1.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains",
+      "changes": "Sounds as G5 (MIDI 79), checked by pitch analysis; left channel only; high-pass at 35 Hz; trimmed to 3.2 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-harp-55",
+      "file": "audio/inst/harp-55.mp3",
+      "title": "Concert harp, mezzo-forte, G3 (KSHarp_G3_mf1.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Chordophones/Composite%20Chordophones/Concert%20Harp/KSHarp_G3_mf1.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Chordophones/Composite%20Chordophones/Concert%20Harp",
+      "changes": "Sounds as G3 (MIDI 55), checked by pitch analysis; stereo downmixed to mono; high-pass at 60 Hz; retuned +11.0 cents to A440, trimmed to 2.5 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-harp-62",
+      "file": "audio/inst/harp-62.mp3",
+      "title": "Concert harp, mezzo-forte, D4 (KSHarp_D4_mf1.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Chordophones/Composite%20Chordophones/Concert%20Harp/KSHarp_D4_mf1.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Chordophones/Composite%20Chordophones/Concert%20Harp",
+      "changes": "Sounds as D4 (MIDI 62), checked by pitch analysis; stereo downmixed to mono; high-pass at 60 Hz; retuned +12.9 cents to A440, trimmed to 2.5 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-harp-69",
+      "file": "audio/inst/harp-69.mp3",
+      "title": "Concert harp, mezzo-forte, A4 (KSHarp_A4_mf1.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Chordophones/Composite%20Chordophones/Concert%20Harp/KSHarp_A4_mf1.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Chordophones/Composite%20Chordophones/Concert%20Harp",
+      "changes": "Sounds as A4 (MIDI 69), checked by pitch analysis; stereo downmixed to mono; high-pass at 60 Hz; retuned +8.5 cents to A440, trimmed to 2.5 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-harp-76",
+      "file": "audio/inst/harp-76.mp3",
+      "title": "Concert harp, mezzo-forte, E5 (KSHarp_E5_mf1.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Chordophones/Composite%20Chordophones/Concert%20Harp/KSHarp_E5_mf1.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Chordophones/Composite%20Chordophones/Concert%20Harp",
+      "changes": "Sounds as E5 (MIDI 76), checked by pitch analysis; stereo downmixed to mono; high-pass at 60 Hz; retuned +11.2 cents to A440, trimmed to 2.5 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-harp-83",
+      "file": "audio/inst/harp-83.mp3",
+      "title": "Concert harp, mezzo-forte, B5 (KSHarp_B5_mf1.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Chordophones/Composite%20Chordophones/Concert%20Harp/KSHarp_B5_mf1.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Chordophones/Composite%20Chordophones/Concert%20Harp",
+      "changes": "Sounds as B5 (MIDI 83), checked by pitch analysis; stereo downmixed to mono; high-pass at 60 Hz; retuned +8.6 cents to A440, trimmed to 2.4 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-ocarina-69",
+      "file": "audio/inst/ocarina-69.mp3",
+      "title": "Ocarina, plain sustain, A4 (StdOcarina_Sus_A3.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Aerophones/Edge-blown%20Aerophones/Ocarina%2C%20Typical/Sustains/Sus/StdOcarina_Sus_A3.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Aerophones/Edge-blown%20Aerophones/Ocarina%2C%20Typical/Sustains/Sus",
+      "changes": "Sounds as A4 (MIDI 69), checked by pitch analysis; left channel only; high-pass at 150 Hz; trimmed to 3.0 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-ocarina-74",
+      "file": "audio/inst/ocarina-74.mp3",
+      "title": "Ocarina, plain sustain, D5 (StdOcarina_Sus_D4.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Aerophones/Edge-blown%20Aerophones/Ocarina%2C%20Typical/Sustains/Sus/StdOcarina_Sus_D4.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Aerophones/Edge-blown%20Aerophones/Ocarina%2C%20Typical/Sustains/Sus",
+      "changes": "Sounds as D5 (MIDI 74), checked by pitch analysis; left channel only; high-pass at 150 Hz; trimmed to 3.0 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-ocarina-80",
+      "file": "audio/inst/ocarina-80.mp3",
+      "title": "Ocarina, plain sustain, G#5 (StdOcarina_Sus_G#4.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Aerophones/Edge-blown%20Aerophones/Ocarina%2C%20Typical/Sustains/Sus/StdOcarina_Sus_G%234.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Aerophones/Edge-blown%20Aerophones/Ocarina%2C%20Typical/Sustains/Sus",
+      "changes": "Sounds as G#5 (MIDI 80), checked by pitch analysis; left channel only; high-pass at 150 Hz; trimmed to 3.0 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-ocarina-85",
+      "file": "audio/inst/ocarina-85.mp3",
+      "title": "Ocarina, plain sustain, C#6 (StdOcarina_Sus_C#5.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Aerophones/Edge-blown%20Aerophones/Ocarina%2C%20Typical/Sustains/Sus/StdOcarina_Sus_C%235.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Aerophones/Edge-blown%20Aerophones/Ocarina%2C%20Typical/Sustains/Sus",
+      "changes": "Sounds as C#6 (MIDI 85), checked by pitch analysis; left channel only; high-pass at 150 Hz; retuned -7.6 cents to A440, trimmed to 3.0 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-handchimes-72",
+      "file": "audio/inst/handchimes-72.mp3",
+      "title": "Hand chimes, C5 (sus_C4_r01_main.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Idiophones/Struck%20Idiophones/Hand%20Chimes/sus_C4_r01_main.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Idiophones/Struck%20Idiophones/Hand%20Chimes",
+      "changes": "Sounds as C5 (MIDI 72), checked by pitch analysis; left channel only; high-pass at 150 Hz; trimmed to 3.0 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-handchimes-78",
+      "file": "audio/inst/handchimes-78.mp3",
+      "title": "Hand chimes, F#5 (sus_F#4_r01_main.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Idiophones/Struck%20Idiophones/Hand%20Chimes/sus_F%234_r01_main.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Idiophones/Struck%20Idiophones/Hand%20Chimes",
+      "changes": "Sounds as F#5 (MIDI 78), checked by pitch analysis; left channel only; high-pass at 150 Hz; retuned -4.9 cents to A440, trimmed to 3.0 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-handchimes-84",
+      "file": "audio/inst/handchimes-84.mp3",
+      "title": "Hand chimes, C6 (sus_C5_r01_main.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Idiophones/Struck%20Idiophones/Hand%20Chimes/sus_C5_r01_main.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Idiophones/Struck%20Idiophones/Hand%20Chimes",
+      "changes": "Sounds as C6 (MIDI 84), checked by pitch analysis; left channel only; high-pass at 150 Hz; trimmed to 3.0 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-handchimes-90",
+      "file": "audio/inst/handchimes-90.mp3",
+      "title": "Hand chimes, F#6 (sus_F#5_r01_main.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Idiophones/Struck%20Idiophones/Hand%20Chimes/sus_F%235_r01_main.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Idiophones/Struck%20Idiophones/Hand%20Chimes",
+      "changes": "Sounds as F#6 (MIDI 90), checked by pitch analysis; left channel only; high-pass at 150 Hz; trimmed to 3.0 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-handchimes-96",
+      "file": "audio/inst/handchimes-96.mp3",
+      "title": "Hand chimes, C7 (sus_C6_r01_main.wav)",
+      "credit": "Versilian Studios LLC, Versilian Community Sample Library",
+      "license": "CC0 1.0 (public domain dedication)",
+      "sourceUrl": "https://raw.githubusercontent.com/sgossner/VCSL/master/Idiophones/Struck%20Idiophones/Hand%20Chimes/sus_C6_r01_main.wav",
+      "page": "https://github.com/sgossner/VCSL/tree/master/Idiophones/Struck%20Idiophones/Hand%20Chimes",
+      "changes": "Sounds as C7 (MIDI 96), checked by pitch analysis; left channel only; high-pass at 150 Hz; trimmed to 2.2 s from the attack with a natural fade-out; 5 ms fade-in; peak-normalized to -3 dBFS; MP3 96 kbps"
+    },
+    {
+      "id": "audio-mars-wind",
+      "file": "audio/nasa/mars-wind.mp3",
+      "title": "Perseverance Rover's SuperCam Records Wind on Mars",
+      "credit": "NASA/JPL-Caltech/LANL/CNES/CNRS/ISAE-Supaero",
+      "license": "NASA media (free to use under the NASA Media Usage Guidelines)",
+      "sourceUrl": "https://www.nasa.gov/wp-content/uploads/2024/05/scam-mic-sol004-run001.wav",
+      "page": "https://www.nasa.gov/sounds-from-beyond/",
+      "changes": "16 s section (15 to 33 s of the recording) made into a seamless loop with a 2 s crossfade; high-pass at 25 Hz; levelled with loudnorm to about -21 LUFS (true peak -1.5 dBTP); mono MP3 96 kbps"
+    },
+    {
+      "id": "audio-ingenuity-hum",
+      "file": "audio/nasa/ingenuity-hum.mp3",
+      "title": "NASA's Ingenuity Mars Helicopter in Flight",
+      "credit": "NASA/JPL-Caltech/LANL/CNES/CNRS/ISAE-Supaéro",
+      "license": "NASA media (free to use under the NASA Media Usage Guidelines)",
+      "sourceUrl": "https://www.nasa.gov/wp-content/uploads/2024/05/jpl-20210506-listen-to-nasas-ingenuity-helicopter-as-it-flies-on-mars.wav",
+      "page": "https://www.nasa.gov/sounds-from-beyond/",
+      "changes": "11 s section (106.5 to 117.5 s), where the 84 Hz rotor hum is clearest; 0.4 s fade-in, 0.8 s fade-out; gain to -20 LUFS; downmixed to mono MP3 96 kbps"
+    },
+    {
+      "id": "audio-voyager-plasma",
+      "file": "audio/nasa/voyager-plasma.mp3",
+      "title": "Voyager Captures Sounds of Interstellar Space (PIA17045)",
+      "credit": "NASA/JPL-Caltech/University of Iowa",
+      "license": "NASA media (free to use under the NASA Media Usage Guidelines)",
+      "sourceUrl": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia17/pia17045/PIA17045_20130906-640.mp4",
+      "page": "https://science.nasa.gov/photojournal/voyager-captures-sounds-of-interstellar-space",
+      "changes": "Soundtrack only: the second passage of the video (April to May 2013 data), silence trimmed; short fades; gain to -20 LUFS; mono MP3 96 kbps"
+    },
+    {
+      "id": "audio-eagle-landed",
+      "file": "audio/nasa/eagle-landed.mp3",
+      "title": "Apollo 11: \"Tranquility Base here. The Eagle has landed.\"",
+      "credit": "NASA",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://nssdc.gsfc.nasa.gov/planetary/lunar/a11landing.aiff",
+      "page": "https://nssdc.gsfc.nasa.gov/planetary/sound/index.html",
+      "changes": "Whole clip kept (the line only); converted from 8-bit 22 kHz AIFF to 44.1 kHz; 5 ms fade-in, 50 ms fade-out; gain to -20 LUFS; mono MP3 96 kbps"
     }
   ],
   "fonts": [

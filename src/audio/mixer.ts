@@ -19,6 +19,8 @@ export const DEFAULT_VOLUMES: Record<Bus, number> = { master: 0.8, music: 0.6, a
 /** How much of each bus goes to the room. */
 const SENDS: Partial<Record<Bus, number>> = { music: 0.32, effects: 0.12, voices: 0.06, ambience: 0.05 };
 
+import type { SampleBank } from "./samples";
+
 export class Mixer {
   readonly ctx: AudioContext;
   tier: AudioTier = "high";
@@ -37,6 +39,8 @@ export class Mixer {
   private spaceAmount = 1;
   /** Everything ends here before the speakers; the audio lab records from it. */
   readonly out: GainNode;
+  /** Recorded notes and takes, once loaded (see samples.ts). Instruments use them when they can. */
+  samples: SampleBank | null = null;
 
   constructor(ctx: AudioContext, tier: AudioTier = "high") {
     this.ctx = ctx;

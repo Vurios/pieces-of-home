@@ -134,3 +134,17 @@ describe("arrangements", () => {
     expect(ARRANGEMENTS.moon.bpm).toBeLessThan(ARRANGEMENTS.home.bpm);
   });
 });
+
+describe("voices follow the words", async () => {
+  const { syllablesOf, planLine: plan, VOICES: V } = await import("../../src/audio/voices");
+  it("finds one syllable per vowel group", () => {
+    const s = syllablesOf("Hello, Milo");
+    expect(s.map((x) => x.letter).join("")).toBe("hlml");
+    expect(s.map((x) => x.vowel)).toEqual([1, 3, 2, 3]);
+  });
+  it("says the same line the same way", () => {
+    const a = plan(V["remi"]!, "Look at the little mirrors!", 3).map((p) => p.vowel);
+    const b = plan(V["remi"]!, "Look at the little mirrors!", 3).map((p) => p.vowel);
+    expect(a).toEqual(b);
+  });
+});

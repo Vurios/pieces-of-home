@@ -39,7 +39,8 @@
     const offSay = engine.bus.on("say", (p) => {
       const life = Math.max(2.8, p.text.length * 0.065 + 1.8);
       // The voice: babble that lasts as long as the typing, Dad's hum or his recording.
-      audio.speak(p.speaker, p.text, p.line);
+      // A mission recording plays its own sound; no babble over it.
+      if (!(p.recording && p.speaker === "radio")) audio.speak(p.speaker, p.text, p.line);
       // One line per speaker at a time.
       lines = [
         ...lines.filter((l) => l.speaker !== p.speaker),

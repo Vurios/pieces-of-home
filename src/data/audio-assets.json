@@ -1,0 +1,248 @@
+{
+  "samples": [
+    {
+      "id": "step-grass",
+      "files": [
+        "sfx/step-grass-1.mp3",
+        "sfx/step-grass-2.mp3",
+        "sfx/step-grass-3.mp3",
+        "sfx/step-grass-4.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "step-wood",
+      "files": [
+        "sfx/step-wood-1.mp3",
+        "sfx/step-wood-2.mp3",
+        "sfx/step-wood-3.mp3",
+        "sfx/step-wood-4.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "step-gravel",
+      "files": [
+        "sfx/step-gravel-1.mp3",
+        "sfx/step-gravel-2.mp3",
+        "sfx/step-gravel-3.mp3",
+        "sfx/step-gravel-4.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "step-snow",
+      "files": [
+        "sfx/step-snow-1.mp3",
+        "sfx/step-snow-2.mp3",
+        "sfx/step-snow-3.mp3",
+        "sfx/step-snow-4.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "step-carpet",
+      "files": [
+        "sfx/step-carpet-1.mp3",
+        "sfx/step-carpet-2.mp3",
+        "sfx/step-carpet-3.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "land-soft",
+      "files": [
+        "sfx/land-soft-1.mp3",
+        "sfx/land-soft-2.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "tap-wood",
+      "files": [
+        "sfx/tap-wood-1.mp3",
+        "sfx/tap-wood-2.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "page",
+      "files": [
+        "sfx/page-1.mp3",
+        "sfx/page-2.mp3",
+        "sfx/page-3.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "book-open",
+      "files": [
+        "sfx/book-open.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "book-close",
+      "files": [
+        "sfx/book-close.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "cloth",
+      "files": [
+        "sfx/cloth-1.mp3",
+        "sfx/cloth-2.mp3",
+        "sfx/cloth-3.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "metal-click",
+      "files": [
+        "sfx/metal-click-1.mp3",
+        "sfx/metal-click-2.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "latch",
+      "files": [
+        "sfx/latch.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "creak",
+      "files": [
+        "sfx/creak.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "door-open",
+      "files": [
+        "sfx/door-open.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "door-close",
+      "files": [
+        "sfx/door-close.mp3"
+      ],
+      "kind": "sfx"
+    },
+    {
+      "id": "ui-click",
+      "files": [
+        "sfx/ui-click-1.mp3",
+        "sfx/ui-click-2.mp3",
+        "sfx/ui-click-3.mp3"
+      ],
+      "kind": "ui"
+    },
+    {
+      "id": "ui-pop",
+      "files": [
+        "sfx/ui-pop-1.mp3",
+        "sfx/ui-pop-2.mp3"
+      ],
+      "kind": "ui"
+    },
+    {
+      "id": "ui-toggle",
+      "files": [
+        "sfx/ui-toggle-1.mp3",
+        "sfx/ui-toggle-2.mp3"
+      ],
+      "kind": "ui"
+    }
+  ],
+  "instruments": [
+    {
+      "id": "glockenspiel",
+      "role": "lead",
+      "notes": {
+        "79": "inst/glockenspiel-79.mp3",
+        "84": "inst/glockenspiel-84.mp3",
+        "91": "inst/glockenspiel-91.mp3",
+        "96": "inst/glockenspiel-96.mp3",
+        "103": "inst/glockenspiel-103.mp3"
+      }
+    },
+    {
+      "id": "piano",
+      "role": "piano",
+      "notes": {
+        "55": "inst/piano-55.mp3",
+        "60": "inst/piano-60.mp3",
+        "67": "inst/piano-67.mp3",
+        "72": "inst/piano-72.mp3",
+        "79": "inst/piano-79.mp3"
+      }
+    },
+    {
+      "id": "harp",
+      "role": "pluck",
+      "notes": {
+        "55": "inst/harp-55.mp3",
+        "62": "inst/harp-62.mp3",
+        "69": "inst/harp-69.mp3",
+        "76": "inst/harp-76.mp3",
+        "83": "inst/harp-83.mp3"
+      }
+    },
+    {
+      "id": "ocarina",
+      "role": "flute",
+      "notes": {
+        "69": "inst/ocarina-69.mp3",
+        "74": "inst/ocarina-74.mp3",
+        "80": "inst/ocarina-80.mp3",
+        "85": "inst/ocarina-85.mp3"
+      }
+    },
+    {
+      "id": "handchimes",
+      "role": "bell",
+      "notes": {
+        "72": "inst/handchimes-72.mp3",
+        "78": "inst/handchimes-78.mp3",
+        "84": "inst/handchimes-84.mp3",
+        "90": "inst/handchimes-90.mp3",
+        "96": "inst/handchimes-96.mp3"
+      }
+    }
+  ],
+  "recordings": [
+    {
+      "id": "mars-wind",
+      "file": "nasa/mars-wind.mp3",
+      "loop": true,
+      "credit": "NASA/JPL-Caltech/LANL/CNES/CNRS/ISAE-Supaero",
+      "page": "https://www.nasa.gov/sounds-from-beyond/"
+    },
+    {
+      "id": "ingenuity-hum",
+      "file": "nasa/ingenuity-hum.mp3",
+      "loop": false,
+      "credit": "NASA/JPL-Caltech/LANL/CNES/CNRS/ISAE-Supaéro",
+      "page": "https://www.nasa.gov/sounds-from-beyond/"
+    },
+    {
+      "id": "voyager-plasma",
+      "file": "nasa/voyager-plasma.mp3",
+      "loop": false,
+      "credit": "NASA/JPL-Caltech/University of Iowa",
+      "page": "https://science.nasa.gov/photojournal/voyager-captures-sounds-of-interstellar-space"
+    },
+    {
+      "id": "eagle-landed",
+      "file": "nasa/eagle-landed.mp3",
+      "loop": false,
+      "credit": "NASA",
+      "page": "https://nssdc.gsfc.nasa.gov/planetary/sound/index.html"
+    }
+  ]
+}

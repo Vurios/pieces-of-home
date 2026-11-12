@@ -60,6 +60,30 @@ export interface Speaking {
  * Plans the syllables for a line: start times, pitches (Hz) and vowels.
  * Pure, so it can be tested.
  */
+/** Each letter's little pitch nudge, from -1 to 1, the same every time. */
+const LETTER_PITCH: Record<string, number> = Object.fromEntries(
+  "abcdefghijklmnopqrstuvwxyz".split("").map((c, i) => [c, Math.sin(i * 2.399) * 0.9]),
+);
+const VOWEL_INDEX: Record<string, number> = { a: 0, e: 1, i: 2, o: 3, u: 4, y: 2 };
+
+/** The syllables of a line: one per vowel group, with its vowel, its first letter and whether a consonant opens it. */
+export function syllablesOf(text: string): { vowel: number; letter: string; consonant: boolean }[] {
+  const out: { vowel: number; letter: string; consonant: boolean }[] = [];
+  const lower = text.toLowerCase();
+  let onset = "";
+  for (let i = 0; i < lower.length; i += 1) {
+    const c = lower[i]!;
+    if (c in VOWEL_INDEX && !(c === "y" && i === 0)) {
+      out.push({ vowel: VOWEL_INDEX[c]!, letter: onset || c, consonant: onset.length > 0 });
+      onset = "";
+      // Skip the rest of the vowel group ("ou", "ee").
+      while (i + 1 < lower.length && lower[i + 1]! in VOWEL_INDEX) i += 1;
+    } else if (c >= "a" && c <= "z") onset ||= c;
+    else onset = "";
+  }
+  return out;
+}
+
 export function planLine(spec: VoiceSpec, text: string, seed: number): { at: number; hz: number; vowel: number; consonant: boolean }[] {
   const random = seeded(seed);
   const ending = endingOf(text);
@@ -68,10 +92,17 @@ export function planLine(spec: VoiceSpec, text: string, seed: number): { at: num
   const count = Math.max(1, Math.min(48, Math.round(typed / spec.syllable)));
   const fast = ending === "exclaim" ? 0.9 : 1;
   const plan: { at: number; hz: number; vowel: number; consonant: boolean }[] = [];
+  // Like Animal Crossing's voices, the babble follows the real words: each
+  // syllable takes the vowel and the opening consonant of a syllable in the
+  // line, and each letter nudges the pitch the same way every time, so a
+  // word always sounds like itself.
+  const syllables = syllablesOf(text);
   let t = 0;
   for (let i = 0; i < count; i += 1) {
-    const semis = contour(i, count, ending) + (random() * 2 - 1) * spec.bounce + (spec.lilt && i % 3 === 1 ? spec.lilt : 0);
-    plan.push({ at: t, hz: spec.hz * 2 ** (semis / 12), vowel: Math.floor(random() * VOWELS.length), consonant: random() < 0.55 });
+    const s = syllables.length ? syllables[Math.floor((i * syllables.length) / count)]! : null;
+    const letter = s ? (LETTER_PITCH[s.letter] ?? 0) : (random() * 2 - 1) * spec.bounce;
+    const semis = contour(i, count, ending) + letter * spec.bounce * 0.6 + (random() * 2 - 1) * spec.bounce * 0.4 + (spec.lilt && i % 3 === 1 ? spec.lilt : 0);
+    plan.push({ at: t, hz: spec.hz * 2 ** (semis / 12), vowel: s ? s.vowel : Math.floor(random() * VOWELS.length), consonant: s ? s.consonant : random() < 0.55 });
     t += spec.syllable * fast * (0.85 + random() * 0.3);
   }
   return plan;

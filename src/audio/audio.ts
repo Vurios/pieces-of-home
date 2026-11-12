@@ -23,6 +23,7 @@ import { BUSES, type Bus, DEFAULT_VOLUMES, Mixer } from "./mixer";
 import { Score, type Scene, type StormStage } from "./music";
 import { LOOPS, type LoopHandle, RECIPES } from "./sfx";
 import { cueAllowed } from "./theory";
+import { SampleBank } from "./samples";
 import { type Speaking, speak } from "./voices";
 
 export { BUSES, type Bus } from "./mixer";
@@ -51,8 +52,28 @@ const MUSIC_FOR: Record<string, Scene> = { home: "home", moon: "moon", mars: "ma
 /** Which soundscape each world uses (see src/audio/ambience.ts). */
 const SCAPE_FOR: Record<string, string> = { tranquility: "moon", hadley: "moon", meridiani: "mars", valinor: "mars" };
 
+/** One recorded take, retuned and optionally muffled, into `out`. */
+function playTake(mx: Mixer, out: AudioNode, buffer: AudioBuffer, at: number, level: number, rate: number, tone?: number): void {
+  const source = mx.ctx.createBufferSource();
+  source.buffer = buffer;
+  source.playbackRate.value = rate;
+  const g = mx.ctx.createGain();
+  g.gain.value = level;
+  let node: AudioNode = source;
+  if (tone) {
+    const lp = mx.ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = tone;
+    node = node.connect(lp);
+  }
+  node.connect(g).connect(out);
+  source.start(at);
+  source.onended = () => g.disconnect();
+}
+
 export class AudioEngine {
   private ctx: AudioContext | null = null;
+  private bank: SampleBank | null = null;
   private mx: Mixer | null = null;
   private score: Score | null = null;
   private ambience: Ambience | null = null;
@@ -132,6 +153,14 @@ export class AudioEngine {
   private build(ctx: AudioContext): void {
     const mx = new Mixer(ctx, this.tier);
     this.mx = mx;
+    // Recorded sounds load after the first click: foley first, then the instruments and the NASA clips.
+    const bank = new SampleBank(ctx);
+    this.bank = bank;
+    mx.samples = bank;
+    void bank
+      .load("sfx")
+      .then(() => bank.load("inst"))
+      .then(() => Promise.all(["eagle-landed", "mars-wind", "ingenuity-hum", "voyager-plasma"].map((id) => bank.load(id))));
     for (const bus of BUSES) mx.setVolume(bus, this.volumes[bus]);
     mx.muffle(this.muffled);
     this.score = new Score(mx, this.crackleBed ?? undefined);
@@ -194,8 +223,55 @@ export class AudioEngine {
       out = node;
       window.setTimeout(() => node.disconnect(), (length + (options.delay ?? 0) + 2) * 1000);
     }
-    recipe({ mx, out, at: now + 0.005 + (options.delay ?? 0), level, rate, param: options.param ?? 0 });
+    const at = now + 0.005 + (options.delay ?? 0);
+    // A recorded take when it has loaded; the code-made recipe until then, or both for a layered cue.
+    const take = spec.sample ? this.bank?.take(spec.sample) : null;
+    if (take) {
+      playTake(mx, out, take, at, level * (spec.sampleGain ?? 0.15), rate * (spec.sampleRate ?? 1), spec.sampleTone);
+      if (!spec.layer) return true;
+    }
+    recipe({ mx, out, at, level: take ? level * 0.6 : level, rate, param: options.param ?? 0 });
     return true;
+  }
+
+  /**
+   * A real recording (NASA mission sounds), played once through the voices
+   * bus. Resolves when it ends, or at once if it is not loaded or sound is
+   * off, with its length in seconds (0 when it did not play).
+   */
+  clip(id: string, level = 1): Promise<number> {
+    const mx = this.mx;
+    const rec = this.bank?.recording(id);
+    if (!mx || !rec || mx.ctx.state !== "running") return Promise.resolve(0);
+    const source = mx.ctx.createBufferSource();
+    source.buffer = rec.buffer;
+    const g = mx.ctx.createGain();
+    g.gain.value = level * 0.9;
+    source.connect(g).connect(mx.input("voices"));
+    source.start(mx.now + 0.05);
+    return new Promise((resolve) => (source.onended = () => resolve(rec.buffer.duration)));
+  }
+
+  /** A looping recording (Mars wind) on the ambience bus, kept at `level`. */
+  recordingLoop(id: string, level: number): { set(level: number): void; stop(): void } | null {
+    const mx = this.mx;
+    const rec = this.bank?.recording(id);
+    if (!mx || !rec) return null;
+    const source = mx.ctx.createBufferSource();
+    source.buffer = rec.buffer;
+    source.loop = true;
+    const g = mx.ctx.createGain();
+    g.gain.value = 0;
+    g.gain.setTargetAtTime(level, mx.now, 0.8);
+    source.connect(g).connect(mx.input("ambience"));
+    source.start();
+    return {
+      set: (value) => g.gain.setTargetAtTime(value, mx.now, 0.6),
+      stop: () => {
+        g.gain.setTargetAtTime(0, mx.now, 0.6);
+        source.stop(mx.now + 3);
+      },
+    };
   }
 
   /** Starts a looping cue (a motor, the rotor, the radio). Null while locked. */

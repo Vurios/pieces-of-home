@@ -10,6 +10,8 @@ import type { Bus } from "./mixer";
  * - `minGap`: seconds before the same cue may start again (anti-spam).
  * - `maxVoices`: how many may sound at once.
  * - `length`: about how long one lasts, for counting voices.
+ * - `sample`: a recorded sound (src/audio/samples.ts) that plays instead of
+ *   the recipe once loaded, a different take each time. `layer` plays both.
  */
 export interface CueSpec {
   recipe: string;
@@ -25,32 +27,56 @@ export interface CueSpec {
   label: string;
   /** Loops have a control from 0 to 1, named here. */
   loop?: string;
+  /** Recorded takes to use instead of the recipe (see samples.ts). */
+  sample?: string;
+  /** Gain on the recording, to sit at the recipe's loudness. */
+  sampleGain?: number;
+  /** Playback rate on the recording: below 1 is lower and heavier. */
+  sampleRate?: number;
+  /** A lowpass on the recording, in Hz, for muffled ground like Moon dust. */
+  sampleTone?: number;
+  /** Play the recording and the recipe together. */
+  layer?: boolean;
 }
 
-const step = (surface: string, label: string, volume: number): CueSpec => ({ recipe: `step-${surface}`, bus: "effects", volume, pitch: 0.09, vary: 0.3, minGap: 0.07, maxVoices: 3, length: 0.15, group: "Feet", label });
+const step = (surface: string, label: string, volume: number, sample?: Pick<CueSpec, "sample" | "sampleGain" | "sampleRate" | "sampleTone">): CueSpec => ({
+  recipe: `step-${surface}`,
+  bus: "effects",
+  volume,
+  pitch: 0.09,
+  vary: 0.3,
+  minGap: 0.07,
+  maxVoices: 3,
+  length: 0.15,
+  group: "Feet",
+  label,
+  ...sample,
+});
 
 export const CUES: Record<string, CueSpec> = {
   "lamp-click": { recipe: "lamp-click", bus: "effects", volume: 1, pitch: 0.04, group: "Home", label: "Lamp click" },
   "lamp-hum": { recipe: "lamp-hum", bus: "ambience", volume: 1, group: "Home", label: "Lamp hum", loop: "brightness" },
-  "page-flip": { recipe: "page-flip", bus: "ui", volume: 0.8, pitch: 0.08, vary: 0.15, minGap: 0.08, group: "Paper", label: "Page flip" },
+  "page-flip": { recipe: "page-flip", bus: "ui", volume: 0.8, pitch: 0.08, vary: 0.15, minGap: 0.08, group: "Paper", label: "Page flip", sample: "page", sampleGain: 0.3 },
+  "book-open": { recipe: "page-flip", bus: "ui", volume: 0.8, minGap: 0.2, group: "Paper", label: "Notebook opens", sample: "book-open", sampleGain: 0.21 },
+  "book-close": { recipe: "page-flip", bus: "ui", volume: 0.8, minGap: 0.2, group: "Paper", label: "Notebook closes", sample: "book-close", sampleGain: 0.21 },
   pencil: { recipe: "pencil", bus: "ui", volume: 1.1, pitch: 0.05, minGap: 0.3, group: "Paper", label: "Pencil scribble" },
   tape: { recipe: "tape", bus: "ui", volume: 1.3, pitch: 0.06, minGap: 0.2, group: "Paper", label: "Tape" },
   stamp: { recipe: "stamp", bus: "ui", volume: 1, pitch: 0.03, minGap: 0.3, group: "Paper", label: "Ink stamp" },
   toast: { recipe: "toast", bus: "ui", volume: 1, pitch: 0.06, minGap: 0.15, group: "Paper", label: "Paper toast" },
-  tick: { recipe: "tick", bus: "ui", volume: 1, pitch: 0.04, minGap: 0.03, group: "Paper", label: "Menu tick" },
-  pop: { recipe: "pop", bus: "ui", volume: 0.8, pitch: 0.06, minGap: 0.05, group: "Paper", label: "Menu pop" },
+  tick: { recipe: "tick", bus: "ui", volume: 1, pitch: 0.04, minGap: 0.03, group: "Paper", label: "Menu tick", sample: "ui-click", sampleGain: 0.13 },
+  pop: { recipe: "pop", bus: "ui", volume: 0.8, pitch: 0.06, minGap: 0.05, group: "Paper", label: "Menu pop", sample: "ui-pop", sampleGain: 0.28 },
 
-  "step-wood": step("wood", "Step on wood", 0.55),
-  "step-grass": step("grass", "Step on grass", 1),
-  "step-path": step("path", "Step on the path", 1.1),
+  "step-wood": step("wood", "Step on wood", 0.55, { sample: "step-wood", sampleGain: 0.26 }),
+  "step-grass": step("grass", "Step on grass", 1, { sample: "step-grass", sampleGain: 0.21 }),
+  "step-path": step("path", "Step on the path", 1.1, { sample: "step-gravel", sampleGain: 0.28 }),
   "step-water": step("water", "Step in shallow water", 0.75),
-  "step-regolith": step("regolith", "Step on Moon regolith", 1.1),
-  "step-dust": step("dust", "Step on Mars dust", 1.5),
+  "step-regolith": step("regolith", "Step on Moon regolith", 1.1, { sample: "step-snow", sampleGain: 0.14, sampleRate: 0.82, sampleTone: 2600 }),
+  "step-dust": step("dust", "Step on Mars dust", 1.5, { sample: "step-snow", sampleGain: 0.093, sampleRate: 0.9, sampleTone: 3400 }),
   jump: { recipe: "jump", bus: "effects", volume: 1.4, pitch: 0.08, minGap: 0.15, group: "Feet", label: "Jump" },
-  land: { recipe: "land", bus: "effects", volume: 0.8, pitch: 0.05, minGap: 0.12, group: "Feet", label: "Land" },
+  land: { recipe: "land", bus: "effects", volume: 0.8, pitch: 0.05, minGap: 0.12, group: "Feet", label: "Land", sample: "land-soft", sampleGain: 0.3, layer: true },
   "regolith-puff": { recipe: "regolith-puff", bus: "effects", volume: 0.7, pitch: 0.1, minGap: 0.1, group: "Feet", label: "Regolith puff" },
 
-  "envelope-pickup": { recipe: "envelope-pickup", bus: "effects", volume: 0.9, group: "Letters", label: "Pick up a letter" },
+  "envelope-pickup": { recipe: "envelope-pickup", bus: "effects", volume: 0.9, group: "Letters", label: "Pick up a letter", sample: "cloth", sampleGain: 0.3, layer: true },
   "delivery-chime": { recipe: "delivery-chime", bus: "effects", volume: 0.7, group: "Letters", label: "Deliver a letter" },
   discovery: { recipe: "discovery", bus: "music", volume: 0.9, minGap: 1, group: "Letters", label: "Discovery sting" },
 
@@ -64,7 +90,10 @@ export const CUES: Record<string, CueSpec> = {
   laser: { recipe: "laser", bus: "effects", volume: 0.8, minGap: 0.5, length: 3.5, group: "Chapter 1", label: "Laser ping and pong" },
   "laser-ping": { recipe: "laser-ping", bus: "effects", volume: 0.8, minGap: 0.3, group: "Chapter 1", label: "Laser ping (sent)" },
   "laser-pong": { recipe: "laser-pong", bus: "effects", volume: 0.85, minGap: 0.3, group: "Chapter 1", label: "Laser pong (came home)" },
-  "mirror-snap": { recipe: "mirror-snap", bus: "effects", volume: 0.9, pitch: 0.05, minGap: 0.1, group: "Chapter 1", label: "Mirror panel snap" },
+  "mirror-snap": { recipe: "mirror-snap", bus: "effects", volume: 0.9, pitch: 0.05, minGap: 0.1, group: "Chapter 1", label: "Mirror panel snap", sample: "metal-click", sampleGain: 0.27, layer: true },
+  "shed-open": { recipe: "tick", bus: "effects", volume: 0.9, minGap: 0.6, group: "Home", label: "Workshop front swings down", sample: "creak", sampleGain: 0.16 },
+  "shed-close": { recipe: "tick", bus: "effects", volume: 0.9, minGap: 0.6, group: "Home", label: "Workshop front swings up", sample: "door-close", sampleGain: 0.16 },
+  latch: { recipe: "tick", bus: "effects", volume: 0.9, minGap: 0.3, group: "Home", label: "Latch", sample: "latch", sampleGain: 0.2 },
   "corner-sparkle": { recipe: "corner-sparkle", bus: "effects", volume: 0.65, minGap: 0.5, group: "Chapter 1", label: "Corner cube clicks home" },
 
   "wheel-crunch": { recipe: "wheel-crunch", bus: "effects", volume: 1.4, pitch: 0.06, minGap: 0.3, group: "Chapter 2", label: "Mesh wheel crunch" },

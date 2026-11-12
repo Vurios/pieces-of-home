@@ -35,7 +35,39 @@ All fonts are self-hosted from `public/fonts/`, Latin subset only, with their li
 
 ## Audio
 
-All music and sound effects are made in code at runtime with the Web Audio API. No recorded or copyrighted audio.
+Most music and sound is still made in code at runtime with the Web Audio API. The recorded files below live in `public/audio/` and are listed one by one in `src/data/credits.json`. Kenney and VCSL files were trimmed, faded, normalized and re-encoded as mono MP3; VCSL notes were checked by pitch analysis and fine-tuned to A440 where needed. The NASA clips were only trimmed, faded and level-matched, and the Mars wind was made into a seamless loop.
+
+| Files (under `public/audio/`) | What | Credit | License | Source |
+|---|---|---|---|---|
+| `sfx/step-grass-{1,2,3,4}.mp3` | Footstep on grass, from footstep_grass_000.ogg, footstep_grass_001.ogg, footstep_grass_003.ogg, footstep_grass_004.ogg | Kenney, Impact Sounds | CC0 1.0 | https://kenney.nl/assets/impact-sounds |
+| `sfx/step-wood-{1,2,3,4}.mp3` | Footstep on wood, from footstep_wood_000.ogg, footstep_wood_001.ogg, footstep_wood_002.ogg, footstep_wood_004.ogg | Kenney, Impact Sounds | CC0 1.0 | https://kenney.nl/assets/impact-sounds |
+| `sfx/step-gravel-{1,2,3,4}.mp3` | Footstep, from footstep04.ogg, footstep05.ogg, footstep06.ogg, footstep09.ogg | Kenney, RPG Audio | CC0 1.0 | https://kenney.nl/assets/rpg-audio |
+| `sfx/step-snow-{1,2,3,4}.mp3` | Footstep in snow, from footstep_snow_001.ogg, footstep_snow_002.ogg, footstep_snow_003.ogg, footstep_snow_004.ogg | Kenney, Impact Sounds | CC0 1.0 | https://kenney.nl/assets/impact-sounds |
+| `sfx/step-carpet-{1,2,3}.mp3` | Footstep on carpet, from footstep_carpet_000.ogg, footstep_carpet_001.ogg, footstep_carpet_003.ogg | Kenney, Impact Sounds | CC0 1.0 | https://kenney.nl/assets/impact-sounds |
+| `sfx/land-soft-{1,2}.mp3` | Soft landing thud, from impact_soft_medium_001.ogg, impact_soft_medium_003.ogg | Kenney, Impact Sounds | CC0 1.0 | https://kenney.nl/assets/impact-sounds |
+| `sfx/tap-wood-{1,2}.mp3` | Light tap on wood, from impact_wood_light_001.ogg, impact_wood_light_003.ogg | Kenney, Impact Sounds | CC0 1.0 | https://kenney.nl/assets/impact-sounds |
+| `sfx/page-{1,2,3}.mp3` | Page flip, from bookFlip1.ogg, bookFlip2.ogg, bookFlip3.ogg | Kenney, RPG Audio | CC0 1.0 | https://kenney.nl/assets/rpg-audio |
+| `sfx/book-open.mp3` | Book opening, from bookOpen.ogg | Kenney, RPG Audio | CC0 1.0 | https://kenney.nl/assets/rpg-audio |
+| `sfx/book-close.mp3` | Book closing, from bookClose.ogg | Kenney, RPG Audio | CC0 1.0 | https://kenney.nl/assets/rpg-audio |
+| `sfx/cloth-{1,2,3}.mp3` | Cloth rustle, from cloth1.ogg, cloth2.ogg, cloth3.ogg | Kenney, RPG Audio | CC0 1.0 | https://kenney.nl/assets/rpg-audio |
+| `sfx/metal-click-1.mp3` | Metal click, from metalClick.ogg | Kenney, RPG Audio | CC0 1.0 | https://kenney.nl/assets/rpg-audio |
+| `sfx/metal-click-2.mp3` | Light metal tap, from impact_metal_light_004.ogg | Kenney, Impact Sounds | CC0 1.0 | https://kenney.nl/assets/impact-sounds |
+| `sfx/latch.mp3` | Metal latch, from metalLatch.ogg | Kenney, RPG Audio | CC0 1.0 | https://kenney.nl/assets/rpg-audio |
+| `sfx/creak.mp3` | Wood creak, from creak2.ogg | Kenney, RPG Audio | CC0 1.0 | https://kenney.nl/assets/rpg-audio |
+| `sfx/door-open.mp3` | Door opening, from doorOpen_1.ogg | Kenney, RPG Audio | CC0 1.0 | https://kenney.nl/assets/rpg-audio |
+| `sfx/door-close.mp3` | Door closing, from doorClose_4.ogg | Kenney, RPG Audio | CC0 1.0 | https://kenney.nl/assets/rpg-audio |
+| `sfx/ui-click-{1,2,3}.mp3` | Soft switch click, from switch_002.ogg, switch_004.ogg, switch_007.ogg | Kenney, Interface Sounds | CC0 1.0 | https://kenney.nl/assets/interface-sounds |
+| `sfx/ui-pop-{1,2}.mp3` | Drop pop, from drop_002.ogg, drop_003.ogg | Kenney, Interface Sounds | CC0 1.0 | https://kenney.nl/assets/interface-sounds |
+| `sfx/ui-toggle-{1,2}.mp3` | Toggle, from toggle_001.ogg, toggle_002.ogg | Kenney, Interface Sounds | CC0 1.0 | https://kenney.nl/assets/interface-sounds |
+| `inst/glockenspiel-{79,84,91,96,103}.mp3` | Glockenspiel, soft mallet, notes G5, C6, G6, C7, G7 | Versilian Studios LLC, Versilian Community Sample Library | CC0 1.0 | https://github.com/sgossner/VCSL/tree/master/Idiophones/Struck%20Idiophones/Glockenspiel |
+| `inst/piano-{55,60,67,72,79}.mp3` | Upright piano (Yamaha), softest layer, notes G3, C4, G4, C5, G5 | Versilian Studios LLC, Versilian Community Sample Library | CC0 1.0 | https://github.com/sgossner/VCSL/tree/master/Chordophones/Zithers/Upright%20Piano%2C%20Yamaha/Sustains |
+| `inst/harp-{55,62,69,76,83}.mp3` | Concert harp, mezzo-forte, notes G3, D4, A4, E5, B5 | Versilian Studios LLC, Versilian Community Sample Library | CC0 1.0 | https://github.com/sgossner/VCSL/tree/master/Chordophones/Composite%20Chordophones/Concert%20Harp |
+| `inst/ocarina-{69,74,80,85}.mp3` | Ocarina, plain sustain, notes A4, D5, G#5, C#6 | Versilian Studios LLC, Versilian Community Sample Library | CC0 1.0 | https://github.com/sgossner/VCSL/tree/master/Aerophones/Edge-blown%20Aerophones/Ocarina%2C%20Typical/Sustains/Sus |
+| `inst/handchimes-{72,78,84,90,96}.mp3` | Hand chimes, notes C5, F#5, C6, F#6, C7 | Versilian Studios LLC, Versilian Community Sample Library | CC0 1.0 | https://github.com/sgossner/VCSL/tree/master/Idiophones/Struck%20Idiophones/Hand%20Chimes |
+| `nasa/mars-wind.mp3` | Perseverance Rover's SuperCam Records Wind on Mars | NASA/JPL-Caltech/LANL/CNES/CNRS/ISAE-Supaero | NASA media | https://www.nasa.gov/sounds-from-beyond/ |
+| `nasa/ingenuity-hum.mp3` | NASA's Ingenuity Mars Helicopter in Flight | NASA/JPL-Caltech/LANL/CNES/CNRS/ISAE-Supaéro | NASA media | https://www.nasa.gov/sounds-from-beyond/ |
+| `nasa/voyager-plasma.mp3` | Voyager Captures Sounds of Interstellar Space (PIA17045) | NASA/JPL-Caltech/University of Iowa | NASA media | https://science.nasa.gov/photojournal/voyager-captures-sounds-of-interstellar-space |
+| `nasa/eagle-landed.mp3` | Apollo 11: "Tranquility Base here. The Eagle has landed." | NASA | Public domain | https://nssdc.gsfc.nasa.gov/planetary/sound/index.html |
 
 ## Libraries
 

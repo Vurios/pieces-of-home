@@ -1,4 +1,42 @@
 import type { Mixer } from "./mixer";
+import { type InstrumentId, hzToMidi } from "./samples";
+
+/** Loudness trim per recorded instrument, so a sampled note peaks where the code instrument did. */
+const TRIM: Record<InstrumentId, number> = { piano: 1.5, harp: 1.35, ocarina: 0.55, glockenspiel: 0.95, handchimes: 1.3 };
+
+/**
+ * Plays a real recorded note (VCSL, CC0) when one is loaded, retuned from the
+ * nearest sample. Returns false while loading, so the code instrument plays.
+ * `hold` keeps a wind note going by looping its steady middle.
+ */
+function sampled(mx: Mixer, out: AudioNode, id: InstrumentId, hz: number, at: number, level: number, length: number, hold = false): boolean {
+  const note = mx.samples?.note(id, hzToMidi(hz));
+  if (!note) return false;
+  const ctx = mx.ctx;
+  const source = ctx.createBufferSource();
+  source.buffer = note.buffer;
+  source.playbackRate.value = note.rate;
+  const amp = gain(ctx);
+  const peak = level * TRIM[id];
+  if (hold) {
+    source.loop = true;
+    source.loopStart = 0.7;
+    source.loopEnd = Math.max(0.9, note.buffer.duration - 0.5);
+    holdEnvelope(amp.gain, at, 0.09, peak, length, 0.45);
+    source.start(at);
+    source.stop(at + length + 0.6);
+  } else {
+    const end = at + Math.min(length, note.buffer.duration / note.rate);
+    amp.gain.setValueAtTime(peak, at);
+    amp.gain.setValueAtTime(peak, Math.max(at, end - 0.3));
+    amp.gain.linearRampToValueAtTime(0.0001, end);
+    source.start(at);
+    source.stop(end + 0.05);
+  }
+  source.connect(amp).connect(out);
+  source.onended = () => amp.disconnect();
+  return true;
+}
 
 /**
  * The instruments, all synthesized. Each one-shot schedules its own nodes at
@@ -62,6 +100,7 @@ export function noise(mx: Mixer, kind: "white" | "pink" | "brown", at: number, l
  * pure, soft tail.
  */
 export function musicBox(mx: Mixer, out: AudioNode, hz: number, at: number, level: number, length = 2.2): void {
+  if (sampled(mx, out, "glockenspiel", hz, at, level * 0.8, length)) return;
   const ctx = mx.ctx;
   const end = at + length;
   const amp = gain(ctx);
@@ -86,6 +125,7 @@ export function musicBox(mx: Mixer, out: AudioNode, hz: number, at: number, leve
  * attack and a very long ring, like a wet finger round a glass rim.
  */
 export function glassBell(mx: Mixer, out: AudioNode, hz: number, at: number, level: number, length = 4.5): void {
+  if (sampled(mx, out, "handchimes", hz, at, level, length)) return;
   const ctx = mx.ctx;
   const end = at + length;
   const amp = gain(ctx);
@@ -108,6 +148,7 @@ export function glassBell(mx: Mixer, out: AudioNode, hz: number, at: number, lev
  * after the hammer, plus a tiny low thump of felt on string.
  */
 export function feltPiano(mx: Mixer, out: AudioNode, hz: number, at: number, level: number, length = 2.4): void {
+  if (sampled(mx, out, "piano", hz, at, level, length)) return;
   const ctx = mx.ctx;
   const end = at + length;
   const tone = filter(ctx, "lowpass", Math.min(hz * 6, 5200), 0.6);
@@ -135,6 +176,7 @@ export function feltPiano(mx: Mixer, out: AudioNode, hz: number, at: number, lev
 
 /** Pluck: a sawtooth through a resonant lowpass that snaps shut, like a muted string. */
 export function pluck(mx: Mixer, out: AudioNode, hz: number, at: number, level: number, length = 0.7): void {
+  if (sampled(mx, out, "harp", hz, at, level, Math.max(length, 1.2))) return;
   const ctx = mx.ctx;
   const end = at + length;
   const f = filter(ctx, "lowpass", hz * 7, 2.2);
@@ -147,6 +189,7 @@ export function pluck(mx: Mixer, out: AudioNode, hz: number, at: number, level: 
 
 /** Flute-like counter-melody: a sine with a breath of noise and a vibrato that arrives late. */
 export function flute(mx: Mixer, out: AudioNode, hz: number, at: number, level: number, hold: number): void {
+  if (sampled(mx, out, "ocarina", hz, at, level, hold, true)) return;
   const ctx = mx.ctx;
   const release = 0.35;
   const end = at + hold + release;
