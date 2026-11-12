@@ -601,11 +601,14 @@ export class Engine {
   async warm(): Promise<void> {
     try {
       await this.prepareShaders();
-      // The trip's shaders too, so the first trip never stutters.
+      // The trip's shaders too, so the first trip never stutters, but later and without
+      // holding up the light: nobody can travel in the first few seconds.
       if (!this.reducedMotion) {
-        const trip = this.ensureTrip();
-        trip.begin("home", "tranquility");
-        await this.renderer.compileAsync(trip.scene, trip.camera);
+        window.setTimeout(() => {
+          const trip = this.ensureTrip();
+          trip.begin("home", "tranquility");
+          void this.renderer.compileAsync(trip.scene, trip.camera).catch(() => undefined);
+        }, 4000);
       }
     } catch {
       // Older drivers without parallel compile simply compile on first draw.
