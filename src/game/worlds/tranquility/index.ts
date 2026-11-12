@@ -4,7 +4,7 @@ import { Batcher, SECTORS, planetMeshes } from "../../render/kit";
 import { type ColliderGroup, createColliderGroup } from "../../world/colliders";
 import { createRandom, fbm3 } from "../../world/noise";
 import { angleBetween, headingToTangent, latLonToDir, surfaceMatrix } from "../../world/sphere";
-import { type Crater, Terrain, type TerrainSpec, buildPlanetGeometry } from "../../world/terrain";
+import { type Bump, type Crater, Terrain, type TerrainSpec, buildPlanetGeometry } from "../../world/terrain";
 import { TRANQUILITY } from "../../../content/chapters/tranquility";
 import { SendALight } from "../../puzzles/send-a-light";
 import { distanceToArc } from "../shapes";
@@ -58,8 +58,21 @@ function terrainSpec(): TerrainSpec {
     if (craters.some((c) => angleBetween(dir, c.center) * MOON_RADIUS < c.radius + radius + 0.6)) continue;
     craters.push({ center: dir, radius, depth: radius * (big ? 0.24 : 0.2), rim: radius * 0.1 });
   }
+  // A few low, rolling swells far from the base, so the horizon is never a perfect ball.
+  const bumps: Bump[] = [];
+  tries = 0;
+  while (bumps.length < 6 && tries < 300) {
+    tries += 1;
+    const dir = d(random() * 150 - 75, random() * 360 - 180);
+    const radius = 3 + random() * 1.8;
+    if (Math.min(...keepClear.map((k) => angleBetween(dir, k) * MOON_RADIUS)) < radius + 5) continue;
+    if (craters.some((c) => angleBetween(dir, c.center) * MOON_RADIUS < c.radius + radius)) continue;
+    if (bumps.some((m) => angleBetween(dir, m.center) * MOON_RADIUS < m.radius + radius)) continue;
+    bumps.push({ center: dir, radius, height: 0.35 + random() * 0.3 });
+  }
   return {
     radius: MOON_RADIUS,
+    bumps,
     seed: 17,
     noiseAmplitude: 0.16,
     noiseFrequency: 2.6,
@@ -203,6 +216,27 @@ export function createTranquility(ctx: WorldContext): World {
     const s = siteOn(terrain, (Math.asin(dir.y) * 180) / Math.PI, (Math.atan2(dir.x, dir.z) * 180) / Math.PI, random() * 360, size * 0.15);
     rock(b, s.matrix, size, random() * 6);
     if (size > 0.3) colliders.push(createColliderGroup(s.matrix, [{ kind: "circle", x: 0, z: 0, radius: size * 0.8, height: size }]));
+  }
+
+  // Boulder fields out on the plain, each a little family of rocks with room to walk round,
+  // well away from the machines and the walked tracks.
+  const fieldRandom = createRandom(23);
+  const fields: Vector3[] = [];
+  for (let tries = 0; fields.length < 9 && tries < 300; tries += 1) {
+    const dir = d(fieldRandom() * 160 - 80, fieldRandom() * 360 - 180);
+    if (clear.some((k) => angleBetween(dir, k) * MOON_RADIUS < 4.2) || trackDistance(dir) < 2.4) continue;
+    if (fields.some((f) => angleBetween(dir, f) * MOON_RADIUS < 5)) continue;
+    fields.push(dir);
+    const count = 3 + Math.floor(fieldRandom() * 3);
+    for (let i = 0; i < count; i += 1) {
+      const heading = fieldRandom() * 360;
+      const reach = i === 0 ? 0 : 0.7 + fieldRandom() * 0.9;
+      const spot = headingToTangent(dir, heading).multiplyScalar(reach / MOON_RADIUS).add(dir).normalize();
+      const size = i === 0 ? 0.42 + fieldRandom() * 0.25 : 0.14 + fieldRandom() * 0.22;
+      const s = siteOn(terrain, (Math.asin(spot.y) * 180) / Math.PI, (Math.atan2(spot.x, spot.z) * 180) / Math.PI, fieldRandom() * 360, size * 0.15);
+      rock(b, s.matrix, size, fieldRandom() * 6, fieldRandom() < 0.5 ? "#8A8680" : "#9A958D");
+      if (size > 0.3) colliders.push(createColliderGroup(s.matrix, [{ kind: "circle", x: 0, z: 0, radius: size * 0.8, height: size }]));
+    }
   }
 
   // Little craters everywhere: a raised rim of bright dust round a darker bowl, inked like a drawing.

@@ -7,7 +7,7 @@ import { Batcher, SECTORS, planetMeshes } from "../../render/kit";
 import { type ColliderGroup, createColliderGroup } from "../../world/colliders";
 import { createRandom, fbm3 } from "../../world/noise";
 import { angleBetween, headingToTangent, latLonToDir } from "../../world/sphere";
-import { type Crater, Terrain, type TerrainSpec, buildPlanetGeometry } from "../../world/terrain";
+import { type Bump, type Crater, Terrain, type TerrainSpec, buildPlanetGeometry } from "../../world/terrain";
 import { MERIDIANI } from "../../../content/chapters/meridiani";
 import { WaitForTheWind } from "../../puzzles/wait-for-wind";
 import { distanceToArc } from "../shapes";
@@ -38,7 +38,8 @@ const SPOTS = {
   parcel: d(8, 34),
   rover: d(-4, 2),
   outcrop: d(-8, -12),
-  rack: d(6, 8),
+  // A good few steps from the rover, so each has room round it.
+  rack: d(13, -5),
   crater: d(-20, 50),
 };
 /** The airbag bounces, biggest first, rolling into the crater. */
@@ -66,8 +67,21 @@ function terrainSpec(): TerrainSpec {
     // Meridiani's craters are old and soft: shallow bowls, low rims.
     craters.push({ center: dir, radius, depth: radius * 0.14, rim: radius * 0.06 });
   }
+  // Long, low swells of sand out on the plains, well away from the rover and the lamp.
+  const bumps: Bump[] = [];
+  tries = 0;
+  while (bumps.length < 5 && tries < 300) {
+    tries += 1;
+    const dir = d(random() * 150 - 75, random() * 360 - 180);
+    const radius = 3.2 + random() * 2;
+    if (Math.min(...keep.map((k) => angleBetween(dir, k) * MARS_RADIUS)) < radius + 5) continue;
+    if (craters.some((c) => angleBetween(dir, c.center) * MARS_RADIUS < c.radius + radius)) continue;
+    if (bumps.some((m) => angleBetween(dir, m.center) * MARS_RADIUS < m.radius + radius)) continue;
+    bumps.push({ center: dir, radius, height: 0.3 + random() * 0.25 });
+  }
   return {
     radius: MARS_RADIUS,
+    bumps,
     seed: 29,
     noiseAmplitude: 0.14,
     noiseFrequency: 2.1,
@@ -280,6 +294,43 @@ export function createMeridiani(ctx: WorldContext): World {
     const s = site(dir, 0, 0);
     b.place(sphere("tiny"), random() < 0.6 ? "#4A3A3E" : "#5A4440", [0, 0.015, 0], [0, 0, 0], 0.022 + random() * 0.018, s.matrix);
   }
+  // More striped rock: a ledge on the inner wall of the little crater, where the
+  // lander sits, and a few low ledges out on the plain, each with room round it.
+  const ledgeRandom = createRandom(61);
+  const ledges: Vector3[] = [];
+  const toRover = headingToward(SPOTS.crater, SPOTS.rover);
+  for (const turn of [150, 215]) {
+    const dir = headingToTangent(SPOTS.crater, toRover + turn).multiplyScalar((CRATER_RADIUS * 0.82) / MARS_RADIUS).add(SPOTS.crater).normalize();
+    const s = site(dir, face(dir, SPOTS.crater), 0.12);
+    add(s, buildOutcrop(b, s, 1.3));
+    ledges.push(dir);
+  }
+  for (let tries = 0; ledges.length < 6 && tries < 300; tries += 1) {
+    const dir = d(ledgeRandom() * 140 - 70, ledgeRandom() * 360 - 180);
+    if (clear.some((k) => angleBetween(dir, k) * MARS_RADIUS < 5) || trackDistance(dir) < 3) continue;
+    if (ledges.some((l) => angleBetween(dir, l) * MARS_RADIUS < 6)) continue;
+    const s = site(dir, ledgeRandom() * 360, 0.08);
+    add(s, buildOutcrop(b, s, 1.2 + ledgeRandom() * 0.8));
+    ledges.push(dir);
+  }
+  // Boulder families on the plain, darker and fewer than on the Moon.
+  const fields: Vector3[] = [];
+  for (let tries = 0; fields.length < 6 && tries < 300; tries += 1) {
+    const dir = d(ledgeRandom() * 160 - 80, ledgeRandom() * 360 - 180);
+    if (clear.some((k) => angleBetween(dir, k) * MARS_RADIUS < 4.5) || trackDistance(dir) < 2.5) continue;
+    if ([...fields, ...ledges].some((f) => angleBetween(dir, f) * MARS_RADIUS < 5)) continue;
+    fields.push(dir);
+    const count = 2 + Math.floor(ledgeRandom() * 3);
+    for (let i = 0; i < count; i += 1) {
+      const reach = i === 0 ? 0 : 0.7 + ledgeRandom() * 0.8;
+      const spot = headingToTangent(dir, ledgeRandom() * 360).multiplyScalar(reach / MARS_RADIUS).add(dir).normalize();
+      const size = i === 0 ? 0.36 + ledgeRandom() * 0.22 : 0.12 + ledgeRandom() * 0.18;
+      const s = site(spot, ledgeRandom() * 360, size * 0.15);
+      rock(b, s.matrix, size, ledgeRandom() * 6, ledgeRandom() < 0.5 ? "#8E5A40" : "#7A4A36");
+      if (size > 0.3) colliders.push(createColliderGroup(s.matrix, [{ kind: "circle", x: 0, z: 0, radius: size * 0.8, height: size }]));
+    }
+  }
+
   // Little soft craters, as drawn: a pale rim and a darker bowl.
   const craterRandom = createRandom(88);
   for (let i = 0; i < 70; i += 1) {
