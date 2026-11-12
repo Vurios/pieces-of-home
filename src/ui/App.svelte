@@ -127,7 +127,8 @@
       engine.bus.on("notebook:open", ({ spread }) => {
         const index = SPREADS.findIndex((s) => s.id === spread);
         audio.ui("page");
-        flow.setNotebook(true, index + 1);
+        // Each machine has two spreads; open at its first.
+        flow.setNotebook(true, index * 2 + 1);
       }),
       engine.bus.on("title:done", () => {
         flow.setStage("play");

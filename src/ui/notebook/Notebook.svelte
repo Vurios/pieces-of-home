@@ -3,6 +3,8 @@
   import { COVER, SPREADS, factText, isComplete, spreadYear, type MachineSpread } from "../../content/notebook";
   import { readPhotos } from "../photos";
   import { readLastPage } from "../story/last-page";
+  import { logNoteText, readLogNote } from "../story/log-note";
+  import { CHAPTERS } from "../../content/chapters";
   import type { GameState } from "../../game/core/state";
   import { DRAWINGS } from "../drawing/machines";
   import Sketch from "../drawing/Sketch.svelte";
@@ -23,6 +25,11 @@
    *
    * Turning a page is a real leaf: its front shows the page you are leaving
    * and its back shows the page you are turning to, so nothing pops.
+   *
+   * Each machine has two spreads, the way a real notebook would: first the
+   * drawing, the photos and what we learned; then Then and Now, the stamp
+   * and Dad's deeper notes. Pages never scroll. If a page is a little too
+   * full on a short screen, its writing shrinks a touch to fit.
    */
   interface Props {
     game: Readonly<GameState>;
@@ -32,9 +39,50 @@
   }
   let { game, page, onclose, onpage }: Props = $props();
 
-  // The cover, one spread per machine, and the last page (Finale).
-  const LAST = SPREADS.length + 1;
-  const total = SPREADS.length + 2;
+  // The cover, two spreads per machine, and the last page (Finale).
+  const PER = 2;
+  const LAST = SPREADS.length * PER + 1;
+  const total = LAST + 1;
+  /** The machine and which of its two spreads a page index shows, or null for the cover and the last page. */
+  function machineAt(index: number): { spread: MachineSpread; part: number; at: number } | null {
+    if (index <= 0 || index >= LAST) return null;
+    const at = Math.floor((index - 1) / PER);
+    return { spread: SPREADS[at]!, part: (index - 1) % PER, at };
+  }
+  const logNote = readLogNote();
+  const POSTS: Record<MachineSpread["world"], string> = { Home: "HOME POST", Moon: "MOON POST", Mars: "MARS POST", Space: "DEEP SPACE POST" };
+  /** The stamp that closes a machine's chapter. */
+  function stampFor(spread: MachineSpread): [string, string] | null {
+    if (spread.id === "lamp") return ["Left on.", "Still shining."];
+    if (spread.id === "voyager") return ["Not left behind.", "Still sending."];
+    return CHAPTERS.find((c) => c.spread === spread.id)?.stamp ?? null;
+  }
+
+  /** Shrinks a page's writing a little when it would not fit, so no page ever scrolls. */
+  function fit(node: HTMLElement): { destroy(): void } {
+    const inner = node.firstElementChild as HTMLElement | null;
+    const apply = (): void => {
+      if (!inner) return;
+      inner.style.zoom = "1";
+      const style = getComputedStyle(node);
+      const room = node.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+      const need = inner.scrollHeight;
+      if (room > 0 && need > room) inner.style.zoom = String(Math.max(0.72, (room / need) * 0.99));
+    };
+    const observer = new ResizeObserver(apply);
+    observer.observe(node);
+    if (inner) observer.observe(inner);
+    // Pictures and fonts can change the height once they load.
+    node.addEventListener("load", apply, true);
+    void document.fonts?.ready.then(apply);
+    apply();
+    return {
+      destroy() {
+        observer.disconnect();
+        node.removeEventListener("load", apply, true);
+      },
+    };
+  }
   const lastPage = readLastPage();
   const groupPhoto = lastPage?.photoAt ? (readPhotos().find((p) => p.at === lastPage.photoAt)?.data ?? null) : null;
   const finished = $derived(game.stamps.includes("finale"));
@@ -66,7 +114,8 @@
   const leftIndex = $derived(flip ? (flip.dir > 0 ? flip.from : flip.to) : shown);
   const rightIndex = $derived(flip ? (flip.dir > 0 ? flip.to : flip.from) : shown);
   const pageLabel = $derived(t("notebook.page", { a: shown * 2 + 1, b: shown * 2 + 2, n: total * 2 }));
-  const current = $derived(shown === 0 || shown === LAST ? null : SPREADS[shown - 1]!);
+  const current = $derived(machineAt(shown)?.spread ?? null);
+  const currentPart = $derived(machineAt(shown)?.part ?? 0);
   const currentInked = $derived(current ? inkedFor(current) : true);
 
   function inkedFor(spread: MachineSpread): boolean {
@@ -77,7 +126,7 @@
   function kind(index: number): string {
     if (index === 0) return "cover";
     if (index === LAST) return finished ? "" : "pencil-page";
-    return inkedFor(SPREADS[index - 1]!) ? "" : "pencil-page";
+    return inkedFor(machineAt(index)!.spread) ? "" : "pencil-page";
   }
 
   function show(next: number, dir: 1 | -1): void {
@@ -145,11 +194,16 @@
   function pageText(): string {
     if (shown === LAST) return finished ? `What will you discover next? ${lastName ?? ""} Leave the light on for whoever comes next.` : "The last page is still blank.";
     if (!current) return `${COVER.title}. ${COVER.dedication} ${COVER.signature}.`;
-    const parts = [current.nickname, current.name, `${t("notebook.forWhat")}. ${current.forWhat}`];
-    if (currentInked) {
-      if (current.learned.length) parts.push(`${t("notebook.learned")}. ${current.learned.map((f) => factText(f)).join(" ")}`);
-      if (current.thenNow.length) parts.push(`${t("notebook.thenNow")}. ${current.thenNow.map((f) => factText(f)).join(" ")}`);
+    if (currentPart === 1) {
+      const more: string[] = [current.nickname];
+      if (currentInked) {
+        if (current.thenNow.length) more.push(`${t("notebook.thenNow")}. ${current.thenNow.map((f) => factText(f)).join(" ")}`);
+        if (current.deeper.length) more.push(`${t("notebook.deeper")}. ${current.deeper.map((f) => f.kid).join(" ")}`);
+      }
+      return more.join(". ");
     }
+    const parts = [current.nickname, current.name, `${t("notebook.forWhat")}. ${current.forWhat}`];
+    if (currentInked && current.learned.length) parts.push(`${t("notebook.learned")}. ${current.learned.map((f) => factText(f)).join(" ")}`);
     parts.push(`${t("notebook.dad")}. ${current.dadNote}`);
     return parts.join(". ");
   }
@@ -227,12 +281,12 @@
     {#each SPREADS as s, i (s.id)}
       {@const done = isComplete(s, game)}
       <li>
-        <button type="button" onclick={() => goTo(i + 1)}>
+        <button type="button" onclick={() => goTo(i * PER + 1)}>
           <span class="patch-slot" aria-hidden="true"><MissionPatch id={s.id as PatchId} earned={done} size={40} tilt={[-6, 4, -3, 5, -4, 3][i]} /></span>
           <span class="nick">{s.nickname}</span>
           <span class="dots" aria-hidden="true"></span>
           <span class={`world w-${s.world.toLowerCase()}`}>{s.world}</span>
-          <span class="pg" aria-hidden="true">{(i + 1) * 2 + 1}</span>
+          <span class="pg" aria-hidden="true">{(i * PER + 1) * 2 + 1}</span>
           <span class="sr-only">{done ? "Done" : ""}</span>
         </button>
       </li>
@@ -292,32 +346,6 @@
         </ul>
       </section>
     {/if}
-    {#if spread.thenNow.length}
-      <section class="now">
-        <h3 class="label">{t("notebook.thenNow")}</h3>
-        {#each spread.thenNow as f (f.id)}<p>{factText(f)}</p>{/each}
-      </section>
-    {/if}
-    {#if spread.deeper.length}
-      <details class="deeper">
-        <summary>{t("notebook.deeper")}</summary>
-        {#each spread.deeper as f (f.id)}
-          <p>{f.kid}{f.deeper ? ` ${f.deeper}` : ""} <a href={f.sourceUrl} target="_blank" rel="noopener noreferrer">{f.sourceTitle}</a></p>
-        {/each}
-      </details>
-    {/if}
-    {#if spread.id === "lamp"}
-      <div class="stamp-mark"><InkStamp lines={["Left on.", "Still shining."]} top="DELIVERED BY REMI" bottom="HOME POST" size={150} tilt={-7} label="Stamp: Left on. Still shining." /></div>
-      <section class="letters">
-        <h3 class="label">{t("notebook.letters")}</h3>
-        <p class="help">{t("notebook.lettersHelp")}</p>
-        <ul>
-          {#each SPREADS.filter((x) => x.id !== "lamp") as s, i (s.id)}
-            <li><Envelope to={s.letterTo} world={s.world} done={isComplete(s, game)} doneLabel={t("notebook.delivered")} tilt={TILTS[i % 5]! * 0.6} /></li>
-          {/each}
-        </ul>
-      </section>
-    {/if}
   {:else}
     <div class="pending">
       {#if spread.images.length > 0}
@@ -336,6 +364,71 @@
       <div class="ghost-lines" aria-hidden="true">
         {#each [92, 78, 86, 54] as w, i (i)}<span style:width={`${w}%`}></span>{/each}
       </div>
+    </div>
+  {/if}
+{/snippet}
+
+{#snippet moreLeft(spread: MachineSpread, index: number)}
+  {@const inked = inkedFor(spread)}
+  {@const stamp = stampFor(spread)}
+  <header class="head small">
+    <p class="kicker"><span>{spread.world}</span><span class="sep" aria-hidden="true"></span><span>{t("notebook.continued")}</span></p>
+    <h2 class="nick-title" class:pencil={!inked}>{spread.nickname}</h2>
+    <Underline width={170} seed={index * 7} color={inked ? "var(--amber)" : "rgba(140,129,115,0.45)"} />
+  </header>
+  {#if inked}
+    {#if spread.thenNow.length}
+      <section class="now big">
+        <h3 class="label">{t("notebook.thenNow")}</h3>
+        {#each spread.thenNow as f (f.id)}<p>{factText(f)} <a class="src" href={f.sourceUrl} target="_blank" rel="noopener noreferrer" aria-label={`${t("notebook.source")}: ${f.sourceTitle}`}>{t("notebook.source")}</a></p>{/each}
+      </section>
+    {/if}
+    {#if spread.id === "ingenuity" && logNote}
+      <aside class="log-note">
+        <h3 class="label">{t("notebook.yourNote")}</h3>
+        <p>{logNoteText(logNote)}</p>
+      </aside>
+    {/if}
+    {#if stamp}
+      <div class="stamp-mark"><InkStamp lines={stamp} top="DELIVERED BY REMI" bottom={POSTS[spread.world]} size={168} tilt={index % 2 ? -6 : 5} label={`Stamp: ${stamp[0]} ${stamp[1]}`} /></div>
+    {/if}
+  {:else}
+    <p class="pencil-note">{t("notebook.pencil")}</p>
+    <div class="ghost-lines" aria-hidden="true">
+      {#each [88, 72, 80] as w, i (i)}<span style:width={`${w}%`}></span>{/each}
+    </div>
+    <div class="stamp-ghost" aria-hidden="true"></div>
+  {/if}
+{/snippet}
+
+{#snippet moreRight(spread: MachineSpread)}
+  {#if inkedFor(spread)}
+    {#if spread.deeper.length}
+      <section class="deeper open">
+        <h3 class="label">{t("notebook.deeper")}</h3>
+        {#each spread.deeper as f (f.id)}
+          <p>{f.kid}{f.deeper ? ` ${f.deeper}` : ""} <a href={f.sourceUrl} target="_blank" rel="noopener noreferrer">{f.sourceTitle}</a></p>
+        {/each}
+      </section>
+    {/if}
+    {#if spread.id === "lamp"}
+      <section class="letters">
+        <h3 class="label">{t("notebook.letters")}</h3>
+        <p class="help">{t("notebook.lettersHelp")}</p>
+        <ul>
+          {#each SPREADS.filter((x) => x.id !== "lamp") as s, i (s.id)}
+            <li><Envelope to={s.letterTo} world={s.world} done={isComplete(s, game)} doneLabel={t("notebook.delivered")} tilt={TILTS[i % 5]! * 0.6} /></li>
+          {/each}
+        </ul>
+      </section>
+    {:else if !spread.deeper.length}
+      <p class="dad-last">{spread.dadNote}</p>
+      <p class="signoff">{COVER.signature}</p>
+    {/if}
+  {:else}
+    <h3 class="label ghost-label">{t("notebook.deeper")}</h3>
+    <div class="ghost-lines" aria-hidden="true">
+      {#each [92, 78, 86, 54, 70] as w, i (i)}<span style:width={`${w}%`}></span>{/each}
     </div>
   {/if}
 {/snippet}
@@ -376,16 +469,21 @@
 {/snippet}
 
 {#snippet face(index: number, side: "left" | "right")}
-  <div class="scroll">
-    {#if index === 0}
-      {#if side === "left"}{@render coverLeft()}{:else}{@render coverRight()}{/if}
-    {:else if index === LAST}
-      {#if side === "left"}{@render lastLeft()}{:else}{@render lastRight()}{/if}
-    {:else if side === "left"}
-      {@render machineLeft(SPREADS[index - 1]!, index)}
-    {:else}
-      {@render machineRight(SPREADS[index - 1]!, index)}
-    {/if}
+  {@const m = machineAt(index)}
+  <div class="scroll" use:fit>
+    <div class="fit">
+      {#if index === 0}
+        {#if side === "left"}{@render coverLeft()}{:else}{@render coverRight()}{/if}
+      {:else if index === LAST}
+        {#if side === "left"}{@render lastLeft()}{:else}{@render lastRight()}{/if}
+      {:else if m && m.part === 1}
+        {#if side === "left"}{@render moreLeft(m.spread, index)}{:else}{@render moreRight(m.spread)}{/if}
+      {:else if m && side === "left"}
+        {@render machineLeft(m.spread, m.at + 1)}
+      {:else if m}
+        {@render machineRight(m.spread, m.at + 1)}
+      {/if}
+    </div>
   </div>
   <span class="folio" aria-hidden="true">{index * 2 + (side === "left" ? 1 : 2)}</span>
 {/snippet}
@@ -596,16 +694,55 @@
     background: repeating-linear-gradient(to bottom, rgba(120, 96, 60, 0.5) 0 10px, transparent 10px 22px);
     pointer-events: none;
   }
+  /* A page never scrolls: it holds what fits, and the "fit" action shrinks the writing a touch when it must. */
   .scroll {
     position: absolute;
     inset: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    overflow: hidden;
     padding: 38px 46px 54px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(98, 87, 77, 0.3) transparent;
-    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent);
-    mask-image: linear-gradient(to bottom, #000 calc(100% - 34px), transparent);
+  }
+  .head.small {
+    margin-bottom: 8px;
+  }
+  .now.big {
+    margin-top: 30px;
+    padding: 22px 22px 12px;
+  }
+  .now.big p {
+    font-size: 1.12rem;
+    line-height: 1.55;
+  }
+  .log-note {
+    margin-top: 22px;
+    padding: 14px 18px 10px;
+    background: repeating-linear-gradient(#fffdf6 0 27px, #d9e3ea 27px 28px);
+    border: 1.5px solid rgba(43, 38, 34, 0.35);
+    border-radius: 3px;
+    rotate: -0.8deg;
+    box-shadow: 0 6px 14px -10px rgba(40, 30, 20, 0.5);
+  }
+  .log-note .label {
+    margin: 0 0 4px;
+  }
+  .log-note p {
+    margin: 0;
+    font: 700 1.25rem/28px var(--hand);
+  }
+  .deeper.open {
+    margin-top: 0;
+    border-top: 0;
+  }
+  .deeper.open p {
+    margin: 0 0 12px;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  .stamp-ghost {
+    width: 150px;
+    height: 150px;
+    margin: 28px auto 0;
+    border: 3px dashed rgba(140, 129, 115, 0.35);
+    border-radius: 50%;
   }
   .page.left .scroll {
     padding-right: 54px;
@@ -1030,31 +1167,6 @@
   .deeper {
     margin-top: 16px;
     border-top: 1px dashed rgba(43, 38, 34, 0.25);
-  }
-  .deeper summary {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-height: 44px;
-    font: 700 1.15rem var(--hand);
-    color: var(--ink);
-    cursor: pointer;
-    list-style: none;
-  }
-  .deeper summary::-webkit-details-marker {
-    display: none;
-  }
-  .deeper summary::before {
-    content: "";
-    width: 7px;
-    height: 7px;
-    border-right: 2px solid var(--amber-deep);
-    border-bottom: 2px solid var(--amber-deep);
-    transform: rotate(-45deg);
-    transition: transform 0.2s;
-  }
-  .deeper[open] summary::before {
-    transform: rotate(45deg);
   }
   .deeper p {
     font-size: 0.95rem;

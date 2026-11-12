@@ -80,6 +80,8 @@ export const EN = {
   "notebook.learned": "What we learned",
   "notebook.thenNow": "Then and now",
   "notebook.deeper": "Deeper notes",
+  "notebook.continued": "More notes",
+  "notebook.yourNote": "Your note in Ingenuity's log",
   "notebook.dad": "Dad's note",
   "notebook.source": "Source",
   "notebook.pencil": "Go see it for yourself. This page fills in when you do.",
