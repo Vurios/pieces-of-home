@@ -100,7 +100,7 @@
       <div class="card fact" class:pictured={Boolean(story?.image)} role="dialog" aria-live="polite" aria-label="A true story">
         {#if story?.image}
           <figure class="photo">
-            <img src={story.image.file} alt={story.image.alt} />
+            <img src={story.image.file} alt={story.image.alt} decoding="async" />
             <figcaption>{story.image.credit}</figcaption>
           </figure>
         {/if}

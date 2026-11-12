@@ -608,3 +608,13 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 **Why:** Team feedback after playing: the book appeared instantly, black flashes, camera limits, small map and cards, a lamp post in the road, and kids in street clothes on the Moon.
 
 **Alternatives considered:** A JS-driven splash (would wait for code to load), switching off the resolution governor (loses smoothness on slow devices), an opaque visor (hides faces), a separate facts screen (breaks the flow of play).
+
+## 62. A 3D trip between worlds, a 3D closing shot, and roomier Moon and Mars
+
+**Date:** 2026-11-12
+
+**Decision:** (1) The trip through the Looking Lamp is drawn in 3D (`src/game/render/trip.ts`): the world left behind and the world ahead float in a starry night as small toon planets, each wearing a tiny model of its machine (the house, the lander, the buggy, the rover, the helicopter), and the lamp's light arcs between them with one of Dad's envelopes tumbling behind it. The camera holds a wide view of both worlds, then leans in as the light dives. The next world loads and compiles behind the closed light first, so the flight never stutters; the light then opens on the trip, closes on the world ahead as the light reaches it, and opens on the world itself. The trip has its own colour grade, so nothing shifts mid-flight. The trip runs on the real clock (a slow device shows fewer frames, not a longer trip). Reduced motion skips the flight. The 2D travel screen became a caption: where Remi is going, dark on the lamp light and pale on the night. (2) The ending picture is the real home world: the camera lifts away from Remi through the open workshop until the whole little world shows against the stars, then turns slowly while the credits roll over a dimmed view. (3) The HUD, corner map and tips step aside during trips and full-screen story screens. (4) Meridiani's breeze flags moved a good few steps from the rover. Both the Moon and Mars gained low swells far from the machines and families of boulders with room to walk round; Meridiani gained striped rock ledges on its little crater's inner wall and out on the plain. Everything new keeps clear of machines and walked tracks.
+
+**Why:** Team feedback asked for the trips and story moments to be 3D animations with better transitions, and for more detail on the Moon and Mars without crowding.
+
+**Alternatives considered:** A pre-rendered video (heavy, cannot show each pair of worlds), drawing the trip over the old world (the next world could not load without a visible stall), a separate 3D ending diorama (the real world with its museum visitors is stronger and costs nothing), new real-hardware props on Mars such as the heat shield (left out until each has a sourced fact).

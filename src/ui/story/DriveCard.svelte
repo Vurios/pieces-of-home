@@ -51,7 +51,7 @@
 {#if riding}
   <aside class="drive" aria-label="Dad's map for the drive" transition:fly={{ y: 30, duration: 260 }}>
     <figure class="photo">
-      <img src={photo.file} alt={photo.alt} width="180" height="180" />
+      <img src={photo.file} alt={photo.alt} width="180" height="180" decoding="async" />
       <svg viewBox="0 0 100 100" aria-hidden="true">
         <path d="M{A.x} {A.y} Q {C.x} {C.y} {B.x} {B.y}" fill="none" stroke="#FFD98A" stroke-width="1.6" stroke-dasharray="3 2.4" stroke-linecap="round" />
         <circle cx={B.x} cy={B.y} r="3.2" fill="none" stroke="#FF8A6A" stroke-width="1.4" />

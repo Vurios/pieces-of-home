@@ -888,6 +888,21 @@ export class Engine {
       },
       /** Draw calls and triangles of the last frame, every pass included. */
       stats: () => ({ calls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, programs: this.renderer.info.programs?.length ?? 0 }),
+      /** Names of the compiled shader programs, to catch ones that compile mid-play. */
+      programs: () => (this.renderer.info.programs ?? []).map((p) => `${p.name}|${p.cacheKey}`),
+      /** Meshes whose material matches a test, with their path in the scene, for debugging. */
+      find: (test: (m: unknown) => boolean) => {
+        const rows: string[] = [];
+        this.scene.traverse((o) => {
+          const m = (o as Mesh).material;
+          if (m && test(m)) {
+            const path: string[] = [];
+            for (let p: import("three").Object3D | null = o; p; p = p.parent) path.push(`${p.name || p.type}${p.visible ? "" : "(hidden)"}`);
+            rows.push(path.join(" < "));
+          }
+        });
+        return rows;
+      },
       setQuality: (tier: QualityTier | null) => this.setQuality(tier),
       /** Sends a game event, for screenshots of moments such as the stamp. */
       emit: <K extends keyof GameEvents>(type: K, payload: GameEvents[K]) => this.bus.emit(type, payload),
