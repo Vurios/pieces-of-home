@@ -538,3 +538,33 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 **Why:** Team feedback on screenshots: hidden words, moving targets, and two large cards covering the screen at once.
 
 **Alternatives considered:** Hiding the place card at the start (players lose the first find), merging both cards (two different messages).
+
+## 55. A word-aware murmur for the speech bubbles
+
+**Date:** 2026-11-12
+
+**Decision:** The characters' murmur is rebuilt as a small formant voice (`src/audio/voices.ts`). Each line is planned word by word: content words carry stress, short gaps sit between words, commas and full stops get real rests, questions rise and statements fall, and the first letters of each syllable shape a soft consonant (a stop, a hiss, a hum or a glide). A tilted throat wave feeds four parallel formant filters, widened for higher voices so no vowel goes thin, with a little chest warmth and presence. Dad keeps his closed-mouth hum, Milo keeps his bleeps. Levels match the old mix within about a decibel, and lines run close to the bubble's typing.
+
+**Why:** Team feedback asked for a better murmur. The old one was one buzzing tone per syllable with no words or pauses, so every line sounded the same.
+
+**Alternatives considered:** Recorded gibberish samples per character (download weight and a license for each voice), speech synthesis (real words clash with the captions and vary by device).
+
+## 56. Corner map as a compass, and a calmer globe
+
+**Date:** 2026-11-12
+
+**Decision:** The corner map sits in a paper compass bezel with tick marks and a red N badge that turn with north, and the ground glides with Remi every frame: it is laid out once round an anchor point and only slid and turned until Remi wanders 1.5 m away. The big map keeps its zoom and spin controls on the globe (round + and - buttons, a compass that shows north as the globe spins), eases between zoom steps, keeps every pin and label wholly on the globe, rings a place on the globe while the list points at it, and heads the list with "n of m found".
+
+**Why:** Team asked for a better map design and placements, and a smoother feel. The old corner map redrew ten times a second, which read as stepping.
+
+**Alternatives considered:** A north-up corner map (fights the third-person camera), a canvas-drawn corner map (loses the crisp SVG ink and its accessibility hooks).
+
+## 57. Smoother frames: horizon culling and shaders ready before they show
+
+**Date:** 2026-11-12
+
+**Decision:** The world props and the planet ground are cut into 16 wedges by direction (`Batcher.build` with `sectors`, `planetMeshes`), and every frame the engine hides each wedge that sits wholly behind the curve of the planet as the camera sees it (a conservative sphere-behind-sphere test, unit tested). Triangles drawn fall by about 45% on every world (Home low tier 333k to 180k, high 877k to 504k) for about 20 more draw calls. Every shader the world could use, hidden props included, is compiled at boot and again behind the closed iris after each trip, and production builds stop asking the driver about each shader (that question stalls until compiling ends). Panels now lift away and fade when they close instead of vanishing, and the map queries reuse their vectors so the corner map makes no garbage.
+
+**Why:** Team asked to optimize the game and make it smoother. On a tiny planet half the world is always behind the horizon but was drawn anyway, in every pass, and first-time shader compiles caused hitches when walking near new things or arriving in a new world.
+
+**Alternatives considered:** Lower detail everywhere (worse look), GPU occlusion queries (latency and driver cost), smaller instanced batches per prop type (far more draw calls).

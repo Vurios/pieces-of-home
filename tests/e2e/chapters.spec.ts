@@ -62,15 +62,21 @@ async function use(page: Page): Promise<void> {
  * Plays one move of a story game, if one is up (Chapter 3): grind the rock and
  * find the blueberries, read the rover's last report, send the calls.
  */
+/** Every kind of story game the helpers have played, for the checks at the end. */
+const played = new Set<string>();
+
 async function playGame(page: Page): Promise<void> {
   const game = page.locator(".game");
   if (!(await game.count())) return;
-  const kind = (await game.getAttribute("class")) ?? "";
+  // A game can finish and leave between any two looks, so every look is short and forgiving.
+  const quick = { timeout: 2_000 };
+  const kind = (await game.getAttribute("class", quick).catch(() => null)) ?? "";
+  for (const name of ["telemetry", "blueberries", "calls"]) if (kind.includes(name)) played.add(name);
   await page.waitForTimeout(500);
-  if (kind.includes("telemetry")) await page.locator(".game .got").click();
+  if (kind.includes("telemetry")) await page.locator(".game .got").click(quick).catch(() => undefined);
   else if (kind.includes("blueberries")) {
     const berry = page.locator(".game .berry:not(.found)");
-    if (await berry.count()) await berry.first().click();
+    if (await berry.count()) await berry.first().click(quick).catch(() => undefined);
     else if (!(await page.locator(".game .berry").count())) {
       // Grinding fills while the key is held.
       await page.keyboard.down("KeyE");
@@ -79,7 +85,7 @@ async function playGame(page: Page): Promise<void> {
     }
   } else if (kind.includes("calls")) {
     const send = page.locator(".game .btn");
-    if (await send.isEnabled()) await send.click();
+    if (await send.isEnabled(quick).catch(() => false)) await send.click(quick).catch(() => undefined);
   }
 }
 
@@ -213,11 +219,9 @@ test("Chapter 3: from the dome to the stamp", async ({ page }, info) => {
   await playUntil(page, (s) => s.flags.includes("wait-for-the-wind:clean"), 120_000);
   // The rover wakes, then the long storm: the last report and the calls nobody answers.
   await playUntil(page, (s) => s.flags.includes("wait-for-the-wind:done"), 90_000);
-  const seen = new Set<string>();
   const end = Date.now() + 150_000;
   while (Date.now() < end) {
-    for (const kind of ["telemetry", "calls"]) if (await page.locator(`.game.${kind}`).count()) seen.add(kind);
-    if (seen.has("calls") && !(await page.locator(".game").count())) break;
+    if (played.has("calls") && !(await page.locator(".game").count())) break;
     if (await page.locator(".card .got").count()) {
       await page.waitForTimeout(500);
       await page.locator(".card .got").click();
@@ -225,7 +229,7 @@ test("Chapter 3: from the dome to the stamp", async ({ page }, info) => {
     await playGame(page);
     await page.waitForTimeout(250);
   }
-  expect([...seen].sort()).toEqual(["calls", "telemetry"]);
+  expect([...played].sort()).toEqual(["blueberries", "calls", "telemetry"]);
   await playUntil(page, () => false, 12_000).catch(() => undefined);
 
   // The solar heart for Milo, home through the lamp light.

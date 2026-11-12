@@ -1,6 +1,6 @@
 import { Color, DirectionalLight, Group, HemisphereLight, Mesh, Vector3 } from "three";
 import { cylinder, torus } from "../../actors/parts";
-import { Batcher } from "../../render/kit";
+import { Batcher, SECTORS, planetMeshes } from "../../render/kit";
 import { type ColliderGroup, createColliderGroup } from "../../world/colliders";
 import { createRandom, fbm3 } from "../../world/noise";
 import { angleBetween, headingToTangent, latLonToDir, surfaceMatrix } from "../../world/sphere";
@@ -140,10 +140,8 @@ export function createTranquility(ctx: WorldContext): World {
     void r;
   });
   // A grainier paint than Home's lawn, so the dust has tooth up close.
-  const planet = new Mesh(geometry, toon.toon({ vertexColors: true, paint: 0.16, rim: 0.12, nearFade: false }));
-  planet.name = "planet";
-  planet.receiveShadow = true;
-  root.add(planet);
+  // The ground is cut into wedges so the far side of the world is skipped when it is out of sight.
+  for (const wedge of planetMeshes(geometry, toon.toon({ vertexColors: true, paint: 0.16, rim: 0.12, nearFade: false }))) root.add(wedge);
 
   // ---- The machines ----
   const b = new Batcher();
@@ -249,7 +247,7 @@ export function createTranquility(ctx: WorldContext): World {
   add(holderB, activity.shapes.holder);
 
   const materials = { solid: toon.toon({ vertexColors: true, paint: 0.12 }), glow: toon.glow("#ffffff", true) };
-  for (const mesh of b.build(materials, { castShadow: quality.shadowMap > 0, receiveShadow: true })) root.add(mesh);
+  for (const mesh of b.build(materials, { castShadow: quality.shadowMap > 0, receiveShadow: true, sectors: SECTORS })) root.add(mesh);
 
   // ---- The chapter: letters, Dad's tag, the parcel for Milo and the way home ----
   const stand = (s: Site, x: number, z: number): Vector3 => at(s, x, 0, z);
@@ -429,7 +427,7 @@ export function createTranquility(ctx: WorldContext): World {
       earth.dispose();
       geometry.dispose();
       root.traverse((o) => {
-        if (o instanceof Mesh && o.name.startsWith("batch")) o.geometry.dispose();
+        if (o instanceof Mesh && (o.name.startsWith("batch") || o.name === "planet")) o.geometry.dispose();
       });
       ctx.interactions.clear();
       void bus;

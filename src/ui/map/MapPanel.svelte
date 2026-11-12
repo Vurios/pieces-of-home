@@ -56,12 +56,14 @@
     const want = 0.95 / spread;
     return ZOOMS.reduce((best, z) => (z <= want && z > best ? z : best), 1);
   }
-  let zoom = $state(fitZoom());
+  /** The zoom step picked, and the zoom drawn (it eases to the step). */
+  let zoomTo = $state(fitZoom());
+  let zoom = $state(untrack(() => zoomTo));
   /** Page units per unit of the globe's radius. */
   const S = $derived(R * zoom);
   function zoomBy(step: number): void {
-    const i = ZOOMS.indexOf(zoom);
-    zoom = ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, (i < 0 ? 0 : i) + step))]!;
+    const i = ZOOMS.indexOf(zoomTo);
+    zoomTo = ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, (i < 0 ? 0 : i) + step))]!;
   }
   function wheel(e: WheelEvent): void {
     e.preventDefault();
@@ -76,6 +78,7 @@
     let frame = 0;
     const tick = (): void => {
       frame = requestAnimationFrame(tick);
+      if (zoom !== zoomTo) zoom = Math.abs(zoomTo - zoom) < 0.004 ? zoomTo : zoom + (zoomTo - zoom) * 0.2;
       if (!target || dragging) return;
       view = easeGlobe(view, target, 0.16);
       if (view.center.distanceTo(target.center) < 0.002) {
@@ -230,7 +233,7 @@
       if (g.z < 0.04) continue;
       const x = g.x * S;
       const y = -g.y * S;
-      if (Math.hypot(x, y) > R + 6) continue;
+      if (Math.hypot(x, y) > R - 5) continue;
       out.push({ id: m.id, label: known(m) ? m.label : "?", icon: known(m) ? m.icon : "unknown", x, y, z: g.z, size: 15 + 7 * g.z, letter: Boolean(m.letters?.some((l) => !delivered.includes(l))), tag: null });
     }
     // Labels never pile up: nearest places choose first (below, above, right, left), and
@@ -253,7 +256,8 @@
       ];
       for (const [x, y] of tries) {
         const b = { x0: x - w / 2, y0: y - h + 2, x1: x + w / 2, y1: y + 2 };
-        if (hits(b) || Math.hypot(x, y - 3) > R - 4) continue;
+        const inside = [b.x0, b.x1].every((cx) => [b.y0, b.y1].every((cy) => Math.hypot(cx, cy) < R - 3));
+        if (!inside || hits(b)) continue;
         boxes.push(b);
         p.tag = { x, y };
         break;
@@ -281,6 +285,16 @@
     return { x: Math.sin(angle) * (R + 8), y: -Math.cos(angle) * (R + 8), z: 0, behind: true, angle: (angle * 180) / Math.PI };
   });
 
+  /** Which way north lies on the page, in degrees clockwise from up. */
+  const north = $derived.by(() => {
+    const pole = onGlobe(view, WORLD_UP);
+    const angle = Math.atan2(pole.x, pole.y);
+    // Seen from right over a pole, north is everywhere: keep the needle up.
+    return Math.hypot(pole.x, pole.y) < 0.02 ? 0 : (angle * 180) / Math.PI;
+  });
+  /** The place the list is pointing at, drawn with a ring on the globe. */
+  let hover = $state<string | null>(null);
+
   const list = $derived(map ? map.marks.filter(known) : []);
   const hidden = $derived(map ? map.marks.length - list.length : 0);
 </script>
@@ -290,6 +304,7 @@
     <div class="layout">
       <!-- A custom widget: drag or arrow keys spin it, and the place list does the same with plain buttons. -->
       <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+      <div class="frame">
       <svg
         class="globe"
         class:dragging
@@ -314,6 +329,7 @@
           </radialGradient>
           <clipPath id="globe-clip"><circle r={R} /></clipPath>
         </defs>
+        <ellipse cy={R + 13} rx={R * 0.72} ry="5" fill="#2B2622" opacity="0.1" />
         <circle r={R + 6} fill="none" stroke={map.colors.ink} stroke-width="1" stroke-dasharray="1 5" opacity="0.4" />
         <g clip-path="url(#globe-clip)">
           <circle r={S} fill={map.colors.land} />
@@ -342,6 +358,7 @@
         <circle r={R} fill="none" stroke={map.colors.ink} stroke-width="2.4" />
         {#each pins as p (p.id)}
           <g opacity={Math.min(1, p.z * 4)}>
+            {#if hover === p.id}<circle cx={p.x} cy={p.y} r={p.size * 0.72} fill="#F2A541" opacity="0.35" stroke="#F2A541" stroke-width="1.6" />{/if}
             <MapGlyph icon={p.icon} x={p.x} y={p.y} size={p.size} ink={map.colors.ink} />
             {#if p.letter}
               <g transform="translate({p.x + 8} {p.y - 9}) scale(0.75)">
@@ -370,21 +387,41 @@
           </g>
         {/if}
       </svg>
+        <svg class="compass" viewBox="-24 -24 48 48" aria-hidden="true">
+          <circle r="21" fill="#FBF6EC" stroke="#2B2622" stroke-width="2" />
+          <circle r="16" fill="none" stroke="#2B2622" stroke-width="0.8" stroke-dasharray="1.5 3" opacity="0.5" />
+          <g transform="rotate({north.toFixed(1)})">
+            <path d="M0 -15 L4.5 0 L-4.5 0 Z" fill="#C8553D" stroke="#2B2622" stroke-width="1.2" stroke-linejoin="round" />
+            <path d="M0 15 L4.5 0 L-4.5 0 Z" fill="#FBF6EC" stroke="#2B2622" stroke-width="1.2" stroke-linejoin="round" />
+            <text y="-17.5" class="n">N</text>
+          </g>
+          <circle r="2" fill="#2B2622" />
+        </svg>
+        <div class="zoom">
+          <button type="button" class="round" onclick={() => zoomBy(1)} disabled={zoomTo === ZOOMS[ZOOMS.length - 1]} aria-label={t("map.zoomIn")}>+</button>
+          <button type="button" class="round" onclick={() => zoomBy(-1)} disabled={zoomTo === ZOOMS[0]} aria-label={t("map.zoomOut")}>&minus;</button>
+        </div>
+      </div>
 
       <div class="side">
         <div class="buttons">
           <button type="button" class="btn amber" onclick={() => goTo(me)}>{t("map.findMe")}</button>
           {#if next}<button type="button" class="btn" onclick={() => next && goTo(next)}>{t("map.next")}</button>{/if}
-          <span class="zoom">
-            <button type="button" class="btn" onclick={() => zoomBy(-1)} disabled={zoom === ZOOMS[0]} aria-label={t("map.zoomOut")}>&minus;</button>
-            <button type="button" class="btn" onclick={() => zoomBy(1)} disabled={zoom === ZOOMS[ZOOMS.length - 1]} aria-label={t("map.zoomIn")}>+</button>
-          </span>
         </div>
         <p class="how">{t("map.how")}</p>
+        <h3 class="head">{t("map.places")} <span>{t("map.count", { n: list.length, total: map.marks.length })}</span></h3>
         <ul class="places">
           {#each list as m (m.id)}
             <li>
-              <button type="button" class="place" onclick={() => goTo(m.at)}>
+              <button
+                type="button"
+                class="place"
+                onclick={() => goTo(m.at)}
+                onpointerenter={() => (hover = m.id)}
+                onpointerleave={() => (hover = null)}
+                onfocus={() => (hover = m.id)}
+                onblur={() => (hover = null)}
+              >
                 <svg viewBox="-13 -13 26 26" aria-hidden="true"><MapGlyph icon={m.icon} size={22} ink={map.colors.ink} /></svg>
                 <span>{m.label}</span>
                 {#if m.letters?.some((l) => !delivered.includes(l))}<span class="badge">{t("map.letter")}</span>{/if}
@@ -407,6 +444,23 @@
     grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
     gap: 22px;
     align-items: start;
+  }
+  .frame {
+    position: relative;
+  }
+  .compass {
+    position: absolute;
+    left: 2%;
+    top: 2%;
+    width: 52px;
+    height: 52px;
+    filter: drop-shadow(0 2px 0 rgba(43, 38, 34, 0.35));
+    pointer-events: none;
+  }
+  .n {
+    font: 700 7px/1 var(--label);
+    text-anchor: middle;
+    fill: #2b2622;
   }
   .globe {
     display: block;
@@ -446,17 +500,63 @@
     gap: 10px;
   }
   .zoom {
-    display: inline-flex;
+    position: absolute;
+    right: 2%;
+    bottom: 3%;
+    display: grid;
     gap: 6px;
   }
-  .zoom .btn {
-    width: 46px;
-    padding-inline: 0;
-    justify-content: center;
-    font: 700 1.5rem/1 var(--read);
+  .round {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0 0 2px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    background: var(--paper-light);
+    box-shadow: 0 3px 0 var(--ink);
+    font: 700 1.45rem/1 var(--read);
+    color: var(--ink);
+    cursor: pointer;
+    transition:
+      transform 0.14s var(--ease-spring),
+      box-shadow 0.14s ease,
+      background 0.14s ease;
   }
-  .zoom .btn:disabled {
-    opacity: 0.4;
+  .round:hover:not(:disabled) {
+    transform: translateY(-1px);
+    background: var(--amber-wash);
+  }
+  .round:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--ink);
+  }
+  .round:focus-visible {
+    outline: 3px solid var(--amber);
+    outline-offset: 2px;
+  }
+  .round:disabled {
+    opacity: 0.38;
+    cursor: default;
+  }
+  .head {
+    margin: 4px 0 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding-bottom: 6px;
+    border-bottom: 1.5px dashed color-mix(in srgb, var(--ink) 30%, transparent);
+    font: 700 0.78rem/1 var(--label);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--clay-deep);
+  }
+  .head span {
+    font: 400 0.85rem/1 var(--read);
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink-soft);
   }
   .how {
     margin: 0;
@@ -486,6 +586,7 @@
     font: 400 0.95rem/1.2 var(--read);
     color: var(--ink);
     cursor: pointer;
+    transition: background 0.15s ease;
   }
   .place:hover,
   .place:focus-visible {

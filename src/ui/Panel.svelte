@@ -1,8 +1,10 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import { cubicIn } from "svelte/easing";
+  import { fade } from "svelte/transition";
   import { trap } from "./focus";
   import Icon, { type IconName } from "./Icon.svelte";
-  import { t } from "./settings.svelte";
+  import { settings, t } from "./settings.svelte";
 
   /**
    * A warm card over the dimmed world, used for settings, credits, play
@@ -43,6 +45,15 @@
     return () => observer.disconnect();
   });
 
+  /** On the way out the sheet lifts off and fades, quicker than it came in. */
+  function lift(_node: Element): { duration: number; easing: (t: number) => number; css: (t: number) => string } {
+    return {
+      duration: settings.reducedMotion ? 0 : 170,
+      easing: cubicIn,
+      css: (k) => `opacity: ${k}; transform: translateY(${(1 - k) * 14}px) rotate(-0.35deg) scale(${0.97 + 0.03 * k});`,
+    };
+  }
+
   function onkey(event: KeyboardEvent): void {
     if (event.key === "Escape") {
       event.preventDefault();
@@ -52,9 +63,9 @@
   }
 </script>
 
-<div class="scrim" aria-hidden="true" onpointerdown={onclose}></div>
+<div class="scrim" aria-hidden="true" onpointerdown={onclose} out:fade|global={{ duration: settings.reducedMotion ? 0 : 200 }}></div>
 <div class="wrap">
-  <div class={`sheet card ${width}`} role="dialog" aria-modal="true" aria-labelledby={id} tabindex="-1" use:trap onkeydown={onkey}>
+  <div class={`sheet card ${width}`} out:lift|global role="dialog" aria-modal="true" aria-labelledby={id} tabindex="-1" use:trap onkeydown={onkey}>
     <span class="tape left" aria-hidden="true"></span>
     <span class="tape right" aria-hidden="true"></span>
     <header>

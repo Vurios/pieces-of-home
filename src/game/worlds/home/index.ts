@@ -3,7 +3,7 @@ import { Character, type KidId } from "../../actors/character";
 import { Milo } from "../../actors/milo";
 import { Mom } from "../../actors/mom";
 import { createEnvelope } from "../../actors/props";
-import { Batcher } from "../../render/kit";
+import { Batcher, SECTORS, planetMeshes } from "../../render/kit";
 import { Floaters, Smoke } from "../../render/particles";
 import { type ColliderGroup, createColliderGroup } from "../../world/colliders";
 import { fbm3 } from "../../world/noise";
@@ -96,10 +96,8 @@ export function createHome(ctx: WorldContext): World {
     out.multiplyScalar(1 - Math.min(0.25, slope * 2.2));
   });
   // Little rim light on the ground: a bright edge round the whole planet reads as an outline.
-  const planet = new Mesh(planetGeometry, toon.toon({ vertexColors: true, paint: 0.09, rim: 0.2, nearFade: false }));
-  planet.name = "planet";
-  planet.receiveShadow = true;
-  root.add(planet);
+  // The ground is cut into wedges so the far side of the world is skipped when it is out of sight.
+  for (const wedge of planetMeshes(planetGeometry, toon.toon({ vertexColors: true, paint: 0.09, rim: 0.2, nearFade: false }))) root.add(wedge);
 
   // ---- Buildings and props ----
   const b = new Batcher();
@@ -158,7 +156,7 @@ export function createHome(ctx: WorldContext): World {
   // Footpaths: soft ribbons over the grass, with pebbles and the porch stepping stones.
   root.add(buildPaths(b, terrain, toon));
 
-  for (const mesh of b.build(materials, { castShadow: quality.shadowMap > 0, receiveShadow: true })) root.add(mesh);
+  for (const mesh of b.build(materials, { castShadow: quality.shadowMap > 0, receiveShadow: true, sectors: SECTORS })) root.add(mesh);
 
   // The shed's moving parts live in the shed's own frame.
   const shedFrame = new Group();
@@ -693,7 +691,7 @@ export function createHome(ctx: WorldContext): World {
       places.dispose();
       planetGeometry.dispose();
       root.traverse((o) => {
-        if (o instanceof Mesh && (o.name.startsWith("batch") || o.name === "paths")) o.geometry.dispose();
+        if (o instanceof Mesh && (o.name.startsWith("batch") || o.name === "paths" || o.name === "planet")) o.geometry.dispose();
       });
       textures.moon.dispose();
       textures.mars.dispose();

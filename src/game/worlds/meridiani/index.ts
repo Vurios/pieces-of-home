@@ -3,7 +3,7 @@ import { box, cylinder, sphere, torus } from "../../actors/parts";
 import { createMaterial } from "../../render/particles";
 import type { LookSpec } from "../../render/post";
 import type { SkySpec } from "../../render/sky";
-import { Batcher } from "../../render/kit";
+import { Batcher, SECTORS, planetMeshes } from "../../render/kit";
 import { type ColliderGroup, createColliderGroup } from "../../world/colliders";
 import { createRandom, fbm3 } from "../../world/noise";
 import { angleBetween, headingToTangent, latLonToDir } from "../../world/sphere";
@@ -223,10 +223,8 @@ export function createMeridiani(ctx: WorldContext): World {
     const slope = 1 - Math.max(0, normal.dot(dir));
     out.multiplyScalar(1 - Math.min(0.28, slope * 2.4));
   });
-  const planet = new Mesh(geometry, toon.toon({ vertexColors: true, paint: 0.15, rim: 0.12, nearFade: false }));
-  planet.name = "planet";
-  planet.receiveShadow = true;
-  root.add(planet);
+  // The ground is cut into wedges so the far side of the world is skipped when it is out of sight.
+  for (const wedge of planetMeshes(geometry, toon.toon({ vertexColors: true, paint: 0.15, rim: 0.12, nearFade: false }))) root.add(wedge);
 
   // ---- The machines ----
   const b = new Batcher();
@@ -310,7 +308,7 @@ export function createMeridiani(ctx: WorldContext): World {
   add(rackSite, activity.shapes.rack);
 
   const materials = { solid: toon.toon({ vertexColors: true, paint: 0.12 }), glow: toon.glow("#ffffff", true) };
-  for (const mesh of b.build(materials, { castShadow: quality.shadowMap > 0, receiveShadow: true })) root.add(mesh);
+  for (const mesh of b.build(materials, { castShadow: quality.shadowMap > 0, receiveShadow: true, sectors: SECTORS })) root.add(mesh);
 
   // ---- The chapter ----
   const runtime = chapterRuntime(ctx, MERIDIANI, {
@@ -543,7 +541,7 @@ export function createMeridiani(ctx: WorldContext): World {
       dust.dispose();
       geometry.dispose();
       root.traverse((o) => {
-        if (o instanceof Mesh && o.name.startsWith("batch")) o.geometry.dispose();
+        if (o instanceof Mesh && (o.name.startsWith("batch") || o.name === "planet")) o.geometry.dispose();
       });
       ctx.interactions.clear();
     },

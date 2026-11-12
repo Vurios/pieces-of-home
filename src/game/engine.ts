@@ -1,11 +1,13 @@
 import {
   Fog,
+  type Mesh,
   Matrix4,
   Quaternion,
   type LoadingManager,
   PCFShadowMap,
   PerspectiveCamera,
   Scene,
+  Sphere,
   SRGBColorSpace,
   type Texture,
   TextureLoader,
@@ -22,6 +24,7 @@ import { SAVE_KEY, StateStore, readStorage, writeStorage } from "./core/state";
 import { Puffs } from "./render/particles";
 import { PostPipeline } from "./render/post";
 import { Sky } from "./render/sky";
+import { behindPlanet } from "./render/kit";
 import { ToonLibrary } from "./render/toon";
 import { FollowCamera } from "./world/camera";
 import { PlayerController } from "./world/controller";
@@ -121,6 +124,8 @@ export class Engine {
       renderer.dispose();
       return null;
     }
+    // Asking the driver whether each shader compiled stalls until it has. Only worth it while building.
+    renderer.debug.checkShaderErrors = import.meta.env.DEV;
     return new Engine(renderer, options);
   }
 
@@ -273,16 +278,24 @@ export class Engine {
    * For Dad's map: the world's map, where Remi stands, which way the camera
    * looks along the ground, and the next stop. Null in a world with no map.
    */
+  /**
+   * What the maps need, read fresh each call. The corner map asks every frame, so
+   * the answer reuses the same vectors: callers copy what they keep.
+   */
   mapView(): { map: WorldMap; worldId: string; up: Vector3; facing: Vector3; heading: Vector3; objective: Vector3 | null } | null {
     const world = this.world;
     if (!world?.map) return null;
-    const up = this.player.up.clone();
-    const facing = new Vector3();
-    this.camera.getWorldDirection(facing);
-    projectOnTangent(facing, up, facing);
-    if (facing.lengthSq() < 1e-6) facing.copy(this.player.forward);
-    return { map: world.map, worldId: world.id, up, facing: facing.normalize(), heading: this.player.forward.clone(), objective: world.objective()?.clone() ?? null };
+    const v = this.mapAnswer;
+    v.up.copy(this.player.up);
+    this.camera.getWorldDirection(v.facing);
+    projectOnTangent(v.facing, v.up, v.facing);
+    if (v.facing.lengthSq() < 1e-6) v.facing.copy(this.player.forward);
+    v.facing.normalize();
+    v.heading.copy(this.player.forward);
+    const objective = world.objective();
+    return { map: world.map, worldId: world.id, up: v.up, facing: v.facing, heading: v.heading, objective: objective ? v.objective.copy(objective) : null };
   }
+  private readonly mapAnswer = { up: new Vector3(), facing: new Vector3(), heading: new Vector3(), objective: new Vector3() };
 
   /** The player's head in world space, for speech bubbles. */
   playerHead(): Vector3 {
@@ -347,6 +360,11 @@ export class Engine {
     const world = await factory(ctx);
     this.world = world;
     this.scene.add(world.root);
+    world.root.updateMatrixWorld(true);
+    this.horizon = [];
+    world.root.traverse((o) => {
+      if (o.userData["horizon"] && (o as Mesh).isMesh) this.horizon.push(o as Mesh);
+    });
 
     if (this.sky) this.sky.set(world.sky);
     else {
@@ -371,6 +389,45 @@ export class Engine {
     this.bus.emit("world:ready", { id });
   }
 
+  /** Wedges of the world that can hide behind its curve (see `Batcher.build`). */
+  private horizon: Mesh[] = [];
+  private cullSphere = new Sphere();
+
+  /** Shows only the wedges of the world that are not wholly behind the planet. */
+  private cullHorizon(world: World): void {
+    if (this.horizon.length === 0) return;
+    // A little inside the lowest ground (crater floors, the pond), so the test never hides too much.
+    const occluder = world.terrain.radius - 1.2;
+    const eye = this.camera.position;
+    for (const mesh of this.horizon) {
+      const s = this.cullSphere.copy(mesh.geometry.boundingSphere!).applyMatrix4(mesh.matrixWorld);
+      mesh.visible = !behindPlanet(eye, occluder, s.center, s.radius);
+    }
+  }
+
+  /**
+   * Starts compiling every shader the world could use, hidden things included
+   * (carried props, story pieces), so nothing compiles the first time it shows.
+   */
+  private prepareShaders(): Promise<void> {
+    const hidden: { visible: boolean }[] = [];
+    this.scene.traverse((o) => {
+      if (!o.visible) {
+        hidden.push(o);
+        o.visible = true;
+      }
+    });
+    try {
+      this.renderer.compile(this.scene, this.camera);
+    } finally {
+      for (const o of hidden) o.visible = false;
+    }
+    return this.renderer.compileAsync(this.scene, this.camera).then(
+      () => undefined,
+      () => undefined,
+    );
+  }
+
   /** True while the iris is closed and a world is loading. */
   traveling = false;
 
@@ -381,6 +438,8 @@ export class Engine {
     try {
       await this.animateIris(0, 1, 0.7);
       await this.loadWorld(id, entry);
+      // Compile the new world's shaders while the iris is still shut, so it opens smoothly.
+      await this.prepareShaders();
       await this.animateIris(1, 0, 0.8);
     } finally {
       this.traveling = false;
@@ -409,7 +468,7 @@ export class Engine {
    */
   async warm(): Promise<void> {
     try {
-      await this.renderer.compileAsync(this.scene, this.camera);
+      await this.prepareShaders();
     } catch {
       // Older drivers without parallel compile simply compile on first draw.
     }
@@ -593,6 +652,7 @@ export class Engine {
     if (titling && this.title && this.title.phase !== "leaving") this.scratch.copy(this.title.focusPoint()).project(this.camera);
     else this.scratch.copy(this.player.position).addScaledVector(up, 0.6).project(this.camera);
     this.post.focus = Math.max(0.12, Math.min(0.88, this.scratch.y * 0.5 + 0.5));
+    this.cullHorizon(world);
     const renderStart = performance.now();
     this.post.render(this.scene, this.camera, this.elapsed);
     this.renderCost = performance.now() - renderStart;
@@ -657,7 +717,7 @@ export class Engine {
         return { meshes, top: rows.slice(0, 8) };
       },
       /** Draw calls and triangles of the last frame, every pass included. */
-      stats: () => ({ calls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles }),
+      stats: () => ({ calls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, programs: this.renderer.info.programs?.length ?? 0 }),
       setQuality: (tier: QualityTier | null) => this.setQuality(tier),
       /** Sends a game event, for screenshots of moments such as the stamp. */
       emit: <K extends keyof GameEvents>(type: K, payload: GameEvents[K]) => this.bus.emit(type, payload),

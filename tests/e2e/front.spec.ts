@@ -173,3 +173,24 @@ test("the About page has the note for grown-ups and passes axe", async ({ page }
   await expect(page.getByRole("link", { name: "Read the Field Guide" })).toHaveAttribute("href", "/field-guide/");
   await axe(page, "about");
 });
+
+test("Dad's map opens from the corner, zooms, spins to a place and passes axe", async ({ page }, info) => {
+  test.skip(info.project.name === "phone", "the corner map moves to the top on touch; one size is enough");
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await page.goto("/?test&quality=low&world=tranquility");
+  await expect(stage(page)).toHaveAttribute("data-stage", "ready", { timeout: 60_000 });
+  const corner = page.getByRole("button", { name: "Open Dad's map" });
+  await expect(corner).toBeVisible({ timeout: 20_000 });
+  await corner.click();
+  const panel = page.getByRole("dialog", { name: "Tranquility Base" });
+  await expect(panel).toBeVisible();
+  await expect(panel.getByText(/of \d+ found/)).toBeVisible();
+  await panel.getByRole("button", { name: "Zoom in" }).click();
+  await panel.getByRole("button", { name: /Little mirrors/ }).click();
+  await page.waitForTimeout(600);
+  await axe(page, "map");
+  await page.keyboard.press("KeyM");
+  await expect(panel).toBeHidden();
+  expect(errors).toEqual([]);
+});

@@ -36,6 +36,8 @@ export const EN = {
   "map.findMe": "Find Remi",
   "map.next": "Next stop",
   "map.how": "Pick a place to spin the globe to it. Use + and - to zoom.",
+  "map.places": "Places",
+  "map.count": "{n} of {total} found",
   "map.zoomIn": "Zoom in",
   "map.zoomOut": "Zoom out",
   "map.more": "Some places are still a secret. Walk around to find them.",
