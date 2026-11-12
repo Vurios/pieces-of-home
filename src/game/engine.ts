@@ -30,7 +30,7 @@ import { TRIP_LOOK, TripScene } from "./render/trip";
 import { FollowCamera } from "./world/camera";
 import { PlayerController } from "./world/controller";
 import { InteractionSystem } from "./world/interaction";
-import { projectOnTangent } from "./world/sphere";
+import { headingToTangent, latLonToDir, projectOnTangent } from "./world/sphere";
 import { TitleSequence } from "./title/title";
 import { WORLDS } from "./worlds/registry";
 import type { Bookmark, World, WorldContext, WorldMap } from "./worlds/types";
@@ -934,6 +934,14 @@ export class Engine {
       /** Changes the save directly, for tests. */
       patch: (change: Partial<{ carrying: string | null; delivered: string[]; stamps: string[]; flags: string[]; miloStage: number }>) =>
         this.store.update((s) => Object.assign(s, change)),
+      /** Stands the player at a latitude and longitude, facing a compass heading (for screenshots). */
+      standAt: (lat: number, lon: number, heading = 0): boolean => {
+        if (!this.world) return false;
+        const dir = latLonToDir(lat, lon);
+        this.player.teleport(dir, headingToTangent(dir, heading), this.world);
+        this.follow.snap(this.player);
+        return true;
+      },
       /** Stands the player next to an interactable, facing it. */
       teleportTo: (id: string): boolean => {
         const target = this.interactions.positionOf(id);

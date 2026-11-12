@@ -13,7 +13,7 @@ import { WaitForTheWind } from "../../puzzles/wait-for-wind";
 import { distanceToArc } from "../shapes";
 import type { Bookmark, FrameInfo, SoundSpot, World, WorldContext } from "../types";
 import { LampBeam, type Site, arcPoints, at, buildTag, chapterRuntime, headingToward, siteOn } from "../kit/little-world";
-import { rock } from "../tranquility/machines";
+import { dressMars, facetRock } from "../kit/mars";
 import { bounceMark, buildFlagRack, buildLander, buildOutcrop, buildRover } from "./machines";
 
 /**
@@ -285,7 +285,7 @@ export function createMeridiani(ctx: WorldContext): World {
     if (clear.some((k) => angleBetween(dir, k) * MARS_RADIUS < 2.4) || trackDistance(dir) < 1.2) continue;
     const size = 0.07 + random() ** 3 * 0.45;
     const s = site(dir, random() * 360, size * 0.15);
-    rock(b, s.matrix, size, random() * 6, random() < 0.5 ? "#8E5A40" : "#7A4A36");
+    b.place(facetRock(i), random() < 0.5 ? "#8E5A40" : "#6A4236", [0, size * 0.28, 0], [random() * 0.5, random() * 6, random() * 0.5], [size, size * 0.7, size * 0.88], s.matrix);
     if (size > 0.3) colliders.push(createColliderGroup(s.matrix, [{ kind: "circle", x: 0, z: 0, radius: size * 0.8, height: size }]));
   }
   for (let i = 0; i < Math.round(420 * Math.max(0.4, quality.particles)); i += 1) {
@@ -326,7 +326,7 @@ export function createMeridiani(ctx: WorldContext): World {
       const spot = headingToTangent(dir, ledgeRandom() * 360).multiplyScalar(reach / MARS_RADIUS).add(dir).normalize();
       const size = i === 0 ? 0.36 + ledgeRandom() * 0.22 : 0.12 + ledgeRandom() * 0.18;
       const s = site(spot, ledgeRandom() * 360, size * 0.15);
-      rock(b, s.matrix, size, ledgeRandom() * 6, ledgeRandom() < 0.5 ? "#8E5A40" : "#7A4A36");
+      b.place(facetRock(i), ledgeRandom() < 0.5 ? "#8E5A40" : "#5C3B33", [0, size * 0.28, 0], [ledgeRandom() * 0.5, ledgeRandom() * 6, ledgeRandom() * 0.5], [size, size * 0.7, size * 0.88], s.matrix);
       if (size > 0.3) colliders.push(createColliderGroup(s.matrix, [{ kind: "circle", x: 0, z: 0, radius: size * 0.8, height: size }]));
     }
   }
@@ -357,6 +357,31 @@ export function createMeridiani(ctx: WorldContext): World {
   };
   const activity = new WaitForTheWind({ ctx, root, terrain, rover, roverSite, rack: rackSite, lane, sounds: devilSounds, view: sweepView });
   add(rackSite, activity.shapes.rack);
+
+  // More of the plains: crescent dunes of dark sand, broken slabs of the pale layered bedrock and a
+  // few dark boulders thrown out by old craters. No tall buttes: Meridiani is very flat.
+  dressMars({
+    b,
+    radius: MARS_RADIUS,
+    seed: 23,
+    site,
+    colliders,
+    terrain,
+    keep: clear,
+    paths: [
+      [SPOTS.landing, SPOTS.rover],
+      [SPOTS.rover, SPOTS.outcrop],
+      [SPOTS.rover, SPOTS.rack],
+      [SPOTS.landing, SPOTS.rack],
+      [SPOTS.rover, SPOTS.crater],
+      [SPOTS.landing, SPOTS.crater],
+      [SPOTS.landing, SPOTS.parcel],
+      [bounceDirs[0]!, SPOTS.crater],
+    ],
+    taken: [...ledges.map((dir) => ({ dir, room: 2.4 })), ...fields.map((dir) => ({ dir, room: 2.2 }))],
+    avoid: (dir) => trackDistance(dir) < 2.2,
+    counts: { buttes: 0, boulders: 8, balanced: 0, dunes: 11, slabs: 8 },
+  });
 
   const materials = { solid: toon.toon({ vertexColors: true, paint: 0.12 }), glow: toon.glow("#ffffff", true) };
   for (const mesh of b.build(materials, { castShadow: quality.shadowMap > 0, receiveShadow: true, sectors: SECTORS })) root.add(mesh);

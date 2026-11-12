@@ -11,7 +11,7 @@ import { ThinAir } from "../../puzzles/thin-air";
 import { distanceToArc } from "../shapes";
 import type { Bookmark, FrameInfo, SoundSpot, World, WorldContext } from "../types";
 import { LampBeam, type Site, arcPoints, at, buildTag, chapterRuntime, headingToward, siteOn } from "../kit/little-world";
-import { rock } from "../tranquility/machines";
+import { DustDevils, dressMars, facetRock } from "../kit/mars";
 import { buildAirfield, buildIngenuity, buildLaunchPad, buildLayeredRock, buildModelHelicopter, buildRotorBench, buildRoverTracks } from "./machines";
 
 /**
@@ -53,6 +53,8 @@ const SAND_DARK = new Color("#9A5E3C");
 const RIPPLE = new Color("#8E5236");
 const RIM = new Color("#A9724E");
 const TRACK_COLOR = new Color("#9E5F3E");
+/** Patches of dark, basalt sand between the paler dust. */
+const DARK_SAND = new Color("#7E4C38");
 
 function terrainSpec(): TerrainSpec {
   const random = createRandom(47);
@@ -124,6 +126,8 @@ export function createValinor(ctx: WorldContext): World {
     const grit = fbm3(dir.x * 59, dir.y * 59, dir.z * 59, 2, 17);
     out.copy(SAND_A).lerp(SAND_B, Math.max(0, Math.min(1, 0.5 + n * 1.3)));
     if (fine > 0.2) out.lerp(SAND_LIGHT, Math.min(0.4, (fine - 0.2) * 2));
+    const dark = fbm3(dir.x * 1.7 + 5.3, dir.y * 1.7, dir.z * 1.7, 3, 33);
+    if (dark > 0.14) out.lerp(DARK_SAND, Math.min(0.45, (dark - 0.14) * 2.2));
     // Long sand waves, like the ones round the real helicopter: clear rows, everywhere.
     const wave = Math.sin(dir.dot(RIPPLE_AXIS) * 120 + n * 6);
     if (wave > 0.45) out.lerp(RIPPLE, Math.min(0.5, (wave - 0.45) * 1.4));
@@ -194,7 +198,7 @@ export function createValinor(ctx: WorldContext): World {
     if (clear.some((k) => angleBetween(dir, k) * VALINOR_RADIUS < 3) || trackDistance(dir) < 1.5) continue;
     const size = 0.07 + random() ** 3 * 0.5;
     const s = site(dir, random() * 360, size * 0.15);
-    rock(b, s.matrix, size, random() * 6, random() < 0.5 ? "#8E5A40" : "#7A4A36");
+    b.place(facetRock(i), random() < 0.5 ? "#8E5A40" : "#6A4236", [0, size * 0.28, 0], [random() * 0.5, random() * 6, random() * 0.5], [size, size * 0.7, size * 0.88], s.matrix);
     if (size > 0.3) colliders.push(createColliderGroup(s.matrix, [{ kind: "circle", x: 0, z: 0, radius: size * 0.8, height: size }]));
   }
   // Little soft craters, as drawn: a pale rim and a darker bowl.
@@ -216,6 +220,33 @@ export function createValinor(ctx: WorldContext): World {
     b.place(sphere("tiny"), "#7A4A36", [(random() - 0.5) * 2.4, 0.02, 0], [0, 0, 0], 0.03 + random() * 0.03, site(p, random() * 360, 0).matrix);
   }
 
+  // More of Mars, with room round everything: buttes like the ones in the real crater, dark boulder
+  // families with sand banked behind them, crescent dunes, a balanced rock or two and broken slabs.
+  const tracksAt = TRACK[1]!.clone().lerp(TRACK[2]!, 0.12).normalize();
+  dressMars({
+    b,
+    radius: VALINOR_RADIUS,
+    seed: 7,
+    site,
+    colliders,
+    terrain,
+    keep: clear,
+    paths: [
+      [SPOTS.landing, SPOTS.ingenuity],
+      [SPOTS.ingenuity, SPOTS.bench],
+      [SPOTS.ingenuity, SPOTS.pad],
+      [SPOTS.bench, SPOTS.pad],
+      [SPOTS.ingenuity, SPOTS.airfield],
+      [SPOTS.landing, SPOTS.airfield],
+      [SPOTS.landing, SPOTS.bench],
+      [SPOTS.landing, SPOTS.parcel],
+      [SPOTS.ingenuity, tracksAt],
+    ],
+    taken: [{ dir: SPOTS.delta, room: 5.5 }],
+    avoid: (dir) => trackDistance(dir) < 1.8,
+    counts: { buttes: 6, boulders: 16, balanced: 3, dunes: 8, slabs: 6 },
+  });
+
   const materials = { solid: toon.toon({ vertexColors: true, paint: 0.12 }), glow: toon.glow("#ffffff", true) };
   for (const mesh of b.build(materials, { castShadow: quality.shadowMap > 0, receiveShadow: true, sectors: SECTORS })) root.add(mesh);
 
@@ -229,6 +260,10 @@ export function createValinor(ctx: WorldContext): World {
     ingenuity: at(ingenuitySite, 0, 0, 0.9),
     sound: buzz,
   });
+
+  // Small dust devils wander across now and then, away from the machines.
+  const devils = new DustDevils(terrain, VALINOR_RADIUS, quality.particles >= 0.6 ? 2 : 1, (dir) => clear.some((k) => angleBetween(dir, k) * VALINOR_RADIUS < 4), 13);
+  root.add(devils.points);
 
   // ---- The chapter ----
   const tracksSpot = TRACK[1]!.clone().lerp(TRACK[2]!, 0.12).normalize();
@@ -367,9 +402,12 @@ export function createValinor(ctx: WorldContext): World {
       runtime.update(dt, frame.time);
       activity.watch(frame.player.position);
       activity.update(dt, frame.reducedMotion);
+      devils.update(dt, frame.reducedMotion);
       lamp.update(frame.time, frame.reducedMotion);
     },
-    resize() {},
+    resize(height: number) {
+      devils.resize(height);
+    },
     debug: {
       ...runtime.debug,
       solve: () => {
@@ -387,6 +425,7 @@ export function createValinor(ctx: WorldContext): World {
     },
     dispose() {
       activity.dispose();
+      devils.dispose();
       lamp.dispose();
       geometry.dispose();
       root.traverse((o) => {

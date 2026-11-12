@@ -335,8 +335,12 @@ export class Character {
     put(this.torso, box(0.02), SHADE, [0, 0.2, 0.16], [0.16, 0.1, 0.06]);
     for (const [x, c] of [[-0.045, "#C8553D"], [0, "#F2A541"], [0.045, "#5E8BB0"]] as const) put(this.torso, cylinder(10), c, [x, 0.2, 0.193], [0.016, 0.01, 0.016], [Math.PI / 2, 0, 0]);
     for (const side of [-1, 1]) put(this.torso, sphere("mid"), WHITE, [side * 0.168, 0.315, 0], 0.083);
-    // The neck ring the helmet locks onto.
+    // The neck ring the helmet locks onto, with a thin ring in the kid's own colour.
     put(this.torso, torus(0.28), GREY, [0, 0.445, 0], [0.19, 0.19, 0.2], [Math.PI / 2, 0, 0]);
+    put(this.torso, torus(0.16), p.accent, [0, 0.47, 0], [0.185, 0.185, 0.16], [Math.PI / 2, 0, 0]);
+    // A round patch on the chest: a navy sky with one small star.
+    put(this.torso, cylinder(16), "#27306A", [-0.1, 0.31, 0.158], [0.036, 0.008, 0.036], [Math.PI / 2 - 0.2, 0, 0]);
+    put(this.torso, sphere("tiny"), "#F2D27A", [-0.094, 0.316, 0.166], 0.009);
 
     // Arms: white sleeves, the kid's colour stripe, puffy gloves.
     for (const [arm, elbow] of [
@@ -359,17 +363,37 @@ export class Character {
       put(knee, torus(0.3), GREY, [0, 0.0, 0], [0.074, 0.074, 0.06], [Math.PI / 2, 0, 0]);
       put(knee, sphere("mid"), SHADE, [0, -0.118, 0.022], [0.086, 0.066, 0.118]);
       put(knee, box(0.03), DARK, [0, -0.156, 0.03], [0.158, 0.04, 0.252]);
+      // A toe cap in the kid's colour.
+      put(knee, sphere("mid"), p.accent, [0, -0.128, 0.105], [0.058, 0.04, 0.042]);
     }
     // The life-support pack, with two hoses round to the chest.
     put(this.torso, box(0.06), WHITE, [0, 0.25, -0.215], [0.36, 0.4, 0.17]);
     put(this.torso, box(0.04), SHADE, [0, 0.45, -0.215], [0.32, 0.06, 0.15]);
-    put(this.torso, box(0.01), p.accent, [0, 0.3, -0.302], [0.16, 0.05, 0.01]);
+    put(this.torso, box(0.01), p.accent, [0, 0.33, -0.302], [0.12, 0.05, 0.01]);
+    // Two air tanks on the back of the pack, and a row of little status lights between them.
+    for (const side of [-1, 1]) {
+      put(this.torso, cylinder(14), SHADE, [side * 0.12, 0.25, -0.3], [0.05, 0.3, 0.05]);
+      put(this.torso, sphere("mid"), SHADE, [side * 0.12, 0.4, -0.3], [0.05, 0.026, 0.05]);
+      put(this.torso, sphere("mid"), SHADE, [side * 0.12, 0.1, -0.3], [0.05, 0.026, 0.05]);
+      put(this.torso, cylinder(12), GREY, [side * 0.12, 0.33, -0.3], [0.053, 0.014, 0.053]);
+    }
+    for (const [x, c] of [[-0.03, "#C8553D"], [0, "#F2A541"], [0.03, "#7FB069"]] as const) put(this.torso, sphere("tiny"), c, [x, 0.22, -0.305], 0.011);
+    // A short antenna on the pack.
+    put(this.torso, cylinder(6), GREY, [0.12, 0.53, -0.25], [0.007, 0.16, 0.007]);
     for (const side of [-1, 1]) put(this.torso, cylinder(8), "#7E95B0", [side * 0.15, 0.17, 0.04], [0.018, 0.34, 0.018], [1.2, 0, side * 0.35]);
     const shells = suit.flush();
     for (const mesh of shells) {
       mesh.visible = false;
       this.suitParts.push(mesh);
     }
+
+    // The antenna's tip glows softly, so friends can spot each other from far away.
+    const tip = new Mesh(sphere("low"), this.toon.glow(p.accent === "#2F3B63" ? "#F2A541" : "#FFC66E"));
+    tip.position.set(0.12, 0.62, -0.25);
+    tip.scale.setScalar(0.02);
+    tip.visible = false;
+    this.torso.add(tip);
+    this.suitParts.push(tip);
 
     // The bubble helmet: clear glass, a little blue at the edges, one painted highlight.
     const helmet = new Mesh(sphere("high"), this.toon.glass("#E4EEFF"));
