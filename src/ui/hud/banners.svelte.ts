@@ -8,6 +8,8 @@ class Banners {
   chapter = $state(false);
   /** True while the travel screen covers a trip through the Looking Lamp. */
   traveling = $state(false);
+  /** How many full-screen story screens are up (the star map, Milo's projector, the last page, the ending). */
+  screens = $state(0);
   /** True while a big card or the travel screen has the stage. */
   get busy(): boolean {
     return this.chapter || this.traveling;

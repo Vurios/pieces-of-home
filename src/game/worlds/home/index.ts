@@ -2,7 +2,7 @@ import { Color, DirectionalLight, Group, HemisphereLight, Matrix4, Mesh, PointLi
 import { Character, type KidId } from "../../actors/character";
 import { Milo } from "../../actors/milo";
 import { Mom } from "../../actors/mom";
-import { createEnvelope } from "../../actors/props";
+import { createEnvelope, createParcel } from "../../actors/props";
 import { Batcher, SECTORS, planetMeshes } from "../../render/kit";
 import { Floaters, Smoke } from "../../render/particles";
 import { type ColliderGroup, createColliderGroup } from "../../world/colliders";
@@ -13,6 +13,7 @@ import type { Bookmark, FrameInfo, MapIcon, World, WorldContext } from "../types
 import { PLACE_COPY, placeFlag } from "../../../content/places";
 import { CHAPTERS, chapterForPart } from "../../../content/chapters";
 import { STORY_COPY } from "../../../content/chapters/common";
+import { FINALE_BEGUN, FINALE_COPY, MILO_VOICE, RECORD, V1_LETTER, finaleStep } from "../../../content/finale";
 import { torus } from "../../actors/parts";
 import { C, buildDish, buildHouse, buildLampPost, buildMailbox } from "./buildings";
 import { GROUND_PATCHES, type Site, HILL, HILL_TOP, HOME_RADIUS, MAILBOX, MEADOW, ORCHARD, PATH_HALF_WIDTH, PLACES, POND, POND_RADIUS, SITES, TERRAIN, TRAILS, TRAIL_LAMPS, local, site } from "./layout";
@@ -270,12 +271,19 @@ export function createHome(ctx: WorldContext): World {
     position: new Vector3(0, 0, 0.55).applyMatrix4(mailboxMatrix),
     radius: 1.6,
     kind: "press",
-    label: () => (store.value.carrying === null && !store.value.delivered.includes(LETTER_TO_THE_LAMP) ? "Take the letter" : null),
+    label: () => {
+      const s = store.value;
+      if (s.carrying !== null) return null;
+      if (!s.delivered.includes(LETTER_TO_THE_LAMP)) return "Take the letter";
+      return finaleStep(s) === "mailbox" ? FINALE_COPY.takeLetter : null;
+    },
     onDone: () => {
+      // The first letter, or (in the Finale) Dad's last one.
+      const letter = store.value.delivered.includes(LETTER_TO_THE_LAMP) ? V1_LETTER : LETTER_TO_THE_LAMP;
       store.update((s) => {
-        s.carrying = LETTER_TO_THE_LAMP;
+        s.carrying = letter;
       });
-      bus.emit("letter:taken", { letter: LETTER_TO_THE_LAMP });
+      bus.emit("letter:taken", { letter });
     },
   });
   interactions.add({
@@ -296,10 +304,32 @@ export function createHome(ctx: WorldContext): World {
     id: "dish",
     position: local(SITES.dish, 0, 0, 1.4),
     radius: 1.8,
-    kind: "hold",
-    holdTime: 1.2,
-    label: () => "Point the dish",
-    onDone: () => undefined,
+    kind: "press",
+    // While Milo's record waits by the dish, the record has the prompt.
+    label: () => (store.value.carrying === V1_LETTER ? FINALE_COPY.aim : finaleStep(store.value) === "record-take" ? null : "Point the dish"),
+    onDone: () => {
+      if (store.value.carrying === V1_LETTER) bus.emit("finale:aim", {});
+    },
+  });
+  // Milo's record waits in the dish's little box once the last letter is sent.
+  const record = createParcel(toon);
+  const recordSpot = local(SITES.dish, 0.62, 0.08, 1.0);
+  record.position.copy(recordSpot);
+  record.quaternion.setFromRotationMatrix(SITES.dish.matrix);
+  record.visible = false;
+  root.add(record);
+  interactions.add({
+    id: "record",
+    position: recordSpot,
+    radius: 1.3,
+    kind: "press",
+    label: () => (finaleStep(store.value) === "record-take" && store.value.carrying === null ? FINALE_COPY.takeRecord : null),
+    onDone: () => {
+      store.update((s) => {
+        s.carrying = RECORD;
+      });
+      bus.emit("letter:taken", { letter: RECORD });
+    },
   });
 
   // ---- Dad's domes: look into one and the Looking Lamp takes you inside ----
@@ -335,8 +365,16 @@ export function createHome(ctx: WorldContext): World {
     position: shop.benchFront.clone().lerp(shop.miloSpot.position, 0.25),
     radius: 1.5,
     kind: "press",
-    label: () => chapterForPart(store.value.carrying)?.partPrompt ?? null,
+    label: () => (store.value.carrying === RECORD ? FINALE_COPY.giveRecord : (chapterForPart(store.value.carrying)?.partPrompt ?? null)),
     onDone: () => {
+      if (store.value.carrying === RECORD) {
+        store.update((s) => {
+          s.carrying = null;
+          s.miloStage = Math.max(s.miloStage, MILO_VOICE);
+        });
+        bus.emit("milo:stage", { stage: MILO_VOICE });
+        return;
+      }
       const chapter = chapterForPart(store.value.carrying);
       if (!chapter) return;
       store.update((s) => {
@@ -465,6 +503,23 @@ export function createHome(ctx: WorldContext): World {
     return "grass";
   };
 
+  // ---- Night, for the Finale ----
+  const DUSK = {
+    sky: { zenith: "#2E2A4F", horizon: "#E59C78", ground: "#3A3354", glow: "#F2A541", glowStrength: 0.9, clouds: 0.55, cloudColor: "#C98A93", stars: 0.55 },
+    grade: { shadows: "#3B3166", highlights: "#F6C27A", shadowAmount: 0.38, highlightAmount: 0.22, saturation: 1.06, contrast: 1.04, lift: 0.055 },
+    fog: "#C79390",
+  };
+  const NIGHT = {
+    sky: { zenith: "#0B1030", horizon: "#3A3470", ground: "#1C1A3A", glow: "#E0B34A", glowStrength: 0.22, clouds: 0.22, cloudColor: "#3A3668", stars: 1 },
+    grade: { shadows: "#1C1E52", highlights: "#FFD98A", shadowAmount: 0.5, highlightAmount: 0.24, saturation: 0.96, contrast: 1.06, lift: 0.045 },
+    fog: "#2C2A5A",
+  };
+  const ca = new Color();
+  const cb = new Color();
+  const mix = (a: string, b: string, t: number): string => `#${ca.set(a).lerp(cb.set(b), t).getHexString()}`;
+  const glowToward = new Vector3(1, 0.2, -0.4);
+  let night = store.value.flags.includes(FINALE_BEGUN) ? 1 : 0;
+
   const world: World = {
     id: "home",
     root,
@@ -499,6 +554,48 @@ export function createHome(ctx: WorldContext): World {
     dustColor: "#D8C3A0",
     // Dusk haze on the far curve. Starts past the play area so nearby color stays clean.
     fog: { color: "#C79390", near: -3, far: 22 },
+    liveSky() {
+      if (night <= 0) return null;
+      const d = DUSK.sky;
+      const n = NIGHT.sky;
+      const lerp = (a: number, b: number): number => a + (b - a) * night;
+      return {
+        zenith: mix(d.zenith, n.zenith, night),
+        horizon: mix(d.horizon, n.horizon, night),
+        ground: mix(d.ground, n.ground, night),
+        glow: mix(d.glow, n.glow, night),
+        glowDirection: glowToward,
+        glowStrength: lerp(d.glowStrength, n.glowStrength),
+        clouds: lerp(d.clouds, n.clouds),
+        cloudColor: mix(d.cloudColor, n.cloudColor, night),
+        stars: lerp(d.stars, n.stars),
+      };
+    },
+    liveLook() {
+      if (night <= 0) return null;
+      const d = DUSK.grade;
+      const n = NIGHT.grade;
+      const lerp = (a: number, b: number): number => a + (b - a) * night;
+      if (world.fog) world.fog.color = mix(DUSK.fog, NIGHT.fog, night);
+      return {
+        grade: {
+          shadows: mix(d.shadows, n.shadows, night),
+          highlights: mix(d.highlights, n.highlights, night),
+          shadowAmount: lerp(d.shadowAmount, n.shadowAmount),
+          highlightAmount: lerp(d.highlightAmount, n.highlightAmount),
+          saturation: lerp(d.saturation, n.saturation),
+          contrast: lerp(d.contrast, n.contrast),
+          lift: lerp(d.lift, n.lift),
+        },
+        ink: "#2B2622",
+        inkStrength: 0.85,
+        inkWidth: 1.25,
+        inkFade: [26, 60],
+        grain: 0.055,
+        vignette: 0.55 + 0.1 * night,
+        lamp: "#F2A541",
+      };
+    },
     spawn: { dir: spawnDir, forward: spawnForward },
     // Back from a dome: standing at the workbench, facing it.
     entries: { bench: { dir: inShed(0.9, -0.55), forward: shedForward } },
@@ -601,6 +698,22 @@ export function createHome(ctx: WorldContext): World {
     objective() {
       const s = store.value;
       if (s.carrying === LETTER_TO_THE_LAMP) return shop.lampSpot;
+      switch (finaleStep(s)) {
+        case "mailbox":
+          return new Vector3(0, 0, 0.55).applyMatrix4(mailboxMatrix);
+        case "dish":
+          return local(SITES.dish, 0, 0, 1.4);
+        case "record-take":
+          return recordSpot;
+        case "record-give":
+          return shop.miloSpot.position;
+        case "listen":
+        case "page":
+        case "ending":
+          return null;
+        default:
+          break;
+      }
       if (!s.delivered.includes(LETTER_TO_THE_LAMP)) return new Vector3(0, 0, 0.55).applyMatrix4(mailboxMatrix);
       if (chapterForPart(s.carrying)) return shop.miloSpot.position;
       if (!s.flags.includes("seen-notebook")) return null;
@@ -650,7 +763,15 @@ export function createHome(ctx: WorldContext): World {
         if (camShell < 0) cameraColliders.push(shedShell);
       }
 
-      waitingLetter.visible = store.value.carrying === null && !store.value.delivered.includes(LETTER_TO_THE_LAMP);
+      const step = finaleStep(store.value);
+      waitingLetter.visible = store.value.carrying === null && (!store.value.delivered.includes(LETTER_TO_THE_LAMP) || step === "mailbox");
+      record.visible = step === "record-take";
+      // Night comes for the Finale, over a few seconds, and stays.
+      const nightTarget = store.value.flags.includes(FINALE_BEGUN) ? 1 : 0;
+      night += (nightTarget - night) * damp(frame.reducedMotion ? 20 : 0.45, dt);
+      if (Math.abs(night - nightTarget) < 0.002) night = nightTarget;
+      sun.intensity = 1.7 * (1 - 0.5 * night);
+      fill.intensity = 1.8 * (1 - 0.35 * night);
       // Earned domes glow; the next one breathes softly to say "here".
       const nextChapter = opened() ? CHAPTERS.find((c) => !store.value.stamps.includes(c.id)) : undefined;
       domeGlows.forEach((ring, i) => {

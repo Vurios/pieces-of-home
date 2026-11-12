@@ -98,6 +98,22 @@
     </ul>
   </section>
 
+  <section aria-labelledby="cr-data">
+    <h3 id="cr-data" class="eyebrow">{t("credits.data")}</h3>
+    <ul class="grid">
+      {#each credits.data as d (d.name)}
+        <li>
+          <span class="what">{d.name}</span>
+          <span class="who">{d.by}. {d.use}</span>
+          <span class="meta">
+            <span class="license">{d.license}</span>
+            <a href={d.sourceUrl} target="_blank" rel="noopener noreferrer">{host(d.sourceUrl)} <Icon name="external" size={13} /></a>
+          </span>
+        </li>
+      {/each}
+    </ul>
+  </section>
+
   <section aria-labelledby="cr-code">
     <h3 id="cr-code" class="eyebrow">{t("credits.code")}</h3>
     <ul class="grid">

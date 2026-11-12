@@ -2,6 +2,28 @@ import { ACTIVITIES } from "../../content/chapters/activities";
 import { CHAPTERS, type ChapterDef, type Line, type Speaker, arrivedFlag, chapterForWorld, partId } from "../../content/chapters";
 import { STORY_COPY } from "../../content/chapters/common";
 import { fact } from "../../content/facts";
+import {
+  AIM_START,
+  ENDING,
+  FINALE,
+  FINALE_AIMED,
+  FINALE_BEGINS,
+  FINALE_BEGUN,
+  FINALE_ENDED,
+  FINALE_HEARD,
+  FINALE_PAGE,
+  LAST_PAGE,
+  LETTER_TAKEN,
+  MESSAGES,
+  MILO_VOICE,
+  RECORD_FITTED,
+  SENT,
+  STAMP,
+  V1_LETTER,
+  finaleOpen,
+  finaleStep,
+} from "../../content/finale";
+import { factText } from "../../content/notebook";
 import type { GameState } from "../../game/core/state";
 import type { Engine } from "../../game/engine";
 import { audio } from "../../audio/audio";
@@ -38,11 +60,18 @@ export class StoryDirector {
         if (this.waiting.size === 0) engine.interactions.blocked = false;
         done?.();
       }),
-      bus.on("world:ready", ({ id }) => this.arrive(id)),
+      bus.on("world:ready", ({ id }) => {
+        void this.arrive(id);
+        if (id === "home") void this.resumeFinale();
+      }),
+      bus.on("finale:aim", () => void this.aim()),
+      // A save that opens in the Finale picks it up once play begins.
+      bus.on("title:done", () => void this.resumeFinale()),
       bus.on("letter:delivered", ({ letter }) => this.delivered(letter)),
       bus.on("letter:taken", ({ letter }) => {
         const chapter = CHAPTERS.find((c) => partId(c) === letter);
         if (chapter) this.toast(STORY_COPY.partTaken);
+        if (letter === V1_LETTER) void this.play(LETTER_TAKEN);
       }),
       bus.on("activity:beat", ({ id, beat }) => {
         const line = ACTIVITIES[id]?.beats[beat];
@@ -56,8 +85,13 @@ export class StoryDirector {
       bus.on("milo:stage", ({ stage }) => {
         const chapter = CHAPTERS.find((c) => c.milo === stage);
         if (chapter) void this.fitted(chapter);
+        else if (stage === MILO_VOICE) void this.play(RECORD_FITTED).then(() => this.resumeFinale());
       }),
     );
+    // Already playing (a reload, or a test that skips the title): pick the Finale up now.
+    window.setTimeout(() => {
+      if (engine.mode === "play") void this.resumeFinale();
+    }, 1200);
   }
 
   /** True while a script is playing. */
@@ -86,7 +120,7 @@ export class StoryDirector {
       const at = anchor ?? (line.who === "remi" ? this.engine.playerHead() : null);
       this.engine.bus.emit("say", {
         speaker: line.who,
-        name: NAMES[line.who],
+        name: line.name ?? NAMES[line.who],
         text: line.say,
         at: at ? [at.x, at.y, at.z] : null,
         ...(line.voice ? { line: line.voice } : {}),
@@ -120,7 +154,8 @@ export class StoryDirector {
       return;
     }
     if ("note" in line) return this.card("note", line.note);
-    return this.card("fact", fact(line.fact).kid, line.fact);
+    // Date-aware facts (Voyager 1's light-day) read the same as in the notebook.
+    return this.card("fact", factText(fact(line.fact)), line.fact);
   }
 
   private card(kind: "note" | "fact", text: string, id?: string): Promise<void> {
@@ -180,6 +215,75 @@ export class StoryDirector {
     });
     await sleep(3400);
     this.toast(STORY_COPY.saved);
+    if (finaleOpen(this.engine.store.value)) void this.resumeFinale();
+  }
+
+  // ---- Finale: The Long Light ----
+
+  private finaleBusy = false;
+
+  /**
+   * Moves the Finale on from wherever the save stands: night and the mailbox
+   * flag, then (after Milo's record) the messages, the last page, the stamp
+   * and the ending. Safe to call again: it only plays what is still to come.
+   */
+  private async resumeFinale(): Promise<void> {
+    if (this.finaleBusy) return;
+    const state = (): GameState => this.engine.store.value;
+    if (!finaleOpen(state()) || this.engine.world?.id !== "home") return;
+    this.finaleBusy = true;
+    try {
+      if (!state().flags.includes(FINALE_BEGUN)) {
+        this.flag(FINALE_BEGUN);
+        this.engine.bus.emit("story:banner", { label: "Finale", name: "The Long Light" });
+        await this.play(FINALE_BEGINS);
+      }
+      if (finaleStep(state()) === "listen") {
+        await this.play(MESSAGES);
+        this.flag(FINALE_HEARD);
+      }
+      if (finaleStep(state()) === "page") {
+        await this.play(LAST_PAGE);
+        this.flag(FINALE_PAGE);
+        this.engine.bus.emit("stamp", { id: FINALE, lines: STAMP });
+        this.update((d) => {
+          if (!d.stamps.includes(FINALE)) d.stamps.push(FINALE);
+        });
+        await sleep(3400);
+        this.toast(STORY_COPY.saved);
+      }
+      if (finaleStep(state()) === "ending") {
+        await this.play(ENDING);
+        this.flag(FINALE_ENDED);
+      }
+    } finally {
+      this.finaleBusy = false;
+    }
+  }
+
+  /** The dish is aimed: find Voyager 1, send the letter, and the facts that go with it. */
+  private aiming = false;
+  private async aim(): Promise<void> {
+    if (this.aiming || this.engine.store.value.carrying !== V1_LETTER) return;
+    this.aiming = true;
+    try {
+      await this.play([...AIM_START, { game: "dish" }]);
+    } finally {
+      this.aiming = false;
+    }
+    this.update((d) => {
+      d.carrying = null;
+      if (!d.delivered.includes(V1_LETTER)) d.delivered.push(V1_LETTER);
+      if (!d.flags.includes(FINALE_AIMED)) d.flags.push(FINALE_AIMED);
+    });
+    this.engine.bus.emit("letter:delivered", { letter: V1_LETTER, to: "dish" });
+    await this.play(SENT);
+  }
+
+  private flag(id: string): void {
+    this.update((d) => {
+      if (!d.flags.includes(id)) d.flags.push(id);
+    });
   }
 
   dispose(): void {

@@ -31,6 +31,9 @@
   import Seismograph from "./story/Seismograph.svelte";
   import StoryCards from "./story/StoryCards.svelte";
   import StoryGames from "./story/StoryGames.svelte";
+  import DishGame from "./story/DishGame.svelte";
+  import FinaleGames from "./story/FinaleGames.svelte";
+  import { V1_LETTER } from "../content/finale";
   import ActivityMeter from "./story/ActivityMeter.svelte";
   import { settings, t } from "./settings.svelte";
   import Menu from "./title/Menu.svelte";
@@ -128,7 +131,8 @@
       }),
       // Dad's dish on the hill: it turns, the radio hisses, a few faint blips come in.
       engine.bus.on("interact:done", ({ id }) => {
-        if (id !== "dish") return;
+        // With Dad's last letter in hand, the dish opens the star map instead (Finale).
+        if (id !== "dish" || engine.store.value.carrying === V1_LETTER) return;
         const at = engine.world?.anchor("dish") ?? null;
         audio.play("dish-servo", { at });
         window.setTimeout(() => {
@@ -271,6 +275,8 @@
 <Speech {engine} />
 <StoryCards {engine} />
 <StoryGames {engine} />
+<DishGame {engine} />
+<FinaleGames {engine} />
 <ActivityMeter {engine} />
 <Seismograph {engine} {game} />
 {#if trip}

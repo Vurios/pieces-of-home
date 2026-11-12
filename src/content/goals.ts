@@ -1,6 +1,7 @@
 import type { InputDevice } from "../game/core/events";
 import type { GameState } from "../game/core/state";
 import { CHAPTERS, type ChapterDef, chapterForPart, chapterForWorld, chapterStep } from "./chapters";
+import { FINALE_COPY, FINALE_TITLE, finaleStep } from "./finale";
 import { PLACE_IDS, placesFound } from "./places";
 
 /**
@@ -13,7 +14,7 @@ import { PLACE_IDS, placesFound } from "./places";
 export const LETTER_TO_THE_LAMP = "to-the-lamp";
 export const SEEN_NOTEBOOK = "seen-notebook";
 
-export type GoalId = "mailbox" | "lamp" | "notebook" | "explore" | "dome" | "arrive" | "letter" | "activity" | "part" | "home";
+export type GoalId = "mailbox" | "lamp" | "notebook" | "explore" | "dome" | "arrive" | "letter" | "activity" | "part" | "home" | "finale";
 
 export interface Goal {
   id: GoalId;
@@ -69,6 +70,17 @@ function chapterGoal(chapter: ChapterDef, state: Readonly<GameState>): Goal {
   }
 }
 
+/** The Finale's goal card, or null while it is still closed. Five steps, like a chapter. */
+function finaleGoal(state: Readonly<GameState>): Goal | null {
+  const step = finaleStep(state);
+  if (step === "closed") return null;
+  const g = FINALE_COPY.goals;
+  const copy = { mailbox: g.mailbox, dish: g.dish, "record-take": g.recordTake, "record-give": g.recordGive, listen: g.listen, page: g.page, ending: g.ending, museum: g.museum }[step];
+  const number = { mailbox: 1, dish: 2, "record-take": 3, "record-give": 4, listen: 5, page: 5, ending: 5, museum: 5 }[step];
+  // Once the museum is open every box is ticked, like exploring Home.
+  return { id: step === "museum" ? "explore" : "finale", chapter: FINALE_TITLE, steps: 5, step: number, title: copy.title, detail: copy.detail, hint: copy.hint };
+}
+
 export function goalFor(state: Readonly<GameState>, device: InputDevice): Goal {
   const here = chapterForWorld(state.world);
   if (here) return chapterGoal(here, state);
@@ -77,6 +89,8 @@ export function goalFor(state: Readonly<GameState>, device: InputDevice): Goal {
   // Back home with Milo's part fitted: the memory plays before the stamp.
   const remembering = CHAPTERS.find((c) => chapterStep(c, state).kind === "memory");
   if (remembering) return chapterGoal(remembering, state);
+  const finale = finaleGoal(state);
+  if (finale) return finale;
   const base = { chapter: PROLOGUE.chapter, steps: 3 };
   if (state.carrying === LETTER_TO_THE_LAMP) {
     return {

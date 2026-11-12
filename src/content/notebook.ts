@@ -1,5 +1,6 @@
 import imageData from "../data/images.json";
 import { type FactEntry, fact } from "./facts";
+import { hoursAndMinutes, voyagerOn } from "./voyager";
 
 /**
  * Dad's notebook: one spread per machine. The same data feeds the in-game
@@ -144,9 +145,9 @@ export const SPREADS: MachineSpread[] = [
     world: "Space",
     drawing: "voyager",
     forWhat: "Carrying a message from Earth, farther away than any other machine.",
-    learned: [fact("v1-light-day"), fact("golden-record")],
+    learned: [fact("v1-launch"), fact("v1-interstellar"), fact("v1-light-day"), fact("golden-record")],
     thenNow: [],
-    deeper: [fact("v2-light-day")],
+    deeper: [fact("v1-light-time"), fact("v1-sky-place"), fact("v2-light-day")],
     dadNote: "I couldn't know every question you would ask. I just wanted to leave you a little company while you found the answers.",
     images: pics("voyager"),
     completeWhen: { stamp: "finale" },
@@ -160,7 +161,8 @@ export function factText(entry: FactEntry, today = new Date()): string {
     const when = new Date(`${entry.date}T10:16:07Z`);
     const day = formatDate(entry.date);
     if (today < when) return `On ${day}, Voyager 1 becomes the first human-made object one light-day from Earth: its signals will take a whole day to reach us.`;
-    return `On ${day}, Voyager 1 became the first human-made object one light-day from Earth. Its signals now take more than a day to reach us.`;
+    // After the milestone, today's light time from the JPL Horizons table (fact v1-light-time).
+    return `On ${day}, Voyager 1 became the first human-made object one light-day from Earth. Today its signals take about ${hoursAndMinutes(voyagerOn(today).lightMinutes)} to reach us.`;
   }
   return entry.kid;
 }

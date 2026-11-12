@@ -6,7 +6,7 @@ There is no deadline. The full scope in the Game Bible gets built: P0, then P1, 
 - **Repo:** https://github.com/Vurios/pieces-of-home (public). No CI: the team asked for straight pushes to `main`. Run typecheck, tests and e2e locally before pushing.
 - **Team rule for this run:** the agent asks the team before starting each next phase prompt.
 
-**Now:** Phase 05 in progress. Chapters 1 (Tranquility Base) and 3 (Meridiani Planum) are playable from the dome to the stamp, each with a full playthrough test. Chapter 3 adds Wait for the Wind (breeze flags steer dust devils over the panels), three story games, the long storm and the real Mars wind (DECISIONS #52). Dad's map is in: a corner map and a globe to spin on every world (#53). Front-end polish from team review (#54). A word-aware murmur for speech (#55), the corner map as a gliding compass and a calmer globe (#56), smoother frames from horizon culling and early shader compiles (#57), a foldable mission note and a travel screen between worlds (#58). Phase 06 waits until Phase 05 is complete. **Next up:** the Finale, then Chapters 2 and 4, then P2.
+**Now:** Phase 05 in progress. Chapters 1 (Tranquility Base) and 3 (Meridiani Planum) and the Finale (The Long Light, #59) are playable end to end, each with a full playthrough test. Chapter 3 adds Wait for the Wind (breeze flags steer dust devils over the panels), three story games, the long storm and the real Mars wind (DECISIONS #52). Dad's map is in: a corner map and a globe to spin on every world (#53). Front-end polish from team review (#54). A word-aware murmur for speech (#55), the corner map as a gliding compass and a calmer globe (#56), smoother frames from horizon culling and early shader compiles (#57), a foldable mission note and a travel screen between worlds (#58). Phase 06 waits until Phase 05 is complete. **Next up:** Chapter 2 (Hadley) and Chapter 4 (Valinor), then P2, the writing pass and the remaining checklist items, then Phase 06. Ask the team before starting Phase 07.
 
 ## State summary (2026-11-11)
 
@@ -148,7 +148,7 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 
 - [x] Verify every fact (subagent), fill `checkedOn` and `deeper` (54 of 56 checked; `opp-quote-myth` and `sur3-microbe` stay out of the game, DECISIONS #50)
 - [x] Content system (`src/content/chapters/`, story director, cards, hints, `chapterStep`)
-- [ ] Real images and data (NASA images, Horizons table for Voyager 1)
+- [x] Real images and data: eight NASA notebook images with full credits (`scripts/fetch-nasa-images.ts` checks or rebuilds them), Voyager 1 from JPL Horizons (`scripts/fetch-horizons.ts`), bright stars from NASA HEASARC (`scripts/fetch-stars.ts`)
 - [ ] Prologue: The Workshop (P0)
 - [x] Chapter 1: Tranquility Base (P0): world, three letters, seismograph, Send a Light, Milo's eyes, memory, stamp; `tests/e2e/chapters.spec.ts`; screens in `docs/screens/phase05/` (`npx tsx scripts/screens-chapters.ts`)
 - [x] Chapter 3: Meridiani Planum (P0): world, three letters, blueberry grinder, Wait for the Wind, the long storm, last report and calls, Milo's solar heart; playthrough in `tests/e2e/chapters.spec.ts`
@@ -157,7 +157,7 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Map design pass: compass corner map that glides with Remi, globe controls and compass, e2e test (#56)
 - [x] Performance pass: horizon culling (about 45% fewer triangles), shaders compiled before they show, panel exit motion (#57)
 - [x] Foldable mission note (J) and a travel screen for every trip through the Looking Lamp (#58)
-- [ ] Finale: The Long Light (P0)
+- [x] Finale: The Long Light (P0): night on Home, Dad's last letter, the star map with live Voyager 1 data, Milo's record and Dad's saved messages, the projector, the last page, the stamp, the ending and credits, museum free roam; playthrough in `tests/e2e/chapters.spec.ts` (#59)
 - [ ] Chapter 2: Hadley-Apennine (P1)
 - [ ] Chapter 4: Valinor Hills (P1)
 - [ ] Archive cards and the Surveyor 3 bonus chapter (P2)

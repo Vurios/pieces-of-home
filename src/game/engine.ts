@@ -435,6 +435,8 @@ export class Engine {
 
   /** True while the iris is closed and a world is loading. */
   traveling = false;
+  /** How many full-screen story screens (the star map, the last page) are up. The player stands still under them. */
+  holdStill = 0;
 
   /** Closes the Looking Lamp iris, swaps worlds, and opens it again. */
   async travel(id: string, entry?: string): Promise<void> {
@@ -552,13 +554,17 @@ export class Engine {
     const input = this.input.read();
     const shot = this.bookmark;
     const titling = this.mode === "title" && this.title !== null;
-    if (shot || titling || this.paused || this.traveling) {
+    if (shot || titling || this.paused || this.traveling || this.holdStill > 0) {
       // Screenshot mode: nobody moves.
       input.moveX = 0;
       input.moveY = 0;
       input.jumpPressed = false;
       input.lookX = 0;
       input.lookY = 0;
+      if (this.holdStill > 0) {
+        input.interactPressed = false;
+        input.interactHeld = false;
+      }
     }
 
     // Movement is relative to the camera's flattened heading.

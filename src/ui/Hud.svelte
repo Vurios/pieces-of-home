@@ -141,7 +141,7 @@
       {:else}
         <kbd class="cap">{keyName}</kbd>
       {/if}
-      <span class="text">{prompt.kind === "hold" ? `${t("hud.hold")} ${prompt.label.toLowerCase()}` : prompt.label}</span>
+      <span class="text">{prompt.kind === "hold" ? `${t("hud.hold")} ${prompt.label.charAt(0).toLowerCase()}${prompt.label.slice(1)}` : prompt.label}</span>
       {#if prompt.kind === "hold"}
         <span class="meter" aria-hidden="true"><span style:width={`${Math.round(prompt.progress * 100)}%`}></span></span>
       {/if}

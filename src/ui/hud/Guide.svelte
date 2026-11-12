@@ -43,7 +43,7 @@
    * comes (a prompt is up, the letter is delivered); the rest go in order.
    */
   const tipId = $derived.by((): TipId | null => {
-    if (!settings.value.tips || hidden || showChapter) return null;
+    if (!settings.value.tips || hidden || showChapter || banners.screens > 0) return null;
     if (prompt && !done.has("use")) return "use";
     if (goal.id === "notebook" && !done.has("notebook")) return "notebook";
     for (const id of ["move", "look", "arrow"] as const) {
@@ -150,6 +150,20 @@
       banners.chapter = false;
     };
   });
+
+  // A chapter card asked for by the story ("Finale / The Long Light").
+  $effect(() =>
+    engine.bus.on("story:banner", ({ label, name }) => {
+      if (shot) return;
+      banner = { label, name };
+      showChapter = true;
+      banners.chapter = true;
+      window.setTimeout(() => {
+        showChapter = false;
+        window.setTimeout(() => (banners.chapter = false), 600);
+      }, settings.reducedMotion ? 2000 : 3000);
+    }),
+  );
 
   // When a goal is finished, the card shows a check for a moment before the next goal.
   const ORDER: Goal["id"][] = ["mailbox", "lamp", "notebook", "explore"];

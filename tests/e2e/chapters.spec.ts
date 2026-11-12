@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { type Page, expect, test } from "@playwright/test";
 
 /**
@@ -136,16 +137,14 @@ test("Chapter 1: from the dome to the stamp", async ({ page }, info) => {
   await playUntil(page, (s) => s.carrying === "a11-letter-descent");
 
   // Three letters, each with its story beat.
-  for (const [target, next] of [
-    ["descent", "a11-letter-seismometer"],
-    ["seismometer", "a11-letter-mirrors"],
+  for (const [target, letter, next] of [
+    ["descent", "a11-letter-descent", "a11-letter-seismometer"],
+    ["seismometer", "a11-letter-seismometer", "a11-letter-mirrors"],
   ] as const) {
-    await goTo(page, `letter-${target}`);
-    await use(page);
+    await useUntil(page, `letter-${target}`, (s) => s.delivered.includes(letter));
     await playUntil(page, (s) => s.carrying === next);
   }
-  await goTo(page, "letter-lrrr");
-  await use(page);
+  await useUntil(page, "letter-lrrr", (s) => s.delivered.includes("a11-letter-mirrors"));
   await playUntil(page, (s) => s.flags.includes("send-a-light:started"));
 
   // Send a Light: two more mirrors, a turn of the frame, then one blink from Earth.
@@ -256,5 +255,103 @@ test("Chapter 3: from the dome to the stamp", async ({ page }, info) => {
   await playUntil(page, (s) => s.stamps.includes("chapter-3"), 60_000);
   const after = await state(page);
   expect(after.miloStage).toBe(3);
+  expect(errors).toEqual([]);
+});
+
+const AFTER_CHAPTER_3 = {
+  version: 1,
+  world: "home",
+  miloStage: 3,
+  carrying: null,
+  delivered: ["to-the-lamp", "a11-letter-descent", "a11-letter-seismometer", "a11-letter-mirrors", "opp-letter-bounce", "opp-letter-grinder", "opp-letter-panels"],
+  stamps: ["prologue", "chapter-1", "chapter-3"],
+  flags: ["seen-notebook"],
+};
+
+/** Clicks story cards until `ready` finds something on the page. */
+async function cardsUntil(page: Page, selector: string, timeout = 90_000): Promise<void> {
+  const end = Date.now() + timeout;
+  while (Date.now() < end) {
+    if (await page.locator(selector).count()) return;
+    const got = page.locator(".card .got");
+    if (await got.count()) {
+      await page.waitForTimeout(400);
+      await got.click({ timeout: 2_000 }).catch(() => undefined);
+    }
+    await page.waitForTimeout(250);
+  }
+  throw new Error(`no ${selector}; state ${JSON.stringify(await state(page))}`);
+}
+
+test("Finale: from the mailbox to the museum", async ({ page }, info) => {
+  test.skip(info.project.name === "phone", "one full playthrough on desktop is enough");
+  test.setTimeout(480_000);
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+  await page.addInitScript((save) => {
+    if (!sessionStorage.getItem("seeded")) {
+      localStorage.setItem("poh.save.v1", JSON.stringify(save));
+      sessionStorage.setItem("seeded", "1");
+    }
+  }, AFTER_CHAPTER_3);
+  await page.goto("/?test&quality=low");
+  await expect(page.locator("html")).toHaveAttribute("data-stage", "ready", { timeout: 60_000 });
+
+  // Night falls and the mailbox flag goes up: Dad's last letter.
+  await playUntil(page, (s) => s.flags.includes("finale:begun"), 60_000);
+  await useUntil(page, "mailbox", (s) => s.carrying === "v1-letter");
+
+  // The dish and Dad's star map: turn toward Voyager 1's real spot tonight, lock on, send.
+  await playUntil(page, () => true);
+  await page.waitForTimeout(1500);
+  await goTo(page, "dish");
+  await use(page);
+  await cardsUntil(page, ".dish svg.map");
+  // Let the map settle after it drops in before measuring it.
+  await page.waitForTimeout(1200);
+  // Tonight's row of the Horizons table (the map's lock-on circle is far wider than a day's drift).
+  const rows = (JSON.parse(readFileSync("src/data/voyager1.json", "utf8")) as { rows: { date: string; ra: number; dec: number }[] }).rows;
+  const today = new Date().toISOString().slice(0, 10);
+  const v = rows.find((r) => r.date === today) ?? (today < rows[0]!.date ? rows[0]! : rows[rows.length - 1]!);
+  const box = (await page.locator(".dish svg.map").boundingBox())!;
+  const K = 720 / 64;
+  const x = 360 - (v.ra - 259) * Math.cos((9 * Math.PI) / 180) * K;
+  const y = 220 - (v.dec - 9) * K;
+  await page.mouse.click(box.x + (x / 720) * box.width, box.y + (y / 440) * box.height);
+  await page.getByRole("button", { name: /Send Dad's letter/ }).click({ timeout: 60_000 });
+  await expect(page.locator(".dish .sent")).toContainText(/would take about \d+ hours/, { timeout: 30_000 });
+  await page.locator(".dish .sent .btn").click();
+  await playUntil(page, (s) => s.delivered.includes("v1-letter"), 30_000);
+
+  // Milo's record, from the dish's little box to Milo.
+  await useUntil(page, "record", (s) => s.carrying === "part:finale", 120_000);
+  await useUntil(page, "milo", (s) => s.miloStage === 5);
+
+  // Dad's saved messages, then Milo's projector.
+  await cardsUntil(page, ".show", 120_000);
+  for (let i = 0; i < 20 && (await page.locator(".show").count()); i++) {
+    await page.locator(".show .btn").click({ timeout: 2_000 }).catch(() => undefined);
+    await page.waitForTimeout(500);
+  }
+
+  // The last page: a sticker and a name from word chips.
+  await cardsUntil(page, ".page", 60_000);
+  await page.locator(".page .sticker").first().click();
+  await page.getByRole("radio", { name: "The Bright" }).click();
+  await page.getByRole("radio", { name: "Comet Trip" }).click();
+  await expect(page.locator(".page .name")).toHaveText("The Bright Comet Trip");
+  await page.getByRole("button", { name: "Done" }).click();
+  await playUntil(page, (s) => s.stamps.includes("finale"), 60_000);
+
+  // The ending, the credits, and the museum.
+  await cardsUntil(page, ".ending", 60_000);
+  await page.getByRole("button", { name: /Credits/ }).click();
+  await expect(page.locator(".ending .roll")).toContainText("JPL");
+  await page.getByRole("button", { name: /Keep exploring/ }).click();
+  await playUntil(page, (s) => s.flags.includes("finale:ended"), 30_000);
+  const end = await state(page);
+  expect(end.miloStage).toBe(5);
+  expect(end.world).toBe("home");
   expect(errors).toEqual([]);
 });

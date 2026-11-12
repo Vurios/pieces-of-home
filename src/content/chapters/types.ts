@@ -13,7 +13,7 @@ export type Speaker = "remi" | "nori" | "lumi" | "theo" | "mom" | "dad" | "milo"
 
 export type Line =
   /** Someone says something. `at` is an anchor id in the world for the bubble (default: the player). */
-  | { say: string; who: Speaker; at?: string; voice?: string }
+  | { say: string; who: Speaker; at?: string; voice?: string; name?: string }
   /** Dad's handwritten margin note, on a card of his paper. */
   | { note: string }
   /** A fact card: the fact's kid wording, from facts.json. */

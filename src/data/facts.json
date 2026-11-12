@@ -520,6 +520,30 @@
       "note": "Source: \"selected for NASA by a committee chaired by Carl Sagan of Cornell University\"; \"assembled 115 images\"; \"spoken greetings from Earth-people in fifty-five languages\". 12-inch gold-plated copper disk: NASA Science Golden Record Overview, https://science.nasa.gov/mission/voyager/voyager-golden-record-overview/ . Note: NASA Night Sky Notes (Nov. 2026) says 116 images and a 1977 NASA release says 60 languages; use 55 and 115 as NASA's current Golden Record pages do."
     },
     {
+      "id": "v1-light-time",
+      "kid": "Today, light from Earth takes more than a whole day to reach Voyager 1.",
+      "deeper": "The game reads Voyager 1's distance for today from a table made with NASA JPL's Horizons system, one row a day from November 2026 to the end of 2028.",
+      "value": "One-way light time from Earth to Voyager 1, daily from 2026-11-01 to 2028-12-31 (src/data/voyager1.json); 1440.0 minutes at 2026-11-18 10:16:07 UTC",
+      "date": null,
+      "sourceTitle": "NASA JPL Horizons System: Voyager 1 (target -31) as seen from Earth",
+      "sourceUrl": "https://ssd.jpl.nasa.gov/horizons/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Fetched with scripts/fetch-horizons.ts (quantities 1, 20 and 21, observer 500@399). Cross-check: interpolated light time at NASA's light-day moment is 1440 minutes, and the distance matches NASA's 25,902,068,356 km within 0.1 percent (tests/unit/voyager.test.ts)."
+    },
+    {
+      "id": "v1-sky-place",
+      "kid": "Dad's map shows the real stars, and the real spot where Voyager 1 is tonight.",
+      "deeper": "Dad's star map uses real star positions from the Yale Bright Star Catalog and Voyager 1's place for tonight from NASA JPL's Horizons system.",
+      "value": "Right ascension and declination from JPL Horizons (quantity 1, ICRF); star positions from the Yale Bright Star Catalog, 5th revised edition, at NASA HEASARC",
+      "date": null,
+      "sourceTitle": "NASA JPL Horizons System: Voyager 1 (target -31) as seen from Earth",
+      "sourceUrl": "https://ssd.jpl.nasa.gov/horizons/",
+      "status": "checked",
+      "checkedOn": "2026-11-12",
+      "note": "Voyager 1's place for the current date is read from src/data/voyager1.json (scripts/fetch-horizons.ts). Stars brighter than magnitude 4.6 round that patch of sky: https://heasarc.gsfc.nasa.gov/W3Browse/star-catalog/bsc5p.html, fetched with scripts/fetch-stars.ts. The game makes no claim about how bright Voyager 1 looks."
+    },
+    {
       "id": "sur3-visit",
       "kid": "Surveyor 3 is the only robot probe people have visited on another world. Apollo 12 landed within walking distance.",
       "deeper": "",

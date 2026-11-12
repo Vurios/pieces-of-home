@@ -13,6 +13,7 @@ NASA is credited as a source of images, models and data. NASA does not sponsor o
 | Notebook photo `images/nasa/apollo11-lrrr.jpg`: Astronaut Edwin Aldrin after deployment of EASEP on surface of moon (AS11-40-5948), resized | NASA | Public domain (NASA media) | https://images.nasa.gov/details/as11-40-5948 |
 | Notebook photo `images/nasa/apollo11-lroc.jpg`: A Stark Beauty All Its Own (LROC M175124932R), resized | NASA/GSFC/Arizona State University | Public domain (NASA media) | https://www.lroc.asu.edu/images/484 |
 | Notebook photo `images/nasa/apollo15-lrv.jpg`: Astronaut David Scott on slope of Hadley Delta during Apollo 15 EVA (AS15-85-11451), resized | NASA | Public domain (NASA media) | https://images.nasa.gov/details/as15-85-11451 |
+| Notebook photo and Dad's map card `images/nasa/apollo15-lroc.jpg`: Retracing the Steps of Apollo 15 (PIA13058), resized | NASA/GSFC/Arizona State University | Public domain (NASA media) | https://science.nasa.gov/photojournal/retracing-the-steps-of-apollo-15/ |
 | Notebook photo `images/nasa/opportunity-tracks.jpg`: Looking Back on a Golden Opportunity (PIA22928), resized | NASA/JPL-Caltech | Public domain (NASA media) | https://science.nasa.gov/photojournal/looking-back-on-a-golden-opportunity/ |
 | Notebook photo `images/nasa/opportunity-blueberries.jpg`: "Berries" on the Ground (PIA05273), resized | NASA/JPL/Cornell/USGS | Public domain (NASA media) | https://science.nasa.gov/photojournal/berries-on-the-ground/ |
 | Notebook photo `images/nasa/ingenuity-shadow.jpg`: Ingenuity's First Black-and-White Image From the Air (PIA24584), resized | NASA/JPL-Caltech | Public domain (NASA media) | https://science.nasa.gov/photojournal/ingenuitys-first-black-and-white-image-from-the-air/ |
@@ -20,6 +21,13 @@ NASA is credited as a source of images, models and data. NASA does not sponsor o
 | Notebook photo `images/nasa/voyager.jpg`: Mementos of Earth (PIA17035), resized | NASA/JPL-Caltech | Public domain (NASA media) | https://science.nasa.gov/photojournal/mementos-of-earth/ |
 
 No NASA 3D model ships yet. The pipeline in `scripts/assets/` prints the credit line for each model when one is added.
+
+## Data
+
+| Data | Used for | By | License | Source |
+| --- | --- | --- | --- | --- |
+| Voyager 1 ephemeris: distance, one-way light time, RA and Dec, daily 2026-11-01 to 2028-12-31 (`src/data/voyager1.json`, `scripts/fetch-horizons.ts`) | The Finale's star map and light-time line; the notebook's date-aware Voyager text | NASA JPL Solar System Dynamics, Horizons System | Public data from NASA JPL (U.S. Government work) | https://ssd.jpl.nasa.gov/horizons/ |
+| Yale Bright Star Catalog, 5th revised edition, table bsc5p (`src/data/stars-voyager.json`, `scripts/fetch-stars.ts`) | Star positions on Dad's star map | Hoffleit and Warren (1991), hosted by NASA HEASARC | Public scientific catalog data (star positions are facts) | https://heasarc.gsfc.nasa.gov/W3Browse/star-catalog/bsc5p.html |
 
 ## Fonts
 

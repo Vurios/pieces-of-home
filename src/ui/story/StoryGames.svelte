@@ -25,6 +25,8 @@
 
   $effect(() =>
     engine.bus.on("story:game", (p) => {
+      // The Finale's games have their own screens (DishGame, FinaleGames).
+      if (!["blueberries", "telemetry", "calls"].includes(p.id)) return;
       game = { key: p.key, id: p.id };
       finishing = false;
       reset();

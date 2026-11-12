@@ -52,6 +52,16 @@
       "changes": "Resized and cropped for the notebook (900 px or less, JPEG)"
     },
     {
+      "id": "nb-apollo15-lroc",
+      "file": "images/nasa/apollo15-lroc.jpg",
+      "title": "Retracing the Steps of Apollo 15 (PIA13058)",
+      "credit": "NASA/GSFC/Arizona State University",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia13/pia13058/PIA13058.jpg",
+      "page": "https://science.nasa.gov/photojournal/retracing-the-steps-of-apollo-15/",
+      "changes": "Resized for the notebook and Dad's map card (900 px, JPEG)"
+    },
+    {
       "id": "nb-opportunity-tracks",
       "file": "images/nasa/opportunity-tracks.jpg",
       "title": "Looking Back on a Golden Opportunity (PIA22928)",
@@ -820,6 +830,22 @@
       "sourceUrl": "https://nssdc.gsfc.nasa.gov/planetary/lunar/a11landing.aiff",
       "page": "https://nssdc.gsfc.nasa.gov/planetary/sound/index.html",
       "changes": "Whole clip kept (the line only); converted from 8-bit 22 kHz AIFF to 44.1 kHz; 5 ms fade-in, 50 ms fade-out; gain to -20 LUFS; mono MP3 96 kbps"
+    }
+  ],
+  "data": [
+    {
+      "name": "Voyager 1 ephemeris (distance, light time, place in the sky)",
+      "use": "The Finale's star map and the light-time line, src/data/voyager1.json",
+      "license": "Public data from NASA JPL (U.S. Government work)",
+      "by": "NASA JPL Solar System Dynamics, Horizons System",
+      "sourceUrl": "https://ssd.jpl.nasa.gov/horizons/"
+    },
+    {
+      "name": "Yale Bright Star Catalog, 5th revised edition (bsc5p)",
+      "use": "Star positions on Dad's star map, src/data/stars-voyager.json",
+      "license": "Public scientific catalog data hosted by NASA HEASARC (star positions are facts)",
+      "by": "Hoffleit and Warren (1991), hosted by NASA HEASARC",
+      "sourceUrl": "https://heasarc.gsfc.nasa.gov/W3Browse/star-catalog/bsc5p.html"
     }
   ],
   "fonts": [

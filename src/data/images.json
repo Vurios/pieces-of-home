@@ -37,6 +37,18 @@
       "height": 900
     },
     {
+      "id": "apollo15-lroc",
+      "file": "/images/nasa/apollo15-lroc.jpg",
+      "title": "Retracing the Steps of Apollo 15 (PIA13058)",
+      "credit": "NASA/GSFC/Arizona State University",
+      "sourceUrl": "https://science.nasa.gov/photojournal/retracing-the-steps-of-apollo-15/",
+      "originalUrl": "https://assets.science.nasa.gov/content/dam/science/psd/photojournal/pia/pia13/pia13058/PIA13058.jpg",
+      "date": "2010-04-16",
+      "alt": "A view from space of the edge of Hadley Rille. Labels mark the spots where the crew stopped, and faint rover tracks run between two of them.",
+      "width": 900,
+      "height": 900
+    },
+    {
       "id": "opportunity-tracks",
       "file": "/images/nasa/opportunity-tracks.jpg",
       "title": "Looking Back on a Golden Opportunity (PIA22928)",

@@ -109,6 +109,10 @@ export interface GameEvents {
    * had its moment, and `end` once the iris is open again.
    */
   "travel:start": { from: string | null; to: string };
+  /** A big chapter card on demand ("Finale / The Long Light"). */
+  "story:banner": { label: string; name: string };
+  /** The dish is aimed with Dad's last letter in hand (Finale). */
+  "finale:aim": Record<string, never>;
   "travel:arrive": { to: string };
   "travel:end": { to: string };
   /** Open Dad's notebook at a spread. */

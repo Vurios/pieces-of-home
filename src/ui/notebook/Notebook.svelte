@@ -1,6 +1,8 @@
 <script lang="ts">
   import { audio } from "../../audio/audio";
   import { COVER, SPREADS, factText, isComplete, spreadYear, type MachineSpread } from "../../content/notebook";
+  import { readPhotos } from "../photos";
+  import { readLastPage } from "../story/last-page";
   import type { GameState } from "../../game/core/state";
   import { DRAWINGS } from "../drawing/machines";
   import Sketch from "../drawing/Sketch.svelte";
@@ -30,7 +32,14 @@
   }
   let { game, page, onclose, onpage }: Props = $props();
 
-  const total = SPREADS.length + 1;
+  // The cover, one spread per machine, and the last page (Finale).
+  const LAST = SPREADS.length + 1;
+  const total = SPREADS.length + 2;
+  const lastPage = readLastPage();
+  const groupPhoto = lastPage?.photoAt ? (readPhotos().find((p) => p.at === lastPage.photoAt)?.data ?? null) : null;
+  const finished = $derived(game.stamps.includes("finale"));
+  const lastSticker = lastPage?.sticker ? (SPREADS.find((x) => x.id === lastPage.sticker)?.nickname ?? null) : null;
+  const lastName = lastPage?.first && lastPage.second ? `${lastPage.first} ${lastPage.second}` : null;
   const FLIP_MS = 760;
   const OPEN_MS = 1150;
   const narrowQuery = typeof window !== "undefined" ? window.matchMedia("(max-width: 820px)") : null;
@@ -57,7 +66,7 @@
   const leftIndex = $derived(flip ? (flip.dir > 0 ? flip.from : flip.to) : shown);
   const rightIndex = $derived(flip ? (flip.dir > 0 ? flip.to : flip.from) : shown);
   const pageLabel = $derived(t("notebook.page", { a: shown * 2 + 1, b: shown * 2 + 2, n: total * 2 }));
-  const current = $derived(shown === 0 ? null : SPREADS[shown - 1]!);
+  const current = $derived(shown === 0 || shown === LAST ? null : SPREADS[shown - 1]!);
   const currentInked = $derived(current ? inkedFor(current) : true);
 
   function inkedFor(spread: MachineSpread): boolean {
@@ -67,6 +76,7 @@
   /** Extra classes for a page, so a copy on a turning leaf looks exactly like the real one. */
   function kind(index: number): string {
     if (index === 0) return "cover";
+    if (index === LAST) return finished ? "" : "pencil-page";
     return inkedFor(SPREADS[index - 1]!) ? "" : "pencil-page";
   }
 
@@ -133,6 +143,7 @@
   }
 
   function pageText(): string {
+    if (shown === LAST) return finished ? `What will you discover next? ${lastName ?? ""} Leave the light on for whoever comes next.` : "The last page is still blank.";
     if (!current) return `${COVER.title}. ${COVER.dedication} ${COVER.signature}.`;
     const parts = [current.nickname, current.name, `${t("notebook.forWhat")}. ${current.forWhat}`];
     if (currentInked) {
@@ -329,10 +340,47 @@
   {/if}
 {/snippet}
 
+{#snippet lastLeft()}
+  <header class="head">
+    <p class="kicker"><span>Home</span></p>
+    <h2 class="name">What will you discover next?</h2>
+  </header>
+  {#if finished}
+    {#if groupPhoto}
+      <figure class="group"><img src={groupPhoto} alt="Remi and friends in Dad's workshop" /><figcaption>All of us, in the workshop</figcaption></figure>
+    {/if}
+    {#if lastSticker}
+      <p class="label">{t("notebook.favorite")}</p>
+      <p class="sticker-big">{lastSticker}</p>
+    {/if}
+    {#if lastName}
+      <p class="label">{t("notebook.nextAdventure")}</p>
+      <p class="adventure">{lastName}</p>
+    {/if}
+  {:else}
+    <p class="pencil-note">{t("notebook.lastBlank")}</p>
+  {/if}
+{/snippet}
+
+{#snippet lastRight()}
+  {#if finished}
+    <div class="stamp-mark"><InkStamp lines={["Not left behind.", "Still sending."]} top="DELIVERED BY REMI" bottom="DEEP SPACE POST" size={150} tilt={-5} label="Stamp: Not left behind. Still sending." /></div>
+    <p class="dad-last">Leave the light on for whoever comes next.</p>
+    <p class="signoff">Dad</p>
+    <p class="help">{t("notebook.museum")}</p>
+  {:else}
+    <div class="ghost-lines" aria-hidden="true">
+      {#each [92, 78, 86, 54] as w, i (i)}<span style:width={`${w}%`}></span>{/each}
+    </div>
+  {/if}
+{/snippet}
+
 {#snippet face(index: number, side: "left" | "right")}
   <div class="scroll">
     {#if index === 0}
       {#if side === "left"}{@render coverLeft()}{:else}{@render coverRight()}{/if}
+    {:else if index === LAST}
+      {#if side === "left"}{@render lastLeft()}{:else}{@render lastRight()}{/if}
     {:else if side === "left"}
       {@render machineLeft(SPREADS[index - 1]!, index)}
     {:else}
@@ -1523,5 +1571,49 @@
       width: 48px;
       padding: 0;
     }
+  }
+  .group {
+    margin: 6px 0 14px;
+    padding: 8px 8px 26px;
+    background: #fff;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
+    rotate: -2deg;
+    max-width: 72%;
+  }
+  .group img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+  }
+  .group figcaption {
+    margin-top: 6px;
+    font: 700 1rem/1 var(--hand);
+    text-align: center;
+  }
+  .sticker-big {
+    display: inline-block;
+    margin: 4px 0 12px;
+    padding: 8px 16px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: #c9dcc0;
+    font: 700 1.05rem/1 var(--read);
+    rotate: -3deg;
+  }
+  .adventure {
+    margin: 2px 0 0;
+    font: 700 1.8rem/1.15 var(--hand);
+  }
+  .dad-last {
+    margin: 18px 0 4px;
+    font: 700 1.6rem/1.3 var(--hand);
+    color: #2c4a7a;
+  }
+  .signoff {
+    margin: 0 0 18px;
+    font: 700 1.2rem/1 var(--hand);
+    color: #2c4a7a;
+    text-align: right;
   }
 </style>
