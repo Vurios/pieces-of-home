@@ -160,7 +160,7 @@ export function goalFor(state: Readonly<GameState>, device: InputDevice): Goal {
 }
 
 /** One control at a time. Each tip ends when the player does it. */
-export type TipId = "move" | "look" | "arrow" | "use" | "notebook";
+export type TipId = "move" | "look" | "arrow" | "use" | "notebook" | "photo" | "emote";
 
 export interface Tip {
   id: TipId;
@@ -169,7 +169,7 @@ export interface Tip {
   text: string;
 }
 
-export const TIP_ORDER: readonly TipId[] = ["move", "look", "arrow", "use", "notebook"];
+export const TIP_ORDER: readonly TipId[] = ["move", "look", "arrow", "use", "notebook", "photo", "emote"];
 
 /** The tip in words for this device. `key` turns a key code into a cap label. */
 export function tipFor(id: TipId, device: InputDevice, bindings: Record<string, string[]>, key: (code: string) => string): Tip {
@@ -181,7 +181,7 @@ export function tipFor(id: TipId, device: InputDevice, bindings: Record<string, 
       return { id, keys: [first("forward", "KeyW"), first("left", "KeyA"), first("back", "KeyS"), first("right", "KeyD")], text: `Walk around. Hold ${first("run", "ShiftLeft")} to run.` };
     case "look":
       if (device === "touch") return { id, keys: [], text: "Drag on the right side of the screen to look around. Pinch to zoom." };
-      if (device === "gamepad") return { id, keys: ["Right stick"], text: "Look around. LB and LT zoom." };
+      if (device === "gamepad") return { id, keys: ["Right stick"], text: "Look around. RT and RB zoom." };
       return { id, keys: ["Mouse"], text: "Click and drag to look around. Scroll, or press + and -, to zoom." };
     case "arrow":
       return { id, keys: [], text: "See the paper arrow by your feet? It always points to your goal." };
@@ -193,5 +193,13 @@ export function tipFor(id: TipId, device: InputDevice, bindings: Record<string, 
       if (device === "touch") return { id, keys: ["Notebook"], text: "Tap it to open Dad's notebook." };
       if (device === "gamepad") return { id, keys: ["View"], text: "Open Dad's notebook." };
       return { id, keys: ["N"], text: "Open Dad's notebook." };
+    case "photo":
+      if (device === "touch") return { id, keys: ["Photo"], text: "Tap it to take a photo. Your photos come back at the end." };
+      if (device === "gamepad") return { id, keys: ["LB"], text: "Take a photo. Your photos come back at the end." };
+      return { id, keys: ["C"], text: "Take a photo. Your photos come back at the end." };
+    case "emote":
+      if (device === "touch") return { id, keys: ["Emote"], text: "Tap it to wave, cheer or say hi." };
+      if (device === "gamepad") return { id, keys: ["Y"], text: "Wave, cheer or say hi." };
+      return { id, keys: ["G"], text: "Wave, cheer or say hi." };
   }
 }

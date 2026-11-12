@@ -1,4 +1,4 @@
-import { Color, DirectionalLight, Group, HemisphereLight, Matrix4, Mesh, PointLight, Vector3 } from "three";
+import { Color, DirectionalLight, Group, HemisphereLight, Matrix4, Mesh, MeshBasicMaterial, PointLight, Vector3 } from "three";
 import { Character, type KidId } from "../../actors/character";
 import { Milo } from "../../actors/milo";
 import { Mom } from "../../actors/mom";
@@ -24,6 +24,10 @@ import { SHED, buildWorkshop, workshopMaterials } from "./workshop";
 import { buildGardenYard, buildHilltop, buildHouseYard, buildShedYard, buildSolarPanel } from "./yard";
 
 export const LETTER_TO_THE_LAMP = "to-the-lamp";
+/** Mom hands Remi the key to Dad's workshop at the start of a new story. */
+export const WORKSHOP_KEY = "workshop-key";
+/** Dad's lamp has clicked on by itself (the prologue's first beat). */
+export const LAMP_ON = "lamp-on";
 
 const GRASS_A = new Color("#7FA37A");
 const GRASS_B = new Color("#668C66");
@@ -198,6 +202,20 @@ export function createHome(ctx: WorldContext): World {
   root.add(fill);
 
   const lampLight = new PointLight("#FFC27A", 5.5, 9, 1.4);
+  // Dad's lamp turns itself on. In a new story it waits dark until Remi first steps into the
+  // workshop, then clicks on by itself (Game Bible, Prologue). Older saves and the title see it lit.
+  const lampWaits = (): boolean => {
+    const s = store.value;
+    return s.flags.includes(WORKSHOP_KEY) && !s.flags.includes(LAMP_ON) && !s.delivered.includes(LETTER_TO_THE_LAMP);
+  };
+  let lampPower = 1;
+  let lampClick = -1;
+  /** The lamp and the pins read the save on the first frame (the store is set up further down). */
+  let firstFrame = true;
+  // The globe pins wake up once the prologue is done.
+  const pinsLit = (): boolean => store.value.stamps.includes("prologue") || store.value.flags.includes("explore-freely");
+  let pinGlow = 1;
+  let pinPop = -1;
   lampLight.position.copy(shop.lampBulb);
   root.add(lampLight);
   const porchLight = new PointLight("#FFC27A", 5, 6, 1.6);
@@ -798,8 +816,51 @@ export function createHome(ctx: WorldContext): World {
       hillFlies.update(dt, frame.reducedMotion);
       smoke.update(dt, frame.reducedMotion);
       places.update(dt, frame.time, frame.reducedMotion);
+      if (firstFrame) {
+        firstFrame = false;
+        lampPower = lampWaits() ? 0 : 1;
+        pinGlow = pinsLit() ? 1 : 0;
+      }
+      // The lamp waits dark in a new story, then clicks on when Remi first walks in.
+      if (lampWaits()) {
+        if (lampClick < 0) lampPower = 0;
+        if (inside && lampClick < 0) lampClick = 0;
+      }
+      if (lampClick >= 0) {
+        lampClick += dt;
+        if (lampClick > 0.7 && lampPower === 0) {
+          bus.emit("sfx", { name: "lamp-click", at: [shop.lampBulb.x, shop.lampBulb.y, shop.lampBulb.z] });
+          store.update((s) => {
+            if (!s.flags.includes(LAMP_ON)) s.flags.push(LAMP_ON);
+          });
+          lampPower = 0.001;
+        }
+        if (lampPower > 0) lampPower = Math.min(1, lampPower + dt * (frame.reducedMotion ? 10 : 2.2));
+        if (lampClick > 1.6 && lampClick - dt <= 1.6) bus.emit("say", { speaker: "remi", name: "Remi", text: "It turned on by itself!", at: null });
+        if (lampClick > 4.4 && lampClick - dt <= 4.4) {
+          const b = shop.lampBulb;
+          bus.emit("say", { speaker: "dad", name: "Dad's note", text: "I made it turn on by itself. So you never come home to a dark workshop.", at: [b.x, b.y + 0.3, b.z] });
+        }
+        if (lampClick > 5) lampClick = -1;
+      }
+      for (const part of shop.lampGlow) part.visible = lampPower > 0;
       // The lamp breathes a little, like a real filament.
-      lampLight.intensity = 5.5 + (frame.reducedMotion ? 0 : Math.sin(frame.time * 3.1) * 0.2);
+      lampLight.intensity = lampPower * (5.5 + (frame.reducedMotion ? 0 : Math.sin(frame.time * 3.1) * 0.2));
+      // The pins on Dad's globes light up one by one when the prologue's stamp comes.
+      if (pinsLit() && pinGlow === 0 && pinPop < 0) pinPop = 0;
+      if (pinPop >= 0) {
+        pinPop += dt;
+        pinGlow = Math.min(1, pinPop / (0.5 + shop.pins.length * 0.35));
+        if (pinPop > 0.6 + shop.pins.length * 0.35) pinPop = -1;
+      }
+      shop.pins.forEach((pin, i) => {
+        const k = pinPop >= 0 ? Math.max(0, Math.min(1, (pinPop - 0.3 - i * 0.35) / 0.35)) : pinGlow;
+        const pop = pinPop >= 0 && k > 0 && k < 1 ? 1 + Math.sin(k * Math.PI) * 0.6 : 1;
+        (pin.head.material as MeshBasicMaterial).color.set(k > 0 ? "#F2A541" : "#8C8173");
+        pin.head.scale.setScalar(0.016 * pop);
+        const breathe = frame.reducedMotion ? 0.5 : 0.5 + Math.sin(frame.time * 2.2 + i) * 0.2;
+        (pin.halo.material as MeshBasicMaterial).opacity = k * 0.35 * breathe * 2;
+      });
     },
     resize(height: number) {
       pixelHeight = height;

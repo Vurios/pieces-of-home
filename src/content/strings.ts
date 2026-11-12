@@ -24,6 +24,7 @@ export const EN = {
   "menu.newNo": "Keep my story",
   "menu.about": "About this game",
   "panel.close": "Close",
+  "toast.key": "You got the key to Dad's workshop.",
   "hud.notebook": "Notebook",
   "hud.photo": "Photo",
   "hud.emote": "Emote",

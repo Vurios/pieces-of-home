@@ -46,6 +46,11 @@
     if (!settings.value.tips || hidden || showChapter || banners.screens > 0 || banners.riding) return null;
     if (prompt && !done.has("use")) return "use";
     if (goal.id === "notebook" && !done.has("notebook")) return "notebook";
+    // After the prologue's stamp, while the first dome waits: photos, then emotes.
+    if (goal.id === "dome" && game.stamps.includes("prologue")) {
+      if (!done.has("photo")) return "photo";
+      if (!done.has("emote")) return "emote";
+    }
     for (const id of ["move", "look", "arrow"] as const) {
       if (done.has(id)) continue;
       if (id === "arrow" && goal.id !== "mailbox" && goal.id !== "lamp") continue;
@@ -90,6 +95,8 @@
         if (steps >= 4) learn("move");
       }),
       engine.bus.on("interact:done", () => learn("use")),
+      engine.bus.on("photo:taken", () => learn("photo")),
+      engine.bus.on("emote", () => learn("emote")),
     ];
     return () => offs.forEach((off) => off());
   });
@@ -104,6 +111,7 @@
       const shown = (now - tipShownAt) / 1000;
       if (tipId === "look" && (engine.input.lookTravel - lookAtTipStart > 1.1 || shown > 12)) learn("look");
       if (tipId === "arrow" && shown > 9) learn("arrow");
+      if ((tipId === "photo" || tipId === "emote") && shown > 14) learn(tipId);
     }, 250);
     return () => window.clearInterval(id);
   });

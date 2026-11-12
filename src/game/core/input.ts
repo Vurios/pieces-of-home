@@ -354,7 +354,7 @@ export class Input {
 
     const moveX = axis(0) + (button(15) ? 1 : 0) - (button(14) ? 1 : 0);
     const moveY = -axis(1) + (button(12) ? 1 : 0) - (button(13) ? 1 : 0);
-    const run = button(5) || button(7) || button(10) || Math.hypot(axis(0), axis(1)) > 0.95;
+    const run = button(10) || Math.hypot(axis(0), axis(1)) > 0.95;
     const active = moveX !== 0 || moveY !== 0 || axis(2) !== 0 || axis(3) !== 0 || button(0) || button(2);
     if (active) this.setDevice("gamepad");
 
@@ -363,8 +363,8 @@ export class Input {
       moveY,
       lookX: axis(2) * 0.045,
       lookY: axis(3) * 0.03,
-      // LB pulls the camera back, LT brings it in.
-      zoom: (button(4) ? 0.03 : 0) - (pad.buttons[6]?.value ?? 0) * 0.03,
+      // RB pulls the camera back, RT brings it in. (LB takes a photo and LT opens the map.)
+      zoom: (button(5) ? 0.03 : 0) - (pad.buttons[7]?.value ?? 0) * 0.03,
       run,
       interact: button(2) || button(1),
     };

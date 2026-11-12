@@ -60,6 +60,10 @@ export interface WorkshopResult {
   /** Glass and other see-through pieces, drawn after everything else. */
   glass: Object3D[];
   globes: Group[];
+  /** The lamp's glowing parts (shade, bulb, halo, pool), so the lamp can click on. */
+  lampGlow: Object3D[];
+  /** Each pin on the globes: its head and a soft halo, so they can light up after the prologue. */
+  pins: { head: Mesh; halo: Mesh }[];
   /** World positions. */
   lampBulb: Vector3;
   lampSpot: Vector3;
@@ -320,6 +324,7 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
   pool.scale.set(0.9, 0.7, 1);
   pool.quaternion.setFromEuler(new Euler(-Math.PI / 2, 0, 0));
   lit(pool, new Vector3(lampBulbLocal.x + 0.2, BENCH_Y + 0.004, lampBulbLocal.z + 0.12), 7);
+  const lampGlow: Object3D[] = [inner, bulb, halo, pool];
   const domeGeometry = new SphereGeometry(0.24, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2);
   const worlds: { x: number; ground: string; detail: (x: number, y: number, z: number) => void }[] = [
     {
@@ -412,9 +417,10 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     b.place(box(0.01), C.woodDark, v(tableX + dx, (fy + tableY) / 2, tableZ + dz), [0, 0, 0], [0.06, tableY - fy, 0.06], m);
   }
   const globes: Group[] = [];
+  const pins: { head: Mesh; halo: Mesh }[] = [];
   const globeSpots = [
-    { x: tableX - 0.2, texture: globeTextures.moon, pins: [fact("a11-site")], face: fact("a11-site") },
-    { x: tableX + 0.22, texture: globeTextures.mars, pins: [fact("opp-site")], face: fact("opp-site") },
+    { x: tableX - 0.2, texture: globeTextures.moon, pins: [fact("a11-site"), fact("a15-site")], face: fact("a11-site") },
+    { x: tableX + 0.22, texture: globeTextures.mars, pins: [fact("opp-site"), fact("ing-site")], face: fact("opp-site") },
   ];
   for (const spot of globeSpots) {
     const baseY = tableY + 0.03;
@@ -441,7 +447,12 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
       head.scale.setScalar(0.016);
       head.position.copy(dir).multiplyScalar(0.17 + 0.05);
       head.name = `pin-${pin.id}`;
-      globe.add(needle, head);
+      const halo = new Mesh(sphere("low"), new MeshBasicMaterial({ color: C.amber, transparent: true, opacity: 0, blending: AdditiveBlending, depthWrite: false }));
+      halo.scale.setScalar(0.034);
+      halo.position.copy(head.position);
+      halo.renderOrder = 9;
+      globe.add(needle, head, halo);
+      pins.push({ head, halo });
     }
     // Turn the globe so the first pin faces into the room, with a desk-globe tilt.
     const { lon } = factCoords(spot.face);
@@ -513,6 +524,8 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     roof,
     glass,
     globes,
+    lampGlow,
+    pins,
     lampBulb: at(lampBulbLocal.x, lampBulbLocal.y, lampBulbLocal.z),
     lampSpot: at(lampX + 0.3, fy, BENCH_Z + 0.85),
     miloSpot: { position: at(-0.55, BENCH_Y, BENCH_Z - 0.05), forward: inward.clone().negate() },

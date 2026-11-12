@@ -161,6 +161,7 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Chapter 2: Hadley-Apennine (P1): world with Hadley Rille, three letters, the wheel test, the rideable buggy with rear steering, Milo's mesh wheels; playthrough in `tests/e2e/chapters.spec.ts` (#60)
 - [x] Team feedback pass: opening scene, flicker fix, camera, map, true-story cards, space suits (#61); 3D trip, 3D closing shot, roomier Moon and Mars (#62)
 - [x] Chapter 4: Valinor Hills (P1): Ingenuity with its broken blade and the Wright Flyer cloth, Wright Brothers Field, the rover's tracks, Dad's rotor bench (Earth air versus Mars air), the 3D scout flight with a top-down path game, a word-chip note in Ingenuity's log, Milo's rotor and Remi's first drawing; playthrough in `tests/e2e/chapters.spec.ts` (#63)
+- [x] Team feedback pass 2: the trip is a rocket ride with a skip (#64), one illustrated set of pop-up game cards (#65), Mars landscapes and suit details (#66); the notebook never scrolls (two spreads per machine)
 - [ ] Archive cards and the Surveyor 3 bonus chapter (P2)
 - [x] Audio pass: recorded foley and instruments, NASA recordings with captions, word-following voices (DECISIONS #49)
 - [ ] Writing pass

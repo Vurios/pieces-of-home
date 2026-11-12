@@ -628,3 +628,43 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 **Why:** Game Bible section 6, Chapter 4 (P1), and the team's ask for 3D story moments.
 
 **Alternatives considered:** A co-op scout flight with one player above and others driving (comes with Phase 06 co-op), a slider-only rotor test without the Earth to Mars comparison (loses the idea), a typed note (not allowed: no free text for kids).
+
+## 64. The trip is a rocket ride
+
+**Date:** 2026-11-13
+
+**Decision:** The 3D trip between worlds (decision 62) now tells a little story instead of showing a beam of light. Remi, in the space suit, walks up to Dad's toy rocket on its launch pad on the world being left, the hatch swings shut behind them, the engine lights with smoke and a short shake, and the rocket climbs away. It cruises along a curved path across the stars with a chase camera and a sparkly trail, flips over, and settles on its fins on the next world in a ring of that world's own dust (cream at home, grey on the Moon, butterscotch on Mars), with the lit hatch turned toward the camera. Each world's dress is rotated so the pad and the landing spot are clear ground. The rocket is a toy (cream body, red nose and fins, brass trim) so it reads as Dad's model, not real hardware. The ride takes about seven seconds; E, Enter, Space, a click or the gamepad's A skips to the landing. New lift-off and landing sounds play on the rocket's beats. The caption sits top left, out of the way.
+
+**Why:** The team asked for an animation where the character climbs into a rocket in the game's own 3D style and flies to the Moon or Mars, and asked for the most impressive version.
+
+**Alternatives considered:** A first-person cockpit view (hides Remi and needs a whole new interior model), a pre-rendered video (heavy, one fixed pair of worlds), keeping the light beam (the team found it too abstract).
+
+## 65. One illustrated set of pop-up game cards
+
+**Date:** 2026-11-13
+
+**Decision:** Every small game that opens on screen (the rotor bench, the scout camera, Ingenuity's log, the wheel test, the star map, the rock grinder, the rover's last report and the calls) shares one card shell (`src/ui/game-card.css`, `src/ui/story/card/`): a coloured band for its place (green home, slate Moon, rust Mars, navy night sky) with a round drawn badge, a small label and a big handwritten title, a "Model" stamp where it is Dad's model; Remi's line in a speech box with a tiny drawn face that turns green when something works; a framed picture to play in; numbered steps that light up and tick off; one big button; and a "True story" strip once it is won, with text taken only from facts.json. The pictures got richer: the rotor bench is a workshop scene with a glass jar of air (moving dots, many for Earth air, a few for Mars air), Dad's ruler and chalk "hop!" line, a blueprint and pegboard on the wall, a lift gauge and toy dials; the scout camera has sand ripples, shaded rocks, rippled soft sand, a camera frame with a blinking dot and the helicopter's own shadow; the log is a lined page with a doodle of Ingenuity; the wheel test sits in a cool Moon-blue workshop; the calls cross a rolling dust storm to a sleeping rover. A soft vignette sits behind each card.
+
+**Why:** The team pointed at the rotor bench card and asked for better pop-up card designs.
+
+**Alternatives considered:** Restyling each card on its own (they would drift apart again), a dark full-screen overlay (hides the world the game belongs to), 3D cards in the scene (hard to read and to use with a keyboard).
+
+## 66. Mars gets its landscape
+
+**Date:** 2026-11-13
+
+**Decision:** A shared Mars kit (`src/game/worlds/kit/mars.ts`) dresses both Mars worlds, always with room round the machines and off the paths between them: crescent dunes with a hollow lee side, in dark sand like real Martian dunes; families of faceted dark boulders with sand banked behind the biggest and pebbles round them; broken slabs of pale layered rock; and the ground gained patches of darker sand. Valinor Hills (Jezero) also gets layered buttes and a couple of balanced rocks on the skyline, and a couple of small dust devils that wander across now and then. Meridiani gets no tall buttes, because the real plain is very flat. Scattered rocks use the new faceted shapes instead of the grey Moon rocks. The space suit gained two air tanks and three status lights on the pack, a short antenna with a glowing tip, a thin collar ring and toe caps in each kid's own colour, and a chest patch, because the camera mostly sees kids from behind.
+
+**Why:** The team said Mars looked too plain.
+
+**Alternatives considered:** Real rover hardware as props (left out until each has a sourced fact), a denser random scatter (crowds paths, breaks the roomy-layout rule), loading external rock models (heavier and off-style).
+
+## 67. The prologue's missing beats, and the gamepad shoulders
+
+**Date:** 2026-11-13
+
+**Decision:** The prologue now has every beat the Game Bible lists. At the start of a new story Mom hands Remi the key to Dad's workshop ("Here's the key to Dad's workshop.", a toast and a little jingle). Dad's lamp waits dark until Remi first steps into the workshop, then clicks on by itself; Remi says "It turned on by itself!" and Dad's note appears at the lamp: "I made it turn on by itself. So you never come home to a dark workshop." (Game Bible 5.7). Older saves and the title see the lamp lit as before. The pins on Dad's globes stay a dull pencil grey until the prologue's stamp, then light up one by one with a soft breathing glow; the Moon globe gains the Apollo 15 pin and the Mars globe the Ingenuity pin (facts a15-site and ing-site). Two new one-time tips after the stamp teach the photo button and the emote wheel, as the prologue's "Teaches" list asks. On a gamepad, LB took a photo and also zoomed out, and LT opened the map and also zoomed in; now RB pulls the camera back and RT brings it in, and running is the stick pushed all the way or a click of the left stick.
+
+**Why:** Phase 05 checklist (Prologue, P0) and a button clash found while adding the photo tip.
+
+**Alternatives considered:** A locked workshop door until the key is taken (adds a blocking step to the very first minute), moving the photo to another button (the HUD glyphs and the notebook already teach LB).

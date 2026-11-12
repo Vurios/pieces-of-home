@@ -168,7 +168,22 @@
   function greet(): void {
     const mom = engine.world?.anchor("mom");
     if (!mom) return;
-    window.setTimeout(() => engine.bus.emit("say", { speaker: "mom", name: "Mom", text: "Take your time, love. I'll be right here on the porch.", at: [mom.x, mom.y, mom.z] }), 900);
+    const at: [number, number, number] = [mom.x, mom.y, mom.z];
+    const fresh = !engine.store.value.flags.includes("workshop-key") && !engine.store.value.delivered.includes("to-the-lamp");
+    if (!fresh) {
+      window.setTimeout(() => engine.bus.emit("say", { speaker: "mom", name: "Mom", text: "Take your time, love. I'll be right here on the porch.", at }), 900);
+      return;
+    }
+    // A new story: Mom hands Remi the key to Dad's workshop first.
+    window.setTimeout(() => engine.bus.emit("say", { speaker: "mom", name: "Mom", text: "Here's the key to Dad's workshop.", at }), 900);
+    window.setTimeout(() => {
+      engine.store.update((s) => {
+        if (!s.flags.includes("workshop-key")) s.flags.push("workshop-key");
+      });
+      audio.play("envelope-pickup");
+      engine.bus.emit("toast", { text: t("toast.key") });
+    }, 3000);
+    window.setTimeout(() => engine.bus.emit("say", { speaker: "mom", name: "Mom", text: "Take your time, love. I'll be right here on the porch.", at }), 4300);
   }
 
   /** The chain was pulled: click, light the windows, start the music, open the menu. */
@@ -217,7 +232,8 @@
     // A shutter, then the instant photo rolls out.
     audio.play("shutter");
     audio.play("polaroid-whirr", { delay: 0.25 });
-    const { full } = await keepPhoto(engine.snapshot());
+    const { full, count } = await keepPhoto(engine.snapshot());
+    engine.bus.emit("photo:taken", { count });
     engine.bus.emit("toast", { text: full ? t("toast.photoFull") : t("toast.photo") });
   }
 
