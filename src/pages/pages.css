@@ -713,3 +713,12 @@ h2 .num {
     word-break: break-all;
   }
 }
+
+/* Dad's archive cards: smaller pictures than the machines with worlds. */
+.archive-card .photos {
+  max-width: 440px;
+}
+.archive-card .photo img {
+  max-height: 340px;
+  object-fit: cover;
+}

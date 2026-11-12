@@ -63,7 +63,9 @@ export interface WorkshopResult {
   /** The lamp's glowing parts (shade, bulb, halo, pool), so the lamp can click on. */
   lampGlow: Object3D[];
   /** Each pin on the globes: its head and a soft halo, so they can light up after the prologue. */
-  pins: { head: Mesh; halo: Mesh }[];
+  pins: { head: Mesh; halo: Mesh; color: string }[];
+  /** Dad's archive board on the right wall: where to stand to read it, and the board's middle. */
+  archive: { stand: Vector3; board: Vector3 };
   /** World positions. */
   lampBulb: Vector3;
   lampSpot: Vector3;
@@ -417,10 +419,12 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     b.place(box(0.01), C.woodDark, v(tableX + dx, (fy + tableY) / 2, tableZ + dz), [0, 0, 0], [0.06, tableY - fy, 0.06], m);
   }
   const globes: Group[] = [];
-  const pins: { head: Mesh; halo: Mesh }[] = [];
+  const pins: { head: Mesh; halo: Mesh; color: string }[] = [];
+  // Dad's worlds get amber pins; the machines on his archive cards get blue ones.
+  const ARCHIVE_PIN = "#6E9BC8";
   const globeSpots = [
-    { x: tableX - 0.2, texture: globeTextures.moon, pins: [fact("a11-site"), fact("a15-site")], face: fact("a11-site") },
-    { x: tableX + 0.22, texture: globeTextures.mars, pins: [fact("opp-site"), fact("ing-site")], face: fact("opp-site") },
+    { x: tableX - 0.2, texture: globeTextures.moon, pins: [fact("a11-site"), fact("a15-site")], archive: [fact("sur3-site"), fact("a14-lrrr-site")], face: fact("a11-site") },
+    { x: tableX + 0.22, texture: globeTextures.mars, pins: [fact("opp-site"), fact("ing-site")], archive: [fact("soj-site"), fact("vik1-site"), fact("spi-site"), fact("ins-site")], face: fact("opp-site") },
   ];
   for (const spot of globeSpots) {
     const baseY = tableY + 0.03;
@@ -436,23 +440,24 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     const ball = new Mesh(new SphereGeometry(0.17, 40, 24), material);
     ball.castShadow = true;
     globe.add(ball);
-    for (const pin of spot.pins) {
+    for (const pin of [...spot.pins, ...spot.archive]) {
+      const color = spot.archive.includes(pin) ? ARCHIVE_PIN : C.amber;
       const { lat, lon } = factCoords(pin);
       const dir = globeDir(lat, lon);
       const needle = new Mesh(cylinder(6), toon.toon({ color: C.metal, objectSpace: true }));
       needle.scale.set(0.004, 0.05, 0.004);
       needle.position.copy(dir).multiplyScalar(0.17 + 0.022);
       needle.quaternion.setFromUnitVectors(new Vector3(0, 1, 0), dir);
-      const head = new Mesh(sphere("low"), toon.glow(C.amber));
+      const head = new Mesh(sphere("low"), toon.glow(color));
       head.scale.setScalar(0.016);
       head.position.copy(dir).multiplyScalar(0.17 + 0.05);
       head.name = `pin-${pin.id}`;
-      const halo = new Mesh(sphere("low"), new MeshBasicMaterial({ color: C.amber, transparent: true, opacity: 0, blending: AdditiveBlending, depthWrite: false }));
+      const halo = new Mesh(sphere("low"), new MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: AdditiveBlending, depthWrite: false }));
       halo.scale.setScalar(0.034);
       halo.position.copy(head.position);
       halo.renderOrder = 9;
       globe.add(needle, head, halo);
-      pins.push({ head, halo });
+      pins.push({ head, halo, color });
     }
     // Turn the globe so the first pin faces into the room, with a desk-globe tilt.
     const { lon } = factCoords(spot.face);
@@ -465,6 +470,28 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     holder.position.copy(new Vector3(spot.x, baseY + 0.36, tableZ).applyMatrix4(m));
     holder.quaternion.setFromRotationMatrix(m);
     globes.push(holder);
+  }
+
+  // ---- Dad's archive: a corkboard on the right wall with a card for each machine he never built a world for ----
+  {
+    const bx = hw - 0.04;
+    const bz = 1.35;
+    const by = 1.55;
+    b.place(box(0.01), C.woodDark, v(bx, by, bz), [0, 0, 0], [0.05, 0.86, 1.42], m);
+    b.place(box(0.006), "#C9995F", v(bx - 0.02, by, bz), [0, 0, 0], [0.03, 0.76, 1.32], m);
+    // A header plank with a brass plate.
+    b.place(box(0.01), C.wood, v(bx - 0.01, by + 0.5, bz), [0, 0, 0], [0.05, 0.1, 1.0], m);
+    b.place(box(0.004), C.brass, v(bx - 0.04, by + 0.5, bz), [0, 0, 0], [0.01, 0.055, 0.42], m);
+    const swatch = ["#B9B4AA", "#C9683F", "#C08560", "#A9572F", "#D49A6A", "#9E9A92"];
+    for (let i = 0; i < 6; i += 1) {
+      const z = bz + (i % 3 - 1) * 0.42;
+      const y = by + (i < 3 ? 0.17 : -0.19);
+      const tilt = ((i * 37) % 7 - 3) * 0.025;
+      b.place(box(0.004), C.paper, v(bx - 0.045, y, z), [tilt, 0, 0], [0.01, 0.3, 0.34], m);
+      b.place(box(0.003), swatch[i]!, v(bx - 0.052, y + 0.05, z), [tilt, 0, 0], [0.006, 0.14, 0.28], m);
+      for (const dy of [-0.07, -0.105]) b.place(box(0.002), C.ink, v(bx - 0.052, y + dy, z - 0.03), [tilt, 0, 0], [0.004, 0.012, 0.22], m);
+      b.place(sphere("low"), C.clay, v(bx - 0.06, y + 0.13, z), [0, 0, 0], 0.018, m);
+    }
   }
 
   // ---- Floor things ----
@@ -526,6 +553,7 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     globes,
     lampGlow,
     pins,
+    archive: { stand: at(hw - 0.85, fy, 1.35), board: at(hw - 0.06, 1.55, 1.35) },
     lampBulb: at(lampBulbLocal.x, lampBulbLocal.y, lampBulbLocal.z),
     lampSpot: at(lampX + 0.3, fy, BENCH_Z + 0.85),
     miloSpot: { position: at(-0.55, BENCH_Y, BENCH_Z - 0.05), forward: inward.clone().negate() },

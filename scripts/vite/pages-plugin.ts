@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import type { Plugin } from "vite";
 import credits from "../../src/data/credits.json";
 import { ABOUT, GUIDE } from "../../src/content/guide";
+import { ARCHIVE } from "../../src/content/archive";
 import { type MachineSpread, SPREADS, factText, formatDate, spreadYear } from "../../src/content/notebook";
 import type { FactEntry } from "../../src/content/facts";
 import { DRAWINGS } from "../../src/ui/drawing/machines";
@@ -40,6 +41,7 @@ function collectFacts(): FactEntry[] {
   for (const spread of SPREADS) {
     for (const entry of [...(spread.place ? [spread.place] : []), ...spread.learned, ...spread.thenNow, ...spread.deeper]) seen.set(entry.id, entry);
   }
+  for (const card of ARCHIVE) for (const entry of [card.place, ...card.facts, ...card.more]) seen.set(entry.id, entry);
   return [...seen.values()];
 }
 
@@ -82,6 +84,13 @@ function guideBody(today: Date): string {
     return `<article class="machine" aria-labelledby="m-${spread.id}">${top}<div class="m-body">${body.join("")}</div>${pics}</article>`;
   }).join("");
 
+  const archive = ARCHIVE.map((card) => {
+    const img = card.image;
+    const photo = `<figure class="photo"><img src="${esc(img.file)}" alt="${esc(img.alt)}" width="${img.width}" height="${img.height}" loading="lazy" decoding="async"/><figcaption>${esc(img.title)}${img.date ? `, ${esc(formatDate(img.date))}` : ""}. ${esc(GUIDE.photoBy)}: ${esc(img.credit)}. ${link(img.sourceUrl, GUIDE.source)}</figcaption></figure>`;
+    const dad = `<blockquote class="dad"><p>${esc(card.note)}</p><footer>${esc(GUIDE.dadSays)}</footer></blockquote>`;
+    return `<article class="machine archive-card" aria-labelledby="a-${card.id}"><div class="m-top"><div class="m-head"><p class="m-kicker">${esc(card.world)}</p><h3 id="a-${card.id}">${esc(card.name)}</h3>${dad}</div></div><div class="m-body"><p class="where"><strong>${esc(GUIDE.where)}:</strong> ${esc(card.place.kid)}${cite(card.place)}</p><ul class="facts">${[...card.facts, ...card.more].map(item).join("")}</ul></div><div class="photos">${photo}</div></article>`;
+  }).join("");
+
   const sources = facts
     .map(
       (f, i) =>
@@ -96,6 +105,7 @@ function guideBody(today: Date): string {
   const toc = [
     [`story`, GUIDE.storyTitle],
     [`machines`, GUIDE.machinesTitle],
+    [`archive`, GUIDE.archiveTitle],
     [`class`, GUIDE.forClassTitle],
     [`sources`, GUIDE.sourcesTitle],
     [`credits`, GUIDE.creditsTitle],
@@ -123,9 +133,10 @@ function guideBody(today: Date): string {
     <section id="story" aria-labelledby="story-title" class="story">${heading("story-title", 1, GUIDE.storyTitle)}${GUIDE.story.map((p, i) => `<p${i === 0 ? ' class="first"' : ""}>${esc(p)}</p>`).join("")}
       <aside class="models"><h3>${esc(GUIDE.modelsTitle)}</h3><p>${esc(GUIDE.models)}</p></aside></section>
     <section id="machines" aria-labelledby="machines-title">${heading("machines-title", 2, GUIDE.machinesTitle)}${machines}</section>
-    <section id="class" aria-labelledby="class-title">${heading("class-title", 3, GUIDE.forClassTitle)}<ol class="steps">${GUIDE.forClass.map((p) => `<li>${esc(p)}</li>`).join("")}</ol></section>
-    <section id="sources" aria-labelledby="sources-title">${heading("sources-title", 4, GUIDE.sourcesTitle)}<p>${esc(GUIDE.sourcesLede)}</p><ol class="sources">${sources}</ol></section>
-    <section id="credits" aria-labelledby="credits-title">${heading("credits-title", 5, GUIDE.creditsTitle)}
+    <section id="archive" aria-labelledby="archive-title">${heading("archive-title", 3, GUIDE.archiveTitle)}<p>${esc(GUIDE.archiveLede)}</p>${archive}</section>
+    <section id="class" aria-labelledby="class-title">${heading("class-title", 4, GUIDE.forClassTitle)}<ol class="steps">${GUIDE.forClass.map((p) => `<li>${esc(p)}</li>`).join("")}</ol></section>
+    <section id="sources" aria-labelledby="sources-title">${heading("sources-title", 5, GUIDE.sourcesTitle)}<p>${esc(GUIDE.sourcesLede)}</p><ol class="sources">${sources}</ol></section>
+    <section id="credits" aria-labelledby="credits-title">${heading("credits-title", 6, GUIDE.creditsTitle)}
       <div class="credit-cols"><div><h3>Pictures</h3><ul class="small">${media}</ul></div><div><h3>Fonts</h3><ul class="small">${fonts}</ul><h3>Code</h3><ul class="small">${libs}</ul></div></div>
     </section>
   </main>

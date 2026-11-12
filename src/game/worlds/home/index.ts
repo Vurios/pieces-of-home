@@ -365,6 +365,17 @@ export function createHome(ctx: WorldContext): World {
     return ring;
   });
   const opened = (): boolean => store.value.stamps.includes("prologue") || store.value.flags.includes("explore-freely");
+
+  // ---- Dad's archive board: a card for each machine he never built a world for ----
+  interactions.add({
+    id: "archive",
+    position: shop.archive.stand,
+    radius: 1.1,
+    kind: "press",
+    label: () => (opened() && store.value.carrying === null ? "Read Dad's archive cards" : null),
+    onDone: () => bus.emit("archive:open", {}),
+  });
+
   shop.domes.forEach((dome, i) => {
     const world = DOME_WORLDS[i]!;
     const chapter = CHAPTERS.find((c) => c.world === world);
@@ -856,7 +867,7 @@ export function createHome(ctx: WorldContext): World {
       shop.pins.forEach((pin, i) => {
         const k = pinPop >= 0 ? Math.max(0, Math.min(1, (pinPop - 0.3 - i * 0.35) / 0.35)) : pinGlow;
         const pop = pinPop >= 0 && k > 0 && k < 1 ? 1 + Math.sin(k * Math.PI) * 0.6 : 1;
-        (pin.head.material as MeshBasicMaterial).color.set(k > 0 ? "#F2A541" : "#8C8173");
+        (pin.head.material as MeshBasicMaterial).color.set(k > 0 ? pin.color : "#8C8173");
         pin.head.scale.setScalar(0.016 * pop);
         const breathe = frame.reducedMotion ? 0.5 : 0.5 + Math.sin(frame.time * 2.2 + i) * 0.2;
         (pin.halo.material as MeshBasicMaterial).opacity = k * 0.35 * breathe * 2;

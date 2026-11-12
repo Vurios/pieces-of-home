@@ -668,3 +668,13 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 **Why:** Phase 05 checklist (Prologue, P0) and a button clash found while adding the photo tip.
 
 **Alternatives considered:** A locked workshop door until the key is taken (adds a blocking step to the very first minute), moving the photo to another button (the HUD glyphs and the notebook already teach LB).
+
+## 68. Dad's archive cards
+
+**Date:** 2026-11-13
+
+**Decision:** Six archive cards (Game Bible 6, P2) live on a corkboard on the workshop's right wall, open after the prologue: Surveyor 3 and the Apollo 12 visit, Sojourner, Viking 1, Spirit, InSight, and the Apollo 14 and 15 mirrors. "Read Dad's archive cards" opens a panel with the six cards down the side (arrow keys, the D-pad or a click flip between them). Each card shows a real NASA photo with its credit, a little globe with the landing pin and its coordinates, three checked facts, a line from Dad that makes no claim, and links to every source. The same cards, with a few more checked facts each, form a new "Dad's archive" section in the Field Guide. Dad's desk globes gained blue pins for the six archive machines next to the amber pins of his worlds. A fact-checking subagent confirmed 44 new facts on primary NASA, JPL and NSSDCA pages (all in facts.json and the Fact Sheet with quotes); where two NASA pages disagree (Viking 1's last day, the distance from Apollo 12 to Surveyor 3) the kid text says only what both agree on. The microbe story about Surveyor 3's camera stays unverified: NASA sources still disagree, so it is not used.
+
+**Why:** Phase 05, P2 item, and Game Bible section 6 ("Add a card only when every fact on it is verified").
+
+**Alternatives considered:** Six separate 3D props each with its own prompt (cramped, against the roomy-layout rule), cards in the notebook (the notebook is Dad's letters; the archive is his reference shelf), artist illustrations instead of photos (real photos with credits are the stronger, truer choice).

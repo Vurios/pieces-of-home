@@ -25,6 +25,8 @@ export const GUIDE = {
   models:
     "Each world in the game is one of Dad's models of a real place. Models are not to scale, so the distances are squeezed. The real numbers are in this guide, and every one has a link to where it comes from.",
   machinesTitle: "The machines",
+  archiveTitle: "Dad's archive",
+  archiveLede: "Dad never built little worlds for these machines, but he kept a card for each one. In the game they are pinned up in the workshop.",
   forWhat: "What it was for",
   learned: "What we learned",
   thenNow: "Then and now",

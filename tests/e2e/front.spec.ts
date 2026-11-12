@@ -157,7 +157,9 @@ test("the Field Guide works without 3D and passes axe", async ({ page }) => {
   await page.goto("/field-guide/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Pieces of Home: Field Guide");
   await expect(page.locator("canvas")).toHaveCount(0);
-  await expect(page.locator("article.machine")).toHaveCount(6);
+  await expect(page.locator("article.machine:not(.archive-card)")).toHaveCount(6);
+  // Dad's archive: six cards, each with a credited photo.
+  await expect(page.locator("article.archive-card")).toHaveCount(6);
   await expect(page.getByText("Dad's sketch. Not to scale.").first()).toBeVisible();
   // Every photo has its credit line.
   const photos = page.locator("figure.photo");
@@ -191,6 +193,41 @@ test("Dad's map opens from the corner, zooms, spins to a place and passes axe", 
   await page.waitForTimeout(600);
   await axe(page, "map");
   await page.keyboard.press("KeyM");
+  await expect(panel).toBeHidden();
+  expect(errors).toEqual([]);
+});
+
+test("Dad's archive opens from the workshop board, flips through its cards and passes axe", async ({ page }, info) => {
+  test.skip(info.project.name === "phone", "one size is enough for the archive panel");
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  // A story just past the prologue: the board in the workshop is open.
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("seeded")) return;
+    localStorage.setItem("poh.save.v1", JSON.stringify({ version: 1, world: "home", miloStage: 0, carrying: null, delivered: ["to-the-lamp"], stamps: ["prologue"], flags: ["seen-notebook", "workshop-key", "lamp-on"] }));
+    sessionStorage.setItem("seeded", "1");
+  });
+  await page.goto("/?test&quality=low");
+  await expect(stage(page)).toHaveAttribute("data-stage", "ready", { timeout: 60_000 });
+  expect(await page.evaluate("window.__poh.teleportTo('archive')")).toBe(true);
+  const panel = page.getByRole("dialog", { name: "Dad's archive" });
+  for (let i = 0; i < 6 && !(await panel.isVisible()); i += 1) {
+    await page.keyboard.down("KeyE");
+    await page.waitForTimeout(150);
+    await page.keyboard.up("KeyE");
+    await page.waitForTimeout(700);
+  }
+  await expect(panel).toBeVisible();
+  await expect(panel.getByRole("heading", { name: "Surveyor 3" })).toBeVisible();
+  await page.keyboard.press("ArrowDown");
+  await expect(panel.getByRole("heading", { name: "Sojourner" })).toBeVisible();
+  await panel.getByRole("button", { name: /InSight/ }).click();
+  await expect(panel.getByRole("heading", { name: "InSight" })).toBeVisible();
+  // Every card shows a credited photo and links to its sources.
+  await expect(panel.getByText("Photo: NASA/JPL-Caltech")).toBeVisible();
+  expect(await panel.locator(".sources a").count()).toBeGreaterThan(0);
+  await axe(page, "archive");
+  await page.keyboard.press("Escape");
   await expect(panel).toBeHidden();
   expect(errors).toEqual([]);
 });

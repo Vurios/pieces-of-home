@@ -20,6 +20,7 @@
   import StampMoment from "./hud/StampMoment.svelte";
   import Toasts from "./hud/Toasts.svelte";
   import Notebook from "./notebook/Notebook.svelte";
+  import ArchivePanel from "./panels/ArchivePanel.svelte";
   import ChaptersPanel from "./panels/ChaptersPanel.svelte";
   import CreditsPanel from "./panels/CreditsPanel.svelte";
   import SettingsPanel from "./panels/SettingsPanel.svelte";
@@ -149,6 +150,7 @@
           }, 3400);
         }, 1200);
       }),
+      engine.bus.on("archive:open", () => flow.open("archive")),
       engine.bus.on("letter:delivered", ({ letter }) => {
         if (letter !== "to-the-lamp") return;
         const lamp = engine.world?.anchor("lamp");
@@ -328,6 +330,8 @@
   <CreditsPanel onclose={() => flow.close()} />
 {:else if flow.panel === "together"}
   <TogetherPanel onclose={() => flow.close()} />
+{:else if flow.panel === "archive"}
+  <ArchivePanel onclose={() => flow.close()} />
 {:else if flow.panel === "chapters"}
   <ChaptersPanel onclose={() => flow.close()} onhome={home} />
 {:else if flow.panel === "map"}

@@ -85,6 +85,8 @@ export interface GameEvents {
   stamp: { id: string; lines: [string, string] };
   emote: { id: string };
   "photo:taken": { count: number };
+  /** Open Dad's archive cards (the board in the workshop). */
+  "archive:open": Record<string, never>;
   /** A story card: Dad's handwritten note, or a fact from facts.json. The UI answers with story:card-done. */
   "story:card": { key: number; kind: "note" | "fact"; text: string; fact?: string };
   "story:card-done": { key: number };

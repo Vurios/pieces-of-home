@@ -19,6 +19,12 @@ NASA is credited as a source of images, models and data. NASA does not sponsor o
 | Notebook photo `images/nasa/ingenuity-shadow.jpg`: Ingenuity's First Black-and-White Image From the Air (PIA24584), resized | NASA/JPL-Caltech | Public domain (NASA media) | https://science.nasa.gov/photojournal/ingenuitys-first-black-and-white-image-from-the-air/ |
 | Notebook photo `images/nasa/ingenuity-valinor.jpg`: Ingenuity at 'Valinor Hills' (PIA26237, detail), resized | NASA/JPL-Caltech/ASU/MSSS | Public domain (NASA media) | https://science.nasa.gov/photojournal/ingenuity-at-valinor-hills/ |
 | Notebook photo `images/nasa/voyager.jpg`: Mementos of Earth (PIA17035), resized | NASA/JPL-Caltech | Public domain (NASA media) | https://science.nasa.gov/photojournal/mementos-of-earth/ |
+| Archive card photo `images/nasa/archive-surveyor3.jpg`: Astronaut Charles Conrad Jr. examines the Surveyor 3 spacecraft (AS12-48-7136), resized | NASA | Public domain (NASA media) | https://images.nasa.gov/details/as12-48-7136 |
+| Archive card photo `images/nasa/archive-sojourner.jpg`: Sojourner Rover Near The Dice (PIA01122), resized | NASA/JPL | Public domain (NASA media) | https://science.nasa.gov/photojournal/sojourner-rover-near-the-dice/ |
+| Archive card photo `images/nasa/archive-viking1.jpg`: First Photograph Taken on Mars Surface (PIA00381), resized | NASA/JPL | Public domain (NASA media) | https://science.nasa.gov/photojournal/first-photograph-taken-on-mars-surface/ |
+| Archive card photo `images/nasa/archive-spirit.jpg`: Spirit Self-Portrait, Sols 329-330 (PIA07371), resized | NASA/JPL/Cornell | Public domain (NASA media) | https://science.nasa.gov/photojournal/spirit-self-portrait-sols-329-330/ |
+| Archive card photo `images/nasa/archive-insight.jpg`: InSight's Final Selfie (PIA25287), resized | NASA/JPL-Caltech | Public domain (NASA media) | https://science.nasa.gov/photojournal/insights-final-selfie/ |
+| Archive card photo `images/nasa/archive-reflectors.jpg`: Close-up of the Apollo 14 laser ranging retroreflector (AS14-67-9386), resized | NASA | Public domain (NASA media) | https://images.nasa.gov/details/as14-67-09386 |
 
 No NASA 3D model ships yet. The pipeline in `scripts/assets/` prints the credit line for each model when one is added.
 

@@ -107,6 +107,78 @@
       "alt": "A worker holds a small flag in front of the Voyager 2 spacecraft, with the shiny Golden Record and its cover on the table below.",
       "width": 720,
       "height": 900
+    },
+    {
+      "id": "archive-surveyor3",
+      "file": "/images/nasa/archive-surveyor3.jpg",
+      "title": "Astronaut Charles Conrad Jr. examines the Surveyor 3 spacecraft (AS12-48-7136)",
+      "credit": "NASA",
+      "sourceUrl": "https://images.nasa.gov/details/as12-48-7136",
+      "originalUrl": "https://images-assets.nasa.gov/image/as12-48-7136/as12-48-7136~medium.jpg",
+      "date": "1969-11-20",
+      "alt": "Astronaut Pete Conrad stands beside Surveyor 3 on the Moon. The Apollo 12 lander sits on the hill behind them.",
+      "width": 900,
+      "height": 872
+    },
+    {
+      "id": "archive-sojourner",
+      "file": "/images/nasa/archive-sojourner.jpg",
+      "title": "Sojourner Rover Near The Dice (PIA01122)",
+      "credit": "NASA/JPL",
+      "sourceUrl": "https://science.nasa.gov/photojournal/sojourner-rover-near-the-dice/",
+      "originalUrl": "https://images-assets.nasa.gov/image/PIA01122/PIA01122~orig.jpg",
+      "date": "1997-07-26",
+      "alt": "Sojourner, a small six-wheeled rover with a flat solar panel on top, sits among red rocks on Mars.",
+      "width": 900,
+      "height": 829
+    },
+    {
+      "id": "archive-viking1",
+      "file": "/images/nasa/archive-viking1.jpg",
+      "title": "First Photograph Taken on Mars Surface (PIA00381)",
+      "credit": "NASA/JPL",
+      "sourceUrl": "https://science.nasa.gov/photojournal/first-photograph-taken-on-mars-surface/",
+      "originalUrl": "https://images-assets.nasa.gov/image/PIA00381/PIA00381~orig.jpg",
+      "date": "1976-07-20",
+      "alt": "The first photo taken on the ground on Mars: rocks and sand, with one of Viking 1's footpads at the right.",
+      "width": 900,
+      "height": 320
+    },
+    {
+      "id": "archive-spirit",
+      "file": "/images/nasa/archive-spirit.jpg",
+      "title": "Spirit Self-Portrait, Sols 329-330 (PIA07371)",
+      "credit": "NASA/JPL/Cornell",
+      "sourceUrl": "https://science.nasa.gov/photojournal/spirit-self-portrait-sols-329-330/",
+      "originalUrl": "https://images-assets.nasa.gov/image/PIA07371/PIA07371~medium.jpg",
+      "date": "2004-12-08",
+      "alt": "Spirit's self-portrait, looking down at its own dusty solar panels on the red ground of Mars.",
+      "width": 900,
+      "height": 820
+    },
+    {
+      "id": "archive-insight",
+      "file": "/images/nasa/archive-insight.jpg",
+      "title": "InSight's Final Selfie (PIA25287)",
+      "credit": "NASA/JPL-Caltech",
+      "sourceUrl": "https://science.nasa.gov/photojournal/insights-final-selfie/",
+      "originalUrl": "https://images-assets.nasa.gov/image/PIA25287/PIA25287~medium.jpg",
+      "date": "2022-04-24",
+      "alt": "InSight's last selfie: the lander and its two round solar panels, covered in red dust.",
+      "width": 900,
+      "height": 540
+    },
+    {
+      "id": "archive-reflectors",
+      "file": "/images/nasa/archive-reflectors.jpg",
+      "title": "Close-up of the Apollo 14 laser ranging retroreflector (AS14-67-9386)",
+      "credit": "NASA",
+      "sourceUrl": "https://images.nasa.gov/details/as14-67-09386",
+      "originalUrl": "https://images-assets.nasa.gov/image/as14-67-09386/as14-67-09386~medium.jpg",
+      "date": "1971-02-05",
+      "alt": "The Apollo 14 mirror panel, a tilted box full of small round mirrors, on the gray Moon with bootprints around it.",
+      "width": 900,
+      "height": 900
     }
   ]
 }

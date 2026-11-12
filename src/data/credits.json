@@ -830,6 +830,66 @@
       "sourceUrl": "https://nssdc.gsfc.nasa.gov/planetary/lunar/a11landing.aiff",
       "page": "https://nssdc.gsfc.nasa.gov/planetary/sound/index.html",
       "changes": "Whole clip kept (the line only); converted from 8-bit 22 kHz AIFF to 44.1 kHz; 5 ms fade-in, 50 ms fade-out; gain to -20 LUFS; mono MP3 96 kbps"
+    },
+    {
+      "id": "ar-archive-surveyor3",
+      "file": "images/nasa/archive-surveyor3.jpg",
+      "title": "Astronaut Charles Conrad Jr. examines the Surveyor 3 spacecraft (AS12-48-7136)",
+      "credit": "NASA",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://images-assets.nasa.gov/image/as12-48-7136/as12-48-7136~medium.jpg",
+      "page": "https://images.nasa.gov/details/as12-48-7136",
+      "changes": "Resized for Dad's archive cards (900 px or less, JPEG)"
+    },
+    {
+      "id": "ar-archive-sojourner",
+      "file": "images/nasa/archive-sojourner.jpg",
+      "title": "Sojourner Rover Near The Dice (PIA01122)",
+      "credit": "NASA/JPL",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://images-assets.nasa.gov/image/PIA01122/PIA01122~orig.jpg",
+      "page": "https://science.nasa.gov/photojournal/sojourner-rover-near-the-dice/",
+      "changes": "Resized for Dad's archive cards (900 px or less, JPEG)"
+    },
+    {
+      "id": "ar-archive-viking1",
+      "file": "images/nasa/archive-viking1.jpg",
+      "title": "First Photograph Taken on Mars Surface (PIA00381)",
+      "credit": "NASA/JPL",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://images-assets.nasa.gov/image/PIA00381/PIA00381~orig.jpg",
+      "page": "https://science.nasa.gov/photojournal/first-photograph-taken-on-mars-surface/",
+      "changes": "Resized for Dad's archive cards (900 px or less, JPEG)"
+    },
+    {
+      "id": "ar-archive-spirit",
+      "file": "images/nasa/archive-spirit.jpg",
+      "title": "Spirit Self-Portrait, Sols 329-330 (PIA07371)",
+      "credit": "NASA/JPL/Cornell",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://images-assets.nasa.gov/image/PIA07371/PIA07371~medium.jpg",
+      "page": "https://science.nasa.gov/photojournal/spirit-self-portrait-sols-329-330/",
+      "changes": "Resized for Dad's archive cards (900 px or less, JPEG)"
+    },
+    {
+      "id": "ar-archive-insight",
+      "file": "images/nasa/archive-insight.jpg",
+      "title": "InSight's Final Selfie (PIA25287)",
+      "credit": "NASA/JPL-Caltech",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://images-assets.nasa.gov/image/PIA25287/PIA25287~medium.jpg",
+      "page": "https://science.nasa.gov/photojournal/insights-final-selfie/",
+      "changes": "Resized for Dad's archive cards (900 px or less, JPEG)"
+    },
+    {
+      "id": "ar-archive-reflectors",
+      "file": "images/nasa/archive-reflectors.jpg",
+      "title": "Close-up of the Apollo 14 laser ranging retroreflector (AS14-67-9386)",
+      "credit": "NASA",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://images-assets.nasa.gov/image/as14-67-09386/as14-67-09386~medium.jpg",
+      "page": "https://images.nasa.gov/details/as14-67-09386",
+      "changes": "Resized for Dad's archive cards (900 px or less, JPEG)"
     }
   ],
   "data": [
