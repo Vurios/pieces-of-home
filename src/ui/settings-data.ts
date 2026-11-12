@@ -17,6 +17,8 @@ export interface Settings {
   exploreFreely: boolean;
   /** Show the little map in the corner. */
   miniMap: boolean;
+  /** The mission note is folded down to its title. */
+  missionFolded: boolean;
   readAloud: boolean;
   /** Show the short how-to-play tips. */
   tips: boolean;
@@ -38,6 +40,7 @@ export function defaultSettings(): Settings {
     language: "en",
     exploreFreely: false,
     miniMap: true,
+    missionFolded: false,
     readAloud: false,
     tips: true,
     tipsDone: [],
@@ -72,6 +75,7 @@ export function reviveSettings(raw: unknown): Settings {
     language: pick(v["language"], ["en", "fil"] as const, d.language),
     exploreFreely: bool("exploreFreely", d.exploreFreely),
     miniMap: bool("miniMap", d.miniMap),
+    missionFolded: bool("missionFolded", d.missionFolded),
     readAloud: bool("readAloud", d.readAloud),
     tips: bool("tips", d.tips),
     tipsDone: Array.isArray(v["tipsDone"]) ? [...new Set((v["tipsDone"] as unknown[]).filter((x): x is string => typeof x === "string" && x.length < 24))].slice(0, 24) : [],

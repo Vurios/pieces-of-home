@@ -59,7 +59,7 @@
       const flags = engine.store.value.flags;
       const next = { id: zone, ...copy, first, found: new Set(PLACE_IDS.filter((id) => flags.includes(placeFlag(id)))) };
       // Take turns with the chapter card: a first find keeps its turn, a repeat visit just skips.
-      if (banners.chapter) {
+      if (banners.busy) {
         if (first || !waiting?.first) waiting = next;
         return;
       }
@@ -77,7 +77,7 @@
 
   // The chapter card took the stage while a place card was up: the place card steps aside and waits.
   $effect(() => {
-    if (!banners.chapter || !shown) return;
+    if (!banners.busy || !shown) return;
     const { key: _key, ...rest } = shown;
     window.clearTimeout(timer);
     waiting = rest;
@@ -86,7 +86,7 @@
 
   // The chapter card is gone: after a short breath, the place that waited gets its turn.
   $effect(() => {
-    if (banners.chapter || !waiting) return;
+    if (banners.busy || !waiting) return;
     const next = waiting;
     const id = window.setTimeout(() => {
       waiting = null;

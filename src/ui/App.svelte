@@ -14,6 +14,7 @@
   import MiniMap from "./map/MiniMap.svelte";
   import MapPanel from "./map/MapPanel.svelte";
   import PlaceCard from "./hud/PlaceCard.svelte";
+  import TravelScreen from "./hud/TravelScreen.svelte";
   import Speech from "./hud/Speech.svelte";
   import StampMoment from "./hud/StampMoment.svelte";
   import Toasts from "./hud/Toasts.svelte";
@@ -303,6 +304,7 @@
   <MapPanel {engine} {game} onclose={() => flow.close()} />
 {/if}
 
+<TravelScreen {engine} />
 {#if flash}<div class="flash" aria-hidden="true"></div>{/if}
 {#if debug}<DebugOverlay {engine} {version} />{/if}
 {#if label}

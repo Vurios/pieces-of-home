@@ -568,3 +568,13 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 **Why:** Team asked to optimize the game and make it smoother. On a tiny planet half the world is always behind the horizon but was drawn anyway, in every pass, and first-time shader compiles caused hitches when walking near new things or arriving in a new world.
 
 **Alternatives considered:** Lower detail everywhere (worse look), GPU occlusion queries (latency and driver cost), smaller instanced batches per prop type (far more draw calls).
+
+## 58. A foldable mission note and a travel screen between worlds
+
+**Date:** 2026-11-12
+
+**Decision:** The mission note in the top left folds down to its tag, step boxes and the goal's title (a round chevron button on the note, or J), and remembers the choice. When a new goal arrives while it is folded, it opens by itself for a few seconds (after any travel screen lifts) so the change is still read. Every trip through the Looking Lamp now shows a travel screen over the closing iris: a night sky, the world left behind and the world ahead drawn as little planets, and the lamp's light drawing a pencil route between them, with the destination's name ("Tranquility Base, On the Moon", "Home, Back to Dad's workshop"). The light eases most of the way while the world loads and finishes once it is ready; the screen holds at least about two seconds so a trip reads as a trip, and says "Almost there..." on a slow load. The new world's story, its chapter card and place cards wait until the screen lifts, and Remi stands still under it.
+
+**Why:** Team feedback: the mission note covered too much of the screen, and changing chapters or planets needed a proper transition instead of a quick blink of the iris.
+
+**Alternatives considered:** Hiding the note after a timeout (players lose the goal), a progress bar loading screen (reads as software, not story), a 3D flight between worlds (load cost, and it would delay the trip on slow devices).

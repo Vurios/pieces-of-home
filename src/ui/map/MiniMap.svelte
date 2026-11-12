@@ -43,7 +43,8 @@
     y: number;
     letter: boolean;
   }
-  let map = $state<WorldMap | null>(null);
+  // Raw: the world's own map object, compared by identity each frame.
+  let map = $state.raw<WorldMap | null>(null);
   let marks = $state<Drawn[]>([]);
   let paths = $state<string[]>([]);
   let blobs = $state<{ x: number; y: number; r: number; kind: "crater" | "water" | "patch"; color: string }[]>([]);

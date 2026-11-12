@@ -6,6 +6,12 @@
 class Banners {
   /** True while the chapter card ("Prologue / The Workshop") is showing. */
   chapter = $state(false);
+  /** True while the travel screen covers a trip through the Looking Lamp. */
+  traveling = $state(false);
+  /** True while a big card or the travel screen has the stage. */
+  get busy(): boolean {
+    return this.chapter || this.traveling;
+  }
 }
 
 export const banners = new Banners();

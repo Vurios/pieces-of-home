@@ -340,7 +340,12 @@ export class Engine {
 
   private loadTexture = (url: string): Texture => this.textureLoader.load(url);
 
-  async loadWorld(id: string, entry?: string): Promise<void> {
+  /**
+   * Builds a world and stands the player in it. `announce` sends "world:ready"
+   * at once; a trip sends it later, when the travel screen lifts, so the
+   * story starts in sight.
+   */
+  async loadWorld(id: string, entry?: string, announce = true): Promise<void> {
     const load = WORLDS[id];
     if (!load) throw new Error(`Unknown world "${id}"`);
     this.bus.emit("world:loading", { id });
@@ -386,7 +391,7 @@ export class Engine {
         s.world = id;
       });
     }
-    this.bus.emit("world:ready", { id });
+    if (announce) this.bus.emit("world:ready", { id });
   }
 
   /** Wedges of the world that can hide behind its curve (see `Batcher.build`). */
@@ -436,13 +441,23 @@ export class Engine {
     if (this.traveling) return;
     this.traveling = true;
     try {
+      this.bus.emit("travel:start", { from: this.world?.id ?? null, to: id });
       await this.animateIris(0, 1, 0.7);
-      await this.loadWorld(id, entry);
+      const shut = performance.now();
+      await this.loadWorld(id, entry, false);
       // Compile the new world's shaders while the iris is still shut, so it opens smoothly.
       await this.prepareShaders();
+      // The travel screen gets a moment even when loading is quick, so a trip reads as a trip.
+      const hold = (this.reducedMotion ? 0.4 : 2.1) * 1000 - (performance.now() - shut);
+      if (hold > 0) await new Promise((resolve) => window.setTimeout(resolve, hold));
+      this.bus.emit("travel:arrive", { to: id });
+      this.bus.emit("world:ready", { id });
       await this.animateIris(1, 0, 0.8);
     } finally {
       this.traveling = false;
+      // Always, even if loading failed, so the travel screen never stays up.
+      this.post.iris = 0;
+      this.bus.emit("travel:end", { to: id });
     }
   }
 
@@ -537,7 +552,7 @@ export class Engine {
     const input = this.input.read();
     const shot = this.bookmark;
     const titling = this.mode === "title" && this.title !== null;
-    if (shot || titling || this.paused) {
+    if (shot || titling || this.paused || this.traveling) {
       // Screenshot mode: nobody moves.
       input.moveX = 0;
       input.moveY = 0;

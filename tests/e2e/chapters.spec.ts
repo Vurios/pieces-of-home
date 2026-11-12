@@ -89,6 +89,22 @@ async function playGame(page: Page): Promise<void> {
   }
 }
 
+/**
+ * Walks to `id` and presses the interact key until `done` is true. A story
+ * card that pops up late can take a key press, so it tries again.
+ */
+async function useUntil(page: Page, id: string, done: (s: State) => boolean, timeout = 60_000): Promise<void> {
+  const end = Date.now() + timeout;
+  while (Date.now() < end) {
+    await playUntil(page, () => true);
+    await goTo(page, id);
+    await use(page);
+    await page.waitForTimeout(600);
+    if (done(await state(page))) return;
+  }
+  throw new Error(`could not use ${id}; state ${JSON.stringify(await state(page))}`);
+}
+
 /** Clicks through story cards and story games until `done` is true. */
 async function playUntil(page: Page, done: (s: State) => boolean, timeout = 40_000): Promise<void> {
   const end = Date.now() + timeout;
@@ -149,11 +165,8 @@ test("Chapter 1: from the dome to the stamp", async ({ page }, info) => {
   await playUntil(page, (s) => s.flags.includes("send-a-light:done"));
 
   // Milo's parcel, home through the lamp light, and his new eyes.
-  await playUntil(page, () => true);
   await page.waitForTimeout(1500);
-  await goTo(page, "parcel");
-  await use(page);
-  expect((await state(page)).carrying).toBe("part:chapter-1");
+  await useUntil(page, "parcel", (s) => s.carrying === "part:chapter-1");
   await goTo(page, "lamp-home");
   await use(page);
   await page.waitForFunction(() => (window as unknown as { __poh: Poh }).__poh.worldId() === "home", null, { timeout: 30_000 });
@@ -233,9 +246,7 @@ test("Chapter 3: from the dome to the stamp", async ({ page }, info) => {
   await playUntil(page, () => false, 12_000).catch(() => undefined);
 
   // The solar heart for Milo, home through the lamp light.
-  await goTo(page, "parcel");
-  await use(page);
-  expect((await state(page)).carrying).toBe("part:chapter-3");
+  await useUntil(page, "parcel", (s) => s.carrying === "part:chapter-3");
   await goTo(page, "lamp-home");
   await use(page);
   await page.waitForFunction(() => (window as unknown as { __poh: Poh }).__poh.worldId() === "home", null, { timeout: 30_000 });

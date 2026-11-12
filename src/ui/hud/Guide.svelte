@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from "svelte";
   import { fade, fly } from "svelte/transition";
   import { type Goal, PROLOGUE, SEEN_NOTEBOOK, TIP_ORDER, type TipId, goalFor, tipFor } from "../../content/goals";
   import type { InputDevice, PromptInfo } from "../../game/core/events";
@@ -124,7 +125,8 @@
   let banner = $state<{ label: string; name: string }>({ label: PROLOGUE.label, name: PROLOGUE.name });
   $effect(() => {
     const world = game.world;
-    if (hidden || introduced === world) return;
+    // After a trip the card waits for the travel screen to lift.
+    if (hidden || banners.traveling || introduced === world) return;
     const first = introduced === "";
     introduced = world;
     const chapter = chapterForWorld(world);
@@ -163,9 +165,52 @@
     last = next;
   });
   const card = $derived(celebrating ?? goal);
+
+  // ---- Folding: the note can fold down to its title (click the chevron, or J). ----
+  // A new goal unfolds it for a few seconds so the player still reads what changed.
+  let peek = $state(false);
+  let lastTitle = "";
+  let peekTimer = 0;
+  $effect(() => {
+    // Runs on every save change (the card is rebuilt), so only a new title counts.
+    const title = card.title;
+    if (title === lastTitle) return;
+    const first = lastTitle === "";
+    lastTitle = title;
+    if (first || !untrack(() => settings.value.missionFolded)) return;
+    wantPeek = true;
+  });
+  // The peek waits until the note can be seen (not under the travel screen or a panel).
+  let wantPeek = $state(false);
+  $effect(() => {
+    if (!wantPeek || hidden || banners.traveling) return;
+    wantPeek = false;
+    peek = true;
+    window.clearTimeout(peekTimer);
+    peekTimer = window.setTimeout(() => (peek = false), 4500);
+  });
+  $effect(() => () => window.clearTimeout(peekTimer));
+  const folded = $derived(settings.value.missionFolded && !peek);
+  function toggleFold(): void {
+    if (peek) {
+      peek = false;
+      return;
+    }
+    settings.update((s) => {
+      s.missionFolded = !s.missionFolded;
+    });
+  }
+  function onkey(event: KeyboardEvent): void {
+    if (hidden || shot || event.code !== "KeyJ" || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+    const target = event.target as HTMLElement | null;
+    if (target && (target.tagName === "INPUT" || target.tagName === "SELECT" || target.tagName === "TEXTAREA")) return;
+    toggleFold();
+  }
   /** Finished steps: the one just done counts while it celebrates; exploring means all done. */
   const filled = $derived(celebrating ? card.step : card.id === "explore" ? card.steps : card.step - 1);
 </script>
+
+<svelte:window onkeydown={onkey} />
 
 {#if !hidden && !shot}
   {#if showChapter}
@@ -178,18 +223,21 @@
     </div>
   {/if}
 
-  <section class="goal" class:done={celebrating !== null} aria-labelledby="goal-title" in:fly={{ x: -16, duration: settings.reducedMotion ? 0 : 400, delay: 300 }}>
+  <section class="goal" class:done={celebrating !== null} class:folded aria-labelledby="goal-title" in:fly={{ x: -16, duration: settings.reducedMotion ? 0 : 400, delay: 300 }}>
     <span class="pin" aria-hidden="true"></span>
-    <p class="eyebrow-row">
-      <span class="chap"><span class="mission">{t("goal.mission")}</span>{card.chapter}</span>
+    <div class="eyebrow-row">
+      <p class="chap"><span class="mission">{t("goal.mission")}</span><span class="chap-name">{card.chapter}</span></p>
       <span class="count" aria-label={`Step ${card.step} of ${card.steps}`}>
         {#each Array.from({ length: card.steps }, (_, i) => i) as i (i)}<i class:on={i < filled} class:now={i === filled && card.id !== "explore"}></i>{/each}
       </span>
-    </p>
+      <button type="button" class="fold" onclick={toggleFold} aria-expanded={!folded} aria-controls="goal-more" aria-label={folded ? t("goal.unfold") : t("goal.fold")} aria-keyshortcuts="J" title={`${folded ? t("goal.unfold") : t("goal.fold")} (J)`}>
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 10 L8 6 L12 10" /></svg>
+      </button>
+    </div>
     {#key card.id + (celebrating ? "-done" : "")}
       <div class="goal-body" in:fly={{ y: 8, duration: settings.reducedMotion ? 0 : 320 }}>
         <h2 id="goal-title">{card.title}</h2>
-        <p class="detail" role="status" aria-live="polite">{celebrating ? "Done!" : card.detail}</p>
+        <div class="more" id="goal-more"><div><p class="detail" role="status" aria-live="polite">{celebrating ? "Done!" : card.detail}</p></div></div>
         {#if celebrating}<span class="done-stamp" aria-hidden="true">Done</span>{/if}
       </div>
     {/key}
@@ -333,6 +381,86 @@
     color: var(--ink);
     pointer-events: none;
     rotate: -0.8deg;
+    transition:
+      width 0.34s var(--ease-out),
+      padding 0.34s var(--ease-out);
+  }
+  /* Folded: just the tag, the steps and the goal's title. */
+  .goal.folded {
+    width: min(320px, calc(100vw - 36px));
+    padding: 12px 14px 11px 30px;
+  }
+  .fold {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    margin: -3px -4px 0 0;
+    padding: 0;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    background: var(--paper-light);
+    box-shadow: 0 2px 0 var(--ink);
+    color: var(--ink);
+    cursor: pointer;
+    pointer-events: auto;
+    transition:
+      transform 0.18s var(--ease-spring),
+      box-shadow 0.18s ease,
+      background 0.18s ease;
+  }
+  .fold:hover {
+    transform: translateY(-1px);
+    background: #f9d79a;
+  }
+  .fold:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 0 var(--ink);
+  }
+  .fold:focus-visible {
+    outline: 3px solid var(--amber);
+    outline-offset: 2px;
+  }
+  .fold svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: rotate 0.34s var(--ease-out);
+  }
+  .folded .fold svg {
+    rotate: 180deg;
+  }
+  .more {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition:
+      grid-template-rows 0.34s var(--ease-out),
+      opacity 0.24s ease;
+  }
+  .more > div {
+    min-height: 0;
+    overflow: hidden;
+  }
+  .folded .more {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  .chap-name {
+    display: block;
+    max-height: 2.6em;
+    overflow: hidden;
+    transition:
+      max-height 0.3s var(--ease-out),
+      opacity 0.2s ease;
+  }
+  .folded .chap-name {
+    max-height: 0;
+    opacity: 0;
   }
   /* A push pin holding it up. */
   .pin {
@@ -348,16 +476,20 @@
   }
   .eyebrow-row {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    align-items: flex-start;
+    gap: 10px;
     margin: 0 0 4px;
   }
+  .count {
+    margin-left: auto;
+    padding-top: 1px;
+  }
   .chap {
+    margin: 0;
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
     font: 700 0.7rem/1 var(--label);
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -365,6 +497,7 @@
   }
   /* "Your mission", typed on a little red label like a flight checklist tab. */
   .mission {
+    white-space: nowrap;
     padding: 3px 6px 2px;
     border-radius: 2px;
     background: var(--clay-deep);
@@ -415,6 +548,10 @@
   .goal h2 {
     margin: 0;
     font: 700 1.5rem/1.15 var(--hand);
+    transition: font-size 0.34s var(--ease-out);
+  }
+  .folded h2 {
+    font-size: 1.15rem;
   }
   :global(:root[data-font="dyslexic"]) .goal h2 {
     font: 700 1.2rem/1.2 var(--read);

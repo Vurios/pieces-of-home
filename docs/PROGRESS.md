@@ -6,7 +6,7 @@ There is no deadline. The full scope in the Game Bible gets built: P0, then P1, 
 - **Repo:** https://github.com/Vurios/pieces-of-home (public). No CI: the team asked for straight pushes to `main`. Run typecheck, tests and e2e locally before pushing.
 - **Team rule for this run:** the agent asks the team before starting each next phase prompt.
 
-**Now:** Phase 05 in progress. Chapters 1 (Tranquility Base) and 3 (Meridiani Planum) are playable from the dome to the stamp, each with a full playthrough test. Chapter 3 adds Wait for the Wind (breeze flags steer dust devils over the panels), three story games, the long storm and the real Mars wind (DECISIONS #52). Dad's map is in: a corner map and a globe to spin on every world (#53). Front-end polish from team review (#54). A word-aware murmur for speech (#55), the corner map as a gliding compass and a calmer globe (#56), and smoother frames from horizon culling and early shader compiles (#57). Phase 06 waits until Phase 05 is complete. **Next up:** the Finale, then Chapters 2 and 4, then P2.
+**Now:** Phase 05 in progress. Chapters 1 (Tranquility Base) and 3 (Meridiani Planum) are playable from the dome to the stamp, each with a full playthrough test. Chapter 3 adds Wait for the Wind (breeze flags steer dust devils over the panels), three story games, the long storm and the real Mars wind (DECISIONS #52). Dad's map is in: a corner map and a globe to spin on every world (#53). Front-end polish from team review (#54). A word-aware murmur for speech (#55), the corner map as a gliding compass and a calmer globe (#56), smoother frames from horizon culling and early shader compiles (#57), a foldable mission note and a travel screen between worlds (#58). Phase 06 waits until Phase 05 is complete. **Next up:** the Finale, then Chapters 2 and 4, then P2.
 
 ## State summary (2026-11-11)
 
@@ -156,6 +156,7 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Speech murmur rebuilt as word-aware formant voices (#55)
 - [x] Map design pass: compass corner map that glides with Remi, globe controls and compass, e2e test (#56)
 - [x] Performance pass: horizon culling (about 45% fewer triangles), shaders compiled before they show, panel exit motion (#57)
+- [x] Foldable mission note (J) and a travel screen for every trip through the Looking Lamp (#58)
 - [ ] Finale: The Long Light (P0)
 - [ ] Chapter 2: Hadley-Apennine (P1)
 - [ ] Chapter 4: Valinor Hills (P1)

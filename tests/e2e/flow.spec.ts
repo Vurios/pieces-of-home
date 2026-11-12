@@ -65,3 +65,25 @@ test("every quality tier draws without errors", async ({ page }, info) => {
     expect(errors).toEqual([]);
   }
 });
+
+test("the mission note folds and opens, and a trip shows the travel screen", async ({ page }, info) => {
+  test.skip(info.project.name === "phone", "one size is enough");
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  await ready(page, "&quality=low");
+  const fold = page.getByRole("button", { name: "Fold the mission note" });
+  await expect(fold).toBeVisible({ timeout: 15_000 });
+  await fold.click();
+  const open = page.getByRole("button", { name: "Open the mission note" });
+  await expect(open).toHaveAttribute("aria-expanded", "false");
+  await page.keyboard.press("KeyJ");
+  await expect(fold).toHaveAttribute("aria-expanded", "true");
+
+  await page.evaluate("void window.__poh.travel('tranquility')");
+  const screen = page.locator(".trip-screen");
+  await expect(screen).toBeVisible({ timeout: 10_000 });
+  await expect(screen).toContainText("Tranquility Base");
+  await expect(screen).toBeHidden({ timeout: 60_000 });
+  expect(await page.evaluate("window.__poh.worldId()")).toBe("tranquility");
+  expect(errors).toEqual([]);
+});

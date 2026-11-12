@@ -103,6 +103,14 @@ export interface GameEvents {
   "activity:beat": { id: string; beat: string };
   /** Ask to go to another little world through the Looking Lamp. `entry` picks where to stand there. */
   travel: { to: string; entry?: string };
+  /**
+   * A trip through the Looking Lamp, for the travel screen: it starts as the
+   * iris closes, `arrive` comes once the new world is ready and the screen has
+   * had its moment, and `end` once the iris is open again.
+   */
+  "travel:start": { from: string | null; to: string };
+  "travel:arrive": { to: string };
+  "travel:end": { to: string };
   /** Open Dad's notebook at a spread. */
   "notebook:open": { spread: string };
   /** A short camera move to show something (a pulse flying to Earth), blended in and out of the follow camera. */
