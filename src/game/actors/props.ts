@@ -1,7 +1,7 @@
 import { DoubleSide, Group, Mesh, MeshBasicMaterial, Shape, ShapeGeometry, Vector3 } from "three";
 import type { ToonLibrary } from "../render/toon";
 import { damp, projectOnTangent, surfaceMatrix } from "../world/sphere";
-import { box } from "./parts";
+import { box, cone, cylinder } from "./parts";
 
 /**
  * Small moving props: the paper arrow that points to the next letter, and the
@@ -147,4 +147,37 @@ export function createMirrorPanel(toon: ToonLibrary): Group {
     if (object instanceof Mesh) object.castShadow = true;
   });
   return group;
+}
+
+/**
+ * A breeze flag (Chapter 3): a thin stick with a pennant of bright cloth. The
+ * cloth is its own child, named "cloth", so it can turn toward a passing dust
+ * devil. The stick stands on its base at the origin.
+ */
+export function createBreezeFlag(toon: ToonLibrary): Group {
+  const flag = new Group();
+  flag.name = "breeze-flag";
+  const stick = new Mesh(cylinder(6), toon.toon({ color: "#EDE5D3", objectSpace: true, paint: 0.05 }));
+  stick.scale.set(0.026, 1.1, 0.026);
+  stick.position.y = 0.55;
+  const knob = new Mesh(cylinder(8), toon.toon({ color: "#D9583F", objectSpace: true, paint: 0.06 }));
+  knob.scale.set(0.035, 0.04, 0.035);
+  knob.position.y = 1.11;
+  const cloth = new Group();
+  cloth.name = "cloth";
+  cloth.position.y = 0.95;
+  const pennant = new Mesh(cone(3), toon.toon({ color: "#F2B23E", objectSpace: true, paint: 0.08, side: DoubleSide }));
+  // A flat three-sided cone on its side: a pennant pointing away from the stick.
+  pennant.scale.set(0.012, 0.5, 0.2);
+  pennant.rotation.z = -Math.PI / 2;
+  pennant.position.x = 0.25;
+  const stripe = new Mesh(box(0.002), toon.toon({ color: "#D9583F", objectSpace: true, paint: 0.06 }));
+  stripe.scale.set(0.06, 0.17, 0.016);
+  stripe.position.x = 0.06;
+  cloth.add(pennant, stripe);
+  flag.add(stick, knob, cloth);
+  flag.traverse((object) => {
+    if (object instanceof Mesh) object.castShadow = true;
+  });
+  return flag;
 }

@@ -9,12 +9,13 @@ import { type ColliderGroup, createColliderGroup } from "../../world/colliders";
 import { fbm3 } from "../../world/noise";
 import { angleBetween, damp, headingToTangent, latLonToDir, surfaceMatrix } from "../../world/sphere";
 import { Terrain, buildPlanetGeometry } from "../../world/terrain";
-import type { Bookmark, FrameInfo, World, WorldContext } from "../types";
+import type { Bookmark, FrameInfo, MapIcon, World, WorldContext } from "../types";
+import { PLACE_COPY, placeFlag } from "../../../content/places";
 import { CHAPTERS, chapterForPart } from "../../../content/chapters";
 import { STORY_COPY } from "../../../content/chapters/common";
 import { torus } from "../../actors/parts";
 import { C, buildDish, buildHouse, buildLampPost, buildMailbox } from "./buildings";
-import { GROUND_PATCHES, type Site, HILL, HILL_TOP, HOME_RADIUS, MAILBOX, MEADOW, ORCHARD, PATH_HALF_WIDTH, PLACES, POND, POND_RADIUS, SITES, TERRAIN, TRAIL_LAMPS, local, site } from "./layout";
+import { GROUND_PATCHES, type Site, HILL, HILL_TOP, HOME_RADIUS, MAILBOX, MEADOW, ORCHARD, PATH_HALF_WIDTH, PLACES, POND, POND_RADIUS, SITES, TERRAIN, TRAILS, TRAIL_LAMPS, local, site } from "./layout";
 import { buildGarden, buildMeadow, groundMatrix, pathDistance, planTrees, scatterNature, treeShade } from "./nature";
 import { buildPaths } from "./paths";
 import { buildPlaces } from "./places";
@@ -31,6 +32,25 @@ const WORN = new Color("#9AA27A");
 const DIRT = new Color("#B3926C");
 const MUD = new Color("#7E6B55");
 const patches = GROUND_PATCHES.map((p) => ({ ...p, color: new Color(p.color) }));
+
+/** The little picture for each place on Dad's map. */
+const MAP_ICONS: Record<string, MapIcon> = {
+  home: "house",
+  workshop: "workshop",
+  garden: "garden",
+  dish: "dish",
+  hill: "hill",
+  meadow: "meadow",
+  treehouse: "treehouse",
+  playground: "playground",
+  pond: "pond",
+  camp: "tent",
+  weather: "weather",
+  rocket: "rocket",
+  orchard: "orchard",
+  windpump: "windpump",
+  balloon: "balloon",
+};
 
 export function createHome(ctx: WorldContext): World {
   const { toon, quality } = ctx;
@@ -555,6 +575,30 @@ export function createHome(ctx: WorldContext): World {
         }
       }
       return zone;
+    },
+    map: {
+      title: "Home",
+      radius: HOME_RADIUS,
+      center: latLonToDir(SITES.spawn.lat, SITES.spawn.lon),
+      colors: { land: "#93B47E", shade: "#7E9F6C", ink: "#2B2622", path: "#D6C09A", water: "#86B8CC" },
+      marks: [
+        { id: "mailbox", label: "Mailbox", at: latLonToDir(MAILBOX.lat, MAILBOX.lon), icon: "mailbox" },
+        ...PLACES.map((p) => ({
+          id: p.id,
+          label: PLACE_COPY[p.id]?.name ?? p.id,
+          at: p.dir,
+          icon: MAP_ICONS[p.id] ?? "house",
+          // Home and the workshop are known from the start; the rest are found by walking.
+          ...(p.id === "home" || p.id === "workshop" ? {} : { found: placeFlag(p.id) }),
+          ...(p.id === "workshop" ? { letters: [LETTER_TO_THE_LAMP] } : {}),
+        })),
+      ],
+      water: [{ at: POND, radius: POND_RADIUS }],
+      patches: [
+        { at: HILL_TOP, radius: HILL.radius * 0.7, color: "#A9C78C" },
+        ...GROUND_PATCHES.map((g) => ({ at: g.dir, radius: g.radius, color: g.color })),
+      ],
+      paths: TRAILS,
     },
     objective() {
       const s = store.value;

@@ -11,6 +11,8 @@
   import { goalFor } from "../content/goals";
   import EmoteWheel from "./hud/EmoteWheel.svelte";
   import Guide from "./hud/Guide.svelte";
+  import MiniMap from "./map/MiniMap.svelte";
+  import MapPanel from "./map/MapPanel.svelte";
   import PlaceCard from "./hud/PlaceCard.svelte";
   import Speech from "./hud/Speech.svelte";
   import StampMoment from "./hud/StampMoment.svelte";
@@ -27,6 +29,8 @@
   import { StoryDirector } from "./story/director";
   import Seismograph from "./story/Seismograph.svelte";
   import StoryCards from "./story/StoryCards.svelte";
+  import StoryGames from "./story/StoryGames.svelte";
+  import ActivityMeter from "./story/ActivityMeter.svelte";
   import { settings, t } from "./settings.svelte";
   import Menu from "./title/Menu.svelte";
   import StoryIntro from "./title/StoryIntro.svelte";
@@ -106,8 +110,8 @@
     const offs = [
       engine.bus.on("travel", ({ to, entry }) => {
         if (engine.traveling || trip) return;
-        // A mirror panel stays in its world: it goes back on its stand.
-        if (engine.store.value.carrying?.startsWith("mirror:")) engine.store.update((s) => void (s.carrying = null));
+        // A mirror panel or a breeze flag stays in its world: it goes back where it came from.
+        if (/^(mirror|flag):/.test(engine.store.value.carrying ?? "")) engine.store.update((s) => void (s.carrying = null));
         const chapter = CHAPTERS.find((c) => c.world === to);
         if (chapter) trip = { to, place: chapter.dome, ...(entry ? { entry } : {}) };
         else void engine.travel(to, entry);
@@ -258,11 +262,15 @@
   onemote={() => (flow.emotes = !flow.emotes)}
   onsettings={() => flow.open("settings")}
   onhint={hint}
+  onmap={() => engine.mapView() && flow.open("map")}
 />
+<MiniMap {engine} {game} hidden={flow.stage !== "play" || flow.covered || !settings.value.miniMap} onopen={() => flow.open("map")} />
 <Guide {engine} {game} hidden={flow.stage !== "play" || flow.covered} notebookOpen={flow.notebook} />
 <PlaceCard {engine} hidden={flow.stage !== "play" || flow.covered || flow.notebook} />
 <Speech {engine} />
 <StoryCards {engine} />
+<StoryGames {engine} />
+<ActivityMeter {engine} />
 <Seismograph {engine} {game} />
 {#if trip}
   <Countdown
@@ -291,6 +299,8 @@
   <TogetherPanel onclose={() => flow.close()} />
 {:else if flow.panel === "chapters"}
   <ChaptersPanel onclose={() => flow.close()} onhome={home} />
+{:else if flow.panel === "map"}
+  <MapPanel {engine} {game} onclose={() => flow.close()} />
 {/if}
 
 {#if flash}<div class="flash" aria-hidden="true"></div>{/if}

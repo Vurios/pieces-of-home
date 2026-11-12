@@ -15,6 +15,8 @@ export interface Settings {
   motion: "system" | "reduce" | "full";
   language: Language;
   exploreFreely: boolean;
+  /** Show the little map in the corner. */
+  miniMap: boolean;
   readAloud: boolean;
   /** Show the short how-to-play tips. */
   tips: boolean;
@@ -35,6 +37,7 @@ export function defaultSettings(): Settings {
     motion: "system",
     language: "en",
     exploreFreely: false,
+    miniMap: true,
     readAloud: false,
     tips: true,
     tipsDone: [],
@@ -68,6 +71,7 @@ export function reviveSettings(raw: unknown): Settings {
     motion: pick(v["motion"], ["system", "reduce", "full"] as const, d.motion),
     language: pick(v["language"], ["en", "fil"] as const, d.language),
     exploreFreely: bool("exploreFreely", d.exploreFreely),
+    miniMap: bool("miniMap", d.miniMap),
     readAloud: bool("readAloud", d.readAloud),
     tips: bool("tips", d.tips),
     tipsDone: Array.isArray(v["tipsDone"]) ? [...new Set((v["tipsDone"] as unknown[]).filter((x): x is string => typeof x === "string" && x.length < 24))].slice(0, 24) : [],

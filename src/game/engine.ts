@@ -14,7 +14,7 @@ import {
   WebGLRenderer,
 } from "three";
 import { Character } from "./actors/character";
-import { PaperArrow, createEnvelope, createMirrorPanel, createParcel } from "./actors/props";
+import { PaperArrow, createEnvelope, createMirrorPanel, createParcel, createBreezeFlag } from "./actors/props";
 import { EventBus, type GameEvents, type QualityTier } from "./core/events";
 import { Input } from "./core/input";
 import { FrameWatchdog, QUALITY, ResolutionGovernor, type QualitySettings, detectTier, lowerTier, readDeviceHints, readTierOverride, writeTierOverride } from "./core/quality";
@@ -29,7 +29,7 @@ import { InteractionSystem } from "./world/interaction";
 import { projectOnTangent } from "./world/sphere";
 import { TitleSequence } from "./title/title";
 import { WORLDS } from "./worlds/registry";
-import type { Bookmark, World, WorldContext } from "./worlds/types";
+import type { Bookmark, World, WorldContext, WorldMap } from "./worlds/types";
 
 export interface EngineOptions {
   canvas: HTMLCanvasElement;
@@ -157,6 +157,7 @@ export class Engine {
     this.carried = [
       { prefix: "part:", model: createParcel(this.toon) },
       { prefix: "mirror:", model: createMirrorPanel(this.toon) },
+      { prefix: "flag:", model: carriedFlag(createBreezeFlag(this.toon)) },
     ];
     for (const { model } of this.carried) {
       model.visible = false;
@@ -266,6 +267,21 @@ export class Engine {
     const x = (p.x * 0.5 + 0.5) * window.innerWidth;
     const y = (-p.y * 0.5 + 0.5) * window.innerHeight;
     return { x, y, visible: p.z < 1 && p.z > -1 && x > -40 && y > -40 && x < window.innerWidth + 40 && y < window.innerHeight + 40 };
+  }
+
+  /**
+   * For Dad's map: the world's map, where Remi stands, which way the camera
+   * looks along the ground, and the next stop. Null in a world with no map.
+   */
+  mapView(): { map: WorldMap; worldId: string; up: Vector3; facing: Vector3; heading: Vector3; objective: Vector3 | null } | null {
+    const world = this.world;
+    if (!world?.map) return null;
+    const up = this.player.up.clone();
+    const facing = new Vector3();
+    this.camera.getWorldDirection(facing);
+    projectOnTangent(facing, up, facing);
+    if (facing.lengthSq() < 1e-6) facing.copy(this.player.forward);
+    return { map: world.map, worldId: world.id, up, facing: facing.normalize(), heading: this.player.forward.clone(), objective: world.objective()?.clone() ?? null };
   }
 
   /** The player's head in world space, for speech bubbles. */
@@ -549,6 +565,11 @@ export class Engine {
     world.sun.target.position.copy(this.player.position);
     world.sun.target.updateMatrixWorld();
     world.fill.position.copy(up);
+    const liveSky = world.liveSky?.();
+    if (liveSky) this.sky?.set(liveSky);
+    const liveLook = world.liveLook?.();
+    if (liveLook) this.post.setLook(liveLook);
+    if (world.fog && this.scene.fog instanceof Fog) this.scene.fog.color.set(world.fog.color);
     this.sky?.setGlowDirection(this.sunDir);
     // A fixed shot from orbit uses the lens up, so the sky still shows its horizon glow and stars.
     this.camera.updateMatrixWorld();
@@ -677,4 +698,12 @@ export class Engine {
     this.renderer.dispose();
     this.bus.clear();
   }
+}
+
+/** A breeze flag held over the shoulder, its stick leaning back. */
+function carriedFlag(flag: import("three").Group): import("three").Group {
+  flag.scale.setScalar(0.72);
+  flag.position.set(0.1, -0.42, -0.05);
+  flag.rotation.set(-0.28, 0, -0.1);
+  return flag;
 }

@@ -6,7 +6,7 @@ There is no deadline. The full scope in the Game Bible gets built: P0, then P1, 
 - **Repo:** https://github.com/Vurios/pieces-of-home (public). No CI: the team asked for straight pushes to `main`. Run typecheck, tests and e2e locally before pushing.
 - **Team rule for this run:** the agent asks the team before starting each next phase prompt.
 
-**Now:** Phase 05 in progress. Chapter 1 (Tranquility Base) is playable from the dome to the stamp, with the content system, story director, fact and note cards, hints in three tiers, the dome countdown, Milo's first part and a full playthrough test. All open facts are checked but two. Recorded sound (CC0 foley and instruments, four NASA recordings) is in, with word-following voices (DECISIONS #46 to #51). **Next up:** Chapter 3 (Meridiani Planum), then the Finale, then Chapters 2 and 4, then P2.
+**Now:** Phase 05 in progress. Chapters 1 (Tranquility Base) and 3 (Meridiani Planum) are playable from the dome to the stamp, each with a full playthrough test. Chapter 3 adds Wait for the Wind (breeze flags steer dust devils over the panels), three story games, the long storm and the real Mars wind (DECISIONS #52). Dad's map is in: a corner map and a globe to spin on every world (#53). Front-end polish from team review (#54). **Next up:** the Finale, then Chapters 2 and 4, then P2.
 
 ## State summary (2026-11-11)
 
@@ -151,7 +151,8 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [ ] Real images and data (NASA images, Horizons table for Voyager 1)
 - [ ] Prologue: The Workshop (P0)
 - [x] Chapter 1: Tranquility Base (P0): world, three letters, seismograph, Send a Light, Milo's eyes, memory, stamp; `tests/e2e/chapters.spec.ts`; screens in `docs/screens/phase05/` (`npx tsx scripts/screens-chapters.ts`)
-- [ ] Chapter 3: Meridiani Planum (P0)
+- [x] Chapter 3: Meridiani Planum (P0): world, three letters, blueberry grinder, Wait for the Wind, the long storm, last report and calls, Milo's solar heart; playthrough in `tests/e2e/chapters.spec.ts`
+- [x] Dad's map: corner map and globe on Home, Tranquility Base and Meridiani Planum (M, click, or LT)
 - [ ] Finale: The Long Light (P0)
 - [ ] Chapter 2: Hadley-Apennine (P1)
 - [ ] Chapter 4: Valinor Hills (P1)

@@ -5,6 +5,8 @@
   import type { GameState } from "../../game/core/state";
   import type { Engine } from "../../game/engine";
   import { settings, t } from "../settings.svelte";
+  import { banners } from "./banners.svelte";
+  import { chapterForWorld } from "../../content/chapters";
 
   /**
    * Tells the player what to do. Three parts:
@@ -116,14 +118,35 @@
     }
   });
 
-  // The chapter card, once per visit, when play first shows.
-  let introduced = false;
+  // The chapter card: when play first shows, and on arriving in each chapter world.
+  // It names the chapter of the world Remi is in ("Chapter 1 / Tranquility Base").
+  let introduced = "";
+  let banner = $state<{ label: string; name: string }>({ label: PROLOGUE.label, name: PROLOGUE.name });
   $effect(() => {
-    if (hidden || introduced) return;
-    introduced = true;
+    const world = game.world;
+    if (hidden || introduced === world) return;
+    const first = introduced === "";
+    introduced = world;
+    const chapter = chapterForWorld(world);
+    if (shot || (!chapter && !first)) return;
+    if (chapter) {
+      const [label, name] = chapter.title.split(": ");
+      banner = { label: label ?? chapter.title, name: name ?? chapter.place };
+    } else banner = { label: PROLOGUE.label, name: PROLOGUE.name };
     showChapter = true;
-    const id = window.setTimeout(() => (showChapter = false), settings.reducedMotion ? 2200 : 3400);
-    return () => window.clearTimeout(id);
+    banners.chapter = true;
+    // The stage stays taken until the card has finished fading out.
+    let gone = 0;
+    const id = window.setTimeout(() => {
+      showChapter = false;
+      gone = window.setTimeout(() => (banners.chapter = false), 600);
+    }, settings.reducedMotion ? 2000 : 2800);
+    return () => {
+      window.clearTimeout(id);
+      window.clearTimeout(gone);
+      showChapter = false;
+      banners.chapter = false;
+    };
   });
 
   // When a goal is finished, the card shows a check for a moment before the next goal.
@@ -149,8 +172,8 @@
     <div class="chapter" aria-hidden="true" transition:fade={{ duration: settings.reducedMotion ? 0 : 500 }}>
       <span class="tape a"></span>
       <span class="tape b"></span>
-      <span class="ch-label">{PROLOGUE.label}</span>
-      <span class="ch-name">{PROLOGUE.name}</span>
+      <span class="ch-label">{banner.label}</span>
+      <span class="ch-name">{banner.name}</span>
       <svg class="ch-line" viewBox="0 0 200 10" preserveAspectRatio="none"><path d="M2 6.5 C 40 3, 80 7.5, 120 4.6 C 150 2.8, 175 5.8, 198 4" /></svg>
     </div>
   {/if}
@@ -222,12 +245,12 @@
   .chapter {
     position: fixed;
     left: 50%;
-    top: 20%;
+    top: 16%;
     translate: -50% 0;
     display: grid;
     justify-items: center;
     gap: 2px;
-    padding: 22px 56px 20px;
+    padding: 14px 40px 12px;
     background-color: #fbf4e4;
     background-image: var(--grain);
     box-shadow:
@@ -261,14 +284,14 @@
     border: 2.5px solid var(--clay);
     border-radius: 4px;
     color: var(--clay);
-    font: 700 0.85rem/1 var(--label);
+    font: 700 0.72rem/1 var(--label);
     letter-spacing: 0.24em;
     text-transform: uppercase;
     rotate: -2deg;
   }
   .ch-name {
-    margin-top: 8px;
-    font: 700 clamp(2.4rem, 6vw, 3.8rem) / 1.05 var(--hand);
+    margin-top: 6px;
+    font: 700 clamp(1.8rem, 3.6vw, 2.5rem) / 1.05 var(--hand);
   }
   .ch-line {
     width: 70%;
@@ -717,7 +740,7 @@
     }
     .chapter {
       top: 34%;
-      padding: 18px 34px 16px;
+      padding: 12px 28px 10px;
     }
   }
 </style>

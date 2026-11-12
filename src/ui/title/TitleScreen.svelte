@@ -25,11 +25,13 @@
       ready = true;
       queueMicrotask(() => chain?.focus({ preventScroll: true }));
     });
+    // The 3D tag swings on its chain, but the button, the outline and the
+    // "Pull the chain" note hold still over where it hangs at rest.
     let frame = 0;
     const tick = (): void => {
       frame = requestAnimationFrame(tick);
       const p = engine.titleTag();
-      if (p) tag = p;
+      if (p && (Math.hypot(p.x - tag.x, p.y - tag.y) > 1.5 || p.visible !== tag.visible)) tag = { x: Math.round(p.x), y: Math.round(p.y), visible: p.visible };
     };
     frame = requestAnimationFrame(tick);
     return () => {
@@ -101,7 +103,6 @@
     onpointercancel={up}
     onclick={click}
   ></button>
-  <span class="ring" style:left={`${tag.x}px`} style:top={`${tag.y}px`} aria-hidden="true"></span>
   <p class="pull-hint" style:left={`${tag.x}px`} style:top={`${tag.y}px`} aria-hidden="true">
     <svg viewBox="0 0 80 40" width="80" height="40"><path d="M76 8 C 56 4, 30 8, 12 26 M12 26 L 24 25 M12 26 L 15 14" /></svg>
     <span>{t("title.pull")}</span>
@@ -135,29 +136,6 @@
   .chain:active {
     cursor: grabbing;
   }
-  /* A warm ring that pulses round the BEGIN tag, so the eye finds it. */
-  .ring {
-    position: fixed;
-    width: 120px;
-    height: 120px;
-    margin: -60px 0 0 -60px;
-    border: 3px solid rgba(255, 214, 140, 0.9);
-    border-radius: 50%;
-    box-shadow: 0 0 24px rgba(255, 190, 90, 0.55);
-    pointer-events: none;
-    animation: ring 2s ease-out infinite;
-  }
-  @keyframes ring {
-    0% {
-      opacity: 0.95;
-      transform: scale(0.55);
-    }
-    80%,
-    100% {
-      opacity: 0;
-      transform: scale(1.25);
-    }
-  }
   /* "Pull the chain" on a paper tag, with Dad's pencil arrow. */
   .pull-hint {
     position: fixed;
@@ -166,7 +144,6 @@
     align-items: center;
     gap: 2px;
     pointer-events: none;
-    animation: nudge 1.8s ease-in-out infinite;
   }
   .pull-hint span {
     padding: 6px 14px 7px;
@@ -188,14 +165,5 @@
     stroke: #fffaf0;
     stroke-width: 3.2;
     stroke-linecap: round;
-  }
-  @keyframes nudge {
-    50% {
-      transform: translateX(6px);
-    }
-  }
-  :global(:root[data-motion="reduce"]) .ring,
-  :global(:root[data-motion="reduce"]) .pull-hint {
-    animation: none;
   }
 </style>

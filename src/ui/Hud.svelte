@@ -18,8 +18,9 @@
     onemote: () => void;
     onsettings: () => void;
     onhint: () => void;
+    onmap: () => void;
   }
-  let { engine, hidden, onnotebook, onphoto, onemote, onsettings, onhint }: Props = $props();
+  let { engine, hidden, onnotebook, onphoto, onemote, onsettings, onhint, onmap }: Props = $props();
 
   let prompt = $state<PromptInfo | null>(null);
   let device = $state<InputDevice>("keyboard");
@@ -79,6 +80,10 @@
         if (down && !was.get(index) && !hidden) s.act();
         was.set(index, down);
       }
+      // LT opens Dad's map.
+      const map = Boolean(pad.buttons[6]?.pressed);
+      if (map && !was.get(6) && !hidden) onmap();
+      was.set(6, map);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
@@ -100,6 +105,7 @@
     else if (event.code === "KeyC") onphoto();
     else if (event.code === "KeyG") onemote();
     else if (event.code === "KeyH") onhint();
+    else if (event.code === "KeyM") onmap();
     else if (event.key === "Escape") onsettings();
   }
 </script>

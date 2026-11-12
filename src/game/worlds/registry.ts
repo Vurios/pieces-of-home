@@ -7,6 +7,7 @@ import type { WorldFactory } from "./types";
 export const WORLDS: Record<string, () => Promise<WorldFactory>> = {
   home: () => import("./home").then((module) => module.createHome),
   tranquility: () => import("./tranquility").then((module) => module.createTranquility),
+  meridiani: () => import("./meridiani").then((module) => module.createMeridiani),
 };
 
 export type WorldId = keyof typeof WORLDS;

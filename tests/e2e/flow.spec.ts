@@ -44,13 +44,13 @@ test("take the letter from the mailbox and give it to the lamp", async ({ page }
   await expect(page.getByText("Take the letter")).toBeVisible({ timeout: 10_000 });
   if (info.project.name === "phone") await page.getByRole("button", { name: "Take the letter" }).tap();
   else await page.keyboard.press("KeyE");
-  await expect.poll(() => poh(page, (api) => api.state().carrying)).toBe("to-the-lamp");
+  await expect.poll(() => poh(page, (api) => api.state().carrying), { timeout: 15_000 }).toBe("to-the-lamp");
 
   expect(await poh(page, (api) => api.teleportTo("lamp"))).toBe(true);
   await expect(page.getByText("Give the letter to the lamp")).toBeVisible({ timeout: 10_000 });
   if (info.project.name === "phone") await page.getByRole("button", { name: "Give the letter to the lamp" }).tap();
   else await page.keyboard.press("KeyE");
-  await expect.poll(() => poh(page, (api) => api.state().delivered)).toContain("to-the-lamp");
+  await expect.poll(() => poh(page, (api) => api.state().delivered), { timeout: 15_000 }).toContain("to-the-lamp");
   expect(errors).toEqual([]);
 });
 

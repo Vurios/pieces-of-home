@@ -4,12 +4,14 @@
   import { PLACE_COPY, PLACE_IDS, placeFlag } from "../../content/places";
   import type { Engine } from "../../game/engine";
   import { settings } from "../settings.svelte";
+  import { banners } from "./banners.svelte";
 
   /**
    * Names a place when the player walks into it, the way a map label appears.
    * The first visit gets the full card: "New place found", the name, one line
    * about it and a row of dots for every place on the planet. Later visits
-   * show just the name, smaller and shorter.
+   * show just the name, smaller and shorter. While the chapter card is up,
+   * a new place waits its turn instead of stacking on top.
    */
   interface Props {
     engine: Engine;
@@ -29,6 +31,15 @@
   const shot = new URLSearchParams(location.search).has("shot");
   let timer = 0;
   let count = 0;
+  /** A place that arrived while the chapter card was up. */
+  let waiting = $state<Omit<Shown, "key"> | null>(null);
+
+  function show(next: Omit<Shown, "key">): void {
+    count += 1;
+    shown = { ...next, key: count };
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => (shown = null), next.first ? 3800 : 2000);
+  }
 
   $effect(() => {
     const off = engine.bus.on("player:zone", ({ zone }) => {
@@ -46,10 +57,13 @@
       }
       if (hidden || shot) return;
       const flags = engine.store.value.flags;
-      count += 1;
-      shown = { id: zone, ...copy, first, found: new Set(PLACE_IDS.filter((id) => flags.includes(placeFlag(id)))), key: count };
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => (shown = null), first ? 4600 : 2200);
+      const next = { id: zone, ...copy, first, found: new Set(PLACE_IDS.filter((id) => flags.includes(placeFlag(id)))) };
+      // Take turns with the chapter card: a first find keeps its turn, a repeat visit just skips.
+      if (banners.chapter) {
+        if (first || !waiting?.first) waiting = next;
+        return;
+      }
+      show(next);
     });
     return () => {
       off();
@@ -59,6 +73,26 @@
 
   $effect(() => {
     if (hidden) shown = null;
+  });
+
+  // The chapter card took the stage while a place card was up: the place card steps aside and waits.
+  $effect(() => {
+    if (!banners.chapter || !shown) return;
+    const { key: _key, ...rest } = shown;
+    window.clearTimeout(timer);
+    waiting = rest;
+    shown = null;
+  });
+
+  // The chapter card is gone: after a short breath, the place that waited gets its turn.
+  $effect(() => {
+    if (banners.chapter || !waiting) return;
+    const next = waiting;
+    const id = window.setTimeout(() => {
+      waiting = null;
+      if (!hidden) show(next);
+    }, 300);
+    return () => window.clearTimeout(id);
   });
 </script>
 
@@ -100,11 +134,11 @@
     z-index: 3;
     display: grid;
     justify-items: center;
-    gap: 4px;
+    gap: 3px;
     width: max-content;
-    max-width: min(520px, calc(100vw - 40px));
+    max-width: min(400px, calc(100vw - 40px));
     box-sizing: border-box;
-    padding: 14px 30px 14px;
+    padding: 9px 22px 10px;
     background-color: #fbf4e4;
     background-image: var(--grain);
     border: var(--outline);
@@ -162,38 +196,38 @@
     border: 2.5px solid var(--clay);
     border-radius: 4px;
     color: var(--clay);
-    font: 700 0.72rem/1 var(--label);
+    font: 700 0.64rem/1 var(--label);
     letter-spacing: 0.2em;
     text-transform: uppercase;
     rotate: -2deg;
   }
   .name {
-    font: 700 1.6rem/1.1 var(--hand);
+    font: 700 1.3rem/1.1 var(--hand);
   }
   .first .name {
-    font-size: clamp(2rem, 4.4vw, 2.6rem);
+    font-size: clamp(1.5rem, 2.6vw, 1.85rem);
   }
   :global(:root[data-font="dyslexic"]) .name {
     font-family: var(--read);
   }
   .line {
     max-width: 34ch;
-    font: 400 1rem/1.4 var(--read);
+    font: 400 0.88rem/1.35 var(--read);
     color: var(--ink-soft);
   }
   .tally {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 6px;
+    gap: 8px;
+    margin-top: 3px;
   }
   .dots {
     display: flex;
     gap: 4px;
   }
   .dots b {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     box-sizing: border-box;
     border: 2px solid rgba(43, 38, 34, 0.35);
     border-radius: 50%;
@@ -215,7 +249,7 @@
     }
   }
   .sum {
-    font: 700 0.78rem/1 var(--label);
+    font: 700 0.68rem/1 var(--label);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--ink-soft);

@@ -27,6 +27,9 @@ import { SampleBank } from "./samples";
 import { type Speaking, speak } from "./voices";
 
 export { BUSES, type Bus } from "./mixer";
+
+/** A looping cue that can also move, when it was placed at a point. */
+type MovingLoop = LoopHandle & { move(p: Point): void };
 export { VOICES } from "./voices";
 
 type Point = { x: number; y: number; z: number };
@@ -85,7 +88,9 @@ export class AudioEngine {
   private wantScene: Scene = "silent";
   private wantFriends = 0;
   private cueState = new Map<string, { last: number; ends: number[] }>();
-  private emitters: { loop: LoopHandle | null; spot: SoundSpot; next: number; panner: AudioNode | null }[] = [];
+  private emitters: { loop: MovingLoop | null; spot: SoundSpot; next: number; value: number }[] = [];
+  /** Looping recordings a world asks for through its ambience levels (the real Mars wind). */
+  private beds = new Map<string, { set(level: number): void; stop(): void; level: number }>();
   private emitterWorld: World | null = null;
   private voices = new Map<string, Speaking>();
   private recordings = new Map<string, AudioBuffer | null>();
@@ -275,7 +280,7 @@ export class AudioEngine {
   }
 
   /** Starts a looping cue (a motor, the rotor, the radio). Null while locked. */
-  loop(name: string, value = 1, at?: Point | null): LoopHandle | null {
+  loop(name: string, value = 1, at?: Point | null): MovingLoop | null {
     const mx = this.mx;
     const spec = CUES[name];
     const make = spec ? LOOPS[spec.recipe] : undefined;
@@ -286,6 +291,14 @@ export class AudioEngine {
     const handle = make(mx, level, value);
     return {
       set: handle.set,
+      move: (p: Point) => {
+        if (!(out instanceof PannerNode)) return;
+        if (out.positionX) {
+          out.positionX.setTargetAtTime(p.x, mx.now, 0.05);
+          out.positionY.setTargetAtTime(p.y, mx.now, 0.05);
+          out.positionZ.setTargetAtTime(p.z, mx.now, 0.05);
+        } else out.setPosition(p.x, p.y, p.z);
+      },
       stop: () => {
         handle.stop();
         window.setTimeout(() => {
@@ -470,6 +483,12 @@ export class AudioEngine {
     bus.on("sfx", ({ name, at, param, delay, level }) =>
       this.play(name, { at: at ? { x: at[0], y: at[1], z: at[2] } : null, ...(param === undefined ? {} : { param }), ...(delay === undefined ? {} : { delay }), ...(level === undefined ? {} : { level }) }),
     );
+    // The Long Storm: the music thins, falls silent while no answer comes, then returns.
+    bus.on("story:cue", ({ id }) => {
+      if (id === "storm") this.storm("thin");
+      else if (id === "silence") this.storm("silence");
+      else if (id === "clear") this.storm("return");
+    });
     bus.on("story:card", ({ kind }) => {
       if (kind === "note") this.play("pencil", { delay: 0.15, level: 0.6 });
     });
@@ -514,13 +533,24 @@ export class AudioEngine {
       this.ambience.setWorld(scape);
     }
     // The title flies high over the planet: only a little of the dusk comes through.
-    this.ambience?.setLevels(f.mode === "title" ? { dusk: 0.35 } : (f.world.ambience?.(f.player) ?? {}));
+    const levels = f.mode === "title" ? { dusk: 0.35 } : (f.world.ambience?.(f.player) ?? {});
+    this.ambience?.setLevels(levels);
+    this.recordingBeds(levels);
     if (f.mode === "play" && this.wantScene === "title") this.setMusic(MUSIC_FOR[f.world.id] ?? "home");
     else if (f.mode === "play" && this.wantScene !== "silent" && this.wantScene !== MUSIC_FOR[f.world.id]) this.setMusic(MUSIC_FOR[f.world.id] ?? "home");
 
     const now = mx.now;
     for (const emitter of this.emitters) {
       const { spot } = emitter;
+      // Sounds that travel (a dust devil): follow the spot and its loudness.
+      if (spot.live && emitter.loop) {
+        emitter.loop.move(spot.position);
+        const value = spot.value ?? 1;
+        if (Math.abs(value - emitter.value) > 0.02) {
+          emitter.loop.set(value);
+          emitter.value = value;
+        }
+      }
       if (!spot.cue || !spot.every) continue;
       const near = Math.hypot(spot.position.x - f.player.x, spot.position.y - f.player.y, spot.position.z - f.player.z) < (spot.radius ?? 6);
       if (near && now >= emitter.next) {
@@ -538,7 +568,31 @@ export class AudioEngine {
     if (!this.mx) return;
     for (const spot of world.sounds ?? []) {
       const loop = spot.loop ? this.loop(spot.loop, spot.value ?? 1, spot.position) : null;
-      this.emitters.push({ loop, spot, next: this.mx.now + (spot.every?.[0] ?? 0) * 0.5, panner: null });
+      this.emitters.push({ loop, spot, next: this.mx.now + (spot.every?.[0] ?? 0) * 0.5, value: spot.value ?? 1 });
+    }
+  }
+
+  /**
+   * A level named after a loaded recording (for example "mars-wind") plays that
+   * recording as a looping bed under the made ambience, and stops when the
+   * world stops asking for it.
+   */
+  private recordingBeds(levels: Record<string, number>): void {
+    for (const [id, bed] of this.beds) {
+      if (id in levels) continue;
+      bed.stop();
+      this.beds.delete(id);
+    }
+    for (const [id, level] of Object.entries(levels)) {
+      if (!this.bank?.recording(id)) continue;
+      const bed = this.beds.get(id);
+      if (!bed) {
+        const made = this.recordingLoop(id, level);
+        if (made) this.beds.set(id, { ...made, level });
+      } else if (Math.abs(bed.level - level) > 0.02) {
+        bed.set(level);
+        bed.level = level;
+      }
     }
   }
 }

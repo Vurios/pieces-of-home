@@ -230,6 +230,10 @@
           {#if tipsReset}<span class="help" role="status">{t("settings.tipsReset")}</span>{/if}
         </div>
         <label class="switch-row">
+          <span class="text">{t("settings.minimap")}<span class="help">{t("settings.minimapHelp")}</span></span>
+          <input class="switch" type="checkbox" role="switch" checked={s.miniMap} onchange={(e) => set("miniMap", e.currentTarget.checked)} />
+        </label>
+        <label class="switch-row">
           <span class="text">{t("settings.explore")}<span class="help">{t("settings.exploreHelp")}</span></span>
           <input class="switch" type="checkbox" role="switch" checked={s.exploreFreely} onchange={(e) => set("exploreFreely", e.currentTarget.checked)} />
         </label>

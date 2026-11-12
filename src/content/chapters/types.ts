@@ -24,7 +24,11 @@ export type Line =
    * A real mission recording (src/data/audio-assets.json) with its caption,
    * the words exactly as heard, and the fact that sources who said it.
    */
-  | { recording: string; name: string; caption: string; fact: string };
+  | { recording: string; name: string; caption: string; fact: string }
+  /** A small game on screen (the microscope, the storm calls). The script waits until it is done. */
+  | { game: string }
+  /** Tells the world to start something: "storm", "silence", "clear". */
+  | { cue: string };
 
 export interface LetterDef {
   /** Saved in `delivered` when given. */

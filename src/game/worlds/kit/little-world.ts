@@ -31,6 +31,11 @@ export function siteOn(terrain: Terrain, lat: number, lon: number, heading: numb
   return { dir, forward, origin, matrix: surfaceMatrix(origin, dir, forward) };
 }
 
+/** Points along the ground from one direction to another, for map paths. */
+export function arcPoints(a: Vector3, b: Vector3, steps = 16): Vector3[] {
+  return Array.from({ length: steps + 1 }, (_, i) => a.clone().lerp(b, i / steps).normalize());
+}
+
 /** A point in a site's frame, as a world position. */
 export function at(s: Site, x: number, y: number, z: number): Vector3 {
   return new Vector3(x, y, z).applyMatrix4(s.matrix);

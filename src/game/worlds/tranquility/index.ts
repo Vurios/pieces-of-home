@@ -10,7 +10,7 @@ import { SendALight } from "../../puzzles/send-a-light";
 import { distanceToArc } from "../shapes";
 import type { Bookmark, FrameInfo, World, WorldContext } from "../types";
 import { PaintedEarth } from "../kit/earth";
-import { LampBeam, type Site, at, buildTag, chapterRuntime, headingToward, siteOn } from "../kit/little-world";
+import { LampBeam, type Site, arcPoints, at, buildTag, chapterRuntime, headingToward, siteOn } from "../kit/little-world";
 import { buildCamera, buildDescentStage, buildFlag, buildFootprints, buildMirrorArray, buildSeismometer, rock } from "./machines";
 
 /**
@@ -373,6 +373,26 @@ export function createTranquility(ctx: WorldContext): World {
     },
     objective() {
       return runtime.objective(() => activity.objective());
+    },
+    map: {
+      title: "Tranquility Base",
+      radius: MOON_RADIUS,
+      center: SPOTS.lander,
+      colors: { land: "#BDB8B0", shade: "#8E8A84", ink: "#24222A", path: "#A29E97" },
+      marks: [
+        { id: "lamp", label: "Looking Lamp", at: SPOTS.landing, icon: "lamp" },
+        { id: "tag", label: "Dad's tag", at: SPOTS.tag, icon: "tag" },
+        { id: "lander", label: "The lander", at: SPOTS.lander, icon: "lander", letters: ["a11-letter-descent"] },
+        { id: "flag", label: "The flag", at: SPOTS.flag, icon: "flag" },
+        { id: "camera", label: "TV camera", at: SPOTS.camera, icon: "camera" },
+        { id: "listener", label: "Moonquake listener", at: SPOTS.listener, icon: "listener", letters: ["a11-letter-seismometer"] },
+        { id: "mirrors", label: "Little mirrors", at: SPOTS.mirrors, icon: "mirrors", letters: ["a11-letter-mirrors"] },
+        { id: "rig", label: "Dad's mirror corner", at: SPOTS.rig, icon: "corner" },
+        { id: "console", label: "Earth console", at: SPOTS.console, icon: "console" },
+        { id: "little-west", label: "Little West crater", at: SPOTS.littleWest, icon: "crater" },
+      ],
+      craters: (spec.craters ?? []).map((c) => ({ at: c.center, radius: c.radius })),
+      paths: trails.map(([a, b]) => arcPoints(a, b, 12)),
     },
     sounds: [],
     ambience() {

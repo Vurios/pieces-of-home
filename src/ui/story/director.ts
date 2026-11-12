@@ -101,6 +101,24 @@ export class StoryDirector {
       await Promise.all([audio.clip(line.recording), sleep(reading)]);
       return;
     }
+    if ("game" in line) {
+      const key = ++this.key;
+      this.engine.interactions.blocked = true;
+      await new Promise<void>((resolve) => {
+        const off = this.engine.bus.on("story:game-done", (done) => {
+          if (done.key !== key) return;
+          off();
+          resolve();
+        });
+        this.engine.bus.emit("story:game", { key, id: line.game });
+      });
+      this.engine.interactions.blocked = this.waiting.size > 0;
+      return;
+    }
+    if ("cue" in line) {
+      this.engine.bus.emit("story:cue", { id: line.cue });
+      return;
+    }
     if ("note" in line) return this.card("note", line.note);
     return this.card("fact", fact(line.fact).kid, line.fact);
   }

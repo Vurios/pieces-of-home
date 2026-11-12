@@ -65,8 +65,42 @@ export const SEND_A_LIGHT: ActivityDef = {
   ],
 };
 
+export const WAIT_FOR_THE_WIND: ActivityDef = {
+  id: "wait-for-the-wind",
+  beats: {
+    "no-hands": { who: "remi", say: "No hands on Mars. Nobody could wipe them there. We wait for the wind." },
+    planted: { who: "remi", say: "The breeze flag is up. Dust devils follow the breeze." },
+    "all-flags": { who: "remi", say: "That's all the flags. I can pull one up and move it." },
+    missed: { who: "remi", say: "So close! Another dust devil will come. They always do." },
+    cleaning: { who: "remi", say: "It's going right over the panels!" },
+  },
+  steps: [
+    {
+      id: "flags",
+      title: "Plant breeze flags",
+      detail: "Dust devils follow the breeze. Take a flag and plant it between a dust devil and the rover.",
+      hints: [
+        "A dust devil goes where the breeze pulls it. What could pull it toward the rover?",
+        "The breeze flags lean against a rock by the rover. Take one and plant it.",
+        "Follow the arrow to the flags. Plant one right next to the rover.",
+      ],
+    },
+    {
+      id: "clean",
+      title: "Lead a dust devil over the panels",
+      detail: "Each flag pulls a passing dust devil toward it. Make a path of flags to the rover. Another dust devil always comes.",
+      hints: [
+        "Watch where the dust devils go. Then put a flag in their way.",
+        "Plant one flag near the dust devils' path and one right beside the rover.",
+        "You can pull a flag up and plant it again. Try lining them up from the dust devils to the rover.",
+      ],
+    },
+  ],
+};
+
 export const ACTIVITIES: Record<string, ActivityDef> = {
   [SEND_A_LIGHT.id]: SEND_A_LIGHT,
+  [WAIT_FOR_THE_WIND.id]: WAIT_FOR_THE_WIND,
 };
 
 export const stepFlag = (activity: string, step: string): string => `${activity}:${step}`;

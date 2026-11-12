@@ -46,6 +46,71 @@ export interface SoundSpot {
   cue?: string;
   every?: [number, number];
   radius?: number;
+  /** The world moves `position` and changes `value` while it plays (a dust devil). */
+  live?: boolean;
+}
+
+/** A small hand-drawn picture on Dad's map (see src/ui/map/MapGlyph.svelte). */
+export type MapIcon =
+  | "lamp"
+  | "tag"
+  | "house"
+  | "workshop"
+  | "mailbox"
+  | "garden"
+  | "dish"
+  | "hill"
+  | "meadow"
+  | "treehouse"
+  | "playground"
+  | "pond"
+  | "tent"
+  | "weather"
+  | "rocket"
+  | "orchard"
+  | "windpump"
+  | "balloon"
+  | "lander"
+  | "flag"
+  | "camera"
+  | "listener"
+  | "mirrors"
+  | "console"
+  | "crater"
+  | "rover"
+  | "rocks"
+  | "bounce"
+  | "pennant"
+  | "corner";
+
+/** One labelled place on a world's map. */
+export interface MapMark {
+  id: string;
+  label: string;
+  /** Unit direction from the planet's center. */
+  at: Vector3;
+  icon: MapIcon;
+  /** Shown as a pencil question mark until this save flag is set (places still to find). */
+  found?: string;
+  /** Letters go here: a little envelope shows until they are all delivered. */
+  letters?: string[];
+}
+
+/**
+ * Dad's map of a little world, for the corner map and the big globe. Every
+ * position is a unit direction from the planet's center.
+ */
+export interface WorldMap {
+  title: string;
+  radius: number;
+  /** Where the globe faces when it first opens, if Remi is not there. */
+  center: Vector3;
+  colors: { land: string; shade: string; ink: string; path?: string; water?: string };
+  marks: MapMark[];
+  craters?: { at: Vector3; radius: number }[];
+  paths?: Vector3[][];
+  water?: { at: Vector3; radius: number }[];
+  patches?: { at: Vector3; radius: number; color: string }[];
 }
 
 export interface FrameInfo {
@@ -83,6 +148,10 @@ export interface World {
   spawn: { dir: Vector3; forward: Vector3 };
   /** Named places to arrive at, for example "bench" when coming back from a dome. */
   entries?: Record<string, { dir: Vector3; forward: Vector3 }>;
+  /** A sky that changes while you play (a dust storm), or null when it holds still. */
+  liveSky?(): SkySpec | null;
+  /** A colour grade that changes while you play, or null. Return one only when it really changed: each costs a new lookup table. */
+  liveLook?(): LookSpec | null;
   /** Test hooks, run through the debug API: "solve", "deliver" and so on. */
   debug?: Record<string, () => unknown>;
   /** The title flight for this world, or null. Only Home has one. */
@@ -98,6 +167,8 @@ export interface World {
   zoneAt?(dir: Vector3): string | null;
   /** Where the paper arrow should point, or null. */
   objective(): Vector3 | null;
+  /** Dad's map of this world, for the corner map and the big globe. */
+  map?: WorldMap;
   /** Sounds placed in the world (machine hums, Milo's chirps). */
   sounds?: SoundSpot[];
   /** How loud each ambience layer should be where the player stands, 0 to 1 (see src/audio/ambience.ts). */

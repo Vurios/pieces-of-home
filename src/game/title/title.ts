@@ -291,9 +291,17 @@ export class TitleSequence {
 
   /** Where the BEGIN tag is on screen, in CSS pixels, for the accessible button over it. */
   tagScreen(camera: PerspectiveCamera, width: number, height: number): { x: number; y: number; visible: boolean } {
+    // Where the tag hangs at rest, with no sway and no pull: the chain moves, the button over it holds still.
+    const sway = this.chain.rotation.z;
+    const hang = this.tag.position.y;
+    this.chain.rotation.z = 0;
+    this.tag.position.y = -1.2 - 0.04;
     this.root.updateMatrixWorld();
     this.tag.updateMatrixWorld();
     const p = this.scratch.set(0, -0.54, 0).applyMatrix4(this.tag.matrixWorld).project(camera);
+    this.chain.rotation.z = sway;
+    this.tag.position.y = hang;
+    this.root.updateMatrixWorld();
     return { x: (p.x * 0.5 + 0.5) * width, y: (-p.y * 0.5 + 0.5) * height, visible: this.chain.visible && p.z < 1 };
   }
 

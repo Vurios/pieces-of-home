@@ -1,12 +1,13 @@
 import type { GameState } from "../../game/core/state";
 import { ACTIVITIES, type ActivityStep, doneFlag, stepFlag } from "./activities";
+import { MERIDIANI } from "./meridiani";
 import { TRANQUILITY } from "./tranquility";
 import type { ChapterDef, LetterDef } from "./types";
 
 export type { ChapterDef, LetterDef, Line, Speaker } from "./types";
 
 /** Every built chapter, in story order. */
-export const CHAPTERS: ChapterDef[] = [TRANQUILITY];
+export const CHAPTERS: ChapterDef[] = [TRANQUILITY, MERIDIANI];
 
 export function chapterById(id: string): ChapterDef | null {
   return CHAPTERS.find((c) => c.id === id) ?? null;

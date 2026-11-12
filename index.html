@@ -531,10 +531,11 @@
         width: 100%;
         animation: scribble 0.5s ease-in-out;
       }
+      /* Done: the pencil rests beside the last tick, clear of the words below. */
       #boot[data-state="ready"] .pencil,
       #boot[data-state="leaving"] .pencil {
-        top: calc(40px + 5.6 * 32px);
-        transform: rotate(-58deg);
+        top: calc(40px + 3.15 * 32px);
+        transform: rotate(-52deg);
       }
       #boot .line {
         margin: 12px 0 0;
@@ -685,8 +686,10 @@
           transform: scale(1.25);
         }
       }
-      #light:hover .plate {
-        transform: rotate(-1deg) scale(1.05);
+      /* Hovering holds the switch still, so it is easy to aim at. */
+      #light:hover .plate::after,
+      #light:hover .lever {
+        animation: none;
       }
       #light .words {
         display: grid;

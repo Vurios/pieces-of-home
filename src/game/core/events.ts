@@ -88,6 +88,13 @@ export interface GameEvents {
   /** A story card: Dad's handwritten note, or a fact from facts.json. The UI answers with story:card-done. */
   "story:card": { key: number; kind: "note" | "fact"; text: string; fact?: string };
   "story:card-done": { key: number };
+  /** A small game on screen (the microscope, the storm calls). The UI answers with story:game-done. */
+  "story:game": { key: number; id: string };
+  "story:game-done": { key: number };
+  /** The story tells the world to start something, for example "storm", "silence" or "clear". */
+  "story:cue": { id: string };
+  /** A gauge for the activity on screen, 0 to 1, or null to hide it. */
+  "activity:meter": { id: string; label: string; value: number | null };
   /** A chapter's main activity begins, moves on a step, or is finished. */
   "activity:start": { id: string };
   "activity:step": { id: string; step: string };

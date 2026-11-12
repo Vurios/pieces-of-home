@@ -508,3 +508,33 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 **Why:** The two best moments of Chapter 1 happen away from where the player stands.
 
 **Alternatives considered:** Fixed cutscenes (take control away), leaving the camera alone (the payoff happens off screen).
+
+## 52. Chapter 3: Wait for the Wind, played with breeze flags
+
+**Date:** 2026-11-12
+
+**Decision:** Meridiani Planum is a 14 m Mars world: butterscotch plains with dark sand ripples, Eagle crater with the lander and its limp airbags, the trail of airbag bounce marks rolling into it, wheel tracks painted from the crater to Opportunity, and a layered outcrop with blueberries. The activity: the rover sleeps under a dust film (one transparent material whose opacity is the dust). Dust devils travel the same lane past the rover every ten seconds. Each planted breeze flag pulls a passing devil toward it (real steering on the sphere, `src/game/puzzles/wait-for-wind.ts`), so a line of flags bends a devil over the panels; the dust blows off, the power gauge fills, the mast lifts and the eyes light. Nothing can fail and another devil always comes. Then the story cues the long storm: the sky, fog, grade, sun and dust thicken over about six seconds, the music thins and goes silent while Remi sends calls nobody answers, then it clears and the rover stays asleep. Three small story games carry the rest: grinding a rock to find blueberries, the rover's last report as two wordy gauges (no numbers), and the calls. The real Mars wind (Perseverance) plays as a looping bed under the made ambience, louder in the storm.
+
+**Why:** The Game Bible asks for solar power, dust and lucky winds, rocks that remember water, and room for the sad part. Flags give kids a physical way to "help the wind" without wiping panels, which nobody could do on Mars.
+
+**Alternatives considered:** A wipe minigame (untrue to the story), a timed wind button (no play), quoting the rover's "last words" (unsourced, DECISIONS #50).
+
+## 53. Dad's map: a corner map and a globe to spin
+
+**Date:** 2026-11-12
+
+**Decision:** Every world can carry a `map` (marks with hand-drawn glyphs, craters, water, paths, letters). The corner map (bottom left) shows the ground round Remi from above, with true distances and the camera's view up the page, the next stop as a ring or a rim arrow, and envelopes where letters wait. Clicking it, M, or LT opens the big map: the whole little world as an orthographic globe that spins by drag, arrow keys or the place list, opens on the middle of Dad's places and zooms to fit them, with labels placed so they never overlap. Home places stay pencil question marks until found. A setting turns the corner map off. The projection math is unit tested (`tests/unit/map.test.ts`).
+
+**Why:** The team asked for a mini map that opens into a whole map as a guide on each planet. A globe suits tiny round worlds better than a flat chart, and a heading-up corner map matches the third-person camera.
+
+**Alternatives considered:** A flat equal-area chart (the far side tears at the rim), two hemispheres (the seam confuses), a 3D render-to-texture map (cost and noise).
+
+## 54. Front end polish from team review
+
+**Date:** 2026-11-12
+
+**Decision:** On the loading page the pencil now rests beside the last tick instead of over the closing line, and the light switch holds still under the pointer. On the title, the button, its outline and the "Pull the chain" note sit over the tag's rest position; only the chain and tag swing. In play, the big cards take turns: the chapter card holds the stage until it has faded, a place card waits (or steps aside) until then, and both cards are smaller. The chapter card now names the chapter of the world Remi arrives in instead of always saying Prologue.
+
+**Why:** Team feedback on screenshots: hidden words, moving targets, and two large cards covering the screen at once.
+
+**Alternatives considered:** Hiding the place card at the start (players lose the first find), merging both cards (two different messages).
