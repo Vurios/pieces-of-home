@@ -5,6 +5,9 @@
   import type { Engine } from "../../game/engine";
   import { banners } from "../hud/banners.svelte";
   import { settings } from "../settings.svelte";
+  import CardHead from "./card/CardHead.svelte";
+  import GameAsk from "./card/GameAsk.svelte";
+  import GameSteps from "./card/GameSteps.svelte";
 
   /**
    * Chapter 2: Dad's wheel test (story game "wheels").
@@ -22,10 +25,10 @@
   let { engine }: Props = $props();
 
   type Kind = "smooth" | "mesh" | "chevrons";
-  const WHEELS: { id: Kind; name: string; result: string; reach: number; slip: number; sink: number }[] = [
-    { id: "smooth", name: "Smooth wheel", result: "It just spins and digs itself in.", reach: 0.17, slip: 3.2, sink: 11 },
-    { id: "mesh", name: "Mesh wheel", result: "It rolls, but it slips in the soft dust.", reach: 0.6, slip: 1.7, sink: 4 },
-    { id: "chevrons", name: "Mesh with chevrons", result: "It grips and rolls right across!", reach: 0.94, slip: 1, sink: 0 },
+  const WHEELS: { id: Kind; name: string; step: string; short: string; result: string; reach: number; slip: number; sink: number }[] = [
+    { id: "smooth", name: "Smooth wheel", step: "Smooth", short: "Digs in", result: "It just spins and digs itself in.", reach: 0.17, slip: 3.2, sink: 11 },
+    { id: "mesh", name: "Mesh wheel", step: "Mesh", short: "Slips", result: "It rolls, but it slips in the soft dust.", reach: 0.6, slip: 1.7, sink: 4 },
+    { id: "chevrons", name: "Mesh with chevrons", step: "Chevrons", short: "Grips!", result: "It grips and rolls right across!", reach: 0.94, slip: 1, sink: 0 },
   ];
 
   // The tray, in the picture's own units.
@@ -46,6 +49,8 @@
   let ruts = $state<{ kind: Kind; from: number; to: number; sink: number }[]>([]);
   let puffs = $state<{ id: number; x: number; y: number; r: number; o: number }[]>([]);
   let last = $state<string | null>(null);
+  /** The wheel pushed last, to tint Remi's line. */
+  let lastKind = $state<Kind | null>(null);
   let doneButton = $state<HTMLButtonElement | null>(null);
   let pushButton = $state<HTMLButtonElement | null>(null);
 
@@ -65,6 +70,7 @@
       ruts = [];
       puffs = [];
       last = null;
+      lastKind = null;
       x = 0;
       turn = 0;
       sink = 0;
@@ -92,6 +98,7 @@
     turn = 0;
     sink = 0;
     last = null;
+    lastKind = null;
     audio.ui("pop");
   }
 
@@ -132,6 +139,7 @@
         ruts = [...ruts.filter((r) => r.kind !== w.id), { kind: w.id, from: 0, to: x, sink: w.sink }];
         if (!tested.includes(w.id)) tested = [...tested, w.id];
         last = w.result;
+        lastKind = w.id;
         if (w.id === "chevrons") sfx("corner-sparkle", 0.6);
         // Then the next wheel waits, or the button to finish.
         const next = WHEELS.find((v) => !tested.includes(v.id));
@@ -193,6 +201,14 @@
     return `${d} L${RIGHT} ${TOP + 30} Z`;
   })();
   const CHEVRONS = Array.from({ length: 12 }, (_, i) => (i / 12) * 360);
+  /** Little grains on top of the dust, for texture only. */
+  const GRAINS = Array.from({ length: 34 }, (_, i) => {
+    const r = (n: number): number => {
+      const v = Math.sin(i * 61.3 + n * 11.7) * 15731.743;
+      return v - Math.floor(v);
+    };
+    return { x: LEFT + 6 + r(1) * (RIGHT - LEFT - 12), y: TOP + 8 + r(2) * 18, r: 0.8 + r(3) * 1.6 };
+  });
 </script>
 
 {#snippet wheelArt(kind: Kind, r: number)}
@@ -214,202 +230,170 @@
 {/snippet}
 
 {#if open}
-  <div class="game wheels" role="dialog" aria-live="polite" aria-label="Dad's wheel test">
-    <p class="from"><span class="pin" aria-hidden="true"></span>Dad's wheel test</p>
-    <p class="ask">{ask}</p>
-    <svg class="tray" viewBox="0 0 {W} {H}" aria-hidden="true">
-      <defs>
-        <pattern id="weave" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <rect width="7" height="7" fill="#7C8286" />
-          <path d="M0 0 L0 7 M0 0 L7 0" stroke="#5E6468" stroke-width="2" />
-        </pattern>
-      </defs>
-      <!-- The wooden tray on its trestles. -->
-      <path d="M{LEFT - 22} {TOP + 30} L{RIGHT + 22} {TOP + 30} L{RIGHT + 16} {TOP + 52} L{LEFT - 16} {TOP + 52} Z" fill="#8A5A3A" stroke="#2B2622" stroke-width="3" stroke-linejoin="round" />
-      <path d="M{LEFT - 10} {TOP + 41} L{RIGHT + 10} {TOP + 41}" stroke="#5E3B26" stroke-width="1.5" opacity="0.6" />
-      <path d="M{LEFT - 22} {TOP - 8} L{LEFT - 22} {TOP + 30} M{RIGHT + 22} {TOP - 8} L{RIGHT + 22} {TOP + 30}" stroke="#2B2622" stroke-width="3" />
-      <path d={DUST} fill="#B4AFA7" stroke="#2B2622" stroke-width="2.4" stroke-linejoin="round" />
-      <!-- Ruts and tracks from the wheels tried so far. -->
-      {#each ruts as r (r.kind)}
-        {#if r.kind === "chevrons"}
-          {#each Array.from({ length: Math.floor((sx(r.to) - sx(r.from)) / 14) }, (_, i) => i) as i (i)}
-            <path d="M{sx(r.from) + i * 14 - 4} {TOP + 9} L{sx(r.from) + i * 14} {TOP + 5} L{sx(r.from) + i * 14 + 4} {TOP + 9}" fill="none" stroke="#8C877F" stroke-width="2" stroke-linecap="round" />
+  <div class="gc-scrim"></div>
+  <div class="game wheels gc gc-moon" role="dialog" aria-label="Dad's wheel test">
+    <CardHead kicker="Dad's wheel test" title="Which wheel grips the dust?" stamp="Model">
+      {#snippet badge()}
+        <svg viewBox="-24 -24 48 48">{@render wheelArt("chevrons", 17)}</svg>
+      {/snippet}
+    </CardHead>
+    <div class="gc-body">
+      <GameAsk text={ask} tone={running || !lastKind ? null : lastKind === "chevrons" ? "good" : "oops"} />
+      <div class="gc-stage tray-stage">
+        <svg class="tray" viewBox="0 -40 {W} {H + 40}" aria-hidden="true">
+          <defs>
+            <pattern id="weave" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <rect width="7" height="7" fill="#7C8286" />
+              <path d="M0 0 L0 7 M0 0 L7 0" stroke="#5E6468" stroke-width="2" />
+            </pattern>
+            <linearGradient id="wt-wall" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#E9EEF4" />
+              <stop offset="1" stop-color="#D3DAE4" />
+            </linearGradient>
+            <radialGradient id="wt-lamp" cx="0.5" cy="0" r="0.9">
+              <stop offset="0" stop-color="#FFF6DE" stop-opacity="0.95" />
+              <stop offset="1" stop-color="#FFF6DE" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <!-- Dad's workshop wall, cool and blue for the Moon chapter, with his drawings pinned up. -->
+          <rect y="-40" width={W} height={TOP + 92} fill="url(#wt-wall)" />
+          {#each [70, 150, 230, 370, 450, 530] as px (px)}<path d="M{px} -40 V{TOP + 52}" stroke="#C3CCD8" stroke-width="2" />{/each}
+          <ellipse cx="300" cy="-40" rx="320" ry="190" fill="url(#wt-lamp)" />
+          <g transform="translate(28 -26) rotate(-3)">
+            <rect width="108" height="86" rx="2" fill="#FFFDF6" stroke="#2B2622" stroke-width="2" />
+            <circle cx="54" cy="40" r="28" fill="#D9D6CF" stroke="#2B2622" stroke-width="2" />
+            <circle cx="44" cy="32" r="6" fill="#BDB8AE" />
+            <circle cx="64" cy="48" r="8" fill="#BDB8AE" />
+            <circle cx="60" cy="26" r="3.5" fill="#BDB8AE" />
+            <text x="54" y="80" class="pin-label" text-anchor="middle">moon dust</text>
+            <circle cx="54" cy="3" r="4.5" fill="#C8553D" stroke="#2B2622" stroke-width="1.5" />
+          </g>
+          <g transform="translate(470 -24) rotate(4)">
+            <rect width="104" height="80" rx="2" fill="#3F6C9C" stroke="#2B2622" stroke-width="2" />
+            {#each [16, 32, 48, 64] as y (y)}<path d="M4 {y} H100" stroke="#fff" stroke-width="1" opacity="0.15" />{/each}
+            <path d="M18 54 H86 M30 54 V40 H74 V54" fill="none" stroke="#fff" stroke-width="1.8" opacity="0.9" />
+            <circle cx="30" cy="58" r="9" fill="none" stroke="#fff" stroke-width="1.8" />
+            <circle cx="74" cy="58" r="9" fill="none" stroke="#fff" stroke-width="1.8" />
+            <path d="M52 40 V22 M44 22 H60" stroke="#fff" stroke-width="1.8" opacity="0.9" />
+            <circle cx="52" cy="3" r="4.5" fill="#C8553D" stroke="#2B2622" stroke-width="1.5" />
+          </g>
+          <!-- The bench under the tray. -->
+          <path d="M0 {TOP + 52} H{W} V{H} H0 Z" fill="#A86E44" />
+          <path d="M0 {TOP + 52} H{W}" stroke="#2B2622" stroke-width="2.5" />
+          {#each [[40, TOP + 64], [260, TOP + 70], [430, TOP + 62]] as [px, py] (px)}<path d="M{px} {py} q 40 -4 80 0 t 80 0" fill="none" stroke="#8A5634" stroke-width="2" opacity="0.5" />{/each}
+          <!-- The wooden tray on its trestles. -->
+          <path d="M{LEFT - 22} {TOP + 30} L{RIGHT + 22} {TOP + 30} L{RIGHT + 16} {TOP + 52} L{LEFT - 16} {TOP + 52} Z" fill="#8A5A3A" stroke="#2B2622" stroke-width="3" stroke-linejoin="round" />
+          <path d="M{LEFT - 10} {TOP + 41} L{RIGHT + 10} {TOP + 41}" stroke="#5E3B26" stroke-width="1.5" opacity="0.6" />
+          <path d="M{LEFT - 22} {TOP - 8} L{LEFT - 22} {TOP + 30} M{RIGHT + 22} {TOP - 8} L{RIGHT + 22} {TOP + 30}" stroke="#2B2622" stroke-width="3" />
+          <path d={DUST} fill="#B4AFA7" stroke="#2B2622" stroke-width="2.4" stroke-linejoin="round" />
+          {#each GRAINS as g, i (i)}<circle cx={g.x} cy={g.y} r={g.r} fill="#9A958C" opacity="0.7" />{/each}
+          <!-- Ruts and tracks from the wheels tried so far. -->
+          {#each ruts as r (r.kind)}
+            {#if r.kind === "chevrons"}
+              {#each Array.from({ length: Math.floor((sx(r.to) - sx(r.from)) / 14) }, (_, i) => i) as i (i)}
+                <path d="M{sx(r.from) + i * 14 - 4} {TOP + 9} L{sx(r.from) + i * 14} {TOP + 5} L{sx(r.from) + i * 14 + 4} {TOP + 9}" fill="none" stroke="#8C877F" stroke-width="2" stroke-linecap="round" />
+              {/each}
+            {:else}
+              <path d="M{sx(r.from)} {TOP + 3} L{sx(r.to) - R * 0.6} {TOP + 3 + r.sink * 0.3} Q {sx(r.to)} {TOP + 5 + r.sink} {sx(r.to) + R * 0.6} {TOP + 3}" fill="none" stroke="#8C877F" stroke-width={r.kind === "smooth" ? 5 : 3} stroke-linecap="round" />
+            {/if}
           {/each}
-        {:else}
-          <path d="M{sx(r.from)} {TOP + 3} L{sx(r.to) - R * 0.6} {TOP + 3 + r.sink * 0.3} Q {sx(r.to)} {TOP + 5 + r.sink} {sx(r.to) + R * 0.6} {TOP + 3}" fill="none" stroke="#8C877F" stroke-width={r.kind === "smooth" ? 5 : 3} stroke-linecap="round" />
-        {/if}
-      {/each}
-      <!-- The finish line Dad chalked at the far end. -->
-      <path d="M{RIGHT - 18} {TOP - 2} L{RIGHT - 18} {TOP + 26}" stroke="#F4ECDD" stroke-width="3" stroke-dasharray="4 4" />
-      <text x={RIGHT - 18} y={TOP - 14} class="chalk" text-anchor="middle">far end</text>
-      {#each puffs as p (p.id)}<circle cx={p.x} cy={p.y} r={p.r} fill="#D8D3CA" opacity={p.o} />{/each}
-      <g transform="translate({sx(x)} {TOP - R + 6 + sink})">
-        <g transform="rotate({(turn * 180) / Math.PI})">{@render wheelArt(chosen, R)}</g>
-      </g>
-      <!-- Dad's paper arrow: push this way. -->
-      {#if !running && x === 0}
-        <path d="M{LEFT + 90} {TOP - 62} L{LEFT + 150} {TOP - 62} M{LEFT + 138} {TOP - 72} L{LEFT + 152} {TOP - 62} L{LEFT + 138} {TOP - 52}" fill="none" stroke="#C8553D" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-      {/if}
-    </svg>
-    <div class="choices" role="radiogroup" aria-label="Pick a wheel">
-      {#each WHEELS as w, i (w.id)}
-        <button type="button" role="radio" aria-checked={chosen === w.id} class="choice" class:on={chosen === w.id} disabled={running} onclick={() => choose(w.id)}>
-          <svg viewBox="-24 -24 48 48" aria-hidden="true">{@render wheelArt(w.id, 18)}</svg>
-          <span>{w.name}</span>
-          {#if tested.includes(w.id)}<span class="tick" aria-label="tested">✓</span>{/if}
-          <kbd>{i + 1}</kbd>
-        </button>
-      {/each}
+          <!-- The finish line Dad chalked at the far end, with a little flag. -->
+          <path d="M{RIGHT - 18} {TOP - 2} L{RIGHT - 18} {TOP + 26}" stroke="#F4ECDD" stroke-width="3" stroke-dasharray="4 4" />
+          <path d="M{RIGHT - 4} {TOP + 2} V{TOP - 40}" stroke="#2B2622" stroke-width="2.5" stroke-linecap="round" />
+          <path d="M{RIGHT - 4} {TOP - 40} L{RIGHT + 14} {TOP - 34} L{RIGHT - 4} {TOP - 28} Z" fill="#C8553D" stroke="#2B2622" stroke-width="1.8" stroke-linejoin="round" />
+          <text x={RIGHT - 30} y={TOP - 14} class="chalk" text-anchor="middle">far end</text>
+          {#each puffs as p (p.id)}<circle cx={p.x} cy={p.y} r={p.r} fill="#D8D3CA" opacity={p.o} />{/each}
+          <ellipse cx={sx(x)} cy={TOP + 4 + sink * 0.5} rx={R * 0.9} ry="4" fill="#2B2622" opacity="0.18" />
+          <g transform="translate({sx(x)} {TOP - R + 6 + sink})">
+            <g transform="rotate({(turn * 180) / Math.PI})">{@render wheelArt(chosen, R)}</g>
+          </g>
+          <!-- Dad's paper arrow: push this way. -->
+          {#if !running && x === 0}
+            <path class="nudge" d="M{LEFT + 90} {TOP - 62} L{LEFT + 150} {TOP - 62} M{LEFT + 138} {TOP - 72} L{LEFT + 152} {TOP - 62} L{LEFT + 138} {TOP - 52}" fill="none" stroke="#C8553D" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+          {/if}
+        </svg>
+      </div>
+      <div class="gc-tiles three" role="radiogroup" aria-label="Pick a wheel">
+        {#each WHEELS as w, i (w.id)}
+          <button type="button" role="radio" aria-checked={chosen === w.id} class="gc-tile choice" disabled={running} onclick={() => choose(w.id)}>
+            <svg viewBox="-24 -24 48 48" aria-hidden="true">{@render wheelArt(w.id, 20)}</svg>
+            <span class="name">{w.name} <kbd>{i + 1}</kbd></span>
+            {#if tested.includes(w.id)}<span class="verdict" class:win={w.id === "chevrons"}>{w.short}</span>{:else}<span class="verdict todo">Not tried yet</span>{/if}
+          </button>
+        {/each}
+      </div>
+      {#if allTested}<p class="gc-real"><span>True story</span>{realWheels.kid}</p>{/if}
+      <div class="gc-foot">
+        <GameSteps steps={WHEELS.map((w) => ({ label: w.step, done: tested.includes(w.id) }))} />
+        <div class="gc-actions">
+          {#if allTested}
+            <button type="button" class="btn amber got" bind:this={doneButton} onclick={finish}>The chevrons win! <kbd>E</kbd></button>
+          {:else}
+            <button type="button" class="btn amber push" bind:this={pushButton} disabled={running} onclick={push}>Push it <kbd>E</kbd></button>
+          {/if}
+        </div>
+      </div>
     </div>
-    {#if allTested}
-      <p class="real">{realWheels.kid}</p>
-      <div class="row">
-        <button type="button" class="btn amber got" bind:this={doneButton} onclick={finish}>The chevrons win! <kbd>E</kbd></button>
-      </div>
-    {:else}
-      <div class="row">
-        <button type="button" class="btn amber push" bind:this={pushButton} disabled={running} onclick={push}>Push it <kbd>E</kbd></button>
-      </div>
-    {/if}
   </div>
 {/if}
 
 <style>
-  .game {
-    position: fixed;
-    left: 50%;
-    top: 50%;
-    width: min(660px, calc(100vw - 32px));
-    max-height: calc(100dvh - 32px);
-    overflow: auto;
-    box-sizing: border-box;
-    padding: 22px 28px 18px;
-    transform: translate(-50%, -50%) rotate(-0.5deg);
-    color: var(--ink);
-    background: var(--grain), var(--card);
-    border-top: 6px solid var(--clay);
-    box-shadow: var(--shadow-card);
-    animation: drop 0.5s var(--ease-spring);
-    z-index: 30;
-  }
-  .game::before {
-    content: "";
-    position: absolute;
-    top: -14px;
-    left: 50%;
-    width: 120px;
-    height: 26px;
-    margin-left: -60px;
-    background: var(--tape);
-    border: 1px solid var(--tape-edge);
-    transform: rotate(2deg);
-  }
-  .from {
-    margin: 0 0 6px;
-    font: 700 0.82rem/1 var(--label);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .pin {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--clay);
-    box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.25);
-  }
-  .ask {
-    margin: 0 0 8px;
-    font: 400 1.2rem/1.4 var(--read);
-    min-height: 1.6em;
-  }
-  .tray {
-    display: block;
-    width: 100%;
-    height: auto;
-    margin: 0 0 10px;
-    background: linear-gradient(#efe6d4, #e6dbc6);
-    border: 2px solid var(--ink);
-    border-radius: 4px;
+  .game.wheels {
+    --gc-w: 800px;
   }
   .chalk {
-    fill: #8a8378;
+    fill: #7a6a58;
     font: 700 15px/1 var(--hand);
   }
-  .choices {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 12px;
+  .pin-label {
+    fill: #2b2622;
+    font: 700 13px/1 var(--hand);
   }
-  .choice {
-    position: relative;
-    display: grid;
-    justify-items: center;
-    gap: 4px;
-    padding: 8px 6px 10px;
-    border: 2px solid var(--ink);
-    border-radius: 8px 10px 9px 7px;
-    background: #fbf6ec;
-    color: var(--ink);
-    font: 700 0.95rem/1.15 var(--read);
-    cursor: pointer;
-    transition:
-      transform 0.15s var(--ease-spring),
-      background 0.15s;
+  .nudge {
+    animation: nudge 1.1s ease-in-out infinite;
+  }
+  @keyframes nudge {
+    50% {
+      transform: translateX(8px);
+    }
+  }
+  .gc-tiles.three {
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: 12px;
   }
   .choice svg {
-    width: 48px;
-    height: 48px;
+    width: 50px;
+    height: 50px;
   }
-  .choice:hover:not(:disabled) {
-    transform: translateY(-2px);
-  }
-  .choice.on {
-    background: #f7dfa8;
-    box-shadow: 0 3px 0 var(--ink);
-  }
-  .choice:disabled {
-    cursor: default;
-    opacity: 0.75;
-  }
-  .choice kbd {
-    position: absolute;
-    top: 6px;
-    left: 8px;
-    font: 700 0.7rem/1 var(--label);
-    opacity: 0.6;
-  }
-  .tick {
-    position: absolute;
-    top: 4px;
-    right: 8px;
-    color: #4f7a3a;
-    font: 700 1.1rem/1 var(--read);
-  }
-  .real {
-    margin: 0 0 10px;
-    padding: 8px 12px;
-    background: #fff;
-    border-left: 4px solid var(--amber);
-    font: 400 1rem/1.4 var(--read);
-  }
-  .row {
+  .name {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
   }
-  @keyframes drop {
-    from {
-      opacity: 0;
-      transform: translate(-50%, -46%) rotate(-2deg);
-    }
+  .name kbd {
+    padding: 1px 5px;
+    border: 1.5px solid var(--line-strong);
+    border-radius: 4px;
+    font: 700 0.62rem/1.2 var(--label);
+    opacity: 0.8;
   }
-  @media (prefers-reduced-motion: reduce) {
-    .game {
-      animation: none;
-    }
+  .verdict {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #f6dccf;
+    color: var(--clay-deep);
+    font: 700 0.78rem/1.3 var(--read);
+  }
+  .verdict.win {
+    background: #dcebd0;
+    color: var(--sage-deep);
+  }
+  .verdict.todo {
+    background: transparent;
+    color: var(--ink-soft);
+    font-weight: 400;
+  }
+  :global(:root[data-motion="reduce"]) .nudge {
+    animation: none;
   }
 </style>

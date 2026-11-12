@@ -1,4 +1,5 @@
 import "./ui/theme.css";
+import "./ui/game-card.css";
 import { mount } from "svelte";
 import { WORLDS } from "./game/worlds/registry";
 import { LoadingManager } from "three";

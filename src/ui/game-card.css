@@ -1,0 +1,484 @@
+/*
+ * Pop-up game cards: the small games that open on screen during a chapter.
+ * Each one looks like a card from Dad's workshop: a coloured band with a round
+ * badge and a handwritten title, a framed picture to play in, a line that says
+ * what to do, numbered steps and one big button. Shared by every story game so
+ * they feel like one set.
+ *
+ * Set --gc-band on the card for the place it belongs to (see .gc-home, .gc-moon, .gc-mars).
+ */
+
+.gc-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 29;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, rgba(24, 14, 10, 0.08) 30%, rgba(24, 14, 10, 0.5) 100%);
+  animation: gc-fade 0.4s var(--ease-out);
+}
+
+.gc {
+  --gc-band: var(--clay);
+  --gc-band-ink: #fff6e6;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 30;
+  width: min(var(--gc-w, 880px), calc(100vw - 32px));
+  max-height: calc(100dvh - 28px);
+  overflow: auto;
+  box-sizing: border-box;
+  color: var(--ink);
+  background: var(--grain), linear-gradient(#fdfaf3, #f5eddf);
+  border: 2.5px solid var(--ink);
+  border-radius: 16px 18px 15px 17px;
+  box-shadow:
+    0 6px 0 var(--ink),
+    0 40px 70px -28px rgba(14, 8, 4, 0.75),
+    0 14px 26px -12px rgba(14, 8, 4, 0.4);
+  transform: translate(-50%, -50%) rotate(-0.35deg);
+  animation: gc-drop 0.55s var(--ease-spring);
+  scrollbar-width: thin;
+}
+.gc-home {
+  --gc-band: #5e8a55;
+}
+.gc-moon {
+  --gc-band: #4f5f86;
+}
+.gc-mars {
+  --gc-band: #b4553a;
+}
+.gc-night {
+  --gc-band: #27306a;
+}
+
+/* The band across the top: badge, small label, big handwritten title, and a stamp. */
+.gc-head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 22px 18px 18px;
+  color: var(--gc-band-ink);
+  background:
+    radial-gradient(circle at 12% -40%, rgba(255, 246, 230, 0.28), transparent 55%),
+    var(--grain),
+    var(--gc-band);
+  border-bottom: 2.5px solid var(--ink);
+  border-radius: 13px 15px 0 0;
+}
+/* Stitches along the bottom of the band, like a sewn label. */
+.gc-head::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 6px;
+  border-bottom: 2px dashed rgba(255, 246, 230, 0.42);
+}
+.gc-badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fffdf6, #f3e6cc);
+  border: 2.5px solid var(--ink);
+  box-shadow: 0 3px 0 var(--ink);
+  transform: rotate(-6deg);
+}
+.gc-badge svg {
+  width: 44px;
+  height: 44px;
+  overflow: visible;
+}
+.gc-names {
+  min-width: 0;
+}
+.gc-kicker {
+  margin: 0 0 3px;
+  font: 700 0.74rem/1 var(--label);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.88;
+}
+.gc-title {
+  margin: 0;
+  font: 700 clamp(1.5rem, 2.3vw, 2rem)/1.05 var(--hand);
+  text-shadow: 0 2px 0 rgba(43, 38, 34, 0.32);
+}
+.gc-stamp {
+  flex: none;
+  margin-left: auto;
+  align-self: flex-start;
+  padding: 5px 9px 4px;
+  border: 2px solid currentColor;
+  border-radius: 4px;
+  font: 700 0.66rem/1.2 var(--label);
+  letter-spacing: 0.12em;
+  text-align: center;
+  text-transform: uppercase;
+  transform: rotate(3deg);
+  opacity: 0.92;
+}
+
+.gc-body {
+  padding: 16px 22px 18px;
+}
+
+/* What to do now: a speech line from Remi, with a little pencil face. */
+.gc-ask {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 2.6em;
+  margin: 0 0 14px;
+  padding: 9px 16px 9px 10px;
+  background: #fffdf8;
+  border: 2px solid var(--ink);
+  border-radius: 14px 16px 15px 13px;
+  box-shadow: 0 3px 0 var(--ink);
+  font: 400 1.15rem/1.35 var(--read);
+}
+.gc-ask .gc-who {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--amber-wash);
+  border: 2px solid var(--ink);
+}
+.gc-ask .gc-who svg {
+  width: 22px;
+  height: 22px;
+}
+.gc-ask.good {
+  background: #eef6e6;
+}
+.gc-ask.oops {
+  background: #fdf0e4;
+}
+
+/* The picture to play in. */
+.gc-stage {
+  position: relative;
+  overflow: hidden;
+  background: #efe6d6;
+  border: 2.5px solid var(--ink);
+  border-radius: 12px;
+  box-shadow:
+    inset 0 0 0 4px rgba(255, 253, 246, 0.55),
+    0 3px 0 var(--ink);
+}
+.gc-stage > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* A stage beside a column of controls. */
+.gc-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 16px;
+  align-items: stretch;
+}
+.gc-split.wide {
+  grid-template-columns: minmax(0, 1fr) 340px;
+}
+.gc-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.gc-group {
+  padding: 9px 12px 10px;
+  background: rgba(255, 253, 246, 0.75);
+  border: 2px solid var(--line-strong);
+  border-radius: 12px;
+}
+.gc-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin: 0 0 8px;
+  font: 700 0.72rem/1 var(--label);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.gc-label kbd {
+  padding: 2px 5px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 4px;
+  font: 700 0.66rem/1 var(--label);
+  letter-spacing: 0;
+}
+
+/* Big toy tiles to pick one thing. */
+.gc-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.gc-tile {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 8px 6px 7px;
+  background: #fbf6ec;
+  border: 2px solid var(--ink);
+  border-radius: 12px 14px 11px 13px;
+  box-shadow: 0 3px 0 var(--ink);
+  color: var(--ink);
+  font: 700 0.92rem/1.1 var(--read);
+  cursor: pointer;
+  transition:
+    transform 0.15s var(--ease-spring),
+    background 0.15s,
+    box-shadow 0.15s;
+}
+.gc-tile svg {
+  width: 34px;
+  height: 34px;
+}
+.gc-tile kbd {
+  font: 700 0.64rem/1 var(--label);
+  opacity: 0.55;
+}
+.gc-tile:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 var(--ink);
+}
+.gc-tile:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--ink);
+}
+.gc-tiles.row .gc-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 6px 6px 5px;
+  font-size: 0.86rem;
+}
+.gc-tiles.row .gc-tile svg {
+  flex: none;
+  width: 26px;
+  height: 26px;
+}
+.gc-tiles.row .gc-tile kbd {
+  display: none;
+}
+.gc-tile[aria-checked="true"] {
+  background: #f9dc9e;
+}
+.gc-tile:disabled {
+  cursor: default;
+}
+
+/* A dial with minus and plus: rising bars, like a toy volume knob. */
+.gc-dial {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gc-step {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: #fbf6ec;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  box-shadow: 0 2px 0 var(--ink);
+  color: var(--ink);
+  font: 700 1.15rem/1 var(--read);
+  cursor: pointer;
+  transition: transform 0.12s var(--ease-spring);
+}
+.gc-step:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.gc-step:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+.gc-step:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.gc-bars {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 5px;
+  height: 30px;
+}
+.gc-bars i {
+  width: 14px;
+  background: #fbf6ec;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  transition:
+    background 0.2s,
+    transform 0.2s var(--ease-spring);
+}
+.gc-bars i:nth-child(1) {
+  height: 30%;
+}
+.gc-bars i:nth-child(2) {
+  height: 45%;
+}
+.gc-bars i:nth-child(3) {
+  height: 62%;
+}
+.gc-bars i:nth-child(4) {
+  height: 80%;
+}
+.gc-bars i:nth-child(5) {
+  height: 100%;
+}
+.gc-bars i.lit {
+  background: var(--amber);
+}
+
+/* Numbered steps along the bottom. */
+.gc-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 14px;
+}
+.gc-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gc-steps li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 12px 4px 4px;
+  border: 2px dashed rgba(43, 38, 34, 0.3);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  font: 700 0.86rem/1.1 var(--read);
+}
+.gc-steps li > b {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  font: 700 0.76rem/1 var(--label);
+}
+.gc-steps li.now {
+  color: var(--ink);
+  background: var(--amber-wash);
+  border: 2px solid var(--amber-deep);
+}
+.gc-steps li.done {
+  color: var(--ink);
+  background: #e6f1dc;
+  border: 2px solid var(--sage-deep);
+}
+.gc-steps li.done > b {
+  background: var(--sage-deep);
+  border-color: var(--ink);
+  color: #fff;
+  font-size: 0;
+}
+.gc-steps li.done > b::after {
+  content: "";
+  width: 9px;
+  height: 5px;
+  margin-top: -3px;
+  border-left: 2.5px solid #fff;
+  border-bottom: 2.5px solid #fff;
+  transform: rotate(-45deg);
+}
+.gc-actions {
+  flex: none;
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+.gc-actions .btn {
+  white-space: nowrap;
+}
+
+/* The true story behind the game, once it is won. */
+.gc-real {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 14px 0 0;
+  padding: 10px 14px;
+  background: #fffdf8;
+  border: 2px solid var(--ink);
+  border-left-width: 8px;
+  border-left-color: var(--amber);
+  border-radius: 8px 10px 9px 8px;
+  font: 400 1.02rem/1.45 var(--read);
+  animation: gc-rise 0.45s var(--ease-spring);
+}
+.gc-real > span:first-child {
+  flex: none;
+  margin-top: 2px;
+  padding: 3px 7px;
+  background: var(--amber);
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  font: 700 0.66rem/1.2 var(--label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* A small hint under a picture. */
+.gc-hint {
+  margin: 8px 2px 0;
+  color: var(--ink-soft);
+  font: 400 0.9rem/1.35 var(--read);
+}
+
+@keyframes gc-drop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -44%) rotate(-2deg) scale(0.96);
+  }
+}
+@keyframes gc-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes gc-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+:root[data-motion="reduce"] .gc,
+:root[data-motion="reduce"] .gc-scrim,
+:root[data-motion="reduce"] .gc-real {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gc,
+  .gc-scrim,
+  .gc-real {
+    animation: none;
+  }
+}

@@ -7,6 +7,9 @@
   import type { Engine } from "../../game/engine";
   import { banners } from "../hud/banners.svelte";
   import { settings } from "../settings.svelte";
+  import CardHead from "./card/CardHead.svelte";
+  import GameAsk from "./card/GameAsk.svelte";
+  import GameSteps from "./card/GameSteps.svelte";
 
   /**
    * Finale: aim Dad's dish at Voyager 1 (story game "dish").
@@ -237,158 +240,130 @@
 </script>
 
 {#if open}
-  <div class="scrim" aria-hidden="true"></div>
+  <div class="gc-scrim night" aria-hidden="true"></div>
   {#key open.key}
-    <div class="dish" role="dialog" aria-modal="true" aria-label="Aim Dad's dish at Voyager 1">
-      <span class="tape" aria-hidden="true"></span>
-      <p class="from">Dad's star map</p>
-      <p class="ask">
-        {#if phase === "aim"}Turn the dish. Listen for the beeps.{:else if phase === "locked"}Locked on! Send Dad's letter.{:else if phase === "sending"}Sending...{:else}Sent!{/if}
-      </p>
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <svg
-        class="map"
-        viewBox="0 0 {W} {H}"
-        bind:this={svg}
-        aria-hidden="true"
-        onpointerdown={(e) => {
-          dragging = true;
-          (e.currentTarget as Element).setPointerCapture(e.pointerId);
-          pointAt(e);
-        }}
-        onpointermove={(e) => dragging && pointAt(e)}
-        onpointerup={() => (dragging = false)}
-        onpointercancel={() => (dragging = false)}
-      >
-        <defs>
-          <radialGradient id="dish-beam">
-            <stop offset="0" stop-color="#FFD98A" stop-opacity="0.35" />
-            <stop offset="1" stop-color="#FFD98A" stop-opacity="0" />
-          </radialGradient>
-          <radialGradient id="dish-voyager">
-            <stop offset="0" stop-color="#FFF6E0" />
-            <stop offset="0.4" stop-color="#E0B34A" stop-opacity="0.8" />
-            <stop offset="1" stop-color="#E0B34A" stop-opacity="0" />
-          </radialGradient>
-        </defs>
-        <!-- Dad's grid, in pencil. -->
-        {#each Array.from({ length: 9 }, (_, i) => i) as i (i)}
-          <line x1={(i + 1) * (W / 10)} y1="0" x2={(i + 1) * (W / 10)} y2={H} class="grid" />
-        {/each}
-        {#each Array.from({ length: 5 }, (_, i) => i) as i (i)}
-          <line x1="0" y1={(i + 1) * (H / 6)} x2={W} y2={(i + 1) * (H / 6)} class="grid" />
-        {/each}
-        {#each STARS as s, i (i)}
-          <circle cx={s.x} cy={s.y} r={s.r} class="star" style:animation-delay="{-s.twinkle}s" />
-        {/each}
-        {#if hint && phase === "aim"}
-          <ellipse cx={toX(voyager.ra)} cy={toY(voyager.dec)} rx={K * 7} ry={K * 6} class="pencil" />
-          <text x={toX(voyager.ra) + K * 7.5} y={toY(voyager.dec) - K * 5} class="pencil-note">Dad circled this spot</text>
-        {/if}
-        {#if phase !== "aim"}
-          <circle cx={toX(voyager.ra)} cy={toY(voyager.dec)} r="26" fill="url(#dish-voyager)" class="found" />
-          <circle cx={toX(voyager.ra)} cy={toY(voyager.dec)} r="4" fill="#FFF6E0" />
-          <text x={toX(voyager.ra)} y={toY(voyager.dec) + 34} class="label">Voyager 1</text>
-        {/if}
-        {#if phase === "sending" || phase === "sent"}
-          <path d={sendPath} pathLength="1" class="signal" stroke-dashoffset={1 - sendProgress} />
-        {/if}
-        <!-- The dish's aim: a soft beam spot and a pencil cross. -->
-        {#if phase === "aim"}
-          <g transform="translate({toX(aim.ra).toFixed(1)} {toY(aim.dec).toFixed(1)})">
-            <circle r={K * 4} fill="url(#dish-beam)" />
-            <circle r="16" class="aim" />
-            <path d="M-24 0 H-10 M10 0 H24 M0 -24 V-10 M0 10 V24" class="aim" />
-          </g>
-        {/if}
-      </svg>
-      <div class="row">
-        <div class="meter" aria-live="polite">
-          <span class="bars" aria-hidden="true">{#each [0.15, 0.35, 0.55, 0.75, 0.92] as b (b)}<i class:on={signal >= b}></i>{/each}</span>
-          <span class="words">{words}</span>
+    <div class="dish gc gc-night" role="dialog" aria-modal="true" aria-label="Aim Dad's dish at Voyager 1">
+      <CardHead kicker="Dad's star map" title="Find Voyager 1 and say hello" stamp="Real stars">
+        {#snippet badge()}
+          <svg viewBox="-22 -22 44 44">
+            <path d="M-16 -2 A16 16 0 0 0 14 -10 Z" fill="#ECE5D7" stroke="#2B2622" stroke-width="2.2" stroke-linejoin="round" />
+            <path d="M-1 -6 L8 -16" stroke="#2B2622" stroke-width="2" />
+            <circle cx="9" cy="-17" r="2.6" fill="#C8553D" stroke="#2B2622" stroke-width="1.4" />
+            <path d="M-4 3 L-8 16 H6 L2 3" fill="#8E8B86" stroke="#2B2622" stroke-width="2" stroke-linejoin="round" />
+            <path d="M12 -20 q 4 2 4 6 M15 -23 q 6 3 6 10" fill="none" stroke="#E0B34A" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        {/snippet}
+      </CardHead>
+      <div class="gc-body">
+        <GameAsk text={phase === "aim" ? (hint ? "Dad circled a spot on his map. Try there!" : "Turn the dish. Listen for the beeps.") : phase === "locked" ? "Locked on! Send Dad's letter." : phase === "sending" ? "Sending..." : "Sent!"} tone={phase === "aim" ? null : "good"} />
+        <div class="gc-stage sky">
+          <!-- svelte-ignore a11y_no_static_element_interactions -->
+          <svg
+            class="map"
+            viewBox="0 0 {W} {H}"
+            bind:this={svg}
+            aria-hidden="true"
+            onpointerdown={(e) => {
+              dragging = true;
+              (e.currentTarget as Element).setPointerCapture(e.pointerId);
+              pointAt(e);
+            }}
+            onpointermove={(e) => dragging && pointAt(e)}
+            onpointerup={() => (dragging = false)}
+            onpointercancel={() => (dragging = false)}
+          >
+            <defs>
+              <radialGradient id="dish-beam">
+                <stop offset="0" stop-color="#FFD98A" stop-opacity="0.35" />
+                <stop offset="1" stop-color="#FFD98A" stop-opacity="0" />
+              </radialGradient>
+              <radialGradient id="dish-voyager">
+                <stop offset="0" stop-color="#FFF6E0" />
+                <stop offset="0.4" stop-color="#E0B34A" stop-opacity="0.8" />
+                <stop offset="1" stop-color="#E0B34A" stop-opacity="0" />
+              </radialGradient>
+              <radialGradient id="dish-milky" cx="0.5" cy="0.5" r="0.5">
+                <stop offset="0" stop-color="#9AA6E8" stop-opacity="0.16" />
+                <stop offset="1" stop-color="#9AA6E8" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+            <!-- A soft band of faint light, for the feel of the night sky. -->
+            <ellipse cx={W * 0.58} cy={H * 0.4} rx={W * 0.6} ry={H * 0.2} transform="rotate(-24 {W * 0.58} {H * 0.4})" fill="url(#dish-milky)" />
+            <!-- Dad's grid, in pencil. -->
+            {#each Array.from({ length: 9 }, (_, i) => i) as i (i)}
+              <line x1={(i + 1) * (W / 10)} y1="0" x2={(i + 1) * (W / 10)} y2={H} class="grid" />
+            {/each}
+            {#each Array.from({ length: 5 }, (_, i) => i) as i (i)}
+              <line x1="0" y1={(i + 1) * (H / 6)} x2={W} y2={(i + 1) * (H / 6)} class="grid" />
+            {/each}
+            {#each STARS as s, i (i)}
+              <circle cx={s.x} cy={s.y} r={s.r} class="star" style:animation-delay="{-s.twinkle}s" />
+            {/each}
+            {#if hint && phase === "aim"}
+              <ellipse cx={toX(voyager.ra)} cy={toY(voyager.dec)} rx={K * 7} ry={K * 6} class="pencil" />
+              <text x={toX(voyager.ra) + K * 7.5} y={toY(voyager.dec) - K * 5} class="pencil-note">Dad circled this spot</text>
+            {/if}
+            {#if phase !== "aim"}
+              <circle cx={toX(voyager.ra)} cy={toY(voyager.dec)} r="26" fill="url(#dish-voyager)" class="found" />
+              <circle cx={toX(voyager.ra)} cy={toY(voyager.dec)} r="4" fill="#FFF6E0" />
+              <text x={toX(voyager.ra)} y={toY(voyager.dec) + 34} class="label">Voyager 1</text>
+            {/if}
+            {#if phase === "sending" || phase === "sent"}
+              <path d={sendPath} pathLength="1" class="signal" stroke-dashoffset={1 - sendProgress} />
+            {/if}
+            <!-- The dish's aim: a soft beam spot and a pencil cross. -->
+            {#if phase === "aim"}
+              <g transform="translate({toX(aim.ra).toFixed(1)} {toY(aim.dec).toFixed(1)})">
+                <circle r={K * 4} fill="url(#dish-beam)" />
+                <circle r="16" class="aim" />
+                <path d="M-24 0 H-10 M10 0 H24 M0 -24 V-10 M0 10 V24" class="aim" />
+              </g>
+            {/if}
+            <!-- Map corners, like a page taped into Dad's notebook. -->
+            <path d="M10 34 V10 H34 M{W - 34} 10 H{W - 10} V34 M{W - 10} {H - 34} V{H - 10} H{W - 34} M34 {H - 10} H10 V{H - 34}" fill="none" stroke="rgba(255,246,224,0.45)" stroke-width="2.5" stroke-linecap="round" />
+          </svg>
         </div>
-        {#if phase === "locked"}
-          <button type="button" class="btn amber" bind:this={sendButton} onclick={send}>Send Dad's letter <kbd>E</kbd></button>
+        <div class="radio-row">
+          <div class="radio" aria-live="polite">
+            <span class="speaker" aria-hidden="true">{#each [0, 1, 2, 3, 4] as i (i)}<i></i>{/each}</span>
+            <span class="bars" aria-hidden="true">{#each [0.15, 0.35, 0.55, 0.75, 0.92] as b (b)}<i class:on={signal >= b}></i>{/each}</span>
+            <span class="words">{words}</span>
+          </div>
+          {#if phase === "aim"}<p class="gc-hint how">Drag on the map, or use the arrow keys, to turn the dish.</p>{/if}
+          {#if phase === "locked"}
+            <button type="button" class="btn amber" bind:this={sendButton} onclick={send}>Send Dad's letter <kbd>E</kbd></button>
+          {/if}
+        </div>
+        {#if phase === "sent"}
+          <div class="sent gc-real">
+            <span>True story</span>
+            <div>
+              <p class="big">At the speed of light, Dad's letter would take about {light} to reach Voyager 1.</p>
+              <p class="src">From: {source.sourceTitle}</p>
+            </div>
+            <button type="button" class="btn amber" bind:this={doneButton} onclick={finish}>Got it <kbd>E</kbd></button>
+          </div>
         {/if}
+        <div class="gc-foot">
+          <GameSteps steps={[{ label: "Find Voyager 1", done: phase !== "aim" }, { label: "Send Dad's letter", done: phase === "sent" }]} />
+          <p class="note">{skyNote}</p>
+        </div>
       </div>
-      {#if phase === "aim"}<p class="how">Drag on the map, or use the arrow keys, to turn the dish.</p>{/if}
-      {#if phase === "sent"}
-        <div class="sent">
-          <p class="big">At the speed of light, Dad's letter would take about {light} to reach Voyager 1.</p>
-          <p class="src">From: {source.sourceTitle}</p>
-          <button type="button" class="btn amber" bind:this={doneButton} onclick={finish}>Got it <kbd>E</kbd></button>
-        </div>
-      {/if}
-      <p class="note">{skyNote}</p>
     </div>
   {/key}
 {/if}
 
 <style>
-  .scrim {
-    position: fixed;
-    inset: 0;
-    z-index: 30;
-    background: radial-gradient(ellipse at 50% 45%, rgba(8, 10, 30, 0.45), rgba(4, 5, 16, 0.8));
-    animation: dim 0.4s ease both;
-  }
   .dish {
-    position: fixed;
-    z-index: 31;
-    left: 50%;
-    top: 50%;
-    translate: -50% -50%;
-    width: min(800px, calc(100vw - 32px));
-    max-height: calc(100dvh - 32px);
-    overflow: auto;
-    box-sizing: border-box;
-    display: grid;
-    gap: 8px;
-    padding: 22px 26px 16px;
-    background-color: #141a44;
-    background-image:
-      radial-gradient(ellipse at 50% 30%, rgba(255, 217, 138, 0.08), transparent 60%),
-      var(--grain);
-    border: 3px solid #2b2622;
-    border-radius: 6px 10px 7px 9px;
-    box-shadow:
-      0 4px 0 #2b2622,
-      0 30px 60px -20px rgba(0, 0, 0, 0.8);
-    color: #fff6e0;
-    rotate: -0.4deg;
-    animation: drop 0.5s var(--ease-spring) both;
+    --gc-w: 820px;
   }
-  .tape {
-    position: absolute;
-    top: -14px;
-    left: 50%;
-    width: 110px;
-    height: 26px;
-    margin-left: -55px;
-    background: var(--tape);
-    box-shadow: inset 0 0 0 1px var(--tape-edge);
-    rotate: -2deg;
+  .gc-scrim.night {
+    background: radial-gradient(ellipse at 50% 45%, rgba(8, 10, 30, 0.35), rgba(4, 5, 16, 0.78));
   }
-  .from {
-    margin: 0;
-    justify-self: start;
-    padding: 3px 9px 2px;
-    border: 2px solid #ffd98a;
-    border-radius: 4px;
-    color: #ffd98a;
-    font: 700 0.72rem/1 var(--label);
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-  }
-  .ask {
-    margin: 0;
-    font: 700 1.5rem/1.2 var(--hand);
+  .sky {
+    background: radial-gradient(ellipse at 50% 60%, #1d2560, #0b1030 75%);
   }
   .map {
-    width: 100%;
-    height: auto;
-    border-radius: 4px;
-    background: radial-gradient(ellipse at 50% 60%, #1d2560, #0b1030 75%);
     touch-action: none;
     cursor: crosshair;
   }
@@ -433,18 +408,48 @@
     stroke-dasharray: 0.02 0.015;
     stroke-linecap: round;
   }
-  .row {
+  .radio-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 14px;
-    min-height: 48px;
+    min-height: 52px;
+    margin-top: 12px;
   }
-  .meter {
+  .radio-row .how {
+    margin: 0;
+  }
+  .radio-row .btn {
+    margin-left: auto;
+  }
+  /* Dad's little radio: a speaker grille, signal bars and what it hears. */
+  .radio {
+    flex: none;
     display: flex;
     align-items: center;
     gap: 12px;
-    font: 700 1.15rem/1.2 var(--hand);
+    padding: 8px 14px 8px 10px;
+    background: #27306a;
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    box-shadow: 0 3px 0 var(--ink);
+    color: #fff6e0;
+    font: 700 1.1rem/1.2 var(--hand);
+  }
+  .speaker {
+    display: grid;
+    gap: 3px;
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+    box-sizing: border-box;
+    background: #1a2050;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 246, 224, 0.4);
+    align-content: center;
+  }
+  .speaker i {
+    height: 1.5px;
+    background: rgba(255, 246, 224, 0.5);
   }
   .bars {
     display: flex;
@@ -476,41 +481,27 @@
   .bars i.on {
     background: #ffd98a;
   }
-  .how,
-  .note {
-    margin: 0;
-    font: 400 0.92rem/1.35 var(--read);
-    color: rgba(255, 246, 224, 0.72);
-  }
-  .note {
-    font-size: 0.82rem;
-    color: rgba(255, 246, 224, 0.55);
-  }
   .sent {
-    display: grid;
-    gap: 6px;
-    justify-items: start;
-    padding: 12px 14px;
-    border-radius: 4px;
-    background: #fbf4e4;
-    color: var(--ink);
-    animation: drop 0.5s var(--ease-spring) both;
+    align-items: center;
+  }
+  .sent > div {
+    flex: 1;
   }
   .big {
     margin: 0;
-    font: 700 1.3rem/1.3 var(--hand);
+    font: 700 1.25rem/1.3 var(--hand);
   }
   .src {
-    margin: 0;
+    margin: 2px 0 0;
     font: 400 0.82rem/1.3 var(--read);
     color: var(--ink-soft);
   }
-  kbd {
-    margin-left: 6px;
-    padding: 1px 6px;
-    border: 1.5px solid currentColor;
-    border-radius: 4px;
-    font: 700 0.75rem/1.2 var(--read);
+  .note {
+    margin: 0;
+    max-width: 46%;
+    text-align: right;
+    font: 400 0.8rem/1.35 var(--read);
+    color: var(--ink-soft);
   }
   @keyframes twinkle {
     50% {
@@ -520,17 +511,6 @@
   @keyframes pulse {
     50% {
       transform: scale(1.25);
-    }
-  }
-  @keyframes dim {
-    from {
-      opacity: 0;
-    }
-  }
-  @keyframes drop {
-    from {
-      opacity: 0;
-      transform: translateY(-18px) scale(0.97);
     }
   }
   :global(:root[data-motion="reduce"]) .dish *,
