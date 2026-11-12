@@ -35,6 +35,7 @@
   import DishGame from "./story/DishGame.svelte";
   import FinaleGames from "./story/FinaleGames.svelte";
   import WheelGame from "./story/WheelGame.svelte";
+  import ThinAirGames from "./story/ThinAirGames.svelte";
   import DriveCard from "./story/DriveCard.svelte";
   import { V1_LETTER } from "../content/finale";
   import ActivityMeter from "./story/ActivityMeter.svelte";
@@ -281,6 +282,7 @@
 <DishGame {engine} />
 <FinaleGames {engine} />
 <WheelGame {engine} />
+<ThinAirGames {engine} />
 <DriveCard {engine} />
 <ActivityMeter {engine} />
 <Seismograph {engine} {game} />

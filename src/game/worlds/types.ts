@@ -84,7 +84,8 @@ export type MapIcon =
   | "pennant"
   | "corner"
   | "wheel"
-  | "buggy";
+  | "buggy"
+  | "helicopter";
 
 /** One labelled place on a world's map. */
 export interface MapMark {

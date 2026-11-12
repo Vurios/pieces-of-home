@@ -618,3 +618,13 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 **Why:** Team feedback asked for the trips and story moments to be 3D animations with better transitions, and for more detail on the Moon and Mars without crowding.
 
 **Alternatives considered:** A pre-rendered video (heavy, cannot show each pair of worlds), drawing the trip over the old world (the next world could not load without a visible stall), a separate 3D ending diorama (the real world with its museum visitors is stronger and costs nothing), new real-hardware props on Mars such as the heat shield (left out until each has a sourced fact).
+
+## 63. Chapter 4: Valinor Hills and Thin Air
+
+**Date:** 2026-11-13
+
+**Decision:** Chapter 4 is built as Dad's model of Ingenuity's corner of Jezero Crater (`src/game/worlds/valinor/`, `src/content/chapters/valinor.ts`). Ingenuity stands on a low rise among long sand waves with one blade broken short (fact ing-final) and a tiny tan patch under its solar panel (the Wright Flyer cloth, fact ing-wright). Wright Brothers Field is Dad's square of pale pebbles with the helicopter's shadow painted in the middle, after its first picture from the air. The rover's tracks run past and away over the hill, because the real rover drove on. Letters go to the field, the tracks (with the recording of Ingenuity's hum heard by the rover) and Ingenuity. The main activity, Thin Air, has three parts: (1) Dad's rotor bench, a small game where lift is the air times the blade length squared times the spin speed squared; Mars air is exactly one hundredth of Earth air in the model (fact mars-thin-air), so the same rotor that hops on Earth needs long blades spinning very fast on Mars; the panel is labelled "Model". (2) The scout flight: Dad's toy helicopter really lifts off its pad and hovers in 3D, and its camera view opens as a small top-down game where Remi draws a safe way for a toy rover round rocks and soft sand (the solo version the Game Bible allows for P1). (3) Leave a note for later: three rows of preset word chips (never free text), kept on the device, shown again at the end. Milo gets his rotor, and Remi finds the scrap of their first drawing inside him. Two new checked facts: ing-relay (the rover's base station passed Ingenuity's messages, JPL PIA23968) and ing-scout (its later job as an aerial scout, JPL Jan. 25, 2024).
+
+**Why:** Game Bible section 6, Chapter 4 (P1), and the team's ask for 3D story moments.
+
+**Alternatives considered:** A co-op scout flight with one player above and others driving (comes with Phase 06 co-op), a slider-only rotor test without the Earth to Mars comparison (loses the idea), a typed note (not allowed: no free text for kids).

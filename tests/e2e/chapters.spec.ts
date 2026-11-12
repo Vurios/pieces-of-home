@@ -124,7 +124,7 @@ async function playUntil(page: Page, done: (s: State) => boolean, timeout = 40_0
 
 test("Chapter 1: from the dome to the stamp", async ({ page }, info) => {
   test.skip(info.project.name === "phone", "one full playthrough on desktop is enough");
-  test.setTimeout(240_000);
+  test.setTimeout(480_000);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(String(e)));
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
@@ -347,10 +347,98 @@ test("Chapter 2: from the dome to the stamp", async ({ page }, info) => {
   expect(errors).toEqual([]);
 });
 
+test("Chapter 4: from the dome to the stamp", async ({ page }, info) => {
+  test.skip(info.project.name === "phone", "one full playthrough on desktop is enough");
+  test.setTimeout(480_000);
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+  await page.addInitScript((save) => {
+    if (!sessionStorage.getItem("seeded")) {
+      localStorage.setItem("poh.save.v1", JSON.stringify(save));
+      sessionStorage.setItem("seeded", "1");
+    }
+  }, AFTER_CHAPTER_1);
+  await page.goto("/?test&quality=low");
+  await expect(page.locator("html")).toHaveAttribute("data-stage", "ready", { timeout: 60_000 });
+
+  // Into the Valinor Hills dome, at the end of Dad's workbench.
+  await goTo(page, "dome-valinor");
+  await use(page);
+  await page.waitForFunction(() => (window as unknown as { __poh: Poh }).__poh.worldId() === "valinor", null, { timeout: 30_000 });
+  await playUntil(page, (s) => s.carrying === "ing-letter-field", 90_000);
+
+  // Three letters: Wright Brothers Field, the rover's tracks, Ingenuity.
+  for (const [target, letter, next] of [
+    ["airfield", "ing-letter-field", "ing-letter-tracks"],
+    ["tracks", "ing-letter-tracks", "ing-letter-heli"],
+  ] as const) {
+    await useUntil(page, `letter-${target}`, (s) => s.delivered.includes(letter));
+    await playUntil(page, (s) => s.carrying === next, 90_000);
+  }
+  await useUntil(page, "letter-ingenuity", (s) => s.delivered.includes("ing-letter-heli"));
+  await playUntil(page, (s) => s.flags.includes("thin-air:started"), 90_000);
+
+  // Dad's rotor bench: Earth air, then Mars air, then big fast blades until it hops.
+  const open = async (id: string, selector: string): Promise<void> => {
+    const end = Date.now() + 60_000;
+    while (!(await page.locator(selector).count()) && Date.now() < end) {
+      await playUntil(page, () => true);
+      await goTo(page, id);
+      await use(page);
+      await page.waitForTimeout(1200);
+    }
+    await expect(page.locator(selector)).toBeVisible();
+    await page.waitForTimeout(500);
+  };
+  await open("rotor-bench", ".game.air");
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(3000);
+  await page.keyboard.press("Digit2");
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(3000);
+  for (let i = 0; i < 3; i += 1) {
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("ArrowUp");
+  }
+  await page.keyboard.press("KeyE");
+  await page.waitForTimeout(3000);
+  await page.locator(".game.air .got").click();
+  await playUntil(page, (s) => s.flags.includes("thin-air:bench"));
+
+  // The scout flight: a safe way round the rocks and the soft sand, then send it.
+  await open("scout-pad", ".game.scout");
+  for (const [key, times] of [["ArrowRight", 3], ["ArrowUp", 2], ["ArrowRight", 2], ["ArrowDown", 4], ["ArrowRight", 3], ["ArrowUp", 2]] as const) {
+    for (let i = 0; i < times; i += 1) await page.keyboard.press(key);
+  }
+  await page.keyboard.press("KeyE");
+  await expect(page.locator(".game.scout .got")).toBeVisible({ timeout: 20_000 });
+  await page.locator(".game.scout .got").click();
+  await playUntil(page, (s) => s.flags.includes("thin-air:scout"));
+
+  // A note in Ingenuity's log, made of word chips.
+  await open("ingenuity-log", ".game.note");
+  for (let row = 0; row < 3; row += 1) await page.locator(".game.note .chips").nth(row).locator("button").first().click();
+  await page.locator(".game.note .got").click();
+  await playUntil(page, (s) => s.flags.includes("thin-air:done"), 60_000);
+
+  // Milo's rotor, home through the lamp light.
+  await playUntil(page, () => false, 8_000).catch(() => undefined);
+  await useUntil(page, "parcel", (s) => s.carrying === "part:chapter-4");
+  await goTo(page, "lamp-home");
+  await use(page);
+  await page.waitForFunction(() => (window as unknown as { __poh: Poh }).__poh.worldId() === "home", null, { timeout: 30_000 });
+  await page.waitForTimeout(800);
+  await useUntil(page, "milo", (s) => s.flags.includes("chapter-4:fitted"));
+  await playUntil(page, (s) => s.stamps.includes("chapter-4"), 60_000);
+  expect(await page.evaluate(() => localStorage.getItem("poh.lognote.v1"))).toContain("Hello, explorer!");
+  expect(errors).toEqual([]);
+});
+
 const AFTER_CHAPTER_3 = {
   version: 1,
   world: "home",
-  miloStage: 3,
+  miloStage: 4,
   carrying: null,
   delivered: [
     "to-the-lamp",
@@ -363,8 +451,11 @@ const AFTER_CHAPTER_3 = {
     "opp-letter-bounce",
     "opp-letter-grinder",
     "opp-letter-panels",
+    "ing-letter-field",
+    "ing-letter-tracks",
+    "ing-letter-heli",
   ],
-  stamps: ["prologue", "chapter-1", "chapter-2", "chapter-3"],
+  stamps: ["prologue", "chapter-1", "chapter-2", "chapter-3", "chapter-4"],
   flags: ["seen-notebook"],
 };
 

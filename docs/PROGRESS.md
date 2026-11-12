@@ -6,7 +6,7 @@ There is no deadline. The full scope in the Game Bible gets built: P0, then P1, 
 - **Repo:** https://github.com/Vurios/pieces-of-home (public). No CI: the team asked for straight pushes to `main`. Run typecheck, tests and e2e locally before pushing.
 - **Team rule for this run:** the agent asks the team before starting each next phase prompt.
 
-**Now:** Phase 05 in progress. Chapters 1 (Tranquility Base), 2 (Hadley-Apennine, the rideable Moon buggy, #60) and 3 (Meridiani Planum) and the Finale (The Long Light, #59) are playable end to end, each with a full playthrough test. Team feedback pass (#61, #62): a CSS opening scene before the notebook, no black flicker, a freer camera with real zoom, a bigger map, big true-story cards with photos, space suits on the Moon and Mars, a 3D trip between worlds, a 3D closing shot, and roomier, more detailed Moon and Mars. Phase 06 waits until Phase 05 is complete. **Next up:** Chapter 4 (Valinor), then P2, the writing pass and the remaining checklist items, then Phase 06. Ask the team before starting Phase 07.
+**Now:** Phase 05 in progress. Chapters 1 (Tranquility Base), 2 (Hadley-Apennine, the rideable Moon buggy, #60), 3 (Meridiani Planum) and 4 (Valinor Hills, Thin Air, #63) and the Finale (The Long Light, #59) are playable end to end, each with a full playthrough test. Team feedback pass (#61, #62): a CSS opening scene before the notebook, no black flicker, a freer camera with real zoom, a bigger map, big true-story cards with photos, space suits on the Moon and Mars, a 3D trip between worlds, a 3D closing shot, and roomier, more detailed Moon and Mars. Phase 06 waits until Phase 05 is complete. **Next up:** P2 (Archive cards, the Surveyor 3 bonus chapter), the writing pass and the remaining checklist items, then Phase 06. Ask the team before starting Phase 07.
 
 ## State summary (2026-11-11)
 
@@ -160,7 +160,7 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Finale: The Long Light (P0): night on Home, Dad's last letter, the star map with live Voyager 1 data, Milo's record and Dad's saved messages, the projector, the last page, the stamp, the ending and credits, museum free roam; playthrough in `tests/e2e/chapters.spec.ts` (#59)
 - [x] Chapter 2: Hadley-Apennine (P1): world with Hadley Rille, three letters, the wheel test, the rideable buggy with rear steering, Milo's mesh wheels; playthrough in `tests/e2e/chapters.spec.ts` (#60)
 - [x] Team feedback pass: opening scene, flicker fix, camera, map, true-story cards, space suits (#61); 3D trip, 3D closing shot, roomier Moon and Mars (#62)
-- [ ] Chapter 4: Valinor Hills (P1)
+- [x] Chapter 4: Valinor Hills (P1): Ingenuity with its broken blade and the Wright Flyer cloth, Wright Brothers Field, the rover's tracks, Dad's rotor bench (Earth air versus Mars air), the 3D scout flight with a top-down path game, a word-chip note in Ingenuity's log, Milo's rotor and Remi's first drawing; playthrough in `tests/e2e/chapters.spec.ts` (#63)
 - [ ] Archive cards and the Surveyor 3 bonus chapter (P2)
 - [x] Audio pass: recorded foley and instruments, NASA recordings with captions, word-following voices (DECISIONS #49)
 - [ ] Writing pass

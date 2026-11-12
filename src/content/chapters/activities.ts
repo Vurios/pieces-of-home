@@ -101,6 +101,53 @@ export const WAIT_FOR_THE_WIND: ActivityDef = {
   ],
 };
 
+export const THIN_AIR: ActivityDef = {
+  id: "thin-air",
+  beats: {
+    bench: [{ who: "remi", say: "Mars air is so thin. The blades have to be big, and spin really fast!" }, { fact: "ing-rotor-speed" }, { who: "remi", say: "Now let's fly Dad's toy helicopter." }],
+    takeoff: { who: "remi", say: "It's up! Let's look down through its camera." },
+    scout: [{ who: "remi", say: "Looking from the air, it's easy to find a safe way." }, { fact: "ing-scout" }],
+    note: [
+      { who: "remi", say: "Our note is in the log now, for whoever comes next." },
+      { who: "remi", say: "Wait. What's that little bit of cloth under its solar panel?" },
+      { fact: "ing-wright" },
+      { who: "remi", say: "A piece of the very first airplane, flying on Mars!" },
+    ],
+  },
+  steps: [
+    {
+      id: "bench",
+      title: "Test Dad's rotor bench",
+      detail: "Spin the rotor in Earth air, then in Mars air. What does it take to hop on Mars?",
+      hints: [
+        "Thin air pushes back less. What could make more lift?",
+        "Dad's rotor bench is the table with the glass jar. Try bigger blades and a faster spin.",
+        "Follow the arrow to the bench. In Mars air, turn both dials all the way up.",
+      ],
+    },
+    {
+      id: "scout",
+      title: "Fly the toy helicopter",
+      detail: "Fly Dad's toy helicopter from its pad. Look down and find a safe way for the rover.",
+      hints: [
+        "From up high you can see the rocks and the soft sand.",
+        "The launch pad is the round board near the bench. Draw a path round the rocks and the soft sand.",
+        "Follow the arrow to the pad. Go along the top or the bottom to get round the rocks.",
+      ],
+    },
+    {
+      id: "note",
+      title: "Leave a note for later",
+      detail: "Ingenuity keeps notes for future explorers. Leave one in its log.",
+      hints: [
+        "What would you say to the next explorer who comes by?",
+        "Go back to Ingenuity on its little hill and open its log.",
+        "Follow the arrow to Ingenuity. Pick one word chip in each row.",
+      ],
+    },
+  ],
+};
+
 export const STEER_FROM_THE_BACK: ActivityDef = {
   id: "steer-from-the-back",
   beats: {
@@ -153,6 +200,7 @@ export const ACTIVITIES: Record<string, ActivityDef> = {
   [SEND_A_LIGHT.id]: SEND_A_LIGHT,
   [STEER_FROM_THE_BACK.id]: STEER_FROM_THE_BACK,
   [WAIT_FOR_THE_WIND.id]: WAIT_FOR_THE_WIND,
+  [THIN_AIR.id]: THIN_AIR,
 };
 
 export const stepFlag = (activity: string, step: string): string => `${activity}:${step}`;

@@ -718,6 +718,30 @@
       "status": "checked",
       "checkedOn": "2026-11-12",
       "note": "Source: Neil Armstrong radios \"Houston, Tranquility Base here. The Eagle has landed.\" after the lunar module lands at 4:17 p.m. EDT. Apollo Lunar Surface Journal: Armstrong at 102:45:58, https://www.apollojournals.org/alsj/a11/a11.landing.html . NSSDCA audio clip: http://nssdc.gsfc.nasa.gov/planetary/lunar/a11landing.aiff (listed on https://nssdc.gsfc.nasa.gov/planetary/sound/index.html)."
+    },
+    {
+      "id": "ing-relay",
+      "kid": "Ingenuity talked to the team on Earth through the Perseverance rover. A box on the rover passed its messages along.",
+      "deeper": "The helicopter base station is a gold box near the back of the rover. It stored and routed messages between Ingenuity and the team on Earth.",
+      "value": "the rover serves as a communications relay; the Helicopter Base Station on Perseverance stores and routes communications",
+      "date": null,
+      "sourceTitle": "JPL PIA23968: Mars Helicopter Base Station on Perseverance Rover (Jan. 20, 2021)",
+      "sourceUrl": "https://www.jpl.nasa.gov/images/pia23968-mars-helicopter-base-station-on-perseverance-rover/",
+      "status": "checked",
+      "checkedOn": "2026-11-13",
+      "note": "Caption: the base station \"stores and routes communications between NASA's Ingenuity Mars Helicopter and mission controllers on Earth\"; it is \"the upper, gold-colored box near the back of NASA's Perseverance rover.\" JPL (Jan. 25, 2024) also calls the rover \"a communications relay for the rotorcraft.\""
+    },
+    {
+      "id": "ing-scout",
+      "kid": "Later, Ingenuity became a scout. It flew ahead and looked from the air for the people who drove the rover.",
+      "deeper": "After its first test flights, it began a new job as an operations demonstration, serving as an aerial scout for Perseverance scientists and rover drivers.",
+      "value": "operations demonstration, serving as an aerial scout for Perseverance scientists and rover drivers",
+      "date": null,
+      "sourceTitle": "JPL: After Three Years on Mars, NASA's Ingenuity Helicopter Mission Ends (Jan. 25, 2024)",
+      "sourceUrl": "https://www.jpl.nasa.gov/news/after-three-years-on-mars-nasas-ingenuity-helicopter-mission-ends",
+      "status": "checked",
+      "checkedOn": "2026-11-13",
+      "note": "Source: it \"embarked on a new mission as an operations demonstration, serving as an aerial scout for Perseverance scientists and rover drivers.\" The page does not say it flew ahead of the rover on every flight, so the kid text keeps it general."
     }
   ]
 }

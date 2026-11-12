@@ -11,6 +11,7 @@
   import { banners } from "../hud/banners.svelte";
   import { settings } from "../settings.svelte";
   import { type LastPage, readLastPage, writeLastPage } from "./last-page";
+  import { type LogNote, logNoteText, readLogNote } from "./log-note";
 
   /**
    * The Finale's three screens, as story games (see StoryGames.svelte for the
@@ -118,8 +119,10 @@
   let scene = $state<"picture" | "credits">("picture");
   let roll = $state<HTMLElement | null>(null);
   let endTimer = 0;
+  let logNote = $state<LogNote | null>(null);
   function startEnding(): void {
     scene = "picture";
+    logNote = readLogNote();
     // The closing picture is the real little world: the camera lifts away from Remi.
     engine.bus.emit("camera:farewell", { on: true });
     window.clearTimeout(endTimer);
@@ -282,6 +285,7 @@
           <div class="picture">
             <p class="end-line">Remi and friends opened Dad's workshop as a little museum.</p>
             <p class="end-line soft">The lamp stays on.</p>
+            {#if logNote}<p class="end-note">Your note in Ingenuity's log: {logNoteText(logNote)}</p>{/if}
             <p class="stamp-line" aria-hidden="true">{STAMP[0]} {STAMP[1]}</p>
           </div>
         {:else}
@@ -559,6 +563,12 @@
     font-size: 1.2rem;
     color: rgba(255, 246, 224, 0.75);
     animation-delay: 1.4s;
+  }
+  .end-note {
+    margin: 6px 0 0;
+    font: 400 1rem/1.4 var(--read);
+    color: rgba(255, 246, 224, 0.8);
+    animation: rise 1s ease 1.8s both;
   }
   .stamp-line {
     margin: 12px 0 0;

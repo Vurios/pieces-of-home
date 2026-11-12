@@ -48,6 +48,11 @@ export class InteractionSystem {
   }
 
   /** Where an item is, for tests and hints. */
+  /** Where every other interactable is, for tests that stand a player clear of neighbours. */
+  positionsExcept(id: string): Vector3[] {
+    return [...this.items.entries()].filter(([key]) => key !== id).map(([, item]) => item.position);
+  }
+
   positionOf(id: string): Vector3 | null {
     return this.items.get(id)?.position ?? null;
   }

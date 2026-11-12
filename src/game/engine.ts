@@ -870,6 +870,7 @@ export class Engine {
     return {
       state: () => this.store.value,
       player: () => ({ position: this.player.position.toArray(), grounded: this.player.grounded }),
+      camera: () => ({ position: this.camera.position.toArray(), forward: this.camera.getWorldDirection(new Vector3()).toArray(), cine: this.cine ? { position: this.cine.position.toArray(), target: this.cine.target.toArray(), age: this.cine.age } : null }),
       tier: () => this.quality.tier,
       mode: () => this.mode,
       titlePhase: () => this.title?.phase ?? null,
@@ -935,6 +936,17 @@ export class Engine {
         const side = projectOnTangent(this.player.position.clone().sub(target), dir, new Vector3());
         if (side.lengthSq() < 1e-6) side.set(1, 0, 0);
         side.setLength(0.6);
+        // Stand on the side away from neighbouring prompts (the domes on the bench sit close together).
+        const others = this.interactions.positionsExcept(id).filter((p) => p.distanceTo(target) < 2);
+        if (others.length) {
+          const clearance = (offset: Vector3): number => Math.min(...others.map((p) => p.distanceTo(target.clone().add(offset))));
+          let best = side.clone();
+          for (let i = 1; i < 8; i += 1) {
+            const turned = side.clone().applyAxisAngle(dir, (i * Math.PI) / 4);
+            if (clearance(turned) > clearance(best) + 0.05) best = turned;
+          }
+          side.copy(best);
+        }
         const stand = target.clone().add(side).normalize();
         this.player.teleport(stand, side.clone().negate(), this.world);
         this.follow.snap(this.player);
