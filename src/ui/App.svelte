@@ -226,6 +226,7 @@
     // A new story opens with the short story of how Remi got here.
     if (fresh) {
       flow.close();
+      engine.store.load(null);
       story = true;
       return;
     }
@@ -313,7 +314,7 @@
   <Menu {hasSave} chapters={chaptersOpen} onstart={start} />
 {/if}
 {#if story}
-  <StoryIntro ondone={() => begin(true)} />
+  <StoryIntro {engine} ondone={() => begin(true)} />
 {/if}
 
 <Hud

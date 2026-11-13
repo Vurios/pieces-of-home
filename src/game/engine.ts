@@ -302,6 +302,51 @@ export class Engine {
     this.title.leave(this.camera);
   }
 
+  /**
+   * Frames a story shot (`story-<id>` in the world's bookmarks): the light
+   * closes, Remi and the camera move, the light opens. Resolves once the shot
+   * shows. False if the world has no such shot.
+   */
+  async storyShot(id: string): Promise<boolean> {
+    const world = this.world;
+    const mark = world?.bookmarks[`story-${id}`];
+    if (!world || !mark?.camera) return false;
+    const token = ++this.storyToken;
+    const first = this.storyView === null;
+    if (!this.reducedMotion) await this.animateIris(this.post.iris, 1, first ? 0.45 : 0.32);
+    if (token !== this.storyToken) return false;
+    if (this.title) this.title.root.visible = false;
+    this.player.teleport(mark.player.dir, mark.player.forward, world);
+    this.follow.snap(this.player);
+    this.storyView = { position: mark.camera.position.clone(), target: mark.camera.target.clone(), up: (mark.camera.up ?? mark.camera.position).clone().normalize(), age: 0 };
+    this.placeStory(0);
+    if (!this.reducedMotion) await this.animateIris(1, 0, 0.5);
+    else this.post.iris = 0;
+    return token === this.storyToken;
+  }
+
+  /** Ends the story: the camera stays where it is, ready to fly down to Remi. */
+  storyEnd(): void {
+    this.storyToken += 1;
+    this.storyView = null;
+    this.post.iris = 0;
+  }
+
+  get inStory(): boolean {
+    return this.storyView !== null;
+  }
+
+  /** The story camera: a slow push in toward what the shot looks at, easing out. */
+  private placeStory(dt: number): void {
+    const v = this.storyView!;
+    v.age += dt;
+    const k = this.reducedMotion ? 0 : 1 - Math.exp(-v.age / 7);
+    const eye = this.scratch.copy(v.position).lerp(v.target, 0.09 * k);
+    this.camera.position.copy(eye);
+    this.camera.up.copy(v.up);
+    this.camera.lookAt(v.target);
+  }
+
   /** Where the title's BEGIN tag is on screen, in CSS pixels. */
   titleTag(): { x: number; y: number; visible: boolean } | null {
     return this.title ? this.title.tagScreen(this.camera, window.innerWidth, window.innerHeight) : null;
@@ -343,6 +388,13 @@ export class Engine {
   private readonly mapAnswer = { up: new Vector3(), facing: new Vector3(), heading: new Vector3(), objective: new Vector3() };
 
   private guideArrow = true;
+  /**
+   * The short story before a new game, in the world itself: each page frames
+   * one of the world's story shots, with the lamp light closing and opening
+   * between them, and the camera drifting slowly in while the page is read.
+   */
+  private storyView: { position: Vector3; target: Vector3; up: Vector3; age: number } | null = null;
+  private storyToken = 0;
   /**
    * The dive into one of Dad's domes on the way to its world: the camera swings
    * in close over the glass, then pushes down into the little world while the
@@ -847,7 +899,7 @@ export class Engine {
     const riding = !shot && !titling && (world.ride?.(dt, input, this.player) ?? false);
     this.riding = riding;
     if (!riding) this.player.update(dt, input, this.follow.forward, this.follow.right, world);
-    world.update(dt, { player: this.player, carrying: this.store.value.carrying, time: this.elapsed, reducedMotion: this.reducedMotion });
+    world.update(dt, { player: this.player, carrying: this.store.value.carrying, time: this.elapsed, reducedMotion: this.reducedMotion, story: this.storyView !== null });
     this.interactions.update(dt, this.player.position, this.player.forward, input);
     // Which named place the player is in, for the place-name card.
     const zone = shot || titling || !world.zoneAt ? null : world.zoneAt(this.player.up);
@@ -914,6 +966,7 @@ export class Engine {
       if (c.age >= c.seconds) this.cine = null;
     }
 
+    if (this.storyView && !shot) this.placeStory(dt);
     if (this.farewell && !shot && !titling) this.farewellShot(dt, world);
     if (this.dive && !shot) this.diveShot(dt);
 

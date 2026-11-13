@@ -500,7 +500,51 @@ export function createHome(ctx: WorldContext): World {
     player: { dir: spawnDir, forward: spawnForward },
     camera: { position: latLonToDir(lat, lon).multiplyScalar(HOME_RADIUS * distance), target: new Vector3(0, 0, 0), up: headingToTangent(latLonToDir(lat, lon), 0) },
   });
+  // The short story before a new game, one shot per page (see the engine's storyShot).
+  const mailboxDir = latLonToDir(MAILBOX.lat, MAILBOX.lon);
+  const toMailbox = headingToTangent(spawnDir, toward(spawnDir, mailboxDir));
+  const spawnSide = new Vector3().crossVectors(spawnDir, toMailbox).normalize();
+  const doorSpot = local(SITES.shed, 0.3, 0, 4.1).normalize();
+  const storyOrbit = latLonToDir(-14, 26);
+  // Out of the way by the door, for the close-ups on the bench.
+  const aside = inShed(-2.0, 1.3);
+  const story: Record<string, Bookmark> = {
+    // Home, a tiny round world at dusk.
+    "story-home": {
+      player: { dir: spawnDir, forward: toMailbox },
+      camera: { position: storyOrbit.clone().multiplyScalar(HOME_RADIUS * 3.15), target: latLonToDir(18, 6).multiplyScalar(HOME_RADIUS * 0.3), up: headingToTangent(storyOrbit, 0) },
+    },
+    // Dad's bench: the lamp, the little worlds, the robot in pieces.
+    "story-bench": {
+      player: { dir: aside, forward: shedForward },
+      camera: { position: local(SITES.shed, 0.2, 2.25, 0.9), target: local(SITES.shed, 0.2, SHED.floor + 0.95, -1.95) },
+    },
+    // Remi at the workshop door.
+    "story-door": {
+      player: { dir: doorSpot, forward: shedForward },
+      camera: { position: local(SITES.shed, 4.8, 2.3, 10.8), target: local(SITES.shed, 0.2, 1.3, 3.0) },
+    },
+    // The little worlds under glass, where the letters go.
+    "story-letters": {
+      player: { dir: aside, forward: shedForward },
+      camera: { position: local(SITES.shed, 1.15, SHED.floor + 1.62, -0.72), target: local(SITES.shed, 1.15, SHED.floor + 0.98, -2.0) },
+    },
+    // Milo, still in pieces.
+    "story-milo": {
+      player: { dir: aside, forward: shedForward },
+      camera: { position: local(SITES.shed, 0.45, SHED.floor + 1.7, -0.45), target: local(SITES.shed, -0.5, SHED.floor + 1.1, -2.0) },
+    },
+    // Remi where the game starts, facing the mailbox with the first letter in it.
+    "story-go": {
+      player: { dir: spawnDir, forward: toMailbox },
+      camera: {
+        position: spawnGround.clone().addScaledVector(toMailbox, -3.8).addScaledVector(spawnDir, 2.1).addScaledVector(spawnSide, 1.9),
+        target: terrain.pointAt(mailboxDir).addScaledVector(spawnDir, 0.75),
+      },
+    },
+  };
   const bookmarks: Record<string, Bookmark> = {
+    ...story,
     "play-yard": standAt(yardSpot, toward(yardSpot, SITES.house.dir)),
     "play-garden": standAt(gardenSpot, toward(gardenSpot, SITES.garden.dir)),
     "play-shed": standAt(shedSpot, toward(shedSpot, SITES.shed.dir)),
@@ -889,8 +933,9 @@ export function createHome(ctx: WorldContext): World {
       const head = feet.clone().addScaledVector(frame.player.up, 1.0);
       mom.update(dt, head, frame.reducedMotion);
       for (const kid of friends) {
-        // A friend played by a real player in the room is not also waiting here.
-        const away = presence.kids.has(kid.id);
+        // A friend played by a real player in the room is not also waiting here; in the
+        // short story Remi opens the workshop alone, so the friends are not there yet.
+        const away = presence.kids.has(kid.id) || frame.story === true;
         kid.root.visible = !away;
         (kid.root.userData["body"] as { radius: number }).radius = away ? 0.001 : 0.28;
         if (away) continue;

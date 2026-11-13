@@ -1,19 +1,25 @@
 <script lang="ts">
   import { audio } from "../../audio/audio";
   import { STORY } from "../../content/story";
+  import type { Engine } from "../../game/engine";
   import { settings } from "../settings.svelte";
-  import { STORY_ART } from "./StoryArt";
 
   /**
-   * The short story before a new game: a few pages of Dad's drawings that ink
-   * themselves in, each with a line or two. Pages turn on their own after
-   * enough time to read, or with Next, a click, a tap or any key.
-   * Escape (or gamepad B) skips the lot.
+   * The short story before a new game, told in the world itself: each page
+   * frames one shot of the little home planet (the planet at dusk, Dad's bench,
+   * the workshop door, the little worlds under glass, Milo in pieces, the
+   * mailbox), with the lamp light closing and opening between them and the
+   * camera drifting slowly in. The words sit on a paper card between
+   * letterbox bars. Pages turn on their own after enough time to read, or with
+   * Next, a click, a tap or any key. Escape (or gamepad B) skips the lot. The
+   * last shot is where the game starts, so the camera flies straight down to
+   * Remi when the story ends.
    */
   interface Props {
+    engine: Engine;
     ondone: () => void;
   }
-  let { ondone }: Props = $props();
+  let { engine, ondone }: Props = $props();
 
   let index = $state(0);
   let next: HTMLButtonElement | null = $state(null);
@@ -21,21 +27,14 @@
   const page = $derived(pages[index]!);
   const last = $derived(index === pages.length - 1);
   /** Long enough to read at a slow pace: a base plus a little for every word. */
-  const hold = $derived(2600 + page.text.split(/\s+/).length * 330);
+  const hold = $derived(2800 + page.text.split(/\s+/).length * 330);
   let finished = false;
-
-  /** Adds pathLength and a stagger index to every ink shape so it can draw itself in. Dashed lines fade in instead. */
-  function inkify(svg: string): string {
-    let n = 0;
-    return svg.replace(/<(path|circle|rect)\b([^>]*)>/g, (whole: string, tag: string, rest: string) =>
-      rest.includes('class="keep"') ? whole : `<${tag} pathLength="1" style="--n:${n++}"${rest}>`,
-    );
-  }
 
   function finish(): void {
     if (finished) return;
     finished = true;
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    engine.storyEnd();
     ondone();
   }
 
@@ -46,6 +45,11 @@
     index = to;
     audio.ui("page");
   }
+
+  // Each page frames its own shot in the world.
+  $effect(() => {
+    void engine.storyShot(page.art);
+  });
 
   // Turn the page on its own once there has been time to read it.
   $effect(() => {
@@ -82,20 +86,14 @@
 
 <svelte:window onkeydown={onkey} />
 
-<div class="story" role="dialog" aria-modal="true" aria-label={STORY.label}>
-  <div class="bench" aria-hidden="true"></div>
-  <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div class="card" onclick={() => go(1)}>
-    <span class="tape a" aria-hidden="true"></span>
-    <span class="tape b" aria-hidden="true"></span>
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+<div class="story" role="dialog" tabindex="-1" aria-modal="true" aria-label={STORY.label} onclick={() => go(1)}>
+  <div class="bar top" aria-hidden="true"></div>
+  <div class="bar bottom" aria-hidden="true"></div>
+  <p class="story-tag" aria-hidden="true">{STORY.label}</p>
+  <div class="card">
     {#key index}
-      <figure class="page">
-        <svg class="art" viewBox="0 0 480 300" aria-hidden="true">
-          <g class="wash">{@html STORY_ART[page.art].wash}</g>
-          <g class="ink">{@html inkify(STORY_ART[page.art].ink)}</g>
-        </svg>
-        <figcaption aria-live="polite">{page.text}</figcaption>
-      </figure>
+      <p class="words" aria-live="polite">{page.text}</p>
       <span class="timer" aria-hidden="true" style:animation-duration={`${hold * (settings.reducedMotion ? 1.3 : 1)}ms`}></span>
     {/key}
     <div class="foot">
@@ -116,120 +114,79 @@
     position: fixed;
     inset: 0;
     z-index: 30;
-    display: grid;
-    place-items: center;
-    padding: max(24px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom));
     pointer-events: auto;
-    animation: fade-in 0.5s ease both;
+    cursor: pointer;
+    /* A soft vignette, so the words read over any shot. */
+    background: radial-gradient(ellipse 85% 75% at 50% 45%, transparent 55%, rgba(16, 12, 30, 0.45) 100%);
+    animation: fade-in 0.6s ease both;
   }
-  /* Dad's bench at night, under the lamp. */
-  .bench {
+  /* Letterbox bars: the story is a little film. */
+  .bar {
     position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse 60% 55% at 50% 42%, rgba(255, 196, 120, 0.28), transparent 70%),
-      repeating-linear-gradient(180deg, transparent 0 166px, rgba(20, 10, 6, 0.5) 166px 168px, transparent 168px 170px),
-      linear-gradient(100deg, #4a3326, #3d2a20 50%, #33231b);
+    left: 0;
+    right: 0;
+    height: 7.5vh;
+    background: #15122b;
+    animation: bar-in 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .bar.top {
+    top: 0;
+    --from: -100%;
+  }
+  .bar.bottom {
+    bottom: 0;
+    --from: 100%;
+  }
+  .story-tag {
+    position: absolute;
+    left: clamp(16px, 3vw, 40px);
+    top: calc(7.5vh + 18px);
+    margin: 0;
+    padding: 5px 12px;
+    border: 2px solid #ffe2ae;
+    border-radius: 6px;
+    color: #ffe2ae;
+    background: rgba(21, 18, 43, 0.55);
+    font: 700 0.78rem/1.2 var(--label);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    rotate: -1.5deg;
+    animation: fade-in 0.6s ease 0.5s both;
   }
   .card {
-    position: relative;
-    width: min(780px, 100%);
-    max-height: 100%;
-    box-sizing: border-box;
-    padding: 22px 26px 18px;
-    background-color: #fbf4e4;
-    background-image:
-      linear-gradient(rgba(64, 108, 170, 0.08) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(64, 108, 170, 0.08) 1px, transparent 1px),
-      var(--grain);
-    background-size: 22px 22px, 22px 22px, 180px 180px;
-    border-radius: 4px;
-    box-shadow:
-      0 2px 0 #e2d4b8,
-      0 4px 0 #d6c6a6,
-      0 40px 70px -26px rgba(0, 0, 0, 0.8);
-    rotate: -0.6deg;
-    cursor: pointer;
-    animation: card-in 0.7s var(--ease-spring) both;
-  }
-  .tape {
     position: absolute;
-    top: -14px;
-    width: 110px;
-    height: 28px;
-    background: var(--tape);
-    box-shadow: inset 0 0 0 1px var(--tape-edge);
+    left: 50%;
+    bottom: calc(7.5vh + 18px);
+    width: min(760px, calc(100vw - 32px));
+    box-sizing: border-box;
+    padding: 20px 26px 16px;
+    background-color: #fbf6ec;
+    background-image: var(--grain);
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    box-shadow:
+      0 6px 0 var(--ink),
+      0 20px 44px rgba(10, 8, 24, 0.45);
+    cursor: default;
+    translate: -50% 0;
+    rotate: -0.5deg;
+    overflow: hidden;
+    animation: card-in 0.6s cubic-bezier(0.25, 1.3, 0.45, 1) 0.3s both;
   }
-  .tape.a {
-    left: 40px;
-    rotate: -6deg;
-  }
-  .tape.b {
-    right: 44px;
-    rotate: 5deg;
-    background: rgba(196, 220, 196, 0.75);
-  }
-  .page {
+  .words {
     margin: 0;
-    display: grid;
-    gap: 14px;
-    animation: turn-in 0.55s var(--ease-out) both;
-  }
-  .art {
-    display: block;
-    width: 100%;
-    max-height: min(52vh, 440px);
-    overflow: visible;
-  }
-  .wash {
-    transform: translate(4px, 5px);
-    opacity: 0;
-    animation: wash-in 0.9s 0.9s ease forwards;
-  }
-  .ink {
-    fill: none;
-    stroke: var(--ink);
-    stroke-width: 3;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  .ink :global(:is(path, circle, rect):not(.keep)) {
-    stroke-dasharray: 1 1.02;
-    stroke-dashoffset: 1;
-    animation: draw 0.9s calc(var(--n) * 70ms) cubic-bezier(0.6, 0, 0.3, 1) forwards;
-  }
-  .ink :global(.keep) {
-    opacity: 0;
-    animation: wash-in 0.6s 1.2s ease forwards;
-  }
-  @keyframes draw {
-    to {
-      stroke-dashoffset: 0;
-    }
-  }
-  @keyframes wash-in {
-    to {
-      opacity: 1;
-    }
-  }
-  figcaption {
     min-height: 2.7em;
-    font: 700 clamp(1.25rem, 2.4vw, 1.65rem) / 1.3 var(--hand);
+    font: 400 clamp(1.15rem, 1.7vw, 1.5rem) / 1.35 var(--hand);
     color: var(--ink);
-    text-align: center;
-    text-wrap: balance;
+    animation: words-in 0.5s ease both;
   }
-  :global(:root[data-font="dyslexic"]) figcaption {
-    font: 700 1.15rem/1.45 var(--read);
-  }
-  /* A pencil line that fills while the page waits to turn by itself. */
   .timer {
-    display: block;
-    margin-top: 10px;
-    height: 3px;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 4px;
     width: 100%;
-    background: rgba(242, 165, 65, 0.85);
-    border-radius: 2px;
+    background: var(--amber);
     transform-origin: left;
     animation: timer linear both;
   }
@@ -288,32 +245,29 @@
       opacity: 0;
     }
   }
+  @keyframes bar-in {
+    from {
+      transform: translateY(var(--from));
+    }
+  }
   @keyframes card-in {
     from {
       opacity: 0;
-      transform: translateY(40px) rotate(3deg) scale(0.95);
+      translate: -50% 40px;
     }
   }
-  @keyframes turn-in {
+  @keyframes words-in {
     from {
       opacity: 0;
-      transform: translateX(26px) rotate(1deg);
+      transform: translateY(8px);
     }
   }
-  :global(:root[data-motion="reduce"]) .story,
-  :global(:root[data-motion="reduce"]) .card,
-  :global(:root[data-motion="reduce"]) .page {
+  :global(:root[data-motion="reduce"]) :is(.story, .bar, .story-tag, .card, .words) {
     animation: none;
-  }
-  :global(:root[data-motion="reduce"]) .wash,
-  :global(:root[data-motion="reduce"]) .ink :global(*) {
-    animation: none;
-    opacity: 1;
-    stroke-dashoffset: 0;
   }
   @media (max-width: 640px) {
     .card {
-      padding: 18px 14px 12px;
+      padding: 16px 14px 12px;
       rotate: 0deg;
     }
     .foot {

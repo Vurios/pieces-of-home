@@ -866,3 +866,13 @@ Loops move in steps, about a dozen frames a second, like paper stop motion. The 
 **Why:** Team feedback, 2026-11-14: the landing page "does not match the game style", make it animated "like in the menu", 2.5D or 3D.
 
 **Alternatives considered:** A real Three.js scene for the loader (needs the engine's code before anything shows, which is the wait the loader covers), a looping video (big download, blurry text), keeping the notebook but restyling it (still not the game's look).
+
+## 86. The story before a new game plays in the world
+
+**Date:** 2026-11-14
+
+**Decision:** The six pages of the short story are now shots of the home planet itself, not flat drawings: the planet at dusk from orbit, Dad's bench with the lamp and the domes, Remi at the workshop door, the little worlds under glass, Milo in pieces, and Remi on the path facing the mailbox. Between pages the lamp light closes and opens (the game's own way of changing place), and the camera drifts slowly in while a page is read. The words sit on a pinned paper card between letterbox bars. The last shot is where the game starts, so "Let's go" flies the camera straight down behind Remi. A new story loads the fresh save before the first page, so the shots show the world as it begins, and the friends who wait in the workshop stay out of the story (Remi opens it alone). Reduced motion cuts between shots with no drift.
+
+**Why:** Team feedback, 2026-11-14: "further improve the story animation u can make image 1 and 2 2.5d/3d animated and it should match the game's style".
+
+**Alternatives considered:** Animated 2D drawings (still not the game's look), a pre-rendered video (big, and it would not match the player's own world and settings).

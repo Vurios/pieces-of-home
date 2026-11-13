@@ -125,6 +125,8 @@ export interface FrameInfo {
   carrying: string | null;
   time: number;
   reducedMotion: boolean;
+  /** The short story before a new game is playing (see the engine's storyShot). */
+  story?: boolean;
 }
 
 export interface World {
