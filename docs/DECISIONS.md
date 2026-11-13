@@ -790,3 +790,23 @@ When any limit is hit the socket fails, the client stops after three tries and s
 **Why:** Phase 06, section 7.
 
 **Alternatives considered:** Sending movement on a fixed tick even when still (would roughly double traffic for no gain).
+
+## 79. Co-op roles: hold it steady
+
+**Date:** 2026-11-13
+
+**Decision:** The seven station games (Dad's landing table and cutters, the wheel test, the rotor bench, the scout flight, Ingenuity's log, the dish) are where co-op roles live. While one player plays a station's game, a new station appears for friends nearby: "Hold it steady for Nori". A helper's name and face show above the player's game card ("Lumi is holding it steady."), and the games with a skill in them get kinder: the landing table counts the Snowman's tummy from farther out, and the dish locks on from farther away. The helper lets go when the game ends ("Nice teamwork!"), when they walk away, or with E. Solo, Dad's clamps hold everything, so every puzzle works with any number of players. Pieces and steps are shared flags, so friends can also split a puzzle's parts (two players can carry Chapter 1's two spare mirrors at once). The room only relays who plays and who holds; it stores neither.
+
+**Why:** Phase 06, section 5 ("holders become players holding pieces steady, extra stations appear when more people are present"); Game Bible 8.
+
+**Alternatives considered:** A separate co-op version of each puzzle (doubles every puzzle, and a solo player would miss half of it); roles assigned by the room (players should choose to help, not be told).
+
+## 80. Prompts refresh after a press
+
+**Date:** 2026-11-13
+
+**Decision:** The interaction system read an item's label before running its action and then keyed the prompt on the label read after, so when a press changed the words ("Hold it steady" to "Let go", or a step's prompt to nothing new) the old words could stay on screen. It now reads the label again after a press and uses the same words for the prompt and its key. This is likely the "old prompts stay up" the Chapter 1 play-tester saw. The room also stopped sending anything to a socket that has not said hello yet (a test on the live site caught a move arriving before a welcome).
+
+**Why:** Phase 06 tests and the no-hooks pass (#75).
+
+**Alternatives considered:** None; both were bugs.

@@ -180,7 +180,7 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Protocol: movement, emotes, phrases, shared progress, story events by id (#76)
 - [x] Lobby, friendly room codes, share link, character select, late join, reconnect (#76)
 - [x] Shared play: one story, one Milo, travel together, friends drawn with name tags and map dots (#76)
-- [ ] Co-op puzzle roles (P1)
+- [x] Co-op puzzle roles (P1): hold it steady at the seven station games; shared pieces let friends split a puzzle; the music adds one instrument per friend (#79)
 - [x] Safety and privacy review (#77)
 - [x] Free-tier budget and solo fallback (#78)
 - [x] Tests: two, three and four players, a full room, junk, the resting fallback, travel together (`tests/e2e/coop.spec.ts`)

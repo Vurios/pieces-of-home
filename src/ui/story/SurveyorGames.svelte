@@ -3,6 +3,7 @@
   import { audio } from "../../audio/audio";
   import { fact } from "../../content/facts";
   import type { Engine } from "../../game/engine";
+  import { presence } from "../../net/presence";
   import { banners } from "../hud/banners.svelte";
   import { settings } from "../settings.svelte";
   import CardHead from "./card/CardHead.svelte";
@@ -82,7 +83,10 @@
   let puffs = $state<{ id: number; x: number; y: number; r: number; o: number; vx: number; vy: number }[]>([]);
   const held = new Set<string>();
 
-  const over = $derived(Math.hypot(px - BODY.x, py - BODY.y) < BODY.r - 8);
+  /** A friend holding the table steady (co-op): the tummy counts from a little farther out. */
+  let steady = $state(false);
+  $effect(() => presence.subscribe(() => (steady = presence.steady)));
+  const over = $derived(Math.hypot(px - BODY.x, py - BODY.y) < BODY.r - (steady ? -6 : 8));
   const onHead = $derived(Math.hypot(px - HEAD.x, py - HEAD.y) < HEAD.r);
   const pinAsk = $derived(
     landSay ?? (landing ? "Down, down, down..." : over ? "Right over its tummy. Land now!" : found ? "That's the Snowman! Aim for its tummy." : "Steer the shadow. Can you find the Snowman?"),

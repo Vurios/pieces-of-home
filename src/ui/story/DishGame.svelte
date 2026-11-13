@@ -5,6 +5,7 @@
   import { hoursAndMinutes, voyagerOn } from "../../content/voyager";
   import stars from "../../data/stars-voyager.json";
   import type { Engine } from "../../game/engine";
+  import { presence } from "../../net/presence";
   import { banners } from "../hud/banners.svelte";
   import { settings } from "../settings.svelte";
   import CardHead from "./card/CardHead.svelte";
@@ -45,6 +46,9 @@
     .map((s) => ({ x: toX(s.ra), y: toY(s.dec), r: Math.max(0.9, 3.9 - s.mag * 0.68), twinkle: (s.hr % 7) * 0.4 }))
     .filter((s) => s.x > -10 && s.x < W + 10 && s.y > -10 && s.y < H + 10);
   const LOCK = 2.2;
+  /** A friend holding the dish steady (co-op) widens the lock a little. */
+  let steady = $state(false);
+  $effect(() => presence.subscribe(() => (steady = presence.steady)));
   const SIGHT = 28;
 
   let open = $state<{ key: number } | null>(null);
@@ -212,7 +216,7 @@
           beep = 2.2 - signal * 1.9;
         }
       }
-      if (distance < LOCK) lockOn();
+      if (distance < (steady ? LOCK * 1.6 : LOCK)) lockOn();
       if (!hint && now - opened > 20_000) hint = true;
     };
     frame = requestAnimationFrame(tick);

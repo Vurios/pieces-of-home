@@ -19,6 +19,7 @@
   import TravelScreen from "./hud/TravelScreen.svelte";
   import Speech from "./hud/Speech.svelte";
   import FriendTags from "./hud/FriendTags.svelte";
+  import HelpBadge from "./hud/HelpBadge.svelte";
   import StampMoment from "./hud/StampMoment.svelte";
   import Toasts from "./hud/Toasts.svelte";
   import Notebook from "./notebook/Notebook.svelte";
@@ -314,6 +315,7 @@
 <PlaceCard {engine} hidden={flow.stage !== "play" || flow.covered || flow.notebook} />
 <FriendTags {engine} hidden={flow.stage !== "play" || flow.covered || banners.traveling || banners.screens > 0} />
 <Speech {engine} />
+<HelpBadge />
 <StoryCards {engine} />
 <StoryGames {engine} />
 <DishGame {engine} />

@@ -113,9 +113,11 @@ export class InteractionSystem {
       this.bus.emit("interact:done", { id: finished });
     }
 
-    const prompt: PromptInfo | null =
-      best && bestLabel ? { id: best.id, label: bestLabel, kind: best.kind, progress: this.progress } : null;
-    this.emitIfChanged(prompt, best ? `${best.id}|${best.label() ?? ""}|${this.progress.toFixed(2)}` : null);
+    // Read the label again: a press can change it ("Hold it steady" becomes "Let go"), and the
+    // prompt and its change key must agree, or the old words would stay up.
+    const label = best ? (finished ? best.label() : bestLabel) : null;
+    const prompt: PromptInfo | null = best && label ? { id: best.id, label, kind: best.kind, progress: this.progress } : null;
+    this.emitIfChanged(prompt, best ? `${best.id}|${label ?? ""}|${this.progress.toFixed(2)}` : null);
     return finished;
   }
 

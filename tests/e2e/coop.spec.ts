@@ -64,6 +64,20 @@ async function open(browser: Browser, room: string, save: object | null, errors:
   return page;
 }
 
+/** Reads story cards like a player: clicks "Got it" until none has shown for a few seconds. */
+async function readCards(page: Page, quiet = 3000, timeout = 90_000): Promise<void> {
+  const end = Date.now() + timeout;
+  let calm = Date.now();
+  while (Date.now() < end && Date.now() - calm < quiet) {
+    const got = page.locator(".card .got");
+    if (await got.count()) {
+      await got.first().click({ timeout: 2000 }).catch(() => undefined);
+      calm = Date.now();
+    }
+    await page.waitForTimeout(300);
+  }
+}
+
 async function sees(page: Page, kid: string, timeout = 30_000): Promise<void> {
   await expect.poll(async () => (await net(page)).friends.some((f) => f.kid === kid && f.visible), { timeout, message: `sees ${kid}` }).toBe(true);
 }
@@ -164,7 +178,11 @@ test("a full room says so, and junk never reaches anyone", async ({ browser }, i
       new Promise((resolve, reject) => {
         const ws = new WebSocket(url);
         ws.onopen = () => say(ws, hello(sid));
-        ws.onmessage = (e) => resolve({ ws, first: JSON.parse(String(e.data)) });
+        // The room's answer to the hello: a welcome, or "full".
+        ws.onmessage = (e) => {
+          const m = JSON.parse(String(e.data)) as { t: string };
+          if (m.t === "wel" || m.t === "full") resolve({ ws, first: m });
+        };
         ws.onerror = () => reject(new Error("socket error"));
       });
     const others = [];
@@ -238,6 +256,45 @@ test("everyone goes through the Looking Lamp together", async ({ browser }, info
   await b.evaluate(() => (window as unknown as { __poh: Poh }).__poh.emit("travel", { to: "home", entry: "bench" }));
   await expect.poll(() => world(b), { timeout: 120_000 }).toBe("home");
   await expect.poll(() => world(a), { timeout: 120_000 }).toBe("home");
+  expect(errors).toEqual([]);
+  for (const page of [a, b]) await page.close();
+});
+
+test("a friend holds a station steady (co-op roles)", async ({ browser }, info) => {
+  test.skip(info.project.name === "phone", "the co-op tests run on desktop");
+  test.setTimeout(480_000);
+  const errors: string[] = [];
+  const room = testRoom(16);
+  const save = { ...AFTER_PROLOGUE, miloStage: 3, stamps: ["prologue", "chapter-1", "chapter-2", "chapter-3"], flags: ["seen-notebook", "bonus:seen"] };
+  const a = await open(browser, room, save, errors);
+  const b = await open(browser, room, null, errors);
+  const world = (page: Page): Promise<string | null> => page.evaluate(() => (window as unknown as { __poh: Poh }).__poh.worldId());
+  await a.evaluate(() => (window as unknown as { __poh: Poh }).__poh.emit("travel", { to: "storms", entry: "lamp" }));
+  await expect.poll(() => world(a), { timeout: 120_000 }).toBe("storms");
+  await expect.poll(() => world(b), { timeout: 120_000 }).toBe("storms");
+  await sees(b, "remi", 60_000);
+  // Both read Dad's arrival note and get the first letter (a card on screen holds the prompts back).
+  const arrived = async (page: Page): Promise<void> => {
+    const end = Date.now() + 120_000;
+    while (Date.now() < end && (await state(page)).carrying !== "sur3-letter-trenches") await readCards(page, 800, 5000);
+    await readCards(page, 1500, 10_000);
+  };
+  await Promise.all([arrived(a), arrived(b)]);
+
+  // Remi plays Dad's landing table; Nori walks up and holds it steady.
+  await a.evaluate(() => (window as unknown as { __poh: Poh }).__poh.emit("story:game", { key: 4242, id: "pinpoint" }));
+  await expect(a.locator(".game.pinpoint")).toBeVisible({ timeout: 20_000 });
+  await b.evaluate(() => (window as unknown as { __poh: { teleportTo(id: string): boolean } }).__poh.teleportTo("landing-table"));
+  await expect(b.locator(".prompt")).toContainText("Hold it steady for Remi", { timeout: 20_000 });
+  await b.keyboard.press("KeyE");
+  await expect(a.locator(".help-badge")).toContainText("Nori is holding it steady.", { timeout: 20_000 });
+  await readCards(b, 1500, 20_000);
+  await expect(b.locator(".prompt")).toContainText("Let go", { timeout: 10_000 });
+
+  // When Remi finishes, Nori lets go with a cheer.
+  await a.evaluate(() => (window as unknown as { __poh: Poh }).__poh.emit("story:game-done", { key: 4242 }));
+  await expect(b.getByText("Nice teamwork!").first()).toBeVisible({ timeout: 20_000 });
+  await expect(a.locator(".help-badge")).toHaveCount(0, { timeout: 10_000 });
   expect(errors).toEqual([]);
   for (const page of [a, b]) await page.close();
 });

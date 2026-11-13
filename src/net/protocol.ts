@@ -36,6 +36,14 @@ export type WorldId = (typeof WORLD_IDS)[number];
 export const SHARED_EVENTS = ["letter:delivered", "activity:beat", "activity:done", "milo:stage"] as const;
 export type SharedEvent = (typeof SHARED_EVENTS)[number];
 
+/**
+ * Puzzle stations with a small game on screen. In a room, while one player
+ * plays a station's game, a friend can stand by and hold it steady (Phase 06,
+ * co-op roles). Solo, Dad's clamps hold it, so every puzzle works with anyone.
+ */
+export const STATION_GAMES = ["pinpoint", "snip", "wheels", "air", "scout", "note", "dish"] as const;
+export type StationGame = (typeof STATION_GAMES)[number];
+
 /** Story ids (letters, flags, stamps, activities) are short lowercase words with colons and dashes. */
 export const ID_PATTERN = /^[a-z0-9]+(?:[:-][a-z0-9]+){0,5}$/;
 export const isId = (value: unknown): value is string => typeof value === "string" && value.length <= 48 && ID_PATTERN.test(value);
@@ -95,6 +103,8 @@ export type ServerMessage =
   | { t: "p"; p: Progress }
   | { t: "w"; s: number; w: WorldId; n: string }
   | { t: "ev"; s: number; e: SharedEvent; a: string; b: string; c: number }
+  | { t: "u"; s: number; g: StationGame | "" }
+  | { t: "h"; s: number; g: StationGame | "" }
   | { t: "full" }
   | { t: "pong"; n: number };
 
@@ -108,6 +118,10 @@ export type ClientMessage =
   | { t: "p"; p: Progress }
   | { t: "w"; w: WorldId; n: string }
   | { t: "ev"; e: SharedEvent; a: string; b: string; c: number }
+  /** Using a station's game now ("" when done). */
+  | { t: "u"; g: StationGame | "" }
+  /** Holding a friend's station steady now ("" to let go). */
+  | { t: "h"; g: StationGame | "" }
   | { t: "ping"; n: number };
 
 export function encode(message: ServerMessage | ClientMessage): string {
@@ -196,6 +210,9 @@ export function decodeClientMessage(raw: unknown): ClientMessage | null {
       const e = readEvent(v);
       return e ? { t: "ev", ...e } : null;
     }
+    case "u":
+    case "h":
+      return v["g"] === "" || oneOf(STATION_GAMES, v["g"]) ? { t: v["t"], g: v["g"] as StationGame | "" } : null;
     case "ping":
       return finite(v["n"]) ? { t: "ping", n: v["n"] } : null;
     default:
@@ -250,6 +267,9 @@ export function decodeServerMessage(raw: unknown): ServerMessage | null {
       const e = readEvent(v);
       return isSeat(v["s"]) && e ? { t: "ev", s: v["s"], ...e } : null;
     }
+    case "u":
+    case "h":
+      return isSeat(v["s"]) && (v["g"] === "" || oneOf(STATION_GAMES, v["g"])) ? { t: v["t"], s: v["s"], g: v["g"] as StationGame | "" } : null;
     case "full":
       return { t: "full" };
     case "pong":

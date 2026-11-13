@@ -1,3 +1,4 @@
+import { Vector3 } from "three";
 import { CHAPTERS, arrivedFlag, chapterForWorld, fittedFlag, partId } from "../content/chapters";
 import { MILO_VOICE, RECORD } from "../content/finale";
 import { KID_NAMES } from "../content/story";
@@ -13,7 +14,9 @@ import {
   LOCAL_FLAGS,
   type Progress,
   SHARED_EVENTS,
+  STATION_GAMES,
   type ServerMessage,
+  type StationGame,
   type SharedEvent,
   WORLD_IDS,
   type WorldId,
@@ -38,6 +41,19 @@ import {
  */
 
 const KID_KEY = "poh.kid.v1";
+
+/** Each station game and the interaction (the machine) it is played at. */
+const STATION_AT: Record<StationGame, string> = {
+  pinpoint: "landing-table",
+  snip: "surveyor-cutters",
+  wheels: "wheel-test",
+  air: "rotor-bench",
+  scout: "scout-pad",
+  note: "ingenuity-log",
+  dish: "dish",
+};
+/** A helper who wanders this far from the station lets go. */
+const HOLD_REACH = 3.5;
 /** Movement goes out at most this often, and only while moving. */
 const MOVE_EVERY_MS = 125;
 
@@ -94,6 +110,14 @@ export class Coop {
   private timer = 0;
   /** The last things heard from friends (emotes, phrases, story events), for tests. Ids only. */
   readonly heard: string[] = [];
+  /** Co-op roles: which station game each friend plays now, and which one each friend holds steady. */
+  private using = new Map<number, StationGame>();
+  private holdingBy = new Map<number, StationGame>();
+  /** The station game this player plays now (and its card's key), and the one they hold for a friend. */
+  private myGame: { id: StationGame; key: number } | null = null;
+  private myHold: { seat: number; game: StationGame } | null = null;
+  private readonly holdSpot = new Vector3(0, -9999, 0);
+  private lastToggle = 0;
 
   constructor(
     private readonly net: NetClient,
@@ -151,8 +175,24 @@ export class Coop {
       }),
       bus.on("world:ready", () => {
         this.forceMove = true;
+        this.letGo();
+        this.addHold();
+      }),
+      bus.on("story:game", ({ key, id }) => {
+        if (!(STATION_GAMES as readonly string[]).includes(id)) return;
+        this.letGo();
+        this.myGame = { id: id as StationGame, key };
+        net.send({ t: "u", g: id as StationGame });
+        this.updateHelpers();
+      }),
+      bus.on("story:game-done", ({ key }) => {
+        if (this.myGame?.key !== key) return;
+        this.myGame = null;
+        net.send({ t: "u", g: "" });
+        this.updateHelpers();
       }),
     );
+    this.addHold();
     this.timer = window.setInterval(() => this.tick(), MOVE_EVERY_MS);
     return () => {
       window.clearInterval(this.timer);
@@ -171,6 +211,10 @@ export class Coop {
     this.roomWorld = null;
     this.known = emptyProgress();
     this.lateJoin = false;
+    this.using.clear();
+    this.holdingBy.clear();
+    this.myHold = null;
+    this.updateHelpers();
     this.engine.crew.clear();
     this.engine.setPlayerKid("remi");
     this.updatePresence();
@@ -307,8 +351,12 @@ export class Coop {
       case "pl":
         if (m.s === this.you) break;
         engine.bus.emit("toast", { text: `${this.name(m.s)} left the room.` });
+        this.using.delete(m.s);
+        this.holdingBy.delete(m.s);
+        if (this.myHold?.seat === m.s) this.letGo();
         engine.crew.remove(m.s);
         this.updatePresence();
+        this.updateHelpers();
         break;
       case "m":
         engine.crew.push(m.s, m.w, m.d, performance.now());
@@ -331,9 +379,99 @@ export class Coop {
       case "ev":
         this.replay(m);
         break;
+      case "u":
+        if (m.g) this.using.set(m.s, m.g);
+        else {
+          this.using.delete(m.s);
+          // The friend finished: a helper lets go with a little cheer.
+          if (this.myHold?.seat === m.s) {
+            engine.bus.emit("toast", { text: "Nice teamwork!" });
+            this.letGo();
+          }
+        }
+        break;
+      case "h":
+        if (m.g) this.holdingBy.set(m.s, m.g);
+        else this.holdingBy.delete(m.s);
+        this.updateHelpers();
+        break;
       default:
         break;
     }
+  }
+
+  /** The friends holding steady the station game this player plays now. */
+  private updateHelpers(): void {
+    const game = this.myGame?.id;
+    const kids = game
+      ? [...this.holdingBy]
+          .filter(([, g]) => g === game)
+          .map(([seat]) => this.engine.crew.list.find((f) => f.seat === seat)?.kid)
+          .filter((k): k is KidId => Boolean(k))
+      : [];
+    presence.setHelpers(kids);
+  }
+
+  private kidName(seat: number): string {
+    const kid = this.engine.crew.list.find((f) => f.seat === seat)?.kid;
+    return kid ? KID_NAMES[kid] : "your friend";
+  }
+
+  /** A friend playing a station game in this world, nearest first, and where the station is. */
+  private friendAtStation(): { seat: number; game: StationGame; at: Vector3 } | null {
+    const here = this.localWorld();
+    if (!here) return null;
+    const me = this.engine.motionSample().data;
+    let best: { seat: number; game: StationGame; at: Vector3 } | null = null;
+    let bestDistance = Infinity;
+    for (const [seat, game] of this.using) {
+      const friend = this.engine.crew.list.find((f) => f.seat === seat && f.world === here);
+      const at = this.engine.interactions.positionOf(STATION_AT[game]);
+      if (!friend || !at) continue;
+      const distance = Math.hypot(at.x - me[0], at.y - me[1], at.z - me[2]);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = { seat, game, at };
+      }
+    }
+    return best;
+  }
+
+  /** "Hold it steady for Nori": a station that appears only while a friend plays a station's game. */
+  private addHold(): void {
+    this.engine.interactions.add({
+      id: "coop-hold",
+      position: this.holdSpot,
+      radius: 2.4,
+      kind: "press",
+      weight: 0.7,
+      label: () => {
+        if (!this.net.connected || this.myGame) return null;
+        if (this.myHold) return "Let go";
+        const friend = this.friendAtStation();
+        return friend ? "Hold it steady for " + this.kidName(friend.seat) : null;
+      },
+      onDone: () => {
+        // One press is one change, even if the key bounces.
+        if (performance.now() - this.lastToggle < 600) return;
+        this.lastToggle = performance.now();
+        if (this.myHold) {
+          this.letGo();
+          return;
+        }
+        const friend = this.friendAtStation();
+        if (!friend) return;
+        this.myHold = { seat: friend.seat, game: friend.game };
+        this.net.send({ t: "h", g: friend.game });
+        this.engine.bus.emit("toast", { text: "You are holding it steady for " + this.kidName(friend.seat) + "." });
+      },
+    });
+  }
+
+  private letGo(): void {
+    if (!this.myHold) return;
+    this.myHold = null;
+    this.net.send({ t: "h", g: "" });
   }
 
   private tick(): void {
@@ -361,6 +499,17 @@ export class Coop {
         engine.arriveNear(friend.position);
         this.forceMove = true;
       }
+    }
+
+    // Co-op roles: keep the hold station on the friend's machine, and let go when walking away.
+    const station = this.friendAtStation();
+    if (station) this.holdSpot.copy(station.at);
+    else this.holdSpot.set(0, -9999, 0);
+    if (this.myHold) {
+      const game = this.using.get(this.myHold.seat);
+      const at = game ? engine.interactions.positionOf(STATION_AT[game]) : null;
+      const me = engine.motionSample().data;
+      if (!at || Math.hypot(at.x - me[0], at.y - me[1], at.z - me[2]) > HOLD_REACH) this.letGo();
     }
 
     // Movement: only while moving, plus one last sample when the player stops.

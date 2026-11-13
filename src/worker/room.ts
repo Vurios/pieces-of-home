@@ -136,8 +136,17 @@ export class Room extends Server<Env> {
     connection.send(encode(message));
   }
 
+  /**
+   * Sends to every player who has said hello, except `except`. A socket that
+   * has not said hello yet holds no seat and hears nothing from the room.
+   */
+  private toSeated(message: ServerMessage, except?: string): void {
+    const text = encode(message);
+    for (const c of this.getConnections<ConnState>()) if (c.state && c.id !== except) c.send(text);
+  }
+
   private toOthers(connection: Connection, message: ServerMessage): void {
-    this.broadcast(encode(message), [connection.id]);
+    this.toSeated(message, connection.id);
   }
 
   override onConnect(connection: Connection, _ctx: ConnectionContext): void {
@@ -188,7 +197,7 @@ export class Room extends Server<Env> {
         const taken = this.seats().some((r) => r.seat !== me.seat && r.kid === message.k && this.holds(r));
         if (taken) return;
         this.sql`UPDATE seats SET kid = ${message.k} WHERE seat = ${me.seat}`;
-        this.broadcast(encode({ t: "pk", s: me.seat, k: message.k }));
+        this.toSeated({ t: "pk", s: me.seat, k: message.k });
         return;
       }
       case "m":
@@ -203,13 +212,18 @@ export class Room extends Server<Env> {
       case "ev":
         this.toOthers(connection, { t: "ev", s: me.seat, e: message.e, a: message.a, b: message.b, c: message.c });
         return;
+      case "u":
+      case "h":
+        // Who plays a station's game, and who holds it steady: passing moments, never stored.
+        this.toOthers(connection, { t: message.t, s: me.seat, g: message.g });
+        return;
       case "p": {
         const known = this.progress();
         if (!progressAdds(known, message.p)) return;
         const next = mergeProgress(known, message.p);
         this.put("progress", JSON.stringify(next));
         await this.touch();
-        this.broadcast(encode({ t: "p", p: next }));
+        this.toSeated({ t: "p", p: next });
         return;
       }
       case "w": {
@@ -285,7 +299,7 @@ export class Room extends Server<Env> {
     this.sql`UPDATE seats SET last = ${Date.now()} WHERE seat = ${me.seat}`;
     // Another tab of the same device may hold the seat now.
     for (const other of this.getConnections<ConnState>()) if (other.id !== connection.id && other.state?.seat === me.seat) return;
-    this.broadcast(encode({ t: "pl", s: me.seat }), [connection.id]);
+    this.toSeated({ t: "pl", s: me.seat }, connection.id);
   }
 
   override onError(connection: Connection<ConnState>, error: unknown): void {
