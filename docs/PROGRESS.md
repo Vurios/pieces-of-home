@@ -6,7 +6,7 @@ There is no deadline. The full scope in the Game Bible gets built: P0, then P1, 
 - **Repo:** https://github.com/Vurios/pieces-of-home (public). No CI: the team asked for straight pushes to `main`. Run typecheck, tests and e2e locally before pushing.
 - **Team rule for this run:** the agent asks the team before starting each next phase prompt.
 
-**Now:** Phase 05 in progress. Chapters 1 (Tranquility Base), 2 (Hadley-Apennine, the rideable Moon buggy, #60), 3 (Meridiani Planum) and 4 (Valinor Hills, Thin Air, #63) and the Finale (The Long Light, #59) are playable end to end, each with a full playthrough test. Team feedback pass (#61, #62): a CSS opening scene before the notebook, no black flicker, a freer camera with real zoom, a bigger map, big true-story cards with photos, space suits on the Moon and Mars, a 3D trip between worlds, a 3D closing shot, and roomier, more detailed Moon and Mars. Phase 06 waits until Phase 05 is complete. **Next up:** the writing pass and the remaining checklist items, then Phase 06. The team dropped the Filipino text (#70). Ask the team before starting Phase 07.
+**Now (2026-11-13):** Phases 05 and 06 are built. Every chapter, the bonus and the Finale have full playthrough tests, plus one test from the title to the credits; a fresh play-tester played Chapter 1 with no hooks and its findings are fixed (#75). Co-op is in: private rooms with word codes, character select, shared story and Milo, travel together, late join, reconnect, friends with name tags and map dots, emotes and preset phrases, "hold it steady" roles at station games, a kind solo fallback, and tests for two, three and four players (#76 to #80). The game is English only (#70). **Next up:** ask the team before starting Phase 07 (polish, QA, final deploy, submission kit).
 
 ## State summary (2026-11-11)
 
@@ -19,7 +19,7 @@ Things a new session should know:
 - `npm run test` goes through `scripts/vitest.mjs` (Windows drive-letter fix, DECISIONS #27).
 - `npm run dev` runs Vite with the real Workers runtime on port 5173. `npm run typecheck` regenerates Worker types first.
 - Skills are git-ignored. After a fresh clone run `npx skills experimental_install` to restore them from `skills-lock.json` (`DECISIONS.md` #9).
-- Co-op is solo by default. Add `?room=some-code` to open a room socket. The page mirrors state on `<html data-net data-players data-stage data-tier>` for tests.
+- Co-op is solo by default. `?room=lamp-otter-comet-42` (three listed words and a number, see `src/net/words.ts`) joins a room; the Play together panel makes or joins one in place. The page mirrors state on `<html data-net data-players data-stage data-tier>` for tests. Hooks with `?test`: `__poh.net()`, `__poh.join(code)`, `__poh.leave()`, `__poh.drop()`, `__poh.pick(kid)`, `__poh.panel(id)`. Co-op tests: `tests/e2e/coop.spec.ts`.
 - URL switches: `?quality=low|medium|high`, `?shot=wide|orbit-back|orbit-west|orbit-east|orbit-north|orbit-south|porch|mom|workshop|bench|character` (fixed camera bookmarks) or `?shot=play-yard|play-garden|play-shed|play-hill|play-meadow|play-treehouse|play-pond|play-camp|play-weather|play-playground|play-rocket|play-orchard|play-windpump|play-balloon` (player placed, normal camera), `?debug` (fps overlay, always on in dev), `?test` (exposes `window.__poh`).
 - Home layout lives in `src/game/worlds/home/layout.ts` (sites, trails, places, terrain). Places are built in `places.ts`, paths in `paths.ts`, place names and lines in `src/content/places.ts`.
 - Screenshots: `npx tsx scripts/screens.ts <folder> [shots] [url] [quality]` with the dev server running. Desktop only, 1440x900 (DECISIONS #41). Latest set is in `docs/screens/pass7/`. Character close-ups: `?shot=character|character-back|character-side|friend-nori|friend-lumi|friend-theo|mom`.
@@ -172,7 +172,7 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Photo mode (24 polaroids, used in the ending), three-tier hints and friends who give them, save, museum free roam, Remi's museum shelf (#72)
 - [x] Automated playthroughs: every world from arrival to stamp, the bonus, the Finale, and one test from the title to the credits; beat screenshots in `docs/screens/phase05/` (`SHOTS=1`) (#74)
 - [x] No-hooks pass of Chapter 1 by a fresh play-tester, and its fixes (#75)
-- [ ] Deploy and live smoke
+- [x] Deploy and live smoke (2026-11-13)
 
 ## Phase 06: Kid-safe co-op for 1 to 4 players
 
@@ -184,7 +184,7 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Safety and privacy review (#77)
 - [x] Free-tier budget and solo fallback (#78)
 - [x] Tests: two, three and four players, a full room, junk, the resting fallback, travel together (`tests/e2e/coop.spec.ts`)
-- [ ] Deploy and live two-player smoke
+- [x] Deploy and live two-player smoke: 13 of 13 live tests pass, co-op included (2026-11-13)
 
 ## Phase 07: Polish, QA, final deploy and the submission kit
 
