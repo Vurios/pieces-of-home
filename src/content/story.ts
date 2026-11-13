@@ -25,3 +25,6 @@ export const STORY = {
     { art: "go", text: "So Remi makes a plan. Deliver Dad's letters. Finish Milo. Start with the mailbox." },
   ] satisfies StoryPage[],
 } as const;
+
+/** The four kids' names, for name tags and co-op character select. */
+export const KID_NAMES: Record<"remi" | "nori" | "lumi" | "theo", string> = { remi: "Remi", nori: "Nori", lumi: "Lumi", theo: "Theo" };

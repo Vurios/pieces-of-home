@@ -4,6 +4,8 @@
  */
 export const SAVE_VERSION = 1;
 export const SAVE_KEY = "poh.save.v1";
+/** A whole story sets about 70 flags (places, steps, chapters), so the cap leaves plenty of room. */
+export const MAX_FLAGS = 200;
 export const MAX_MILO_STAGE = 5;
 
 export interface GameState {
@@ -45,7 +47,7 @@ export function reviveState(raw: unknown): GameState {
     carrying: typeof value["carrying"] === "string" && value["carrying"].length < 64 ? value["carrying"] : null,
     delivered: isStringArray(value["delivered"]) ? [...new Set(value["delivered"])] : [],
     stamps: isStringArray(value["stamps"]) ? [...new Set(value["stamps"])] : [],
-    flags: isStringArray(value["flags"]) ? [...new Set(value["flags"])].slice(0, 64) : [],
+    flags: isStringArray(value["flags"]) ? [...new Set(value["flags"])].slice(0, MAX_FLAGS) : [],
   };
 }
 

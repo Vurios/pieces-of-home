@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { testRoom } from "./rooms";
 
 test("page loads, the canvas draws, and nothing logs an error", async ({ page }) => {
   const errors: string[] = [];
@@ -30,7 +31,7 @@ test("health endpoint answers", async ({ request }) => {
 });
 
 test("a room WebSocket connects", async ({ page }, testInfo) => {
-  const room = `smoke-${testInfo.project.name}-${Date.now() % 100000}`;
+  const room = testRoom(testInfo.project.name === "phone" ? 2 : 1);
   await page.goto(`/?room=${room}&test&quality=low`);
   // CPU-drawn WebGL plus a trace recording can hold the page's first frames for a while.
   await expect(page.locator("html")).toHaveAttribute("data-net", "connected", { timeout: 40_000 });
@@ -40,7 +41,7 @@ test("a room WebSocket connects", async ({ page }, testInfo) => {
 test("two players in one room see each other counted", async ({ browser }, testInfo) => {
   // Two pages, each drawing the 3D world on the CPU, beside another test: give them time.
   test.setTimeout(180_000);
-  const room = `pair-${testInfo.project.name}-${Date.now() % 100000}`;
+  const room = testRoom(testInfo.project.name === "phone" ? 4 : 3);
   const first = await browser.newPage();
   const second = await browser.newPage();
   await first.goto(`/?room=${room}&test&quality=low`);

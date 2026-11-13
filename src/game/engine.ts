@@ -15,7 +15,8 @@ import {
   Vector3,
   WebGLRenderer,
 } from "three";
-import { Character } from "./actors/character";
+import { Character, type KidId } from "./actors/character";
+import { Crew } from "./actors/crew";
 import { PaperArrow, createEnvelope, createMirrorPanel, createParcel, createPartsBag, createBreezeFlag } from "./actors/props";
 import { EventBus, type GameEvents, type QualityTier } from "./core/events";
 import { Input } from "./core/input";
@@ -80,6 +81,9 @@ export class Engine {
   private sky: Sky | null = null;
   private player: PlayerController;
   private kid: Character;
+  /** Friends in a co-op room (Phase 06). Empty when playing solo. */
+  readonly crew: Crew;
+  private riding = false;
   private envelope;
   /** What a player carries, by the start of the carried id: letters, Milo's parts, mirror panels. */
   private carried: { prefix: string; model: import("three").Object3D }[];
@@ -193,7 +197,8 @@ export class Engine {
     }
     this.follow = new FollowCamera(this.camera);
     this.puffs = new Puffs(Math.round(90 * this.quality.particles) + 10, "#D8C3A0");
-    this.scene.add(this.kid.root, this.arrow.root, this.puffs.points);
+    this.crew = new Crew(this.toon);
+    this.scene.add(this.kid.root, this.arrow.root, this.puffs.points, this.crew.root);
 
     this.bus.on("player:step", ({ running }) => {
       this.scratch.copy(this.player.position).addScaledVector(this.player.forward, -0.1);
@@ -336,6 +341,51 @@ export class Engine {
   }
   private readonly mapAnswer = { up: new Vector3(), facing: new Vector3(), heading: new Vector3(), objective: new Vector3() };
 
+  /** Which kid the local player plays: Remi solo, or the kid picked in a co-op room. */
+  get playerKid(): KidId {
+    return this.kid.id;
+  }
+
+  /** Plays another kid (co-op character select). The carried things move to the new kid's hands. */
+  setPlayerKid(id: KidId): void {
+    if (this.kid.id === id) return;
+    const next = new Character(id, this.toon);
+    next.carrySocket.add(this.envelope);
+    for (const { model } of this.carried) next.carrySocket.add(model);
+    next.setSuit(this.world?.suits === true);
+    next.root.matrix.copy(this.kid.root.matrix);
+    next.root.matrix.decompose(next.root.position, next.root.quaternion, next.root.scale);
+    this.scene.remove(this.kid.root);
+    this.scene.add(next.root);
+    this.kid = next;
+    this.bus.emit("player:kid", { kid: id });
+  }
+
+  /**
+   * Where the local player stands, for co-op: position, facing, pace and a
+   * few bits (1 carrying, 2 seated), rounded small for the wire.
+   */
+  motionSample(): { world: string | null; data: [number, number, number, number, number, number, number, number]; pace: number } {
+    const p = this.player.position;
+    const f = this.player.forward;
+    const r = (n: number, k = 100): number => Math.round(n * k) / k;
+    const bits = (this.store.value.carrying !== null ? 1 : 0) | (this.riding ? 2 : 0);
+    return { world: this.world?.id ?? null, data: [r(p.x), r(p.y), r(p.z), r(f.x, 1000), r(f.y, 1000), r(f.z, 1000), r(this.player.pace), bits], pace: this.player.pace };
+  }
+
+  /** Puts the player next to a point (a friend), with a soft puff of light: how a late joiner arrives. */
+  arriveNear(point: Vector3): void {
+    const world = this.world;
+    if (!world) return;
+    const up = point.clone().normalize();
+    const side = projectOnTangent(new Vector3(1, 0.3, 0.2), up, new Vector3());
+    if (side.lengthSq() < 1e-6) side.set(0, 0, 1);
+    const stand = point.clone().add(side.setLength(1.1)).normalize();
+    this.player.teleport(stand, side.clone().negate().normalize(), world);
+    this.follow.snap(this.player);
+    this.puffs.emit(this.player.position, this.player.up, 14, 1.2);
+  }
+
   /** The player's head in world space, for speech bubbles. */
   playerHead(): Vector3 {
     return this.player.position.clone().addScaledVector(this.player.up, 1.5);
@@ -419,6 +469,7 @@ export class Engine {
     this.scene.fog = world.fog ? new Fog(world.fog.color, world.fog.near, world.fog.far) : null;
     this.puffs.setColor(world.dustColor);
     this.kid.setSuit(world.suits === true);
+    this.crew.setSuits(world.suits === true);
     world.resize(this.renderer.domElement.height);
 
     this.bookmark = this.options.shot ? (world.bookmarks[this.options.shot] ?? null) : null;
@@ -734,6 +785,7 @@ export class Engine {
 
     // Movement is relative to the camera's flattened heading. In a ride, the world moves the player.
     const riding = !shot && !titling && (world.ride?.(dt, input, this.player) ?? false);
+    this.riding = riding;
     if (!riding) this.player.update(dt, input, this.follow.forward, this.follow.right, world);
     world.update(dt, { player: this.player, carrying: this.store.value.carrying, time: this.elapsed, reducedMotion: this.reducedMotion });
     this.interactions.update(dt, this.player.position, this.player.forward, input);
@@ -766,6 +818,7 @@ export class Engine {
       carrying: this.store.value.carrying !== null,
       seated: riding,
     }, this.reducedMotion);
+    this.crew.update(dt, this.world?.id ?? null, performance.now(), this.reducedMotion);
 
     // Camera.
     if (shot?.camera) {

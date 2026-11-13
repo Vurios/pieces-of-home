@@ -2,6 +2,8 @@
   import { Vector3 } from "three";
   import { audio } from "../../audio/audio";
   import type { Engine } from "../../game/engine";
+  import { KID_NAMES } from "../../content/story";
+  import type { StringKey } from "../../content/strings";
   import Icon, { type IconName } from "../Icon.svelte";
   import { settings, t } from "../settings.svelte";
 
@@ -9,7 +11,8 @@
    * Speech: paper bubbles over whoever is talking, with a handwritten name,
    * typed-on text and the speaker's gibberish voice. When the speaker is off screen
    * (or bubbles are off), the line shows in the caption bar instead.
-   * Emotes pop a small icon bubble over the player.
+   * Emotes pop a small icon bubble over the player. In a co-op room, a
+   * friend's emotes and phrases ride on that friend's head.
    */
   interface Props {
     engine: Engine;
@@ -27,6 +30,8 @@
     life: number;
     recording: boolean;
     icon: IconName | null;
+    /** Follows a head as it moves: "me" for the local player, a seat for a friend. */
+    follow: "me" | number | null;
     x: number;
     y: number;
     onScreen: boolean;
@@ -44,13 +49,26 @@
       // One line per speaker at a time.
       lines = [
         ...lines.filter((l) => l.speaker !== p.speaker),
-        { key: counter++, speaker: p.speaker, name: p.name, text: p.text, at: p.at ? new Vector3(...p.at) : null, shown: 0, age: 0, life, recording: p.recording ?? false, icon: null, x: 0, y: 0, onScreen: false },
+        { key: counter++, speaker: p.speaker, name: p.name, text: p.text, at: p.at ? new Vector3(...p.at) : null, shown: 0, age: 0, life, recording: p.recording ?? false, icon: null, follow: null, x: 0, y: 0, onScreen: false },
       ];
     });
-    const offEmote = engine.bus.on("emote", ({ id }) => {
+    const offEmote = engine.bus.on("emote", ({ id, seat }) => {
       const icon = (["wave", "heart", "star", "look", "question", "yay"] as const).find((name) => name === id) ?? null;
       if (!icon) return;
-      lines = [...lines.filter((l) => l.speaker !== "emote"), { key: counter++, speaker: "emote", name: "", text: "", at: null, shown: 0, age: 0, life: 2.2, recording: false, icon, x: 0, y: 0, onScreen: false }];
+      const speaker = `emote-${seat ?? "me"}`;
+      lines = [...lines.filter((l) => l.speaker !== speaker), { key: counter++, speaker, name: "", text: "", at: null, shown: 0, age: 0, life: 2.2, recording: false, icon, follow: seat ?? "me", x: 0, y: 0, onScreen: false }];
+    });
+    // Preset phrases, said by whichever kid the player (or a friend) plays.
+    const offPhrase = engine.bus.on("phrase", ({ id, seat }) => {
+      const kid = seat === undefined ? engine.playerKid : (engine.crew.list.find((f) => f.seat === seat)?.kid ?? null);
+      if (!kid) return;
+      const text = t(`phrase.${id}` as StringKey);
+      const speaker = `phrase-${seat ?? "me"}`;
+      audio.speak(kid, text);
+      lines = [
+        ...lines.filter((l) => l.speaker !== speaker),
+        { key: counter++, speaker, name: KID_NAMES[kid], text, at: null, shown: 0, age: 0, life: Math.max(2.8, text.length * 0.065 + 1.8), recording: false, icon: null, follow: seat ?? "me", x: 0, y: 0, onScreen: false },
+      ];
     });
     let last = performance.now();
     let frame = 0;
@@ -64,7 +82,7 @@
       lines = lines
         .map((line) => {
           const shown = reduce ? line.text.length : Math.min(line.text.length, line.shown + dt * 42);
-          const at = line.speaker === "emote" ? engine.playerHead() : line.at;
+          const at = line.follow === "me" ? engine.playerHead() : typeof line.follow === "number" ? engine.crew.head(line.follow) : line.at;
           const p = at ? engine.project(at) : { x: 0, y: 0, visible: false };
           return { ...line, shown, age: line.age + dt, x: p.x, y: p.y, onScreen: p.visible };
         })
@@ -74,6 +92,7 @@
     return () => {
       offSay();
       offEmote();
+      offPhrase();
       cancelAnimationFrame(frame);
     };
   });

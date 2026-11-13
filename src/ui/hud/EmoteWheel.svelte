@@ -30,9 +30,9 @@
     onclose();
   }
 
-  function phrase(key: StringKey): void {
-    const at = engine.playerHead();
-    engine.bus.emit("say", { speaker: "remi", name: "Remi", text: t(key), at: [at.x, at.y, at.z] });
+  /** A preset phrase by id: the speech bubble shows it, and a co-op room sends only the id. */
+  function phrase(id: string): void {
+    engine.bus.emit("phrase", { id });
     onclose();
   }
 
@@ -54,7 +54,7 @@
   </div>
   <div class="phrases">
     {#each PHRASES as p (p.id)}
-      <button type="button" class="phrase" onclick={() => phrase(p.key)}>{t(p.key)}</button>
+      <button type="button" class="phrase" onclick={() => phrase(p.id)}>{t(p.key)}</button>
     {/each}
   </div>
 </div>

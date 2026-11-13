@@ -5,6 +5,7 @@
   import type { GameState } from "../game/core/state";
   import type { Engine } from "../game/engine";
   import type { NetClient, NetState } from "../net/client";
+  import type { Coop } from "../net/coop";
   import DebugOverlay from "./DebugOverlay.svelte";
   import { flow } from "./flow.svelte";
   import { gamepadNav } from "./focus";
@@ -17,6 +18,7 @@
   import PlaceCard from "./hud/PlaceCard.svelte";
   import TravelScreen from "./hud/TravelScreen.svelte";
   import Speech from "./hud/Speech.svelte";
+  import FriendTags from "./hud/FriendTags.svelte";
   import StampMoment from "./hud/StampMoment.svelte";
   import Toasts from "./hud/Toasts.svelte";
   import Notebook from "./notebook/Notebook.svelte";
@@ -48,14 +50,15 @@
 
   interface Props {
     net: NetClient;
+    coop: Coop;
     engine: Engine;
     version: string;
     debug: boolean;
   }
 
-  let { net, engine, version, debug }: Props = $props();
+  let { net, coop, engine, version, debug }: Props = $props();
   // `subscribe` reports the current state right away, so this default never shows.
-  let netState: NetState = $state({ status: "solo", room: null, players: 1 });
+  let netState: NetState = $state({ status: "solo", room: null, players: 1, you: null, seats: [] });
   let game = $state<GameState>(untrack(() => ({ ...engine.store.value })));
   let flash = $state(false);
   /** The short story plays before a new story starts. */
@@ -271,13 +274,15 @@
   const label = $derived.by(() => {
     switch (netState.status) {
       case "connecting":
-        return "Finding your room";
+        return t("together.opening");
+      case "reconnecting":
+        return t("together.again");
       case "connected":
-        return netState.players === 1 ? "Room open. Just you so far." : `Room open. ${netState.players} friends here.`;
+        return netState.players === 1 ? "Room open. Just you so far." : `Room open. ${netState.players} here.`;
       case "offline":
-        return "Friends can't join right now. You can still play.";
+        return t("together.resting");
       case "full":
-        return "That room is full. You can still play on your own.";
+        return t("together.full");
       default:
         return "";
     }
@@ -307,6 +312,7 @@
 <MiniMap {engine} {game} hidden={flow.stage !== "play" || flow.covered || banners.traveling || banners.screens > 0 || !settings.value.miniMap} onopen={() => flow.open("map")} />
 <Guide {engine} {game} hidden={flow.stage !== "play" || flow.covered || banners.traveling || banners.screens > 0} notebookOpen={flow.notebook} />
 <PlaceCard {engine} hidden={flow.stage !== "play" || flow.covered || flow.notebook} />
+<FriendTags {engine} hidden={flow.stage !== "play" || flow.covered || banners.traveling || banners.screens > 0} />
 <Speech {engine} />
 <StoryCards {engine} />
 <StoryGames {engine} />
@@ -342,7 +348,7 @@
 {:else if flow.panel === "credits"}
   <CreditsPanel onclose={() => flow.close()} />
 {:else if flow.panel === "together"}
-  <TogetherPanel onclose={() => flow.close()} />
+  <TogetherPanel {net} {coop} onclose={() => flow.close()} />
 {:else if flow.panel === "archive"}
   <ArchivePanel onclose={() => flow.close()} />
 {:else if flow.panel === "chapters"}

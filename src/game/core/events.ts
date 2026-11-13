@@ -86,7 +86,12 @@ export interface GameEvents {
   toast: { text: string };
   /** A chapter or beat is complete. Two short lines for the big ink stamp. */
   stamp: { id: string; lines: [string, string] };
-  emote: { id: string };
+  /** An emote over a kid's head. `seat` is a co-op friend; without it, the local player. */
+  emote: { id: string; seat?: number };
+  /** A preset phrase (ids only, Game Bible 8). `seat` is a co-op friend; without it, the local player. */
+  phrase: { id: string; seat?: number };
+  /** The local player now plays another kid (co-op character select). */
+  "player:kid": { kid: string };
   "photo:taken": { count: number };
   /** Open Dad's archive cards (the board in the workshop). */
   "archive:open": Record<string, never>;

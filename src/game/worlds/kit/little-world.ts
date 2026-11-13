@@ -116,11 +116,11 @@ export class LampBeam {
           varying float vDist;
           void main() {
             float edge = 1.0 - abs(dot(normalize(vN), normalize(vV)));
-            float fade = pow(1.0 - vH, 1.6) * smoothstep(0.0, 0.12, vH);
+            float fade = pow(1.0 - vH, 1.6) * smoothstep(0.0, 0.05, vH);
             float shimmer = 0.85 + 0.15 * sin(vH * 24.0 - uTime * 2.0);
             // Close to the lens the beam fades away, so it never fogs the view.
-            float a = (0.035 + 0.16 * edge * edge) * fade * shimmer * smoothstep(3.5, 8.0, vDist);
-            gl_FragColor = vec4(vec3(1.0, 0.78, 0.45) * a, a);
+            float a = (0.06 + 0.22 * edge * edge) * fade * shimmer * smoothstep(1.8, 5.0, vDist);
+            gl_FragColor = vec4(vec3(1.0, 0.82, 0.5) * a * 1.4, a);
           }
         `,
       }),
@@ -202,7 +202,8 @@ export function chapterRuntime(ctx: WorldContext, chapter: ChapterDef, spots: Ch
     position: spots.tag,
     radius: 1.6,
     kind: "press",
-    label: () => "Flip Dad's tag",
+    // With Milo's part in hand, the lamp's ring is for going home: the tag waits.
+    label: () => (chapterStep(chapter, state()).kind === "part-home" ? null : "Flip Dad's tag"),
     onDone: () => bus.emit("notebook:open", { spread: chapter.spread }),
   });
 
@@ -211,6 +212,7 @@ export function chapterRuntime(ctx: WorldContext, chapter: ChapterDef, spots: Ch
     position: spots.home,
     radius: 1.5,
     kind: "press",
+    weight: 0.6,
     label: () => (state().carrying === part ? "Take the part home" : "Go back to the workshop"),
     onDone: () => bus.emit("travel", { to: "home", entry: "bench" }),
   });

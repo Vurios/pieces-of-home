@@ -14,6 +14,11 @@ export interface Interactable {
   /** How close the player must be, in world units. */
   radius: number;
   kind: "press" | "hold";
+  /**
+   * Counts this item as nearer (below 1) or farther (above 1) when choosing
+   * between prompts. The way home in the lamp's ring wins over a sign at its edge.
+   */
+  weight?: number;
   /** Seconds to hold, for "hold". */
   holdTime?: number;
   /** The prompt text right now, or null when nothing can be done here. */
@@ -76,7 +81,7 @@ export class InteractionSystem {
       if (!label) continue;
       // Prefer what the player faces: things off to the side count as a little farther away, things behind more.
       const facing = distance > 0.01 ? this.toItem.divideScalar(distance).dot(forward) : 1;
-      const score = distance * (facing > 0 ? 1 + (1 - facing) * 0.9 : 2.2);
+      const score = distance * (facing > 0 ? 1 + (1 - facing) * 0.9 : 2.2) * (item.weight ?? 1);
       if (score < bestScore) {
         bestScore = score;
         best = item;

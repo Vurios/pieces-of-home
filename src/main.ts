@@ -7,6 +7,7 @@ import { audio } from "./audio/audio";
 import { BootProgress } from "./boot/progress";
 import { Engine } from "./game/engine";
 import { NetClient } from "./net/client";
+import { Coop } from "./net/coop";
 import { isValidRoomCode } from "./net/protocol";
 import App from "./ui/App.svelte";
 import { flow } from "./ui/flow.svelte";
@@ -88,7 +89,20 @@ async function boot(): Promise<void> {
   if (!texturesStarted) textureTask.done();
   await Promise.all([fonts, sounds]);
 
-  mount(App, { target: ui, props: { net, engine, version: __APP_VERSION__, debug: import.meta.env.DEV || params.has("debug") } });
+  const coop = new Coop(net, engine);
+  coop.start();
+  if (import.meta.env.DEV || params.has("test")) {
+    Object.assign((window as unknown as { __poh: object }).__poh, {
+      net: () => ({ ...net.snapshot, stats: { ...net.stats }, heard: [...coop.heard], kid: engine.playerKid, friends: engine.crew.list.map((f) => ({ seat: f.seat, kid: f.kid, world: f.world, visible: f.character.root.visible, at: f.position.toArray() })) }),
+      join: (code: string) => coop.join(code),
+      leave: () => coop.leave(),
+      drop: () => net.drop(),
+      panel: (id: string) => flow.open(id as never),
+      pick: (kid: string) => coop.pick(kid as never),
+    });
+  }
+
+  mount(App, { target: ui, props: { net, coop, engine, version: __APP_VERSION__, debug: import.meta.env.DEV || params.has("debug") } });
   uiTask.done();
   // Wait for the last textures, so the globes are never blank on the first frame.
   if (!textureTask.finished) await new Promise<void>((resolve) => (manager.onLoad = () => (textureTask.done(), resolve())));
@@ -110,7 +124,7 @@ async function boot(): Promise<void> {
   });
 
   const room = params.get("room");
-  if (room && isValidRoomCode(room)) net.join(room);
+  if (room && isValidRoomCode(room)) coop.join(room);
 
   if (skipIntro) {
     engine.start();

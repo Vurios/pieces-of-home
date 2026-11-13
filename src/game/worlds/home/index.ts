@@ -19,6 +19,7 @@ import { C, buildDish, buildHouse, buildLampPost, buildMailbox } from "./buildin
 import { GROUND_PATCHES, type Site, HILL, HILL_TOP, HOME_RADIUS, MAILBOX, MEADOW, ORCHARD, PATH_HALF_WIDTH, PLACES, POND, POND_RADIUS, SITES, TERRAIN, TRAILS, TRAIL_LAMPS, clearOfTrails, local, site } from "./layout";
 import { buildGarden, buildMeadow, groundMatrix, pathDistance, planTrees, scatterNature, treeShade } from "./nature";
 import { buildPaths } from "./paths";
+import { presence } from "../../../net/presence";
 import { buildPlaces } from "./places";
 import { SHED, buildWorkshop, workshopMaterials } from "./workshop";
 import { buildGardenYard, buildHilltop, buildHouseYard, buildShedYard, buildSolarPanel } from "./yard";
@@ -244,7 +245,10 @@ export function createHome(ctx: WorldContext): World {
     surfaceMatrix(spot.position, up, spot.forward, kid.root.matrix);
     kid.root.matrix.decompose(kid.root.position, kid.root.quaternion, kid.root.scale);
     root.add(kid.root);
-    colliders.push(createColliderGroup(kid.root.matrix, [{ kind: "circle", x: 0, z: 0, radius: 0.28, height: 1.3 }]));
+    // In a co-op room a real friend may play this kid: then this one steps out (see update).
+    const body = { kind: "circle" as const, x: 0, z: 0, radius: 0.28, height: 1.3 };
+    colliders.push(createColliderGroup(kid.root.matrix, [body]));
+    kid.root.userData["body"] = body;
     // Playing alone, the friends help: ask one and they say the next hint (Game Bible: hints, three tiers).
     const name = id.charAt(0).toUpperCase() + id.slice(1);
     const head = spot.position.clone().addScaledVector(up, 1.45);
@@ -254,7 +258,7 @@ export function createHome(ctx: WorldContext): World {
       position: spot.position,
       radius: 0.8,
       kind: "press",
-      label: () => (ctx.store.value.carrying?.startsWith("part:") ? null : `Ask ${name} for a hint`),
+      label: () => (ctx.store.value.carrying?.startsWith("part:") || presence.kids.has(id) ? null : `Ask ${name} for a hint`),
       onDone: () => ctx.bus.emit("hint:ask", { who: id, name, at: [head.x, head.y, head.z] }),
     });
     return kid;
@@ -867,6 +871,11 @@ export function createHome(ctx: WorldContext): World {
       const head = feet.clone().addScaledVector(frame.player.up, 1.0);
       mom.update(dt, head, frame.reducedMotion);
       for (const kid of friends) {
+        // A friend played by a real player in the room is not also waiting here.
+        const away = presence.kids.has(kid.id);
+        kid.root.visible = !away;
+        (kid.root.userData["body"] as { radius: number }).radius = away ? 0.001 : 0.28;
+        if (away) continue;
         kid.lookAt(inside && kid.root.position.distanceTo(feet) < 4.5 ? head : null);
         kid.update(dt, { pace: 0, running: false, grounded: true, verticalSpeed: 0, sinceLanding: 10, landingSpeed: 0, carrying: false }, frame.reducedMotion);
       }

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Vector3 } from "three";
+  import { KID_PALETTES, type KidId } from "../../game/actors/character";
   import type { GameState } from "../../game/core/state";
   import type { Engine } from "../../game/engine";
   import type { MapIcon, WorldMap } from "../../game/worlds/types";
@@ -26,6 +27,8 @@
     onopen: () => void;
   }
   let { engine, hidden, onopen }: Props = $props();
+  /** Co-op friends in this world, in the map's anchor space: a small dot in their shirt color. */
+  let friendDots = $state<{ seat: number; kid: KidId; x: number; y: number }[]>([]);
 
   /** How many meters from Remi to the rim. */
   const RANGE = 10;
@@ -154,6 +157,12 @@
       const turn = pageAngle(anchor, v.facing);
       // Svelte only touches the page when something really moved.
       if (Math.abs(x - pose.x) > 0.04 || Math.abs(y - pose.y) > 0.04 || Math.abs(turn - pose.turn) > 0.08) pose = { x, y, turn };
+      // Friends in the same world.
+      const dots = engine.crew.here(v.worldId).map((f) => {
+        const g = onGround(anchor!, tmp.copy(f.position).normalize());
+        return { seat: f.seat, kid: f.kid, x: g.x * SCALE, y: -g.y * SCALE };
+      });
+      if (dots.length !== friendDots.length || dots.some((d, i) => Math.abs(d.x - friendDots[i]!.x) + Math.abs(d.y - friendDots[i]!.y) > 0.5 || d.kid !== friendDots[i]!.kid)) friendDots = dots;
       const h = pageAngle(anchor, v.heading) - turn;
       if (Math.abs(h - heading) > 0.1) heading = h;
       const n = tmp.copy(pole).addScaledVector(v.up, -v.up.y);
@@ -179,6 +188,13 @@
   });
   const ground = $derived(`rotate(${(-pose.turn).toFixed(2)}) translate(${(-pose.x).toFixed(2)} ${(-pose.y).toFixed(2)})`);
   const placed = $derived(marks.map((m) => ({ ...m, ...spin(m.x, m.y) })).filter((m) => Math.hypot(m.x, m.y) < LAND + 8));
+  const friends = $derived(
+    friendDots.map((d) => {
+      const p = spin(d.x, d.y);
+      const inside = Math.hypot(p.x, p.y) < LAND - 6;
+      return { ...d, ...p, inside, angle: Math.atan2(p.x, -p.y) * DEG, color: KID_PALETTES[d.kid].top };
+    }),
+  );
   const TICKS = Array.from({ length: 24 }, (_, i) => i * 15);
   const clipId = `mini-${Math.random().toString(36).slice(2, 7)}`;
 </script>
@@ -253,6 +269,19 @@
           <path d="M0 -9 L9 6 L0 2 L-9 6 Z" fill="#F2A541" stroke="#2B2622" stroke-width="1.8" stroke-linejoin="round" class="pulse" />
         </g>
       {/if}
+      <!-- Co-op friends: a dot in their shirt color, or a dot on the rim when they are far away. -->
+      {#each friends as f (f.seat)}
+        {#if f.inside}
+          <g class="friend" data-kid={f.kid} transform="translate({f.x.toFixed(1)} {f.y.toFixed(1)})">
+            <circle r="7.5" fill={f.color} stroke="#2B2622" stroke-width="2" />
+            <circle r="2.6" cy="-1" fill="#FBF6EC" />
+          </g>
+        {:else}
+          <g class="friend" data-kid={f.kid} transform="rotate({f.angle.toFixed(1)}) translate(0 -80)">
+            <circle r="6" fill={f.color} stroke="#2B2622" stroke-width="1.8" />
+          </g>
+        {/if}
+      {/each}
       <!-- Remi: a little amber arrow, pointing the way Remi faces. -->
       <g transform="rotate({heading.toFixed(1)})">
         <path d="M0 -11 L8 8 L0 4 L-8 8 Z" fill="#F2A541" stroke="#2B2622" stroke-width="2" stroke-linejoin="round" />
