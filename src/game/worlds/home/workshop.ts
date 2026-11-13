@@ -1,6 +1,7 @@
 import {
   AdditiveBlending,
   CanvasTexture,
+  CylinderGeometry,
   Euler,
   Group,
   type Material,
@@ -14,6 +15,7 @@ import {
   SRGBColorSpace,
   SphereGeometry,
   type Texture,
+  TorusGeometry,
   Vector3,
 } from "three";
 import { factCoords, fact } from "../../../content/facts";
@@ -75,6 +77,11 @@ export interface WorkshopResult {
   dustCenter: Vector3;
   /** Dad's four domes, left to right: the top of the glass, and where a player stands to look in. */
   domes: { top: Vector3; stand: Vector3 }[];
+  /**
+   * Dad's newest dome, the bonus world, on its own little stand by the
+   * archive board. A cloth covers it until it opens.
+   */
+  bonusDome: { top: Vector3; stand: Vector3; cover: Object3D };
   /** Is this world point inside? `margin` grows the box, for hysteresis. */
   isInside(point: Vector3, margin: number): boolean;
 }
@@ -494,6 +501,79 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     }
   }
 
+  // ---- Dad's newest dome: the Ocean of Storms, on a round plant stand under the archive board ----
+  const bonusX = hw - 0.42;
+  const bonusZ = 0.98;
+  const standTop = fy + 0.8;
+  {
+    b.place(cylinder(20), C.woodDark, v(bonusX, standTop, bonusZ), [0, 0, 0], [0.24, 0.05, 0.24], m);
+    b.place(cylinder(20), C.wood, v(bonusX, standTop + 0.03, bonusZ), [0, 0, 0], [0.22, 0.012, 0.22], m);
+    b.place(cylinder(10, 0.8), C.woodDark, v(bonusX, fy + 0.42, bonusZ), [0, 0, 0], [0.045, 0.74, 0.045], m);
+    b.place(sphere("low"), C.wood, v(bonusX, fy + 0.6, bonusZ), [0, 0, 0], [0.07, 0.05, 0.07], m);
+    for (let i = 0; i < 3; i += 1) {
+      const a = (i / 3) * Math.PI * 2 + 0.5;
+      b.place(box(0.01), C.woodDark, v(bonusX + Math.cos(a) * 0.13, fy + 0.04, bonusZ + Math.sin(a) * 0.13), [0, -a, 0.35], [0.26, 0.05, 0.05], m);
+    }
+    b.place(cylinder(24), C.brass, v(bonusX, standTop + 0.045, bonusZ), [0, 0, 0], [0.2, 0.012, 0.2], m);
+    // The little world: grey Moon dust, a crater with a tan tripod robot in it, and a gold lander on the rim.
+    b.place(sphere("mid"), "#B2ADA4", v(bonusX, standTop - 0.04, bonusZ), [0, 0, 0], 0.14, m);
+    b.place(cylinder(14), "#8E8A84", v(bonusX - 0.02, standTop + 0.097, bonusZ + 0.02), [0, 0, 0], [0.075, 0.006, 0.075], m);
+    b.place(torus(0.2), "#CFCAC0", v(bonusX - 0.02, standTop + 0.1, bonusZ + 0.02), [Math.PI / 2, 0, 0], [0.078, 0.078, 0.04], m);
+    // Surveyor: a tan tripod with its little flat panel on top.
+    for (let i = 0; i < 3; i += 1) {
+      const a = (i / 3) * Math.PI * 2;
+      b.place(cylinder(4), "#C9B48E", v(bonusX - 0.02 + Math.sin(a) * 0.016, standTop + 0.125, bonusZ + 0.02 + Math.cos(a) * 0.016), [Math.cos(a) * 0.35, 0, -Math.sin(a) * 0.35], [0.004, 0.055, 0.004], m);
+    }
+    b.place(box(0.002), "#2B3A63", v(bonusX - 0.02, standTop + 0.158, bonusZ + 0.02), [0.4, 0.4, 0], [0.04, 0.003, 0.03], m);
+    // Intrepid on the rim: a gold box on four legs.
+    b.place(cylinder(8), C.brass, v(bonusX + 0.07, standTop + 0.13, bonusZ - 0.06), [0, 0.4, 0], [0.032, 0.03, 0.032], m);
+    for (let i = 0; i < 4; i += 1) {
+      const a = (i / 4) * Math.PI * 2 + 0.4;
+      b.place(cylinder(4), C.metal, v(bonusX + 0.07 + Math.sin(a) * 0.035, standTop + 0.11, bonusZ - 0.06 + Math.cos(a) * 0.035), [Math.cos(a) * 0.5, 0, -Math.sin(a) * 0.5], [0.003, 0.03, 0.003], m);
+    }
+    // Dad's tag on a stake, folded like the bench ones.
+    b.place(cylinder(4), C.woodDark, v(bonusX - 0.2, standTop + 0.12, bonusZ + 0.12), [0, 0, 0], [0.006, 0.18, 0.006], m);
+    b.place(box(0.003), C.paper, v(bonusX - 0.205, standTop + 0.2, bonusZ + 0.125), [0, 0.9, 0.08], [0.11, 0.065, 0.006], m);
+    b.place(box(0.001), C.ink, v(bonusX - 0.21, standTop + 0.205, bonusZ + 0.13), [0, 0.9, 0.08], [0.07, 0.006, 0.002], m);
+    const dome = new Mesh(domeGeometry, glassMaterial);
+    dome.position.copy(new Vector3(bonusX, standTop + 0.05, bonusZ).applyMatrix4(m));
+    dome.quaternion.setFromRotationMatrix(m);
+    dome.scale.setScalar(0.85);
+    dome.renderOrder = 8;
+    glass.push(dome);
+  }
+  // A dust cloth over it, tied with string, until the dome opens.
+  const bonusCover = new Group();
+  {
+    const cloth = toon.toon({ color: "#D9CDB4", paint: 0.2 });
+    const drape = new Mesh(new SphereGeometry(0.212, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.62), cloth);
+    drape.position.set(0, 0.035, 0);
+    drape.scale.set(1, 1.08, 1);
+    const hem = new Mesh(new CylinderGeometry(0.19, 0.214, 0.12, 18, 1, true), cloth);
+    hem.position.set(0, 0.0, 0);
+    // Soft folds where the cloth hangs down.
+    const fold = toon.toon({ color: "#C2B596", paint: 0.2 });
+    for (let i = 0; i < 7; i += 1) {
+      const a = (i / 7) * Math.PI * 2 + 0.3;
+      const crease = new Mesh(new CylinderGeometry(0.006, 0.014, 0.11, 5), fold);
+      crease.position.set(Math.sin(a) * 0.203, -0.005, Math.cos(a) * 0.203);
+      crease.rotation.set(Math.cos(a) * 0.12, 0, -Math.sin(a) * 0.12);
+      bonusCover.add(crease);
+    }
+    const knot = new Mesh(sphere("low"), toon.toon({ color: C.clay }));
+    knot.scale.setScalar(0.022);
+    knot.position.set(0, 0.27, 0);
+    const string = new Mesh(new TorusGeometry(0.19, 0.006, 4, 24), toon.toon({ color: C.clay }));
+    string.rotation.x = Math.PI / 2;
+    string.position.set(0, 0.07, 0);
+    for (const part of [drape, hem, knot, string]) {
+      part.castShadow = true;
+      bonusCover.add(part);
+    }
+    bonusCover.position.copy(new Vector3(bonusX, standTop + 0.06, bonusZ).applyMatrix4(m));
+    bonusCover.quaternion.setFromRotationMatrix(m);
+  }
+
   // ---- Floor things ----
   b.place(cylinder(32), "#8E4E35", v(-0.2, fy + 0.012, 0.45), [0, 0, 0], [1.3, 0.02, 1.3], m);
   b.place(cylinder(32), C.amber, v(-0.2, fy + 0.016, 0.45), [0, 0, 0], [1.0, 0.02, 1.0], m);
@@ -516,7 +596,7 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     b.place(box(0.004), C.paper, v(x, fy + y - 0.1, z), [0, r, 0], [0.18, 0.11, 0.53], m);
   }
   // A coiled cable and a watering can by the door.
-  b.place(torus(0.15), C.ink, v(2.3, fy + 0.03, 1.6), [Math.PI / 2, 0, 0], 0.22, m);
+  b.place(torus(0.15), C.ink, v(1.75, fy + 0.03, 2.1), [Math.PI / 2, 0, 0], 0.22, m);
   b.place(cylinder(12), C.sage, v(2.5, fy + 0.18, 2.05), [0, 0, 0], [0.13, 0.32, 0.13], m);
   b.place(cylinder(6, 0.5), C.sage, v(2.36, fy + 0.25, 2.18), [0.5, 0.7, 0], [0.03, 0.3, 0.03], m);
 
@@ -534,6 +614,7 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     { kind: "box", x: -2.45, z: 0.6, halfWidth: 0.3, halfDepth: 0.2, height: fy + 0.36 },
     { kind: "box", x: -2.25, z: 1.8, halfWidth: 0.55, halfDepth: 0.4, height: fy + 1.0 },
     { kind: "circle", x: 2.5, z: 2.05, radius: 0.15, height: fy + 0.35 },
+    { kind: "circle", x: bonusX, z: bonusZ, radius: 0.26, height: standTop + 0.3 },
   ];
   const frontShapes: Shape[] = [
     { kind: "box", x: -(doorHalf + sideWidth / 2), z: hd + 0.1, halfWidth: sideWidth / 2, halfDepth: 0.13, height: 4.2 },
@@ -553,7 +634,7 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     globes,
     lampGlow,
     pins,
-    archive: { stand: at(hw - 0.85, fy, 1.35), board: at(hw - 0.06, 1.55, 1.35) },
+    archive: { stand: at(hw - 0.85, fy, 1.7), board: at(hw - 0.06, 1.55, 1.35) },
     lampBulb: at(lampBulbLocal.x, lampBulbLocal.y, lampBulbLocal.z),
     lampSpot: at(lampX + 0.3, fy, BENCH_Z + 0.85),
     miloSpot: { position: at(-0.55, BENCH_Y, BENCH_Z - 0.05), forward: inward.clone().negate() },
@@ -564,6 +645,7 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     ],
     benchFront: at(-0.55, fy, BENCH_Z + 1.0),
     domes: [0.25, 0.85, 1.45, 2.05].map((x) => ({ top: at(x, BENCH_Y + 0.34, BENCH_Z - 0.05), stand: at(x, fy, BENCH_Z + 0.85) })),
+    bonusDome: { top: at(bonusX, standTop + 0.27, bonusZ), stand: at(bonusX - 0.75, fy, bonusZ - 0.12), cover: bonusCover },
     dustCenter: at(-1.4, 1.5, -1.2),
     isInside(point: Vector3, margin: number): boolean {
       scratch.copy(point).applyMatrix4(inverse);

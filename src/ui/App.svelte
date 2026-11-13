@@ -37,6 +37,7 @@
   import FinaleGames from "./story/FinaleGames.svelte";
   import WheelGame from "./story/WheelGame.svelte";
   import ThinAirGames from "./story/ThinAirGames.svelte";
+  import SurveyorGames from "./story/SurveyorGames.svelte";
   import DriveCard from "./story/DriveCard.svelte";
   import { V1_LETTER } from "../content/finale";
   import ActivityMeter from "./story/ActivityMeter.svelte";
@@ -119,8 +120,8 @@
     const offs = [
       engine.bus.on("travel", ({ to, entry }) => {
         if (engine.traveling || trip) return;
-        // A mirror panel or a breeze flag stays in its world: it goes back where it came from.
-        if (/^(mirror|flag):/.test(engine.store.value.carrying ?? "")) engine.store.update((s) => void (s.carrying = null));
+        // A mirror panel, a breeze flag or the parts bag stays in its world: it goes back where it came from.
+        if (/^(mirror|flag|bag):/.test(engine.store.value.carrying ?? "")) engine.store.update((s) => void (s.carrying = null));
         const chapter = CHAPTERS.find((c) => c.world === to);
         if (chapter) trip = { to, place: chapter.dome, ...(entry ? { entry } : {}) };
         else void engine.travel(to, entry);
@@ -302,6 +303,7 @@
 <FinaleGames {engine} />
 <WheelGame {engine} />
 <ThinAirGames {engine} />
+<SurveyorGames {engine} />
 <DriveCard {engine} />
 <ActivityMeter {engine} />
 <Seismograph {engine} {game} />

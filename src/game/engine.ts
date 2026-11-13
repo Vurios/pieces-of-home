@@ -16,7 +16,7 @@ import {
   WebGLRenderer,
 } from "three";
 import { Character } from "./actors/character";
-import { PaperArrow, createEnvelope, createMirrorPanel, createParcel, createBreezeFlag } from "./actors/props";
+import { PaperArrow, createEnvelope, createMirrorPanel, createParcel, createPartsBag, createBreezeFlag } from "./actors/props";
 import { EventBus, type GameEvents, type QualityTier } from "./core/events";
 import { Input } from "./core/input";
 import { FrameWatchdog, QUALITY, ResolutionGovernor, type QualitySettings, detectTier, lowerTier, readDeviceHints, readTierOverride, writeTierOverride } from "./core/quality";
@@ -185,6 +185,7 @@ export class Engine {
       { prefix: "part:", model: createParcel(this.toon) },
       { prefix: "mirror:", model: createMirrorPanel(this.toon) },
       { prefix: "flag:", model: carriedFlag(createBreezeFlag(this.toon)) },
+      { prefix: "bag:", model: createPartsBag(this.toon) },
     ];
     for (const { model } of this.carried) {
       model.visible = false;

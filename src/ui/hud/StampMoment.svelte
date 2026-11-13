@@ -23,6 +23,7 @@
     "chapter-2": { patch: "lrv", post: "MOON POST" },
     "chapter-3": { patch: "opportunity", post: "MARS POST" },
     "chapter-4": { patch: "ingenuity", post: "MARS POST" },
+    "bonus-surveyor": { patch: "surveyor", post: "MOON POST" },
     finale: { patch: "voyager", post: "DEEP SPACE POST" },
   };
 

@@ -48,6 +48,7 @@ export type TripProp = "house" | "lander" | "buggy" | "rover" | "helicopter" | "
 const DRESS: Record<string, { kind: TripWorld; prop: TripProp }> = {
   home: { kind: "home", prop: "house" },
   tranquility: { kind: "moon", prop: "lander" },
+  storms: { kind: "moon", prop: "lander" },
   hadley: { kind: "moon", prop: "buggy" },
   meridiani: { kind: "mars", prop: "rover" },
   valinor: { kind: "mars", prop: "helicopter" },

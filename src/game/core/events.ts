@@ -69,7 +69,8 @@ export interface GameEvents {
   "player:zone": { zone: string | null };
   "input:device": { device: InputDevice };
   "quality:change": { tier: QualityTier; auto: boolean };
-  "milo:stage": { stage: number };
+  /** Milo got a part. `chapter` names the chapter it came from (a bonus part has no stage of its own). */
+  "milo:stage": { stage: number; chapter?: string };
   /** A title letter landed. `index` counts letters in reading order. */
   "title:note": { index: number };
   /** Every title letter is down and the chain can be pulled. */

@@ -96,6 +96,33 @@ export const DRAWINGS: Record<MachineSpread["drawing"], () => Prim[]> = {
     { k: "rect", x: 150, y: 132, w: 10, h: 6 },
     { k: "ellipse", x: 155, y: 135, w: 30, h: 22 },
   ],
+  surveyor: () => [
+    // Side view: a three-legged frame, round footpads, the mast with its flat
+    // antenna and solar panel, the camera can with its mirror hood, and the
+    // scoop arm reaching down to its trenches. Dotted lines where the parts were cut.
+    { k: "line", a: [108, 150], b: [160, 70] },
+    { k: "line", a: [212, 150], b: [160, 70] },
+    { k: "line", a: [108, 150], b: [212, 150] },
+    { k: "line", a: [128, 120], b: [192, 120] },
+    { k: "line", a: [112, 150], b: [62, 196] },
+    { k: "line", a: [208, 150], b: [258, 196] },
+    { k: "line", a: [160, 150], b: [168, 200] },
+    { k: "ellipse", x: 58, y: 198, w: 34, h: 8 },
+    { k: "ellipse", x: 262, y: 198, w: 34, h: 8 },
+    { k: "ellipse", x: 168, y: 202, w: 30, h: 7 },
+    { k: "line", a: [160, 70], b: [160, 40] },
+    { k: "poly", pts: [[160, 40], [116, 22], [104, 44], [148, 58]] },
+    { k: "poly", pts: [[162, 42], [210, 20], [222, 40], [176, 60]] },
+    { k: "rect", x: 132, y: 128, w: 30, h: 20 },
+    { k: "rect", x: 198, y: 92, w: 16, h: 40 },
+    { k: "poly", pts: [[196, 92], [216, 92], [222, 80], [202, 78]] },
+    { k: "path", d: "M190 88 l 4 0 M200 88 l 4 0 M210 88 l 4 0 M218 88 l 4 0" },
+    { k: "line", a: [118, 142], b: [88, 166] },
+    { k: "line", a: [88, 166], b: [56, 172] },
+    { k: "rect", x: 34, y: 168, w: 22, h: 12 },
+    { k: "path", d: "M30 164 l 4 0 M38 164 l 4 0 M46 164 l 4 0 M54 164 l 4 0" },
+    { k: "path", d: "M22 196 l 18 0 M24 190 l 18 0 M26 184 l 16 0" },
+  ],
   voyager: () => [
     // The big dish, the body, the long booms and the Golden Record on its side.
     { k: "ellipse", x: 140, y: 70, w: 150, h: 46 },

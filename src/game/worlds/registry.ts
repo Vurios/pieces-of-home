@@ -10,6 +10,7 @@ export const WORLDS: Record<string, () => Promise<WorldFactory>> = {
   hadley: () => import("./hadley").then((module) => module.createHadley),
   meridiani: () => import("./meridiani").then((module) => module.createMeridiani),
   valinor: () => import("./valinor").then((module) => module.createValinor),
+  storms: () => import("./storms").then((module) => module.createStorms),
 };
 
 export type WorldId = keyof typeof WORLDS;

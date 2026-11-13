@@ -89,8 +89,8 @@ export class StoryDirector {
         const chapter = CHAPTERS.find((c) => c.activity === id);
         if (chapter) void this.play([{ wait: 0.8 }, ...chapter.activityDone, { say: STORY_COPY.partFound, who: "remi", at: "tag" }]);
       }),
-      bus.on("milo:stage", ({ stage }) => {
-        const chapter = CHAPTERS.find((c) => c.milo === stage);
+      bus.on("milo:stage", ({ stage, chapter: from }) => {
+        const chapter = (from ? CHAPTERS.find((c) => c.id === from) : undefined) ?? CHAPTERS.find((c) => !c.bonus && c.milo === stage);
         if (chapter) void this.fitted(chapter);
         else if (stage === MILO_VOICE) void this.play(RECORD_FITTED).then(() => this.resumeFinale());
       }),

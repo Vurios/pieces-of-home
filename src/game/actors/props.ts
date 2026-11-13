@@ -1,7 +1,7 @@
 import { DoubleSide, Group, Mesh, MeshBasicMaterial, Shape, ShapeGeometry, Vector3 } from "three";
 import type { ToonLibrary } from "../render/toon";
 import { damp, projectOnTangent, surfaceMatrix } from "../world/sphere";
-import { box, cone, cylinder } from "./parts";
+import { box, cone, cylinder, sphere, torus } from "./parts";
 
 /**
  * Small moving props: the paper arrow that points to the next letter, and the
@@ -180,4 +180,45 @@ export function createBreezeFlag(toon: ToonLibrary): Group {
     if (object instanceof Mesh) object.castShadow = true;
   });
   return flag;
+}
+
+/**
+ * The parts bag (bonus chapter): a soft white sample bag, cinched at the top
+ * with a drawstring and a paper label, the bag the astronauts used for the
+ * pieces of Surveyor 3. It sits on its bottom at the origin.
+ */
+export function createPartsBag(toon: ToonLibrary): Group {
+  const group = new Group();
+  group.name = "parts-bag";
+  const cloth = toon.toon({ color: "#EFE9DC", objectSpace: true, paint: 0.12 });
+  const body = new Mesh(sphere("mid"), cloth);
+  body.scale.set(0.15, 0.13, 0.12);
+  body.position.y = 0.12;
+  // Lumps where the camera and the scoop push at the cloth.
+  const lump = new Mesh(sphere("low"), cloth);
+  lump.scale.set(0.08, 0.07, 0.07);
+  lump.position.set(0.07, 0.15, 0.05);
+  const neck = new Mesh(cylinder(10, 0.6), cloth);
+  neck.scale.set(0.06, 0.08, 0.06);
+  neck.position.y = 0.26;
+  const tie = new Mesh(torus(0.3), toon.toon({ color: "#C9A04A", objectSpace: true, paint: 0.05 }));
+  tie.scale.setScalar(0.045);
+  tie.rotation.x = Math.PI / 2;
+  tie.position.y = 0.245;
+  const frill = new Mesh(cylinder(10, 1.6, true), cloth);
+  frill.scale.set(0.045, 0.05, 0.045);
+  frill.position.y = 0.315;
+  const label = new Mesh(box(0.004), toon.toon({ color: "#F4ECDD", objectSpace: true, paint: 0.05 }));
+  label.scale.set(0.08, 0.05, 0.004);
+  label.position.set(-0.02, 0.13, 0.122);
+  label.rotation.z = -0.15;
+  const stripe = new Mesh(box(0.002), toon.toon({ color: "#B8433A", objectSpace: true, paint: 0.05 }));
+  stripe.scale.set(0.06, 0.008, 0.003);
+  stripe.position.set(-0.02, 0.145, 0.125);
+  stripe.rotation.z = -0.15;
+  group.add(body, lump, neck, tie, frill, label, stripe);
+  group.traverse((object) => {
+    if (object instanceof Mesh) object.castShadow = true;
+  });
+  return group;
 }

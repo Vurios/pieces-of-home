@@ -58,6 +58,11 @@ export interface ChapterDef {
   dome: string;
   /** "Chapter 1: Tranquility Base". */
   title: string;
+  /**
+   * A bonus chapter: never needed for the Finale or the next-dome goal, and
+   * its part does not change Milo's stage number.
+   */
+  bonus?: true;
   /** Short label for the goal card. */
   place: string;
   arrival: Line[];
@@ -69,7 +74,7 @@ export interface ChapterDef {
   /** Lines when the activity starts and when it is done. */
   activityStart: Line[];
   activityDone: Line[];
-  /** Milo's stage after this chapter. */
+  /** Milo's stage after this chapter (0 for a bonus part, which adds to Milo without a new stage). */
   milo: number;
   miloPart: string;
   /** "Give Milo his new eyes", the prompt at the workbench. */

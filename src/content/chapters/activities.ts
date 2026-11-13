@@ -196,11 +196,61 @@ export const STEER_FROM_THE_BACK: ActivityDef = {
   ],
 };
 
+export const PINPOINT: ActivityDef = {
+  id: "pinpoint",
+  beats: {
+    landed: [
+      { who: "remi", say: "Landed! Right next to Surveyor." },
+      { fact: "a12-there-it-is" },
+      { who: "remi", say: "Now let's go see Surveyor up close." },
+    ],
+    snipped: [
+      { who: "remi", say: "Snip, snip. The camera, the scoop and a piece of tube." },
+      { fact: "sur3-parts" },
+      { who: "remi", say: "They go in the bag. Let's take it to the box by Intrepid." },
+    ],
+    bag: { who: "remi", say: "Got the bag. Up the hill to Intrepid!" },
+  },
+  steps: [
+    {
+      id: "land",
+      title: "Land by the Snowman",
+      detail: "Dad's landing table has a toy lander. Steer it down right next to Surveyor 3.",
+      hints: [
+        "The astronauts found Surveyor by looking for a shape made of craters.",
+        "Dad's landing table is near the Looking Lamp. Find the Snowman, then aim for its tummy.",
+        "Follow the arrow to the table. Steer the shadow into the big crater, then press Land.",
+      ],
+    },
+    {
+      id: "snip",
+      title: "Take parts home to study",
+      detail: "Snip Surveyor's camera, its scoop and a piece of tube, like the astronauts did.",
+      hints: [
+        "Scientists wanted to see what years on the Moon did to Surveyor.",
+        "Walk down into the crater to Surveyor 3. Dad's cutters are waiting.",
+        "Follow the arrow to Surveyor. Tap each part with a dotted line.",
+      ],
+    },
+    {
+      id: "pack",
+      title: "Pack the parts",
+      detail: "Carry the parts bag up the hill to the sample box by Intrepid.",
+      hints: [
+        "The parts have to go home with the lander.",
+        "The bag is at Surveyor's feet. The sample box sits by Intrepid's ladder.",
+        "Follow the arrow. Pick up the bag, then put it in the box.",
+      ],
+    },
+  ],
+};
+
 export const ACTIVITIES: Record<string, ActivityDef> = {
   [SEND_A_LIGHT.id]: SEND_A_LIGHT,
   [STEER_FROM_THE_BACK.id]: STEER_FROM_THE_BACK,
   [WAIT_FOR_THE_WIND.id]: WAIT_FOR_THE_WIND,
   [THIN_AIR.id]: THIN_AIR,
+  [PINPOINT.id]: PINPOINT,
 };
 
 export const stepFlag = (activity: string, step: string): string => `${activity}:${step}`;

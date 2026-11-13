@@ -42,6 +42,16 @@
       "changes": "Resized and cropped for the notebook (900 px or less, JPEG)"
     },
     {
+      "id": "nb-apollo12-lroc",
+      "file": "images/nasa/apollo12-lroc.jpg",
+      "title": "The Apollo 12 and Surveyor 3 landing site (Lunar Reconnaissance Orbiter, 2010)",
+      "credit": "NASA/GSFC/Arizona State University",
+      "license": "Public domain (NASA media)",
+      "sourceUrl": "https://assets.science.nasa.gov/content/dam/science/psd/solar/internal_resources/4082/cratered_surface_and_relatively_small_spacecraft__seen_from_above.jpeg",
+      "page": "https://science.nasa.gov/solar-system/moon/footpads-and-footprints-humans-and-machine-meet-on-the-moon/",
+      "changes": "Resized for the notebook (900 px wide, JPEG)"
+    },
+    {
       "id": "nb-apollo15-lrv",
       "file": "images/nasa/apollo15-lrv.jpg",
       "title": "Astronaut David Scott on slope of Hadley Delta during Apollo 15 EVA (AS15-85-11451)",

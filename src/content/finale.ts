@@ -1,5 +1,5 @@
 import type { GameState } from "../game/core/state";
-import { CHAPTERS, type Line } from "./chapters";
+import { MAIN_CHAPTERS, type Line } from "./chapters";
 
 /**
  * Finale: The Long Light (Game Bible 5.8 and 6, P0). Night on Home. The
@@ -27,9 +27,9 @@ export const FINALE_HEARD = "finale:heard";
 export const FINALE_PAGE = "finale:page";
 export const FINALE_ENDED = "finale:ended";
 
-/** The Finale opens once every built chapter has its stamp. */
+/** The Finale opens once every main chapter has its stamp. The bonus chapter is never needed. */
 export function finaleOpen(state: Readonly<GameState>): boolean {
-  return state.stamps.includes("prologue") && CHAPTERS.every((c) => state.stamps.includes(c.id));
+  return state.stamps.includes("prologue") && MAIN_CHAPTERS.every((c) => state.stamps.includes(c.id));
 }
 
 export type FinaleStep = "closed" | "mailbox" | "dish" | "record-take" | "record-give" | "listen" | "page" | "ending" | "museum";

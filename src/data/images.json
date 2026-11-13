@@ -179,6 +179,18 @@
       "alt": "The Apollo 14 mirror panel, a tilted box full of small round mirrors, on the gray Moon with bootprints around it.",
       "width": 900,
       "height": 900
+    },
+    {
+      "id": "apollo12-lroc",
+      "file": "/images/nasa/apollo12-lroc.jpg",
+      "title": "The Apollo 12 and Surveyor 3 landing site, seen by the Lunar Reconnaissance Orbiter in 2010",
+      "credit": "NASA/GSFC/Arizona State University",
+      "sourceUrl": "https://science.nasa.gov/solar-system/moon/footpads-and-footprints-humans-and-machine-meet-on-the-moon/",
+      "originalUrl": "https://assets.science.nasa.gov/content/dam/science/psd/solar/internal_resources/4082/cratered_surface_and_relatively_small_spacecraft__seen_from_above.jpeg",
+      "date": "2010",
+      "alt": "A view from space of the Apollo 12 site. The lander is a small dark dot near the middle, with thin dark paths where the astronauts walked. Surveyor 3 is a tiny dot in the big round crater to the lower right.",
+      "width": 900,
+      "height": 694
     }
   ]
 }

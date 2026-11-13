@@ -2,14 +2,26 @@ import type { GameState } from "../../game/core/state";
 import { ACTIVITIES, type ActivityStep, doneFlag, stepFlag } from "./activities";
 import { HADLEY } from "./hadley";
 import { MERIDIANI } from "./meridiani";
+import { STORMS } from "./storms";
 import { TRANQUILITY } from "./tranquility";
 import { VALINOR } from "./valinor";
 import type { ChapterDef, LetterDef } from "./types";
 
 export type { ChapterDef, LetterDef, Line, Speaker } from "./types";
 
-/** Every built chapter, in story order. */
-export const CHAPTERS: ChapterDef[] = [TRANQUILITY, HADLEY, MERIDIANI, VALINOR];
+/** Every built chapter, in story order, with the bonus chapter last. */
+export const CHAPTERS: ChapterDef[] = [TRANQUILITY, HADLEY, MERIDIANI, VALINOR, STORMS];
+
+/** The four chapters the story needs; the bonus chapter is never required. */
+export const MAIN_CHAPTERS: ChapterDef[] = CHAPTERS.filter((c) => !c.bonus);
+
+/** The bonus chapter opens once this chapter is stamped (Game Bible 5.6: between the solar heart and the rotor). */
+export const BONUS_OPENS_AFTER = "chapter-3";
+
+/** True once a save may visit the bonus chapter. */
+export function bonusOpen(state: Readonly<GameState>): boolean {
+  return state.stamps.includes(BONUS_OPENS_AFTER) || state.stamps.some((id) => CHAPTERS.some((c) => c.bonus && c.id === id));
+}
 
 export function chapterById(id: string): ChapterDef | null {
   return CHAPTERS.find((c) => c.id === id) ?? null;
@@ -34,15 +46,17 @@ export interface MiloParts {
   wheels: boolean;
   heart: boolean;
   rotor: boolean;
+  /** The bonus chapter's scoop arm. */
+  scoop: boolean;
   record: boolean;
 }
 
 const PART_OF: Record<number, keyof MiloParts> = { 1: "eyes", 2: "wheels", 3: "heart", 4: "rotor" };
 
 export function miloParts(state: Readonly<GameState>): MiloParts {
-  const parts: MiloParts = { eyes: false, wheels: false, heart: false, rotor: false, record: state.miloStage >= 5 };
+  const parts: MiloParts = { eyes: false, wheels: false, heart: false, rotor: false, scoop: false, record: state.miloStage >= 5 };
   for (const chapter of CHAPTERS) {
-    const part = PART_OF[chapter.milo];
+    const part = chapter.bonus ? "scoop" : PART_OF[chapter.milo];
     if (part && hasPart(chapter, state)) parts[part] = true;
   }
   return parts;

@@ -11,7 +11,7 @@ import { angleBetween, damp, headingToTangent, latLonToDir, surfaceMatrix } from
 import { Terrain, buildPlanetGeometry } from "../../world/terrain";
 import type { Bookmark, FrameInfo, MapIcon, World, WorldContext } from "../types";
 import { PLACE_COPY, placeFlag } from "../../../content/places";
-import { CHAPTERS, chapterForPart, fittedFlag, miloParts } from "../../../content/chapters";
+import { CHAPTERS, MAIN_CHAPTERS, bonusOpen, chapterForPart, fittedFlag, miloParts } from "../../../content/chapters";
 import { STORY_COPY } from "../../../content/chapters/common";
 import { FINALE_BEGUN, FINALE_COPY, MILO_VOICE, RECORD, V1_LETTER, finaleStep } from "../../../content/finale";
 import { torus } from "../../actors/parts";
@@ -376,6 +376,29 @@ export function createHome(ctx: WorldContext): World {
     onDone: () => bus.emit("archive:open", {}),
   });
 
+  // ---- Dad's newest dome: the bonus world, under a dust cloth until Chapter 3 is stamped ----
+  const BONUS = CHAPTERS.find((c) => c.bonus)!;
+  const BONUS_SEEN = "bonus:seen";
+  root.add(shop.bonusDome.cover);
+  const bonusRing = new Mesh(torus(0.12), toon.glow("#FFC877"));
+  bonusRing.position.copy(shop.bonusDome.top).addScaledVector(shedDir, -0.27 * 0.85 + 0.03);
+  bonusRing.quaternion.setFromRotationMatrix(SITES.shed.matrix);
+  bonusRing.rotateX(Math.PI / 2);
+  bonusRing.scale.setScalar(0.22);
+  bonusRing.visible = false;
+  root.add(bonusRing);
+  /** Seconds since the cloth started to slide off, or -1. */
+  let coverFall = -1;
+  const coverHome = shop.bonusDome.cover.position.clone();
+  interactions.add({
+    id: `dome-${BONUS.world}`,
+    position: shop.bonusDome.stand,
+    radius: 1.0,
+    kind: "press",
+    label: () => (opened() && bonusOpen(store.value) && !store.value.carrying?.startsWith("part:") ? STORY_COPY.visit(BONUS.dome) : null),
+    onDone: () => bus.emit("travel", { to: BONUS.world, entry: "lamp" }),
+  });
+
   shop.domes.forEach((dome, i) => {
     const world = DOME_WORLDS[i]!;
     const chapter = CHAPTERS.find((c) => c.world === world);
@@ -412,7 +435,7 @@ export function createHome(ctx: WorldContext): World {
         s.miloStage = Math.max(s.miloStage, chapter.milo);
         if (!s.flags.includes(fittedFlag(chapter))) s.flags.push(fittedFlag(chapter));
       });
-      bus.emit("milo:stage", { stage: chapter.milo });
+      bus.emit("milo:stage", { stage: chapter.milo, chapter: chapter.id });
     },
   });
   const offStage = bus.on("milo:stage", () => milo.setParts(miloParts(store.value)));
@@ -483,6 +506,14 @@ export function createHome(ctx: WorldContext): World {
     bench: {
       player: { dir: inShed(-0.9, -0.6), forward: shedForward },
       camera: { position: local(SITES.shed, 0.2, 2.25, 0.9), target: local(SITES.shed, 0.2, SHED.floor + 0.95, -1.95) },
+    },
+    milo: {
+      player: { dir: inShed(-0.9, -0.6), forward: shedForward },
+      camera: { position: local(SITES.shed, 0.45, SHED.floor + 1.7, -0.45), target: local(SITES.shed, -0.5, SHED.floor + 1.1, -2.0) },
+    },
+    "bonus-dome": {
+      player: { dir: inShed(0.9, 0.2), forward: shedForward },
+      camera: { position: local(SITES.shed, 1.0, SHED.floor + 1.95, 2.1), target: local(SITES.shed, 2.55, SHED.floor + 1.0, 0.98) },
     },
     character: {
       player: { dir: spawnDir, forward: spawnForward.clone().negate() },
@@ -748,7 +779,7 @@ export function createHome(ctx: WorldContext): World {
       if (!s.delivered.includes(LETTER_TO_THE_LAMP)) return new Vector3(0, 0, 0.55).applyMatrix4(mailboxMatrix);
       if (chapterForPart(s.carrying)) return shop.miloSpot.position;
       if (!s.flags.includes("seen-notebook")) return null;
-      const next = CHAPTERS.find((c) => !s.stamps.includes(c.id));
+      const next = MAIN_CHAPTERS.find((c) => !s.stamps.includes(c.id));
       if (next && opened()) {
         const i = DOME_WORLDS.indexOf(next.world);
         return i >= 0 ? shop.domes[i]!.stand : null;
@@ -804,7 +835,7 @@ export function createHome(ctx: WorldContext): World {
       sun.intensity = 1.7 * (1 - 0.5 * night);
       fill.intensity = 1.8 * (1 - 0.35 * night);
       // Earned domes glow; the next one breathes softly to say "here".
-      const nextChapter = opened() ? CHAPTERS.find((c) => !store.value.stamps.includes(c.id)) : undefined;
+      const nextChapter = opened() ? MAIN_CHAPTERS.find((c) => !store.value.stamps.includes(c.id)) : undefined;
       domeGlows.forEach((ring, i) => {
         const chapter = CHAPTERS.find((c) => c.world === DOME_WORLDS[i]);
         const earned = chapter ? store.value.stamps.includes(chapter.id) : false;
@@ -855,6 +886,37 @@ export function createHome(ctx: WorldContext): World {
         if (lampClick > 5) lampClick = -1;
       }
       for (const part of shop.lampGlow) part.visible = lampPower > 0;
+      // The bonus dome: the cloth slides off the first time Remi comes in after it opens.
+      const bonusReady = bonusOpen(store.value);
+      const cover = shop.bonusDome.cover;
+      if (!bonusReady) {
+        cover.visible = true;
+        cover.position.copy(coverHome);
+        cover.scale.setScalar(1);
+      } else if (!store.value.flags.includes(BONUS_SEEN)) {
+        if (coverFall < 0 && inside) coverFall = 0;
+        if (coverFall >= 0) {
+          coverFall += dt * (frame.reducedMotion ? 4 : 1);
+          const t = Math.min(1, coverFall / 1.1);
+          // It is whisked up and away, like a magician's cloth.
+          cover.position.copy(coverHome).addScaledVector(shedDir, 0.35 * t);
+          cover.scale.set(1 - 0.9 * t * t, 1 + 0.4 * t - 1.3 * t * t, 1 - 0.9 * t * t);
+          cover.visible = t < 0.98;
+          if (coverFall > 0.5 && coverFall - dt <= 0.5) bus.emit("sfx", { name: "envelope-pickup", at: [coverHome.x, coverHome.y, coverHome.z] });
+          if (coverFall > 1.4) {
+            store.update((s) => void (s.flags.includes(BONUS_SEEN) || s.flags.push(BONUS_SEEN)));
+            const top = shop.bonusDome.top;
+            bus.emit("say", { speaker: "remi", name: "Remi", text: "Dad's cloth fell off a dome. There's a new world under it!", at: [top.x, top.y + 0.3, top.z] });
+            coverFall = -1;
+          }
+        }
+      } else cover.visible = false;
+      const bonusDone = store.value.stamps.includes(BONUS.id);
+      bonusRing.visible = opened() && bonusReady && store.value.flags.includes(BONUS_SEEN);
+      {
+        const pulse = !bonusDone && !frame.reducedMotion ? 0.55 + 0.45 * Math.sin(frame.time * 2.4 + 1) : 1;
+        (bonusRing.material as { color: Color }).color.setRGB(1 * pulse, 0.78 * pulse, 0.46 * pulse);
+      }
       // The lamp breathes a little, like a real filament.
       lampLight.intensity = lampPower * (5.5 + (frame.reducedMotion ? 0 : Math.sin(frame.time * 3.1) * 0.2));
       // The pins on Dad's globes light up one by one when the prologue's stamp comes.

@@ -38,8 +38,13 @@ export class Milo {
   private bulbDark: MeshToonMaterial;
   private bulbLit: MeshBasicMaterial;
   private light: PointLight;
-  private parts: Record<"stand" | "eyes" | "wheels" | "feet" | "heart" | "rotor" | "record", Object3D>;
+  private parts: Record<"stand" | "eyes" | "wheels" | "feet" | "heart" | "rotor" | "record" | "scoop" | "stub", Object3D>;
   private rotor = new Group();
+  /** The bonus part: a jointed arm with a little scoop, like Surveyor 3's. */
+  private scoop = new Group();
+  private scoopElbow = new Group();
+  private scoopWrist = new Group();
+  private hasScoop = false;
   private wheels: Object3D[] = [];
   private time = 0;
   private hum = 0;
@@ -58,11 +63,40 @@ export class Milo {
     this.mesh(this.body, box(0.01), LAMP, [0, 0.245, 0.171], [0.42, 0.035, 0.01]);
     this.mesh(this.body, box(0.01), SHELL_DARK, [-0.212, 0.31, 0], [0.01, 0.12, 0.2]);
     // Folded little arms, not finished yet: bare hinges and stubby grippers.
+    // The right one is swapped for the scoop arm when he gets it.
+    const stub = new Group();
     for (const side of [-1, 1]) {
-      this.mesh(this.body, sphere("low"), METAL_DARK, [side * 0.225, 0.34, 0.05], 0.035);
-      this.mesh(this.body, cylinder(8), METAL, [side * 0.235, 0.27, 0.09], [0.018, 0.13, 0.018], [0.5, 0, 0]);
-      this.mesh(this.body, box(0.01), METAL_DARK, [side * 0.235, 0.22, 0.13], [0.04, 0.035, 0.05]);
+      const parent = side > 0 ? stub : this.body;
+      this.mesh(parent, sphere("low"), METAL_DARK, [side * 0.225, 0.34, 0.05], 0.035);
+      this.mesh(parent, cylinder(8), METAL, [side * 0.235, 0.27, 0.09], [0.018, 0.13, 0.018], [0.5, 0, 0]);
+      this.mesh(parent, box(0.01), METAL_DARK, [side * 0.235, 0.22, 0.13], [0.04, 0.035, 0.05]);
     }
+    this.body.add(stub);
+
+    // Bonus part: the scoop arm. A shoulder, two struts with a spring, and a
+    // little box scoop with a hinged lid, the way Surveyor's sampler looked.
+    this.scoop.position.set(0.26, 0.37, 0.06);
+    this.mesh(this.scoop, sphere("low"), METAL_DARK, [0, 0, 0], 0.042);
+    this.mesh(this.scoop, cylinder(10), LAMP, [0.012, 0, 0], [0.03, 0.03, 0.03], [0, 0, Math.PI / 2]);
+    this.mesh(this.scoop, cylinder(8), METAL, [0.05, -0.01, 0.09], [0.017, 0.18, 0.017], [Math.PI / 2 - 0.1, 0, 0]);
+    this.mesh(this.scoop, cylinder(8), METAL_DARK, [0.05, 0.022, 0.08], [0.008, 0.15, 0.008], [Math.PI / 2 - 0.1, 0, 0]);
+    for (let i = 0; i < 4; i += 1) this.mesh(this.scoop, torus(0.3), METAL_DARK, [0.05, 0.022, 0.03 + i * 0.03], [0.014, 0.014, 0.014]);
+    this.scoopElbow.position.set(0.05, -0.028, 0.18);
+    this.scoop.add(this.scoopElbow);
+    this.mesh(this.scoopElbow, sphere("low"), METAL_DARK, [0, 0, 0], 0.03);
+    this.mesh(this.scoopElbow, cylinder(8), METAL, [0, 0, 0.07], [0.015, 0.14, 0.015], [Math.PI / 2, 0, 0]);
+    this.scoopWrist.position.set(0, 0, 0.14);
+    this.scoopElbow.add(this.scoopWrist);
+    this.mesh(this.scoopWrist, sphere("low"), METAL_DARK, [0, 0, 0], 0.022);
+    // The scoop: an open box with a lid, its teeth along the front edge.
+    this.mesh(this.scoopWrist, box(0.01), "#C9B48E", [0, -0.025, 0.04], [0.06, 0.04, 0.08]);
+    this.mesh(this.scoopWrist, box(0.006), "#8C7A58", [0, -0.004, 0.04], [0.064, 0.008, 0.084]);
+    this.mesh(this.scoopWrist, box(0.004), METAL, [0, 0.008, 0.02], [0.062, 0.006, 0.05], [-0.35, 0, 0]);
+    for (const x of [-0.02, 0, 0.02]) this.mesh(this.scoopWrist, cone(4), METAL, [x, -0.04, 0.085], [0.008, 0.016, 0.008], [Math.PI / 2, 0, 0]);
+    this.scoop.rotation.x = -0.2;
+    this.scoopElbow.rotation.x = 1.0;
+    this.scoopWrist.rotation.x = -0.5;
+    this.body.add(this.scoop);
 
     // Panel seams, and axle stubs waiting for wheels.
     for (const x of [-0.07, 0.07]) this.mesh(this.body, box(0.002), "#2E2926", [x, 0.32, 0.171], [0.006, 0.2, 0.004]);
@@ -161,7 +195,7 @@ export class Milo {
     this.mesh(record, cylinder(12), "#8E6A1F", [0.14, 0.3, 0.177], [0.012, 0.004, 0.012], [Math.PI / 2, 0, 0]);
     this.body.add(record);
 
-    this.parts = { stand, eyes, wheels, feet, heart, rotor: this.rotor, record };
+    this.parts = { stand, eyes, wheels, feet, heart, rotor: this.rotor, record, scoop: this.scoop, stub };
     this.root.traverse((object) => {
       if (object instanceof Mesh) object.castShadow = true;
     });
@@ -187,15 +221,18 @@ export class Milo {
 
   setStage(stage: number): void {
     const s = Math.max(0, Math.min(MILO_STAGES, Math.floor(stage)));
-    this.setParts({ eyes: s >= 1, wheels: s >= 2, heart: s >= 3, rotor: s >= 4, record: s >= 5 });
+    this.setParts({ eyes: s >= 1, wheels: s >= 2, heart: s >= 3, rotor: s >= 4, record: s >= 5, scoop: false });
   }
 
   /**
    * Shows the parts Milo has. Chapters can be played in any order, so each
    * part is its own switch; `stage` counts them.
    */
-  setParts(parts: { eyes: boolean; wheels: boolean; heart: boolean; rotor: boolean; record: boolean }): void {
+  setParts(parts: { eyes: boolean; wheels: boolean; heart: boolean; rotor: boolean; record: boolean; scoop?: boolean }): void {
     this.stage = [parts.eyes, parts.wheels, parts.heart, parts.rotor, parts.record].filter(Boolean).length;
+    this.hasScoop = parts.scoop === true;
+    this.parts.scoop.visible = this.hasScoop;
+    this.parts.stub.visible = !this.hasScoop;
     this.awake = parts.eyes;
     this.spinning = parts.rotor;
     this.onStand = !parts.wheels;
@@ -243,6 +280,14 @@ export class Milo {
     this.head.rotation.y += (yaw - this.head.rotation.y) * damp(5, dt);
     this.head.rotation.x += (pitch - this.head.rotation.x) * damp(5, dt);
     if (this.spinning) this.rotor.rotation.y += dt * (reducedMotion ? 2 : 10);
+    if (this.hasScoop) {
+      // Now and then he scoops the air in front of him, the way a happy dog digs.
+      const cycle = reducedMotion ? 0 : (this.time % 6.5) / 6.5;
+      const dig = cycle > 0.7 ? Math.sin(((cycle - 0.7) / 0.3) * Math.PI) : 0;
+      this.scoop.rotation.x = -0.2 + dig * 0.45;
+      this.scoopElbow.rotation.x = 1.0 - dig * 0.5;
+      this.scoopWrist.rotation.x = -0.5 + dig * 0.9;
+    }
   }
 
   /** Spins the wheels by the distance travelled. */

@@ -51,9 +51,9 @@ export interface SoundFrame {
   mode: "title" | "play";
 }
 
-const MUSIC_FOR: Record<string, Scene> = { home: "home", moon: "moon", mars: "mars", finale: "finale", tranquility: "moon", hadley: "moon", meridiani: "mars", valinor: "mars" };
+const MUSIC_FOR: Record<string, Scene> = { home: "home", moon: "moon", mars: "mars", finale: "finale", tranquility: "moon", hadley: "moon", meridiani: "mars", valinor: "mars", storms: "moon" };
 /** Which soundscape each world uses (see src/audio/ambience.ts). */
-const SCAPE_FOR: Record<string, string> = { tranquility: "moon", hadley: "moon", meridiani: "mars", valinor: "mars" };
+const SCAPE_FOR: Record<string, string> = { tranquility: "moon", hadley: "moon", meridiani: "mars", valinor: "mars", storms: "moon" };
 
 /** One recorded take, retuned and optionally muffled, into `out`. */
 function playTake(mx: Mixer, out: AudioNode, buffer: AudioBuffer, at: number, level: number, rate: number, tone?: number): void {

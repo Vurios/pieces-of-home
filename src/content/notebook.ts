@@ -34,7 +34,7 @@ export interface MachineSpread {
   /** Shown on the tag, for example "Moon". */
   world: "Moon" | "Mars" | "Space" | "Home";
   /** Which drawing to use. */
-  drawing: "lamp" | "lrrr" | "lrv" | "opportunity" | "ingenuity" | "voyager";
+  drawing: "lamp" | "lrrr" | "lrv" | "opportunity" | "ingenuity" | "surveyor" | "voyager";
   forWhat: string;
   learned: FactEntry[];
   thenNow: FactEntry[];
@@ -135,6 +135,23 @@ export const SPREADS: MachineSpread[] = [
     images: pics("ingenuity-shadow", "ingenuity-valinor"),
     completeWhen: { stamp: "chapter-4" },
     chapter: "Chapter 4: Valinor Hills",
+  },
+  {
+    id: "surveyor",
+    letterTo: "To Surveyor 3",
+    nickname: "The robot that waited",
+    name: "Surveyor 3",
+    place: fact("sur3-site"),
+    world: "Moon",
+    drawing: "surveyor",
+    forWhat: "Finding out if the Moon's ground was safe to land on.",
+    learned: [fact("sur3-landing"), fact("sur3-scoop"), fact("sur3-wet-sand"), fact("sur3-pictures"), fact("sur3-last-contact")],
+    thenNow: [fact("sur3-visit"), fact("a12-brown"), fact("sur3-cutters"), fact("sur3-camera-museum"), fact("sur3-still-there")],
+    deeper: [fact("sur3-crater"), fact("a12-snowman"), fact("a12-pinpoint"), fact("a12-fresh"), fact("sur3-parts")],
+    dadNote: "Sometimes the best way to learn is to go back and look again.",
+    images: pics("archive-surveyor3", "apollo12-lroc"),
+    completeWhen: { stamp: "bonus-surveyor" },
+    chapter: "Bonus: Ocean of Storms",
   },
   {
     id: "voyager",

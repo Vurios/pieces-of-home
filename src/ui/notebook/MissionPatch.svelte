@@ -5,7 +5,7 @@
    * circle, a satin-stitch border, the machine in thread and its name round
    * the edge. A patch not earned yet is only a pencil outline.
    */
-  export type PatchId = "notebook" | "lamp" | "lrrr" | "lrv" | "opportunity" | "ingenuity" | "voyager";
+  export type PatchId = "notebook" | "lamp" | "lrrr" | "lrv" | "opportunity" | "ingenuity" | "surveyor" | "voyager";
 
   interface PatchDesign {
     top: string;
@@ -92,6 +92,20 @@
         <path d="M42 48 L 78 44 M44 54 L 76 56" class="line" />
         <path d="M60 46 L 60 62" class="line" /><rect x="54" y="60" width="12" height="9" rx="2" fill="#fde6c8" />
         <path d="M55 69 L 50 78 M65 69 L 70 78" class="thin" />`,
+    },
+    surveyor: {
+      top: "THE ROBOT THAT WAITED",
+      bottom: "MOON",
+      cloth: "#3f5677",
+      rim: "#d9c48f",
+      thread: "#f3ead6",
+      art: `${STARS}
+        <path d="M22 82 C 44 74, 78 74, 100 82 L 100 96 L 22 96 Z" fill="#c9ced6" />
+        <ellipse cx="60" cy="84" rx="20" ry="4" fill="#9aa1ab" />
+        <path d="M48 80 L 60 54 L 72 80 M51 74 L 69 74" class="line" />
+        <path d="M60 54 L 60 46 M52 44 L 60 46 L 68 40" class="thin" />
+        <rect x="54" y="60" width="12" height="8" fill="#d9c48f" class="thin" />
+        <path d="M84 70 L 92 60 L 92 72 Z" fill="#e8c15a" class="thin" /><path d="M86 72 L 82 78 M90 72 L 94 78" class="thin" />`,
     },
     voyager: {
       top: "FARTHEST LETTER",

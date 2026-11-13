@@ -1,6 +1,6 @@
 import type { InputDevice } from "../game/core/events";
 import type { GameState } from "../game/core/state";
-import { CHAPTERS, type ChapterDef, chapterForPart, chapterForWorld, chapterStep } from "./chapters";
+import { CHAPTERS, type ChapterDef, MAIN_CHAPTERS, chapterForPart, chapterForWorld, chapterStep } from "./chapters";
 import { FINALE_COPY, FINALE_TITLE, finaleStep } from "./finale";
 import { PLACE_IDS, placesFound } from "./places";
 
@@ -123,8 +123,8 @@ export function goalFor(state: Readonly<GameState>, device: InputDevice): Goal {
       hint: `The notebook keeps every letter and every machine. ${how}`,
     };
   }
-  // The next dome waits on the workbench.
-  const next = CHAPTERS.find((c) => !state.stamps.includes(c.id));
+  // The next dome waits on the workbench. The bonus dome is never the next one.
+  const next = MAIN_CHAPTERS.find((c) => !state.stamps.includes(c.id));
   if (next && state.stamps.includes("prologue")) {
     return {
       chapter: next.title,

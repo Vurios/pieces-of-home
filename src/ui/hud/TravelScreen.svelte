@@ -22,6 +22,7 @@
   const WHERE: Record<string, string> = {
     home: t("travel.home"),
     tranquility: t("travel.moon"),
+    storms: t("travel.moon"),
     hadley: t("travel.moon"),
     meridiani: t("travel.mars"),
     valinor: t("travel.mars"),

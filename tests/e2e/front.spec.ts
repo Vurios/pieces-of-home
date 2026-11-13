@@ -144,7 +144,7 @@ test("the notebook opens, turns with the keys and passes axe", async ({ page }, 
   await page.keyboard.press("KeyN");
   const book = page.locator(".notebook");
   await expect(book).toBeVisible();
-  await expect(book.getByText("1 / 14")).toBeVisible();
+  await expect(book.getByText("1 / 16")).toBeVisible();
   await page.keyboard.press("ArrowRight");
   await expect(book.getByText("2 / 14")).toBeVisible();
   await page.waitForTimeout(700);
@@ -157,7 +157,7 @@ test("the Field Guide works without 3D and passes axe", async ({ page }) => {
   await page.goto("/field-guide/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Pieces of Home: Field Guide");
   await expect(page.locator("canvas")).toHaveCount(0);
-  await expect(page.locator("article.machine:not(.archive-card)")).toHaveCount(6);
+  await expect(page.locator("article.machine:not(.archive-card)")).toHaveCount(7);
   // Dad's archive: six cards, each with a credited photo.
   await expect(page.locator("article.archive-card")).toHaveCount(6);
   await expect(page.getByText("Dad's sketch. Not to scale.").first()).toBeVisible();
