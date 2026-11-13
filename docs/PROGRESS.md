@@ -194,12 +194,12 @@ Team feedback pass 3 (2026-11-14), done first as part of the polish:
 - [x] Paper arrow can be turned off in Settings (#81)
 - [x] Map: smooth wheel and pinch zoom, zooms out to the whole planet, flick spin (#81)
 - [x] Trails no longer vanish at some camera angles (#81)
-- [ ] Loader: a 2.5D animated scene in the game's own style
-- [ ] Story intro: animated in 3D with the game's own world and kids
-- [ ] Dome entry: a 3D dive into Dad's little world instead of the countdown
-- [ ] Trip between worlds: a better 3D ride
+- [x] Loader: a 2.5D animated scene in the game's own style (#85)
+- [x] Story intro: animated in 3D with the game's own world and kids (#86)
+- [x] Dome entry: a 3D dive into Dad's little world instead of the countdown (#82)
+- [x] Trip between worlds: a better 3D ride (#83)
 - [ ] Moon and Mars: more things to see around each planet
-- [ ] Free travel to the Moon and Mars at any time
+- [x] Free travel to the Moon and Mars at any time (#84)
 - [ ] Dad's notebook: tighter, fuller pages; better letter (mail) design
 - [ ] A short "what is happening and what to do" opening for new players
 - [ ] Every panel and card in one game style
