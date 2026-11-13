@@ -6,9 +6,9 @@ interface Poh {
   teleportTo(id: string): boolean;
 }
 
-async function ready(page: Page, query = ""): Promise<void> {
+async function ready(page: Page, query = "", timeout = 60_000): Promise<void> {
   await page.goto(`/?test${query}`);
-  await expect(page.locator("html")).toHaveAttribute("data-stage", "ready", { timeout: 60_000 });
+  await expect(page.locator("html")).toHaveAttribute("data-stage", "ready", { timeout });
 }
 
 const poh = <T>(page: Page, fn: (api: Poh) => T): Promise<T> =>
@@ -56,10 +56,12 @@ test("take the letter from the mailbox and give it to the lamp", async ({ page }
 
 test("every quality tier draws without errors", async ({ page }, info) => {
   test.skip(info.project.name === "phone", "one size is enough");
+  // Three full loads on a software renderer: the high tier alone can take most of a minute.
+  test.setTimeout(360_000);
   for (const tier of ["low", "medium", "high"]) {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(String(error)));
-    await ready(page, `&quality=${tier}`);
+    await ready(page, `&quality=${tier}`, 110_000);
     await expect(page.locator("html")).toHaveAttribute("data-tier", tier);
     await page.waitForTimeout(500);
     expect(errors).toEqual([]);
