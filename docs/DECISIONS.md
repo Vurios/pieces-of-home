@@ -678,3 +678,14 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 **Why:** Phase 05, P2 item, and Game Bible section 6 ("Add a card only when every fact on it is verified").
 
 **Alternatives considered:** Six separate 3D props each with its own prompt (cramped, against the roomy-layout rule), cards in the notebook (the notebook is Dad's letters; the archive is his reference shelf), artist illustrations instead of photos (real photos with credits are the stronger, truer choice).
+
+## 69. The Surveyor 3 bonus chapter: Ocean of Storms
+
+**Date:** 2026-11-13
+
+**Decision:** The P2 bonus chapter is a fifth little world, `storms`, Dad's model of the Apollo 12 site. Surveyor 3 (a tan tripod: frame, footpads, mast with antenna and solar panel, TV camera with its mirror hood, the folding scoop arm) stands on the inner slope of Surveyor crater with its four trenches and two sets of bounce dents up the slope; Intrepid's bottom half sits on the rim with the flag; a smaller crater makes the Snowman's head; Earth hangs low over the crater. Three letters (the trenches, Intrepid, Surveyor 3) and an activity, Pinpoint, in three steps: Dad's landing table (a top-down card game: steer the toy lander's shadow, find the Snowman, land in its tummy), Dad's cutters (a blueprint card: snip the camera, the scoop and a piece of tube into the bag), then carry the parts bag up to the sample box by Intrepid's ladder, whose lid closes. Milo gets a jointed scoop arm that digs now and then; it does not change his stage number (Game Bible 5.6 puts it between stages 3 and 4), so `ChapterDef.bonus` keeps the chapter out of the Finale gate and the next-dome goal, and `milo:stage` now names the chapter it came from. The dome sits apart on a round plant stand under the archive board, covered by a dust cloth until Chapter 3 is stamped; the first time Remi walks in after that, the cloth is whisked away. The notebook gains a "robot that waited" spread (two spreads, never scrolling) with an orbiter photo of the Apollo 12 site (LROC), and a mission patch. Stamp: "Left behind. Still teaching us how things age." (prompt 05). Every fact shown is checked; the *Science checks itself* microbe note is left out because `sur3-microbe` is still unverified (NASA sources disagree).
+
+**Why:** Phase 05, P2 item; Game Bible section 6 and 5.6.
+
+**Alternatives considered:** A sixth dome on the crowded workbench (against the roomy-layout rule), letting the bonus raise Milo's stage (would shift the Finale's record stage), a 3D descent flight for the landing (the card keeps it readable and testable; the camera then sweeps over the real crater instead), showing the microbe story with a "maybe" (we only show checked facts).
+

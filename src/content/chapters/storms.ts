@@ -94,7 +94,7 @@ export const STORMS: ChapterDef = {
     { say: "Every few days we dug one up a little, just to look. Was it growing?", who: "remi" },
     { note: "Sometimes the best way to learn is to go back and look again." },
   ],
-  stamp: ["Left behind.", "Then visited by friends."],
+  stamp: ["Left behind.", "Still teaching us how things age."],
   goals: {
     arrive: "Look around the Ocean of Storms",
     letters: "Deliver Dad's three letters",

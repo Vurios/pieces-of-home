@@ -110,7 +110,7 @@ test("a gamepad alone gets from the loader to the notebook", async ({ page }, in
   const book = page.locator(".notebook");
   await expect(book).toBeVisible();
   await tap(RB);
-  await expect(book.getByText("2 / 14")).toBeVisible();
+  await expect(book.getByText("2 / 16")).toBeVisible();
   await tap(B);
   await expect(book).toBeHidden();
 });
@@ -146,7 +146,7 @@ test("the notebook opens, turns with the keys and passes axe", async ({ page }, 
   await expect(book).toBeVisible();
   await expect(book.getByText("1 / 16")).toBeVisible();
   await page.keyboard.press("ArrowRight");
-  await expect(book.getByText("2 / 14")).toBeVisible();
+  await expect(book.getByText("2 / 16")).toBeVisible();
   await page.waitForTimeout(700);
   await axe(page, "notebook");
   await page.keyboard.press("Escape");
