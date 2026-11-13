@@ -92,7 +92,12 @@ function ribbon(g: Builder, terrain: Terrain, spec: TrailSpec): void {
   }
 }
 
-/** A round patch: a junction where trails meet, or the rounded end of a trail. */
+/**
+ * A round patch: a junction where trails meet, or the rounded end of a trail.
+ * Built as several rings, not one fan: a patch is over two meters across, and
+ * one flat fan from its middle to its rim cut under the round, bumpy ground,
+ * so the grass showed through the junction at some camera angles.
+ */
 function cap(g: Builder, terrain: Terrain, center: Vector3, radius: number, lift: number): void {
   const segments = 32;
   const east = new Vector3(0, 1, 0).cross(center);
@@ -100,25 +105,34 @@ function cap(g: Builder, terrain: Terrain, center: Vector3, radius: number, lift
   east.normalize();
   const north = new Vector3().crossVectors(center, east).normalize();
   const middle = push(g, terrain, center, lift, mottle(CENTER, center, 0.6));
-  const inner: number[] = [];
-  const outer: number[] = [];
+  // Rings from the middle out: share of the radius, height above the grass, color.
+  const RINGS: [number, number, Color | null][] = [
+    [0.2, lift, null],
+    [0.4, lift, null],
+    [0.6, lift, null],
+    [0.78, lift, null],
+    [0.9, 0.012, MIDDLE],
+    [1.0, 0.006, RIM],
+  ];
+  const rings: number[][] = RINGS.map(() => []);
   const at = new Vector3();
   for (let i = 0; i < segments; i += 1) {
     const a = (i / segments) * Math.PI * 2;
     const wobble = 1 + 0.025 * Math.sin(a * 3 + center.x * 40);
-    for (const [share, list, color, h] of [
-      [0.9, inner, MIDDLE, 0.012],
-      [1.0, outer, RIM, 0.006],
-    ] as const) {
+    RINGS.forEach(([share, h, color], k) => {
       const r = (radius * share * wobble) / HOME_RADIUS;
       at.copy(center).addScaledVector(east, Math.cos(a) * r).addScaledVector(north, Math.sin(a) * r).normalize();
-      list.push(push(g, terrain, at, h, color));
-    }
+      rings[k]!.push(push(g, terrain, at, h, color ?? mottle(CENTER, at, 0.5)));
+    });
   }
   for (let i = 0; i < segments; i += 1) {
     const j = (i + 1) % segments;
-    g.indices.push(middle, inner[j]!, inner[i]!);
-    g.indices.push(inner[i]!, inner[j]!, outer[i]!, inner[j]!, outer[j]!, outer[i]!);
+    g.indices.push(middle, rings[0]![j]!, rings[0]![i]!);
+    for (let k = 0; k < rings.length - 1; k += 1) {
+      const inner = rings[k]!;
+      const outer = rings[k + 1]!;
+      g.indices.push(inner[i]!, inner[j]!, outer[i]!, inner[j]!, outer[j]!, outer[i]!);
+    }
   }
 }
 

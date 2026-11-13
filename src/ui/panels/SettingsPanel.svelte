@@ -234,6 +234,10 @@
           <input class="switch" type="checkbox" role="switch" checked={s.miniMap} onchange={(e) => set("miniMap", e.currentTarget.checked)} />
         </label>
         <label class="switch-row">
+          <span class="text">{t("settings.arrow")}<span class="help">{t("settings.arrowHelp")}</span></span>
+          <input class="switch" type="checkbox" role="switch" checked={s.guideArrow} onchange={(e) => set("guideArrow", e.currentTarget.checked)} />
+        </label>
+        <label class="switch-row">
           <span class="text">{t("settings.explore")}<span class="help">{t("settings.exploreHelp")}</span></span>
           <input class="switch" type="checkbox" role="switch" checked={s.exploreFreely} onchange={(e) => set("exploreFreely", e.currentTarget.checked)} />
         </label>

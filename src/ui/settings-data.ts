@@ -15,6 +15,8 @@ export interface Settings {
   exploreFreely: boolean;
   /** Show the little map in the corner. */
   miniMap: boolean;
+  /** Show the paper arrow that points to the next stop. */
+  guideArrow: boolean;
   /** The mission note is folded down to its title. */
   missionFolded: boolean;
   readAloud: boolean;
@@ -37,6 +39,7 @@ export function defaultSettings(): Settings {
     motion: "system",
     exploreFreely: false,
     miniMap: true,
+    guideArrow: true,
     missionFolded: false,
     readAloud: false,
     tips: true,
@@ -71,6 +74,7 @@ export function reviveSettings(raw: unknown): Settings {
     motion: pick(v["motion"], ["system", "reduce", "full"] as const, d.motion),
     exploreFreely: bool("exploreFreely", d.exploreFreely),
     miniMap: bool("miniMap", d.miniMap),
+    guideArrow: bool("guideArrow", d.guideArrow),
     missionFolded: bool("missionFolded", d.missionFolded),
     readAloud: bool("readAloud", d.readAloud),
     tips: bool("tips", d.tips),

@@ -165,8 +165,9 @@ export function trailLength(spec: TrailSpec): number {
 
 /** Points along a trail, about `step` meters apart. */
 export function sampleTrail(spec: TrailSpec, step: number): Vector3[] {
-  const curved = spec.bend !== 0 || spec.wiggle !== 0;
-  const n = curved ? Math.max(2, Math.ceil(trailLength(spec) / step)) : 1;
+  // Straight trails are sampled as finely as curved ones: the planet is round, and one
+  // flat strip from end to end cut under the ground, so the grass covered the middle.
+  const n = Math.max(2, Math.ceil(trailLength(spec) / step));
   return Array.from({ length: n + 1 }, (_, i) => trailPoint(spec, i / n));
 }
 

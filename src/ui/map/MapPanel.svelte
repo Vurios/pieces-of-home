@@ -42,8 +42,13 @@
   let dragging = $state(false);
 
   // ---- Zoom: Dad's little worlds keep their places close together, so the map
-  // starts zoomed in enough to spread them out, and + and - change it. ----
+  // starts zoomed in enough to spread them out. The wheel, a pinch, + and -
+  // change it smoothly, from the whole little planet floating on the page
+  // (zoomed out) to a close look at one place. ----
+  const ZOOM_MIN = 0.55;
+  const ZOOM_MAX = 4;
   const ZOOMS = [1, 1.5, 2.2, 3.2];
+  const clampZoom = (z: number): number => Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
   function fitZoom(): number {
     if (!map) return 1;
     const v = globeView(middle, WORLD_UP);
@@ -61,13 +66,15 @@
   let zoom = $state(untrack(() => zoomTo));
   /** Page units per unit of the globe's radius. */
   const S = $derived(R * zoom);
+  /** The globe's drawn radius: it fills the frame when zoomed in, and floats smaller on the page when zoomed out. */
+  const Rv = $derived(Math.min(R, S));
   function zoomBy(step: number): void {
-    const i = ZOOMS.indexOf(zoomTo);
-    zoomTo = ZOOMS[Math.max(0, Math.min(ZOOMS.length - 1, (i < 0 ? 0 : i) + step))]!;
+    zoomTo = clampZoom(zoomTo * Math.pow(1.4, step));
   }
   function wheel(e: WheelEvent): void {
     e.preventDefault();
-    zoomBy(e.deltaY < 0 ? 1 : -1);
+    // A trackpad sends many small steps and a mouse wheel a few big ones: both zoom smoothly.
+    zoomTo = clampZoom(zoomTo * Math.exp(-Math.max(-120, Math.min(120, e.deltaY)) * 0.0022));
   }
 
   function goTo(p: Vector3): void {
@@ -79,6 +86,11 @@
     const tick = (): void => {
       frame = requestAnimationFrame(tick);
       if (zoom !== zoomTo) zoom = Math.abs(zoomTo - zoom) < 0.004 ? zoomTo : zoom + (zoomTo - zoom) * 0.2;
+      // A flick keeps the globe turning for a moment, slowing like a real one.
+      if (!dragging && !target && (Math.abs(fling.x) > 0.00002 || Math.abs(fling.y) > 0.00002)) {
+        view = spinGlobe(view, fling.x * 16, fling.y * 16);
+        fling = { x: fling.x * 0.9, y: fling.y * 0.9 };
+      }
       if (!target || dragging) return;
       view = easeGlobe(view, target, 0.16);
       if (view.center.distanceTo(target.center) < 0.002) {
@@ -90,25 +102,52 @@
     return () => cancelAnimationFrame(frame);
   });
 
-  // ---- Spinning by hand ----
-  let last: { x: number; y: number } | null = null;
+  // ---- Spinning by hand (one finger or the mouse), and pinching to zoom ----
+  let last: { x: number; y: number; t: number } | null = null;
+  let fling = { x: 0, y: 0 };
   let svg = $state<SVGSVGElement | null>(null);
+  const touches = new Map<number, { x: number; y: number }>();
+  let pinch: { distance: number; zoom: number } | null = null;
   function down(e: PointerEvent): void {
+    e.preventDefault();
+    touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+    if (touches.size === 2) {
+      const [a, b] = [...touches.values()];
+      pinch = { distance: Math.hypot(a!.x - b!.x, a!.y - b!.y), zoom: zoomTo };
+      dragging = false;
+      return;
+    }
     dragging = true;
     target = null;
-    last = { x: e.clientX, y: e.clientY };
-    (e.currentTarget as Element).setPointerCapture(e.pointerId);
+    fling = { x: 0, y: 0 };
+    last = { x: e.clientX, y: e.clientY, t: performance.now() };
   }
   function move(e: PointerEvent): void {
+    if (touches.has(e.pointerId)) touches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && touches.size === 2) {
+      const [a, b] = [...touches.values()];
+      zoomTo = clampZoom(pinch.zoom * (Math.hypot(a!.x - b!.x, a!.y - b!.y) / Math.max(1, pinch.distance)));
+      return;
+    }
     if (!dragging || !last || !svg) return;
     const scale = (2 * R + 40) / svg.getBoundingClientRect().width;
-    const dx = (e.clientX - last.x) * scale;
-    const dy = (e.clientY - last.y) * scale;
-    last = { x: e.clientX, y: e.clientY };
-    view = spinGlobe(view, dx / S, -dy / S);
+    const dx = ((e.clientX - last.x) * scale) / S;
+    const dy = (-(e.clientY - last.y) * scale) / S;
+    const now = performance.now();
+    const dt = Math.max(1, now - last.t);
+    last = { x: e.clientX, y: e.clientY, t: now };
+    view = spinGlobe(view, dx, dy);
+    // Remember how fast the hand moved, for the little spin after letting go.
+    fling = { x: fling.x * 0.5 + (dx / dt) * 0.5, y: fling.y * 0.5 + (dy / dt) * 0.5 };
   }
-  function up(): void {
+  function up(e: PointerEvent): void {
+    touches.delete(e.pointerId);
+    if (touches.size < 2) pinch = null;
+    if (!dragging) return;
     dragging = false;
+    // A hand that stopped before letting go leaves the globe still.
+    if (last && performance.now() - last.t > 90) fling = { x: 0, y: 0 };
     last = null;
   }
   // M closes the map again, wherever focus is inside it.
@@ -302,7 +341,7 @@
     if (g.z > 0.04 && Math.hypot(x, y) < R - 4) return { x, y, z: g.z, behind: false, angle: 0 };
     // On the far side, or out of the window: an arrow on the rim, pointing the way.
     const angle = Math.atan2(g.x, g.y);
-    return { x: Math.sin(angle) * (R + 8), y: -Math.cos(angle) * (R + 8), z: 0, behind: true, angle: (angle * 180) / Math.PI };
+    return { x: Math.sin(angle) * (Rv + 8), y: -Math.cos(angle) * (Rv + 8), z: 0, behind: true, angle: (angle * 180) / Math.PI };
   });
 
   /** Which way north lies on the page, in degrees clockwise from up. */
@@ -347,10 +386,10 @@
             <stop offset="0.55" stop-color="#fff" stop-opacity="0" />
             <stop offset="1" stop-color="#000" stop-opacity="0.32" />
           </radialGradient>
-          <clipPath id="globe-clip"><circle r={R} /></clipPath>
+          <clipPath id="globe-clip"><circle r={Rv} /></clipPath>
         </defs>
-        <ellipse cy={R + 13} rx={R * 0.72} ry="5" fill="#2B2622" opacity="0.1" />
-        <circle r={R + 6} fill="none" stroke={map.colors.ink} stroke-width="1" stroke-dasharray="1 5" opacity="0.4" />
+        <ellipse cy={Rv + 13} rx={Rv * 0.72} ry="5" fill="#2B2622" opacity="0.1" />
+        <circle r={Rv + 6} fill="none" stroke={map.colors.ink} stroke-width="1" stroke-dasharray="1 5" opacity="0.4" />
         <g clip-path="url(#globe-clip)">
           <circle r={S} fill={map.colors.land} />
           {#each graticule as d, i (i)}<path {d} fill="none" stroke={map.colors.ink} stroke-width="0.5" opacity="0.18" />{/each}
@@ -381,8 +420,8 @@
             {/if}
           {/each}
         </g>
-        <circle r={R} fill="url(#globe-light)" pointer-events="none" />
-        <circle r={R} fill="none" stroke={map.colors.ink} stroke-width="2.4" />
+        <circle r={Rv} fill="url(#globe-light)" pointer-events="none" />
+        <circle r={Rv} fill="none" stroke={map.colors.ink} stroke-width="2.4" />
         {#each pins as p (p.id)}
           <g opacity={Math.min(1, p.z * 4)}>
             {#if hover === p.id}<circle cx={p.x} cy={p.y} r={p.size * 0.72} fill="#F2A541" opacity="0.35" stroke="#F2A541" stroke-width="1.6" />{/if}
@@ -400,7 +439,7 @@
         {/each}
         {#if goal}
           {#if goal.behind}
-            <g transform="rotate({goal.angle}) translate(0 {-R - 9})">
+            <g transform="rotate({goal.angle}) translate(0 {-Rv - 9})">
               <path d="M0 -8 L7 5 L0 1.5 L-7 5 Z" fill="#F2A541" stroke="#2B2622" stroke-width="1.4" stroke-linejoin="round" class="nudge" />
             </g>
           {:else}
@@ -425,8 +464,8 @@
           <circle r="2" fill="#2B2622" />
         </svg>
         <div class="zoom">
-          <button type="button" class="round" onclick={() => zoomBy(1)} disabled={zoomTo === ZOOMS[ZOOMS.length - 1]} aria-label={t("map.zoomIn")}>+</button>
-          <button type="button" class="round" onclick={() => zoomBy(-1)} disabled={zoomTo === ZOOMS[0]} aria-label={t("map.zoomOut")}>&minus;</button>
+          <button type="button" class="round" onclick={() => zoomBy(1)} disabled={zoomTo >= ZOOM_MAX - 0.001} aria-label={t("map.zoomIn")}>+</button>
+          <button type="button" class="round" onclick={() => zoomBy(-1)} disabled={zoomTo <= ZOOM_MIN + 0.001} aria-label={t("map.zoomOut")}>&minus;</button>
         </div>
       </div>
 

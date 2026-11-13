@@ -534,3 +534,26 @@ input.switch:checked::after {
   transition: none;
   transform: none;
 }
+
+/*
+ * A game, not a web page: holding the mouse down never paints a blue text
+ * highlight, images never drag, and taps never flash. Form fields keep text
+ * selection (there are none for typing; this is a safety net).
+ */
+html,
+body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+img,
+svg {
+  -webkit-user-drag: none;
+}
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+}

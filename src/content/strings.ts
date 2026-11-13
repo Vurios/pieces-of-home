@@ -165,6 +165,8 @@ export const EN = {
   "settings.story": "Story",
   "settings.explore": "Explore freely",
   "settings.exploreHelp": "Opens every chapter and every notebook page. Good for teachers.",
+  "settings.arrow": "Paper arrow",
+  "settings.arrowHelp": "The arrow that points to your next stop. Turn it off to find the way yourself.",
   "settings.minimap": "Corner map",
   "settings.minimapHelp": "A little map in the corner. Press M for the big one.",
   "settings.tips": "How-to-play tips",

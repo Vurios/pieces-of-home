@@ -74,6 +74,8 @@
     const director = new StoryDirector(engine, (text) => engine.bus.emit("toast", { text }));
     return () => director.dispose();
   });
+  // The paper arrow can be turned off in Settings.
+  $effect(() => engine.setGuideArrow(settings.value.guideArrow));
   // Explore freely opens every built dome.
   $effect(() => {
     const on = settings.value.exploreFreely;

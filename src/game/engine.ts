@@ -3,6 +3,7 @@ import {
   type Mesh,
   Matrix4,
   Quaternion,
+  Raycaster,
   type LoadingManager,
   PCFShadowMap,
   PerspectiveCamera,
@@ -340,6 +341,12 @@ export class Engine {
     return { map: world.map, worldId: world.id, up: v.up, facing: v.facing, heading: v.heading, objective: objective ? v.objective.copy(objective) : null };
   }
   private readonly mapAnswer = { up: new Vector3(), facing: new Vector3(), heading: new Vector3(), objective: new Vector3() };
+
+  private guideArrow = true;
+  /** Shows or hides the paper arrow that points to the next stop (a setting). */
+  setGuideArrow(on: boolean): void {
+    this.guideArrow = on;
+  }
 
   /** Which kid the local player plays: Remi solo, or the kid picked in a co-op room. */
   get playerKid(): KidId {
@@ -888,7 +895,7 @@ export class Engine {
       this.scene.fog.far = horizon + world.fog.far;
     }
 
-    this.arrow.update(dt, this.player.position, up, shot || titling ? null : world.objective(), this.reducedMotion);
+    this.arrow.update(dt, this.player.position, up, shot || titling || !this.guideArrow ? null : world.objective(), this.reducedMotion);
     this.puffs.update(dt);
 
     // Keep the sharp band of the tilt-shift on the player.
@@ -957,6 +964,14 @@ export class Engine {
         return { meshes, top: rows.slice(0, 8) };
       },
       /** Draw calls and triangles of the last frame, every pass included. */
+      // What lies under the player, top first: each hit's object name and its distance from the planet's center.
+      groundProbe: (ahead = 0.7, side = 0) => {
+        // A step away from the player, so the player's own body is not in the way.
+        const right = new Vector3().crossVectors(this.player.forward, this.player.up).normalize();
+        const up = this.player.position.clone().addScaledVector(this.player.forward, ahead).addScaledVector(right, side).normalize();
+        const ray = new Raycaster(up.clone().multiplyScalar((this.world?.terrain.radius ?? 20) + 6), up.clone().negate(), 0, 12);
+        return ray.intersectObjects(this.scene.children, true).filter((h) => h.object.visible && h.object.type !== "Points").slice(0, 8).map((h) => ({ name: `${h.object.name || h.object.type} < ${h.object.parent?.name ?? ""}`, r: Math.round(h.point.length() * 1000) / 1000 }));
+      },
       stats: () => ({ calls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, programs: this.renderer.info.programs?.length ?? 0 }),
       /** Names of the compiled shader programs, to catch ones that compile mid-play. */
       programs: () => (this.renderer.info.programs ?? []).map((p) => `${p.name}|${p.cacheKey}`),
