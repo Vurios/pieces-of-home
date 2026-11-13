@@ -106,6 +106,16 @@ async function useUntil(page: Page, id: string, done: (s: State) => boolean, tim
   throw new Error(`could not use ${id}; state ${JSON.stringify(await state(page))}`);
 }
 
+/**
+ * Saves a screenshot of a key beat into docs/screens/phase05/ when SHOTS=1
+ * (desktop only), so a run can refresh the review set.
+ */
+async function beat(page: Page, name: string): Promise<void> {
+  if (!process.env["SHOTS"] || page.viewportSize()?.width !== 1440) return;
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: `docs/screens/phase05/${name}-1440x900.png` });
+}
+
 /** Clicks through story cards and story games until `done` is true. */
 async function playUntil(page: Page, done: (s: State) => boolean, timeout = 40_000): Promise<void> {
   const end = Date.now() + timeout;
@@ -281,6 +291,7 @@ test("Chapter 2: from the dome to the stamp", async ({ page }, info) => {
   await use(page);
   await page.waitForFunction(() => (window as unknown as { __poh: Poh }).__poh.worldId() === "hadley", null, { timeout: 30_000 });
   await playUntil(page, (s) => s.carrying === "a15-letter-wheels", 90_000);
+  await beat(page, "ch2-01-arrive");
 
   // Three letters: the woven wheels, the two seats, the tracks.
   for (const [target, letter, next] of [
@@ -307,6 +318,7 @@ test("Chapter 2: from the dome to the stamp", async ({ page }, info) => {
     await page.keyboard.press("KeyE");
     await page.waitForTimeout(3600);
   }
+  await beat(page, "ch2-02-wheel-test");
   await page.locator(".game.wheels .got").click();
   await playUntil(page, (s) => s.flags.includes("steer-from-the-back:wheels"));
 
@@ -322,6 +334,7 @@ test("Chapter 2: from the dome to the stamp", async ({ page }, info) => {
   await page.keyboard.down("KeyW");
   await page.waitForTimeout(1200);
   expect((await ride()).speed).toBeGreaterThan(0);
+  await beat(page, "ch2-03-drive");
   await page.keyboard.up("KeyW");
   await world("to-overlook");
   await page.waitForTimeout(400);
@@ -342,6 +355,7 @@ test("Chapter 2: from the dome to the stamp", async ({ page }, info) => {
   await page.waitForTimeout(800);
   await useUntil(page, "milo", (s) => s.flags.includes("chapter-2:fitted"));
   await playUntil(page, (s) => s.stamps.includes("chapter-2"), 60_000);
+  await beat(page, "ch2-04-stamp");
   const after = await state(page);
   expect(after.miloStage).toBe(2);
   expect(errors).toEqual([]);
@@ -367,6 +381,7 @@ test("Chapter 4: from the dome to the stamp", async ({ page }, info) => {
   await use(page);
   await page.waitForFunction(() => (window as unknown as { __poh: Poh }).__poh.worldId() === "valinor", null, { timeout: 30_000 });
   await playUntil(page, (s) => s.carrying === "ing-letter-field", 90_000);
+  await beat(page, "ch4-01-arrive");
 
   // Three letters: Wright Brothers Field, the rover's tracks, Ingenuity.
   for (const [target, letter, next] of [
@@ -403,6 +418,7 @@ test("Chapter 4: from the dome to the stamp", async ({ page }, info) => {
   }
   await page.keyboard.press("KeyE");
   await page.waitForTimeout(3000);
+  await beat(page, "ch4-02-rotor-bench");
   await page.locator(".game.air .got").click();
   await playUntil(page, (s) => s.flags.includes("thin-air:bench"));
 
@@ -413,12 +429,14 @@ test("Chapter 4: from the dome to the stamp", async ({ page }, info) => {
   }
   await page.keyboard.press("KeyE");
   await expect(page.locator(".game.scout .got")).toBeVisible({ timeout: 20_000 });
+  await beat(page, "ch4-03-scout");
   await page.locator(".game.scout .got").click();
   await playUntil(page, (s) => s.flags.includes("thin-air:scout"));
 
   // A note in Ingenuity's log, made of word chips.
   await open("ingenuity-log", ".game.note");
   for (let row = 0; row < 3; row += 1) await page.locator(".game.note .chips").nth(row).locator("button").first().click();
+  await beat(page, "ch4-04-log-note");
   await page.locator(".game.note .got").click();
   await playUntil(page, (s) => s.flags.includes("thin-air:done"), 60_000);
 
@@ -431,6 +449,7 @@ test("Chapter 4: from the dome to the stamp", async ({ page }, info) => {
   await page.waitForTimeout(800);
   await useUntil(page, "milo", (s) => s.flags.includes("chapter-4:fitted"));
   await playUntil(page, (s) => s.stamps.includes("chapter-4"), 60_000);
+  await beat(page, "ch4-05-stamp");
   expect(await page.evaluate(() => localStorage.getItem("poh.lognote.v1"))).toContain("Hello, explorer!");
   expect(errors).toEqual([]);
 });
@@ -465,6 +484,7 @@ test("Bonus: the Ocean of Storms, from the dome to the stamp", async ({ page }, 
   await use(page);
   await page.waitForFunction(() => (window as unknown as { __poh: Poh }).__poh.worldId() === "storms", null, { timeout: 30_000 });
   await playUntil(page, (s) => s.carrying === "sur3-letter-trenches", 90_000);
+  await beat(page, "bonus-01-arrive");
 
   // Three letters: the trenches, Intrepid, Surveyor 3.
   for (const [target, letter, next] of [
@@ -496,6 +516,7 @@ test("Bonus: the Ocean of Storms, from the dome to the stamp", async ({ page }, 
   await map.click({ position: { x: (392 / 600) * box.width, y: (255 / 400) * box.height } });
   await expect(page.locator(".game.pinpoint .gc-ask")).toContainText("Right over its tummy", { timeout: 30_000 });
   await page.waitForTimeout(400);
+  await beat(page, "bonus-02-pinpoint");
   await page.keyboard.press("KeyE");
   await expect(page.locator(".game.pinpoint .got")).toBeVisible({ timeout: 20_000 });
   await page.locator(".game.pinpoint .got").click();
@@ -508,11 +529,13 @@ test("Bonus: the Ocean of Storms, from the dome to the stamp", async ({ page }, 
     await page.waitForTimeout(1800);
   }
   await expect(page.locator(".game.snip .got")).toBeVisible({ timeout: 10_000 });
+  await beat(page, "bonus-03-snip");
   await page.locator(".game.snip .got").click();
   await playUntil(page, (s) => s.flags.includes("pinpoint:snip"));
 
   // Carry the parts bag up to the sample box by Intrepid.
   await useUntil(page, "parts-bag", (s) => s.carrying === "bag:surveyor");
+  await beat(page, "bonus-04-bag");
   await useUntil(page, "sample-box", (s) => s.flags.includes("pinpoint:done"));
 
   // Milo's scoop arm, home through the lamp light. His stage number does not change.
@@ -524,6 +547,7 @@ test("Bonus: the Ocean of Storms, from the dome to the stamp", async ({ page }, 
   await page.waitForTimeout(800);
   await useUntil(page, "milo", (s) => s.flags.includes("bonus-surveyor:fitted"));
   await playUntil(page, (s) => s.stamps.includes("bonus-surveyor"), 60_000);
+  await beat(page, "bonus-05-stamp");
   const end = await state(page);
   expect(end.miloStage).toBe(3);
   expect(end.stamps).not.toContain("finale");

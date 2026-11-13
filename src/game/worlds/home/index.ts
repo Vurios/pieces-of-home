@@ -252,7 +252,7 @@ export function createHome(ctx: WorldContext): World {
     ctx.interactions.add({
       id: `friend-${id}`,
       position: spot.position,
-      radius: 0.95,
+      radius: 0.8,
       kind: "press",
       label: () => (ctx.store.value.carrying?.startsWith("part:") ? null : `Ask ${name} for a hint`),
       onDone: () => ctx.bus.emit("hint:ask", { who: id, name, at: [head.x, head.y, head.z] }),

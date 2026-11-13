@@ -644,10 +644,12 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     lampBulb: at(lampBulbLocal.x, lampBulbLocal.y, lampBulbLocal.z),
     lampSpot: at(lampX + 0.3, fy, BENCH_Z + 0.85),
     miloSpot: { position: at(-0.55, BENCH_Y, BENCH_Z - 0.05), forward: inward.clone().negate() },
+    // The friends keep clear of the bench, the domes and the bonus stand, so every prompt
+    // there belongs to the thing in front of you (and nobody stands in a path).
     friends: [
       { position: at(-1.95, fy, 1.15), forward: new Vector3(1, 0, -0.6).normalize().transformDirection(m) },
-      { position: at(1.55, fy, 0.55), forward: new Vector3(0.7, 0, -1).normalize().transformDirection(m) },
-      { position: at(0.95, fy, -0.75), forward: new Vector3(-0.6, 0, -1).normalize().transformDirection(m) },
+      { position: at(1.0, fy, 0.25), forward: new Vector3(-0.2, 0, -1).normalize().transformDirection(m) },
+      { position: at(-1.25, fy, 0.2), forward: new Vector3(0.45, 0, -1).normalize().transformDirection(m) },
     ],
     benchFront: at(-0.55, fy, BENCH_Z + 1.0),
     domes: [0.25, 0.85, 1.45, 2.05].map((x) => ({ top: at(x, BENCH_Y + 0.34, BENCH_Z - 0.05), stand: at(x, fy, BENCH_Z + 0.85) })),
