@@ -15,9 +15,9 @@ export const HADLEY: ChapterDef = {
   place: "Hadley-Apennine",
   arrival: [
     { wait: 0.6 },
-    { say: "Mountains! And a giant crack in the ground.", who: "remi" },
+    { say: "Mountains! And a giant winding valley.", who: "remi" },
     { fact: "a15-site" },
-    { say: "And Dad built a car for the Moon. A Moon buggy!", who: "remi" },
+    { say: "And Dad put a little Moon buggy in his model!", who: "remi" },
     { note: "Model, not to scale. The rille is a lot bigger in real life." },
   ],
   tag: { title: "Hadley-Apennine", lines: ["Model, not to scale.", "Real numbers on the back."] },

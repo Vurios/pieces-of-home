@@ -19,7 +19,7 @@ export const STORY = {
   pages: [
     { art: "home", text: "This is Home, a tiny round world at dusk. Remi and Mom have come back to Dad's workshop." },
     { art: "bench", text: "Dad loved to build things. A lamp that turns on by itself. A little robot. Tiny worlds under glass." },
-    { art: "door", text: "Dad died last spring. Tonight, Remi opens his workshop for the first time since then." },
+    { art: "door", text: "Dad died last spring. Tonight, Remi opens Dad's workshop for the first time since then." },
     { art: "letters", text: "Inside are letters Dad wrote but never sent. Each one is for a machine people left behind, on the Moon, on Mars and far out in space." },
     { art: "milo", text: "And Milo, Dad's robot, is still in pieces on the bench." },
     { art: "go", text: "So Remi makes a plan. Deliver Dad's letters. Finish Milo. Start with the mailbox." },

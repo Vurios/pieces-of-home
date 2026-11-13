@@ -709,3 +709,33 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 
 **Alternatives considered:** Leaving chapter travel to the domes only (slower for anyone who wants to go back to a world from the menu).
 
+## 72. The workshop changes with every stamp, and friends give hints
+
+**Date:** 2026-11-13
+
+**Decision:** Remi's museum shelf hangs on the workshop's left wall. Each stamp adds a keepsake and an instant photo of that world above it: a corner of mirrors (Chapter 1), a mesh wheel (2), a jar of blueberry stones (3), a rotor blade (4), a little scoop (bonus) and the golden record (Finale). Empty spots keep a blank paper label. Together with Milo's parts and the glowing domes, the room now shows how far the story has come. Playing alone, Nori, Lumi and Theo in the workshop each offer "Ask for a hint": they say the current goal's hint out loud, one tier further each time, the same tiers as the Hint button.
+
+**Why:** Phase 05, section 6 ("The workshop changes after each chapter", "Hint system... friends in the workshop for solo").
+
+**Alternatives considered:** Photos taped over Dad's pegboard (crowded, and covers his tools), hints only from the button (the friends would stand there with nothing to do).
+
+## 73. Writing pass
+
+**Date:** 2026-11-13
+
+**Decision:** A cold copy review by a subagent found 42 issues; 39 are fixed. Highlights: no line suggests Dad is still writing; Dad's notes speak as Dad ("I made the helicopter big"); Ingenuity's ending matches its fact ("damaged its rotor blades", not "one blade"); plain-text numbers with no fact behind them are gone ("three legs", "four ditches"); hints say exactly where and what to press; "round" became "around"; quoted speech uses quote marks; Voyager's light-day line is split into short sentences; the Chapter 4 note now uses the Game Bible's own line ("I tucked a little piece of you in here"). Kept on purpose: "Thanks for waiting up" (the Bible's own prologue joke), the bonus stamp "Still teaching us how things age" (prompt 05 names it), and "chevrons" (the fact and the wheel test use the word).
+
+**Why:** Phase 05, section 5 (writing).
+
+**Alternatives considered:** Rewriting every chapter script from scratch (the review found the copy mostly sound).
+
+## 74. One test from the title to the credits
+
+**Date:** 2026-11-13
+
+**Decision:** `tests/e2e/chapters.spec.ts` gains "From the title to the credits": the loader, the light, the title flight, the chain, New story, Skip story, the prologue's letter and stamp, the four chapters stamped through the debug hook (each has its own full playthrough), a reload, then the whole Finale through the ending and the credits roll. The Finale steps are shared with the Finale test.
+
+**Why:** Phase 05, section 7.
+
+**Alternatives considered:** Playing every chapter again inside this test (over twenty minutes on a software renderer, and it would repeat the chapter tests).
+

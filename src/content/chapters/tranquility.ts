@@ -45,7 +45,7 @@ export const TRANQUILITY: ChapterDef = {
       beat: [
         { say: "It's a listening machine. For moonquakes!", who: "remi", at: "seismometer" },
         { fact: "a11-seismometer" },
-        { say: "Let's make a tiny one. Jump!", who: "remi" },
+        { say: "Let's make a tiny moonquake. Jump!", who: "remi" },
       ],
     },
     {

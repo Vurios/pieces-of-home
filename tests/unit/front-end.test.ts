@@ -100,7 +100,7 @@ describe("room codes", () => {
 describe("notebook and Field Guide", () => {
   it("words the Voyager light-day fact for the day it is read", () => {
     const v1 = fact("v1-light-day");
-    expect(factText(v1, new Date("2020-01-01"))).toMatch(/becomes/);
+    expect(factText(v1, new Date("2020-01-01"))).toMatch(/will be one light-day/);
     expect(factText(v1, new Date("2030-01-01"))).toMatch(/became/);
   });
 

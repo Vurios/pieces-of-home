@@ -35,7 +35,7 @@ export const MERIDIANI: ChapterDef = {
         { say: "These dents go bounce, bounce, bounce... right into the crater!", who: "remi", at: "bounce" },
         { fact: "opp-hole-in-one" },
         { fact: "opp-landing" },
-        { say: "A hole-in-one on Mars. Dad would love that.", who: "remi" },
+        { say: "A hole-in-one on Mars! No wonder Dad liked this one.", who: "remi" },
       ],
     },
     {
@@ -101,8 +101,8 @@ export const MERIDIANI: ChapterDef = {
   memory: [
     { fact: "opp-planned" },
     { fact: "opp-years" },
-    { say: "Dad joked his inventions came with a warranty like that. A short one.", who: "remi" },
-    { say: "But the night-light he made me still works. Every single night.", who: "remi" },
+    { say: "Dad used to joke that his gadgets were only built to last a little while.", who: "remi" },
+    { say: "But the night-light he made me still glows every night.", who: "remi" },
     { note: "Some days are dusty. Wait for the wind." },
   ],
   stamp: ["Left behind.", "Still teaching."],

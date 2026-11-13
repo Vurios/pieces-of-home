@@ -108,7 +108,7 @@
         <path d="M84 70 L 92 60 L 92 72 Z" fill="#e8c15a" class="thin" /><path d="M86 72 L 82 78 M90 72 L 94 78" class="thin" />`,
     },
     voyager: {
-      top: "FARTHEST LETTER",
+      top: "FARTHEST TRAVELER",
       bottom: "SPACE",
       cloth: "#1f2547",
       rim: "#e8c15a",

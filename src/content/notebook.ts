@@ -104,13 +104,13 @@ export const SPREADS: MachineSpread[] = [
   },
   {
     id: "opportunity",
-    letterTo: "To the rover who kept going",
+    letterTo: "To the rover that kept going",
     nickname: "The rover that kept going",
     name: "Opportunity, Mars Exploration Rover",
     place: fact("opp-site"),
     world: "Mars",
     drawing: "opportunity",
-    forWhat: "A robot geologist, looking for signs of old water.",
+    forWhat: "A robot rock scientist, looking for signs of old water.",
     learned: [fact("opp-planned"), fact("opp-years"), fact("opp-distance"), fact("opp-blueberries")],
     thenNow: [],
     deeper: [],
@@ -156,7 +156,7 @@ export const SPREADS: MachineSpread[] = [
   {
     id: "voyager",
     letterTo: "To Voyager 1, far from home",
-    nickname: "The farthest letter",
+    nickname: "The farthest traveler",
     name: "Voyager 1",
     place: null,
     world: "Space",
@@ -208,9 +208,9 @@ export function factText(entry: FactEntry, today = new Date()): string {
   if (entry.id === "v1-light-day" && entry.date) {
     const when = new Date(`${entry.date}T10:16:07Z`);
     const day = formatDate(entry.date);
-    if (today < when) return `On ${day}, Voyager 1 becomes the first human-made object one light-day from Earth: its signals will take a whole day to reach us.`;
+    if (today < when) return `On ${day}, Voyager 1 will be one light-day from Earth. No machine people made has gone that far. Its signals will take a whole day to reach us.`;
     // After the milestone, today's light time from the JPL Horizons table (fact v1-light-time).
-    return `On ${day}, Voyager 1 became the first human-made object one light-day from Earth. Today its signals take about ${hoursAndMinutes(voyagerOn(today).lightMinutes)} to reach us.`;
+    return `On ${day}, Voyager 1 became one light-day from Earth. No machine people made had gone that far. Today its signals take about ${hoursAndMinutes(voyagerOn(today).lightMinutes)} to reach us.`;
   }
   return entry.kid;
 }

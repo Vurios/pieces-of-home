@@ -19,7 +19,7 @@ export const VALINOR: ChapterDef = {
     { say: "Mars again! But this part has wavy sand, like a beach.", who: "remi" },
     { fact: "ing-site" },
     { say: "Look, a tiny helicopter. Dad's letters are for it!", who: "remi" },
-    { note: "Model, not to scale. Dad made the helicopter big so we can see it." },
+    { note: "Model, not to scale. I made the helicopter big so you can see it." },
   ],
   tag: { title: "Valinor Hills", lines: ["Model, not to scale.", "Real numbers on the back."] },
   letters: [
@@ -34,7 +34,7 @@ export const VALINOR: ChapterDef = {
         { say: "This is where it flew the very first time.", who: "remi", at: "airfield" },
         { fact: "ing-first-flight" },
         { fact: "ing-first-flight-length" },
-        { say: "Dad painted its shadow, like the picture it took of itself!", who: "remi" },
+        { say: "Dad painted its shadow. Ingenuity took a picture of its own shadow too!", who: "remi" },
       ],
     },
     {
@@ -43,7 +43,7 @@ export const VALINOR: ChapterDef = {
       address: "To the rover's tracks",
       prompt: "Give the letter to the rover's tracks",
       where: "The long wheel tracks that run past the helicopter and over the hill.",
-      letter: "Your rover was a good friend. It listened, and it carried every message home.",
+      letter: "Your rover is a good friend. It listened, and it carried every message home.",
       beat: [
         { say: "The rover drove on. But its tracks are still here.", who: "remi", at: "tracks" },
         { fact: "ing-relay" },
@@ -54,7 +54,7 @@ export const VALINOR: ChapterDef = {
       id: "ing-letter-heli",
       to: "ingenuity",
       address: "To the little helicopter",
-      prompt: "Give the letter to Ingenuity",
+      prompt: "Give the letter to the little helicopter",
       where: "Ingenuity stands among the sand ripples on the hill.",
       letter: "Nobody knew if you could fly. You tried anyway. Then you kept trying, again and again.",
       beat: [
@@ -68,10 +68,10 @@ export const VALINOR: ChapterDef = {
   activityStart: [
     { say: "Dad built a rotor bench. Can blades lift in air this thin?", who: "remi" },
     { fact: "mars-thin-air" },
-    { note: "Try it on Earth first. Then try it on Mars." },
+    { note: "Try Earth air first. Then try Mars air." },
   ],
   activityDone: [
-    { say: "It can't fly anymore. One of its blades broke.", who: "remi" },
+    { say: "Oh no. It can't fly anymore.", who: "remi" },
     { fact: "ing-final" },
     { say: "But it still wakes up and keeps notes.", who: "remi" },
     { fact: "ing-testbed" },
@@ -83,11 +83,11 @@ export const VALINOR: ChapterDef = {
     { say: "A rotor, like Ingenuity's! Can you hop, Milo?", who: "remi" },
     { say: "Wait. There's a scrap of paper tucked inside Milo.", who: "remi" },
     { say: "It's my first drawing. A plane! Dad kept it.", who: "remi" },
-    { note: "Every good flying machine carries a little piece of where it came from." },
+    { note: "I tucked a little piece of you in here. Every good flying machine carries one." },
   ],
   memory: [
     { say: "Dad and I made paper planes and threw them off the hill.", who: "remi" },
-    { say: "Mine always crashed. Dad said, fold it again. Try one more time.", who: "remi" },
+    { say: "Mine always crashed. Dad said, \"Fold it again. Try one more time.\"", who: "remi" },
     { note: "Most first flights are short. That is how all flying starts." },
   ],
   stamp: ["Left behind.", "Still keeping notes."],

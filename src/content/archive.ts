@@ -43,7 +43,7 @@ export const ARCHIVE: readonly ArchiveCard[] = [
     image: image("archive-surveyor3"),
     facts: [fact("sur3-wet-sand"), fact("sur3-last-contact"), fact("sur3-visit")],
     more: [fact("sur3-parts")],
-    note: "Fancy waiting all that time, and then someone drops by.",
+    note: "Imagine waiting all that time, and then someone drops by.",
   },
   {
     id: "sojourner",

@@ -57,12 +57,12 @@ export const FINALE_COPY = {
   goals: {
     mailbox: { title: "Check the mailbox", detail: "The flag is up again. One last letter.", hint: "The mailbox is by the porch, in front of the house." },
     dish: { title: "Take the letter to Dad's dish", detail: "The dish on the hill can talk to faraway things.", hint: "The dish is up the hill behind the workshop. Follow the paper arrow." },
-    recordTake: { title: "Take Milo's record", detail: "Dad left something in the dish's little box.", hint: "Look by the foot of the dish." },
+    recordTake: { title: "Take Milo's record", detail: "Dad left something in the dish's little box.", hint: "Look in the little box at the foot of the dish." },
     recordGive: { title: "Give Milo his record", detail: "Milo waits on Dad's workbench.", hint: "Milo is on the workbench in the workshop." },
     listen: { title: "Listen to Milo", detail: "Milo has something to play for you.", hint: "Stay with Milo for a moment." },
     page: { title: "Fill in the last page", detail: "One page of Dad's notebook is still blank.", hint: "The last page waits in Dad's notebook." },
     ending: { title: "Leave the light on", detail: "The lamp stays on.", hint: "Stay a moment." },
-    museum: { title: "The museum is open", detail: "Visit any little world again, or walk round Home. The lamp stays on.", hint: "The domes are on the workbench. Every world is waiting." },
+    museum: { title: "The museum is open", detail: "Visit any little world again, or walk around Home. The lamp stays on.", hint: "The domes are on the workbench. Every world is waiting." },
   },
 };
 
@@ -91,13 +91,13 @@ export const SENT: Line[] = [
   { fact: "v1-interstellar" },
   { fact: "v1-light-day" },
   { fact: "golden-record" },
-  { say: "A golden record. Like a letter from all of us.", who: "remi" },
+  { say: "The Golden Record. Like a letter from all of us.", who: "remi" },
   { say: "Wait. There's something in the dish's little box.", who: "remi" },
 ];
 
 export const RECORD_FITTED: Line[] = [
   { wait: 1.0 },
-  { say: "A golden record. Just like Voyager's.", who: "remi" },
+  { say: "Milo's own golden record. Just like Voyager's.", who: "remi" },
   { say: "Milo? Can you talk now?", who: "remi" },
 ];
 
@@ -107,7 +107,7 @@ const SAVED = "Dad (saved message)";
 export const MESSAGES: Line[] = [
   { wait: 0.8 },
   { say: "Hi, kiddo. This is Dad. If you can hear this, Milo has his voice. Nice work.", who: "dad", name: SAVED },
-  { say: "I put some sounds of home on this record. Rain on the workshop roof. The lamp's click. You, laughing at my jokes. Mostly at my jokes.", who: "dad", name: SAVED },
+  { say: "I put some sounds of home on this record. Rain on the workshop roof. The lamp's click. You, laughing at my jokes. Okay, mostly laughing at me.", who: "dad", name: SAVED },
   { say: "I couldn't know every question you would ask. I just wanted to leave you a little company while you found the answers.", who: "dad", name: SAVED },
   { wait: 0.8 },
   { say: "Thanks, Dad.", who: "remi" },

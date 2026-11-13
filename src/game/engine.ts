@@ -225,6 +225,7 @@ export class Engine {
 
     window.addEventListener("resize", this.onWindowResize);
     document.addEventListener("visibilitychange", this.onVisibility);
+    window.addEventListener("pagehide", this.flushSave);
     window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", (event) => {
       this.systemReducedMotion = event.matches;
       this.applyMotion();
@@ -631,7 +632,15 @@ export class Engine {
     this.renderer.setAnimationLoop(null);
   }
 
+  /** Writes a waiting save at once (the tab is hiding or closing, so no frame will come). */
+  private flushSave = (): void => {
+    if (this.saveTimer <= 0) return;
+    this.saveTimer = 0;
+    writeStorage(SAVE_KEY, this.store.serialize());
+  };
+
   private onVisibility = (): void => {
+    if (document.hidden) this.flushSave();
     if (document.hidden) this.renderer.setAnimationLoop(null);
     else if (this.running) {
       this.timer.reset();
@@ -974,6 +983,8 @@ export class Engine {
     this.stop();
     window.removeEventListener("resize", this.onWindowResize);
     document.removeEventListener("visibilitychange", this.onVisibility);
+    window.removeEventListener("pagehide", this.flushSave);
+    this.flushSave();
     this.input.dispose();
     this.world?.dispose();
     this.sky?.dispose();

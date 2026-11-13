@@ -569,21 +569,8 @@ async function cardsUntil(page: Page, selector: string, timeout = 90_000): Promi
   throw new Error(`no ${selector}; state ${JSON.stringify(await state(page))}`);
 }
 
-test("Finale: from the mailbox to the museum", async ({ page }, info) => {
-  test.skip(info.project.name === "phone", "one full playthrough on desktop is enough");
-  test.setTimeout(480_000);
-  const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(String(e)));
-  page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
-  await page.addInitScript((save) => {
-    if (!sessionStorage.getItem("seeded")) {
-      localStorage.setItem("poh.save.v1", JSON.stringify(save));
-      sessionStorage.setItem("seeded", "1");
-    }
-  }, AFTER_CHAPTER_3);
-  await page.goto("/?test&quality=low");
-  await expect(page.locator("html")).toHaveAttribute("data-stage", "ready", { timeout: 60_000 });
-
+/** The Finale from the moment night falls to the museum, as one player plays it (with the debug walk). */
+async function playFinale(page: Page): Promise<void> {
   // Night falls and the mailbox flag goes up: Dad's last letter.
   await playUntil(page, (s) => s.flags.includes("finale:begun"), 60_000);
   await useUntil(page, "mailbox", (s) => s.carrying === "v1-letter");
@@ -636,8 +623,71 @@ test("Finale: from the mailbox to the museum", async ({ page }, info) => {
   await expect(page.locator(".ending .roll")).toContainText("JPL");
   await page.getByRole("button", { name: /Keep exploring/ }).click();
   await playUntil(page, (s) => s.flags.includes("finale:ended"), 30_000);
+}
+
+test("Finale: from the mailbox to the museum", async ({ page }, info) => {
+  test.skip(info.project.name === "phone", "one full playthrough on desktop is enough");
+  test.setTimeout(480_000);
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+  await page.addInitScript((save) => {
+    if (!sessionStorage.getItem("seeded")) {
+      localStorage.setItem("poh.save.v1", JSON.stringify(save));
+      sessionStorage.setItem("seeded", "1");
+    }
+  }, AFTER_CHAPTER_3);
+  await page.goto("/?test&quality=low");
+  await expect(page.locator("html")).toHaveAttribute("data-stage", "ready", { timeout: 60_000 });
+
+  await playFinale(page);
   const end = await state(page);
   expect(end.miloStage).toBe(5);
   expect(end.world).toBe("home");
   expect(errors).toEqual([]);
 });
+
+test("From the title to the credits", async ({ page }, info) => {
+  test.skip(info.project.name === "phone", "one full playthrough on desktop is enough");
+  test.setTimeout(600_000);
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
+
+  // The loader, the light, the title flight and the chain, then a new story from the menu.
+  await page.goto("/?test&intro&quality=low");
+  await expect(page.locator("html")).toHaveAttribute("data-stage", "waiting", { timeout: 60_000 });
+  await expect(page.locator("#boot")).toHaveAttribute("data-prompt", "", { timeout: 10_000 });
+  await page.keyboard.press("Space");
+  await expect(page.locator("html")).toHaveAttribute("data-stage", "title", { timeout: 20_000 });
+  await page.waitForTimeout(400);
+  await page.keyboard.press("KeyX");
+  const chain = page.getByRole("button", { name: /pull the light chain/i });
+  await expect(chain).toBeVisible({ timeout: 20_000 });
+  await chain.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("html")).toHaveAttribute("data-stage", "menu", { timeout: 10_000 });
+  await page.getByRole("button", { name: /New story/ }).click();
+  await page.getByRole("button", { name: "Skip story" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-stage", "ready", { timeout: 60_000 });
+
+  // The prologue: Dad's letter from the mailbox to the lamp, and its stamp.
+  await useUntil(page, "mailbox", (s) => s.carrying === "to-the-lamp");
+  await useUntil(page, "lamp", (s) => s.delivered.includes("to-the-lamp"));
+  await playUntil(page, (s) => s.stamps.includes("prologue"), 30_000);
+
+  // The four chapters have their own playthroughs above: here they are stamped with the debug hook.
+  await page.evaluate(
+    (save) => (window as unknown as { __poh: { patch(change: Partial<State>): void } }).__poh.patch(save),
+    { delivered: AFTER_CHAPTER_3.delivered, stamps: AFTER_CHAPTER_3.stamps, miloStage: 4, carrying: null, flags: ["seen-notebook"] },
+  );
+  await page.waitForTimeout(1500);
+  await page.goto("/?test&quality=low");
+  await expect(page.locator("html")).toHaveAttribute("data-stage", "ready", { timeout: 60_000 });
+
+  // The Finale, the ending and the credits.
+  await playFinale(page);
+  expect((await state(page)).stamps).toContain("finale");
+  expect(errors).toEqual([]);
+});
+

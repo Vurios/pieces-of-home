@@ -145,7 +145,7 @@ export function goalFor(state: Readonly<GameState>, device: InputDevice): Goal {
       id: "explore",
       step: 3,
       title: "You found every place",
-      detail: "You walked all the way round Home. The next letters are still being written.",
+      detail: "You walked all the way around Home. Rest a while, or head back to the workshop.",
       hint: "Say hi to Mom on the porch, or sit by the campfire for a while.",
     };
   }
@@ -155,7 +155,7 @@ export function goalFor(state: Readonly<GameState>, device: InputDevice): Goal {
     step: 3,
     title: "Explore Home",
     detail: `You found ${found} of ${total} places. Follow the paths to find the rest.`,
-    hint: "Paths lead to every place, and lamps light the way. Walk all the way round the little planet.",
+    hint: "Paths lead to every place, and lamps light the way. Walk all the way around the little planet.",
   };
 }
 

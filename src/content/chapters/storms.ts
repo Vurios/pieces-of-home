@@ -33,7 +33,7 @@ export const STORMS: ChapterDef = {
       to: "trenches",
       address: "To the little trenches",
       prompt: "Give the letter to the little trenches",
-      where: "Down in the crater, in front of Surveyor 3. Four little ditches in the dust.",
+      where: "Down in the crater, in front of Surveyor 3. Little ditches dug in the dust.",
       letter: "A robot dug you while people steered it from home. You told everyone the ground was safe to stand on.",
       beat: [
         { say: "Little ditches! Surveyor dug them with its scoop.", who: "remi", at: "trenches" },
@@ -46,7 +46,7 @@ export const STORMS: ChapterDef = {
       id: "a12-letter-intrepid",
       to: "intrepid",
       address: "To Intrepid's bottom half",
-      prompt: "Give the letter to Intrepid",
+      prompt: "Give the letter to Intrepid's bottom half",
       where: "The gold lander up on the edge of the crater.",
       letter: "You landed right where you planned, next to an old friend. That takes a very steady hand.",
       beat: [
@@ -60,7 +60,7 @@ export const STORMS: ChapterDef = {
       to: "surveyor",
       address: "To Surveyor 3",
       prompt: "Give the letter to Surveyor 3",
-      where: "On the slope inside the big crater. A tall robot on three legs.",
+      where: "On the slope inside the big crater. A tall robot on thin metal legs.",
       letter: "You waited a long time in the quiet. Then two friends walked down the hill to say hello.",
       beat: [
         { say: "Surveyor 3. It waited here all by itself.", who: "remi", at: "surveyor" },

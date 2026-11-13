@@ -52,7 +52,7 @@ export const SEND_A_LIGHT: ActivityDef = {
       hints: [
         "A good mirror trick works from any side. Let's test it.",
         "Stand by the frame and turn it a few times. Watch where the light goes.",
-        "The arrow points at the frame. Use it to turn the corner.",
+        "Follow the arrow to the frame. Press Use to turn the corner.",
       ],
     },
     {
@@ -128,11 +128,11 @@ export const THIN_AIR: ActivityDef = {
     {
       id: "scout",
       title: "Fly the toy helicopter",
-      detail: "Fly Dad's toy helicopter from its pad. Look down and find a safe way for the rover.",
+      detail: "Fly Dad's toy helicopter from its pad. Look down and draw a safe way for the rover.",
       hints: [
         "From up high you can see the rocks and the soft sand.",
-        "The launch pad is the round board near the bench. Draw a path round the rocks and the soft sand.",
-        "Follow the arrow to the pad. Go along the top or the bottom to get round the rocks.",
+        "The launch pad is the round board near the bench. Draw a path around the rocks and the soft sand.",
+        "Follow the arrow to the pad. On the map, draw along the very top or very bottom to get around the rocks. Then send it to the rover.",
       ],
     },
     {
@@ -188,9 +188,9 @@ export const STEER_FROM_THE_BACK: ActivityDef = {
       title: "Park it back in its spot",
       detail: "Drive back and stop inside Dad's chalk marks.",
       hints: [
-        "Every good driver parks the buggy where they found it.",
+        "Where did the buggy start? Take it back there.",
         "The chalk marks are next to the lander. Come in slowly.",
-        "Follow the arrow to the chalk marks. Slow down when you get close and it rolls in.",
+        "Follow the arrow to the chalk marks. Slow down as you get close, and it rolls right in.",
       ],
     },
   ],
@@ -217,9 +217,9 @@ export const PINPOINT: ActivityDef = {
       title: "Land by the Snowman",
       detail: "Dad's landing table has a toy lander. Steer it down right next to Surveyor 3.",
       hints: [
-        "The astronauts found Surveyor by looking for a shape made of craters.",
+        "The astronauts found Surveyor by looking for craters shaped like a snowman.",
         "Dad's landing table is near the Looking Lamp. Find the Snowman, then aim for its tummy.",
-        "Follow the arrow to the table. Steer the shadow into the big crater, then press Land.",
+        "Follow the arrow to the table. Steer the shadow over the big round crater, the Snowman's tummy. Then press Land.",
       ],
     },
     {
@@ -229,7 +229,7 @@ export const PINPOINT: ActivityDef = {
       hints: [
         "Scientists wanted to see what years on the Moon did to Surveyor.",
         "Walk down into the crater to Surveyor 3. Dad's cutters are waiting.",
-        "Follow the arrow to Surveyor. Tap each part with a dotted line.",
+        "Follow the arrow to Surveyor. Pick each part with a dotted line to snip it.",
       ],
     },
     {

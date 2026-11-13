@@ -168,8 +168,8 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Chapter select: every chapter, the bonus and the Finale with Go, Stamped and Not yet
 - [x] The Surveyor 3 bonus chapter (P2): the Ocean of Storms world, landing table and cutters card games, parts bag and sample box, the cloth-covered dome, Milo's scoop arm, notebook spread and patch; playthrough in `tests/e2e/chapters.spec.ts` (#69)
 - [x] Audio pass: recorded foley and instruments, NASA recordings with captions, word-following voices (DECISIONS #49)
-- [ ] Writing pass
-- [ ] Photo mode, hints, save, museum free roam
+- [x] Writing pass: cold copy review, 39 of 42 fixes applied (#73)
+- [x] Photo mode (24 polaroids, used in the ending), three-tier hints and friends who give them, save, museum free roam, Remi's museum shelf (#72)
 - [ ] Automated playthroughs, deploy
 
 ## Phase 06: Kid-safe co-op for 1 to 4 players
