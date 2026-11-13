@@ -40,7 +40,7 @@ export const TRANQUILITY: ChapterDef = {
       to: "seismometer",
       address: "To the moonquake listener",
       prompt: "Give the letter to the moonquake listener",
-      where: "South of the lander. A little box with two flat wings.",
+      where: "Near the lander. A little box with two flat wings.",
       letter: "You listened so hard. I hope the Moon told you some good stories.",
       beat: [
         { say: "It's a listening machine. For moonquakes!", who: "remi", at: "seismometer" },
@@ -58,7 +58,6 @@ export const TRANQUILITY: ChapterDef = {
       beat: [
         { say: "The little mirrors. Dad's favorite.", who: "remi", at: "lrrr" },
         { fact: "a11-lrrr-placed" },
-        { fact: "a11-lrrr-cubes" },
       ],
     },
   ],
@@ -70,8 +69,8 @@ export const TRANQUILITY: ChapterDef = {
   activityDone: [
     { say: "It came back! Ping... and pong.", who: "remi" },
     { fact: "light-roundtrip" },
-    { fact: "lrrr-still-used" },
-    { say: "Every little mirror is shining back at home.", who: "remi" },
+    { say: "Our three mirrors make one corner. The real panel has lots of them.", who: "remi" },
+    { fact: "a11-lrrr-cubes" },
   ],
   milo: 1,
   miloPart: "corner-cube eyes",

@@ -170,17 +170,21 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Audio pass: recorded foley and instruments, NASA recordings with captions, word-following voices (DECISIONS #49)
 - [x] Writing pass: cold copy review, 39 of 42 fixes applied (#73)
 - [x] Photo mode (24 polaroids, used in the ending), three-tier hints and friends who give them, save, museum free roam, Remi's museum shelf (#72)
-- [ ] Automated playthroughs, deploy
+- [x] Automated playthroughs: every world from arrival to stamp, the bonus, the Finale, and one test from the title to the credits; beat screenshots in `docs/screens/phase05/` (`SHOTS=1`) (#74)
+- [x] No-hooks pass of Chapter 1 by a fresh play-tester, and its fixes (#75)
+- [ ] Deploy and live smoke
 
 ## Phase 06: Kid-safe co-op for 1 to 4 players
 
-- [ ] Room state persisted in SQLite
-- [ ] Protocol: movement, emotes, phrases, shared progress
-- [ ] Lobby, friendly room codes, share link, character select
-- [ ] Shared play and puzzle roles
-- [ ] Safety and privacy review
-- [ ] Free-tier budget checks and solo fallback
-- [ ] Tests, deploy
+- [x] Room state persisted in SQLite (#76)
+- [x] Protocol: movement, emotes, phrases, shared progress, story events by id (#76)
+- [x] Lobby, friendly room codes, share link, character select, late join, reconnect (#76)
+- [x] Shared play: one story, one Milo, travel together, friends drawn with name tags and map dots (#76)
+- [ ] Co-op puzzle roles (P1)
+- [x] Safety and privacy review (#77)
+- [x] Free-tier budget and solo fallback (#78)
+- [x] Tests: two, three and four players, a full room, junk, the resting fallback, travel together (`tests/e2e/coop.spec.ts`)
+- [ ] Deploy and live two-player smoke
 
 ## Phase 07: Polish, QA, final deploy and the submission kit
 

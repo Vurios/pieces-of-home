@@ -182,7 +182,8 @@
   .captions {
     position: fixed;
     left: 50%;
-    bottom: max(96px, calc(env(safe-area-inset-bottom) + 96px));
+    /* Above the tip card when one is up (Guide sets --tip-top), else just over the prompt. */
+    bottom: max(96px, calc(env(safe-area-inset-bottom) + 96px), calc(var(--tip-top, 0px) + 116px));
     transform: translateX(-50%);
     width: min(720px, calc(100vw - 32px));
     display: grid;

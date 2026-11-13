@@ -230,6 +230,14 @@
   }
   /** Finished steps: the one just done counts while it celebrates; exploring means all done. */
   const filled = $derived(celebrating ? card.step : card.id === "explore" ? card.steps : card.step - 1);
+
+  /** The tip card's height, so spoken captions can sit just above it instead of over it. */
+  let tipHeight = $state(0);
+  $effect(() => {
+    const root = document.documentElement;
+    if (tip && tipHeight > 0) root.style.setProperty("--tip-top", `${Math.round(tipHeight)}px`);
+    else root.style.removeProperty("--tip-top");
+  });
 </script>
 
 <svelte:window onkeydown={onkey} />
@@ -267,7 +275,7 @@
 
   {#if tip}
     {#key tip.id}
-      <div class="tip" class:touch={device === "touch"} role="status" aria-live="polite" in:fly={{ y: 24, duration: settings.reducedMotion ? 0 : 420 }} out:fade={{ duration: settings.reducedMotion ? 0 : 180 }}>
+      <div class="tip" bind:clientHeight={tipHeight} class:touch={device === "touch"} role="status" aria-live="polite" in:fly={{ y: 24, duration: settings.reducedMotion ? 0 : 420 }} out:fade={{ duration: settings.reducedMotion ? 0 : 180 }}>
         <span class="tape" aria-hidden="true"></span>
         <span class="how" aria-hidden="true">How to play</span>
         <div class="tip-row">

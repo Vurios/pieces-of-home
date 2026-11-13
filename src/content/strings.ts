@@ -83,7 +83,7 @@ export const EN = {
   "notebook.yourNote": "Your note in Ingenuity's log",
   "notebook.dad": "Dad's note",
   "notebook.source": "Source",
-  "notebook.pencil": "Go see it for yourself. This page fills in when you do.",
+  "notebook.pencil": "Go see it for yourself. This page fills in when the chapter is done.",
   "notebook.model": "Model, not to scale",
   "notebook.readAloud": "Read this page aloud",
   "notebook.stopReading": "Stop reading",

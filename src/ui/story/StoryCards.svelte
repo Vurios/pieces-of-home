@@ -11,7 +11,7 @@
    * the machine with its exact credit, the place, the story in plain words,
    * the details behind it (higher reading level, from the same sourced fact)
    * and where it comes from. A card stays until the player says "Got it"
-   * (click, tap, E, Enter, Space or the gamepad's A); the world keeps going.
+   * (click, tap, E, Enter or the gamepad's A; Space stays the jump key); the world keeps going.
    */
   interface Props {
     engine: Engine;
@@ -62,11 +62,20 @@
     const onKey = (event: KeyboardEvent): void => {
       // A short pause first, so a key held from walking or delivering never skips a card unread.
       if (performance.now() - shownAt < 450) return;
-      if (event.code === "KeyE" || event.code === "Enter" || event.code === "Space") {
+      // Space is the jump key (the moonquake listener's game wants jumps), so it never closes a card.
+      if (event.code === "Space") {
+        if ((event.target as Element | null)?.closest?.(".card")) event.preventDefault();
+        return;
+      }
+      if (event.code === "KeyE" || event.code === "Enter") {
         if (event.code !== "KeyE" && (event.target as Element | null)?.closest?.(".more")) return;
         event.preventDefault();
         done();
       }
+    };
+    // A focused button would also click on Space's key up.
+    const onKeyUp = (event: KeyboardEvent): void => {
+      if (event.code === "Space" && (event.target as Element | null)?.closest?.(".card")) event.preventDefault();
     };
     let frame = 0;
     let wasDown = true;
@@ -78,9 +87,11 @@
       wasDown = down;
     };
     window.addEventListener("keydown", onKey);
+    window.addEventListener("keyup", onKeyUp);
     frame = requestAnimationFrame(poll);
     return () => {
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onKeyUp);
       cancelAnimationFrame(frame);
     };
   });

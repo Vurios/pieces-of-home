@@ -293,7 +293,9 @@ export class SendALight implements Activity {
       position: this.rigPoint.clone().addScaledVector(this.spec.rig.forward, 0.01),
       radius: 1.9,
       kind: "press",
-      label: () => (this.started && !store.value.carrying?.startsWith("mirror:") && !this.turning ? "Turn the frame" : null),
+      // Each tool asks only while its step is still to do, so a finished step leaves no old prompt behind.
+      // The frame turns once its corner is built, so it never talks over the spare mirrors beside it.
+      label: () => (this.started && this.flags.includes(stepFlag(ID, "mirrors")) && !this.flags.includes(stepFlag(ID, "turn")) && !store.value.carrying?.startsWith("mirror:") && !this.turning ? "Turn the frame" : null),
       onDone: () => {
         this.yawIndex = (this.yawIndex + 1) % YAWS.length;
         this.turning = true;
@@ -305,7 +307,7 @@ export class SendALight implements Activity {
       position: this.consolePoint,
       radius: 1.6,
       kind: "press",
-      label: () => (this.started && !this.pulse.flying ? "Send a light from Earth" : null),
+      label: () => (this.started && !this.flags.includes(stepFlag(ID, "pulse")) && !this.pulse.flying ? "Send a light from Earth" : null),
       onDone: () => this.fire(),
     });
   }

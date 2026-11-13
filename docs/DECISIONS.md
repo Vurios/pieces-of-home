@@ -739,3 +739,54 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 
 **Alternatives considered:** Playing every chapter again inside this test (over twenty minutes on a software renderer, and it would repeat the chapter tests).
 
+
+## 75. A no-hooks pass of Chapter 1, and what it changed
+
+**Date:** 2026-11-13
+
+**Decision:** A fresh subagent, told to play as an eight to ten year old and forbidden to read the code, played Chapter 1 from the workshop with only keys and mouse on a frozen build (about 78 moves). It understood the letters, the moonquake jump game and the mirror corner from the screen alone, and got stuck only on the way home. Fixes from its report:
+- The way home: Dad's tag stood at the edge of the lamp's ring and its prompt took the E. The tag now steps back while you carry Milo's part, the lamp's ring wins ties (a new `weight` on interactions), and the beam is bright enough to read as light against a dark sky.
+- Prompts for finished steps go away ("Turn the frame" only after the corner is built and until it is turned; "Send a light from Earth" until the round trip is timed).
+- Space no longer closes story cards. It is the jump key, and a card that opened during the jump game ate the first jump. E, Enter, a click or the gamepad's A still close them.
+- One fact card per beat at the little mirrors. The corner-cube card comes after the player has built a corner, after a line from Remi that ties the two together, and it shows the panel's photo, not the view from orbit.
+- Plainer words: "Bring two more mirrors", "Dad's little desk with a telescope plays Earth", "watch it come back" (there was nothing to count), "Near the lander", and the notebook's pencil note says the page fills in "when the chapter is done".
+- Spoken captions sit above the tip card instead of over it, and the envelope's paper clip moved off "By lamplight".
+- Theo and Lumi moved off the workbench approach: Theo's hint prompt was taking the Hadley dome's E.
+
+**Why:** Phase 05, section 7 ("a human-style pass with no hooks for Chapter 1").
+
+**Alternatives considered:** Driving the pass from a script (it would only follow the path we already know works).
+
+## 76. Co-op architecture
+
+**Date:** 2026-11-13
+
+**Decision:** One `Room` Durable Object per room code (PartyServer, SQLite, hibernation). It stores the shared story (letters, stamps, flags, Milo as one record), the room's world, and four seats (a random session id made on the device, the kid, last seen). It relays movement, emotes, phrases and four story events (`letter:delivered`, `activity:beat`, `activity:done`, `milo:stage`) by id; each client plays the words from its own copy of the story, so no text ever crosses the wire. Shared progress only grows (lists join, Milo takes the higher stage). The client bridge (`src/net/coop.ts`) merges the room's story into the local save, drops a carried letter a friend already delivered, follows the room through the Looking Lamp, and brings a late joiner in next to a friend with a puff of light. Movement goes out only while moving, at most 8 times a second, as an eight-number array; friends are drawn 160 ms in the past and slide between samples. Room codes must be three different words from the curated list and a number from 1 to 99; the Worker refuses any other `/parties/` path before it reaches a Durable Object. A dropped seat keeps its kid for five minutes, so a reconnect or a reload comes back as the same kid. The first player gets Remi; a newcomer gets the kid they last played if free, else Remi, else the next free kid.
+
+**Why:** Phase 06, sections 1 to 5; Game Bible 8.
+
+**Alternatives considered:** The room running each puzzle's rules (every puzzle would need a second copy on the server; the clients already agree through shared flags and ids); free-form room names (could carry a name or a message).
+
+## 77. Co-op safety
+
+**Date:** 2026-11-13
+
+**Decision:** Nothing typed, ever. Codes are picked from word lists; emotes and phrases are ids from fixed lists; story ids must match a strict id pattern, so a sentence cannot pass as an id; the room drops any message off the protocol and never forwards unknown fields. Seats hold a random id, a kid and a time, nothing else, and photos never leave the device. Rooms are never listed, and an alarm clears a room's storage a day after the last play. Each socket has a message bucket (40, refilling 20 a second); a flood is dropped and a socket that keeps flooding is closed. At most four players. The only server log is a room error line with no player data.
+
+**Why:** Phase 06, section 6; CLAUDE.md kid safety.
+
+**Alternatives considered:** Letting players name their room (free text).
+
+## 78. Co-op on the free tier
+
+**Date:** 2026-11-13
+
+**Decision:** Budget, from Cloudflare's Durable Objects pricing page (Workers Free: 100,000 requests a day, 13,000 GB-s of duration a day, 100,000 SQLite rows written a day; incoming WebSocket messages count 20 to 1; outgoing messages are free):
+- Messages: a walking player sends at most 8 a second and an idle player sends none (the e2e test measures both). A player who walks about half the time sends about 14,400 an hour, which is about 720 requests. Two players: about 1,440 requests per room-hour; four: about 2,900. The request limit stretches to about 69 two-player room-hours a day.
+- Duration is the tighter limit: a room that hears a message every few seconds stays awake, at 128 MB that is 0.125 GB x 3,600 s = 450 GB-s per busy room-hour, so about 29 busy room-hours a day. Idle rooms hibernate and cost nothing.
+- Writes: a hello writes a few rows, a story beat one, "last active" at most every ten minutes; well under the 100,000 a day.
+When any limit is hit the socket fails, the client stops after three tries and says "Co-op is resting right now. You can keep playing solo."
+
+**Why:** Phase 06, section 7.
+
+**Alternatives considered:** Sending movement on a fixed tick even when still (would roughly double traffic for no gain).

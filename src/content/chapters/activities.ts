@@ -37,8 +37,8 @@ export const SEND_A_LIGHT: ActivityDef = {
   steps: [
     {
       id: "mirrors",
-      title: "Build a corner of mirrors",
-      detail: "One flat mirror sends the light away. Carry the other two mirrors to Dad's frame.",
+      title: "Bring two more mirrors",
+      detail: "One mirror bounces the light away. Fit two more in Dad's frame to make a corner.",
       hints: [
         "Where does the light go after it hits one mirror? Can more mirrors bring it back?",
         "Two more mirrors wait on little stands near the frame. Pick one up and fit it in.",
@@ -58,11 +58,11 @@ export const SEND_A_LIGHT: ActivityDef = {
     {
       id: "pulse",
       title: "Time the light",
-      detail: "Send one blink from Dad's Earth console. Count until it comes back.",
+      detail: "Dad's little desk with a telescope plays Earth. Send one blink from it and watch it come back.",
       hints: [
         "Scientists time the light to measure how far away the Moon is.",
-        "The Earth console is the little desk with a telescope. Send a light from there.",
-        "Follow the arrow to the console. Send a light and listen for ping, then pong.",
+        "Find the little desk with a telescope. It plays Earth. Send a light from there.",
+        "Follow the arrow to the desk. Send a light and listen for ping, then pong.",
       ],
     },
   ],

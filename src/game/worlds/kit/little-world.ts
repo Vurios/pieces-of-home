@@ -119,8 +119,9 @@ export class LampBeam {
             float fade = pow(1.0 - vH, 1.6) * smoothstep(0.0, 0.05, vH);
             float shimmer = 0.85 + 0.15 * sin(vH * 24.0 - uTime * 2.0);
             // Close to the lens the beam fades away, so it never fogs the view.
-            float a = (0.06 + 0.22 * edge * edge) * fade * shimmer * smoothstep(1.8, 5.0, vDist);
-            gl_FragColor = vec4(vec3(1.0, 0.82, 0.5) * a * 1.4, a);
+            // Warm enough to read as light even against a dark blue sky (a weak glow only turned it grey).
+            float a = (0.14 + 0.4 * edge * edge) * fade * shimmer * smoothstep(1.8, 5.0, vDist);
+            gl_FragColor = vec4(vec3(1.0, 0.86, 0.58) * a * 2.2, a);
           }
         `,
       }),

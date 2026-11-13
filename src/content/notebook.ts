@@ -184,6 +184,15 @@ export interface FactStory {
   when: string | null;
 }
 
+/**
+ * A fact about the machine itself shows the machine, not the view from orbit
+ * (found in the no-hooks Chapter 1 pass: the corner cubes card showed the site from above).
+ */
+const PICTURE_FOR: Record<string, string> = {
+  "a11-lrrr-placed": "apollo11-lrrr",
+  "a11-lrrr-cubes": "apollo11-lrrr",
+};
+
 export function factStory(id: string): FactStory {
   const entry = fact(id);
   const has = (s: MachineSpread): boolean => [...s.learned, ...s.thenNow, ...s.deeper].some((f) => f.id === id) || s.place?.id === id;
@@ -201,7 +210,9 @@ export function factStory(id: string): FactStory {
   // Facts on the same page take turns with its pictures.
   const pictures = spread?.images ?? [];
   const turn = [...id].reduce((sum, c) => sum + c.charCodeAt(0), 0);
-  return { spread, image: pictures.length ? pictures[turn % pictures.length]! : null, where, details: details.slice(0, 4), when: entry.date ? formatDate(entry.date) : null };
+  const preferred = PICTURE_FOR[id] ? images.get(PICTURE_FOR[id]!) : undefined;
+  const image = preferred ?? (pictures.length ? pictures[turn % pictures.length]! : null);
+  return { spread, image, where, details: details.slice(0, 4), when: entry.date ? formatDate(entry.date) : null };
 }
 
 export function factText(entry: FactEntry, today = new Date()): string {

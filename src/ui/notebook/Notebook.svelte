@@ -1265,7 +1265,9 @@
   .clip-wire {
     position: absolute;
     top: -14px;
-    left: 26px;
+    /* Clipped at the right end of the envelope, clear of its "By lamplight" label. */
+    left: auto;
+    right: 64px;
     z-index: 1;
     width: 13px;
     height: 40px;
