@@ -854,3 +854,15 @@ When any limit is hit the socket fails, the client stops after three tries and s
 **Why:** Team feedback, 2026-11-14: "Game should also have a way to go freely to mars and moon." The chapter list in the menu already allowed it, but nobody found it; a rocket in the yard and a button on the map are where a player looks.
 
 **Alternatives considered:** A parked rocket in every little world (each world would need room for it off the paths), a travel row on the HUD (more buttons on screen during play).
+
+## 85. A loading page in the game's own look
+
+**Date:** 2026-11-14
+
+**Decision:** The two loading pictures (a flat night hill with the house, then Dad's notebook on the bench) are replaced by one scene in the game's look, in 2.5D. The little home planet turns slowly under the night sky with Dad's workshop, the house, the windpump, the toy rocket and the balloon going round on it; Remi walks on top with a letter; the Moon (with a gold lander) and Mars (with a blue-winged rover) hang in the sky, and Dad's letters fly the dotted routes out to them. The title is the same chunky block letters as the 3D title (cream faces on wooden sides, OF in amber, the O of HOME a bulb), dropping in letter by letter. Layers lean with the pointer, near ones more than far ones. A pinned paper card ticks through "Things that kept working" (each line still a checked fact) with a progress bar, then becomes a "Turn on the light" button; the bulb in the title lights and its light fills the screen and becomes Dad's lamp in the 3D workshop, as before.
+
+Loops move in steps, about a dozen frames a second, like paper stop motion. The planet is one image, drawn once, so turning it never redraws its paths. When the browser draws WebGL in software (no graphics chip), the loops hold still: under two parallel test browsers the moving planet made booting take about 90 seconds instead of 6.
+
+**Why:** Team feedback, 2026-11-14: the landing page "does not match the game style", make it animated "like in the menu", 2.5D or 3D.
+
+**Alternatives considered:** A real Three.js scene for the loader (needs the engine's code before anything shows, which is the wait the loader covers), a looping video (big download, blurry text), keeping the notebook but restyling it (still not the game's look).
