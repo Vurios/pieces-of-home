@@ -8,6 +8,7 @@ export const STORY_COPY = {
   partTaken: "It's for Milo. Step into the lamp light to take it home.",
   saved: "Saved in Dad's notebook",
   visit: (place: string): string => `Visit ${place}`,
+  rocket: "Fly Dad's rocket",
   goHome: "Go back to the workshop",
   takeHome: "Take the part home",
 } as const;

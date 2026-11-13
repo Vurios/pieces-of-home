@@ -19,8 +19,10 @@
     engine: Engine;
     game: GameState;
     onclose: () => void;
+    /** Opens Dad's rocket, to fly to the Moon or Mars (once the worlds are open). */
+    onrocket?: (() => void) | undefined;
   }
-  let { engine, game, onclose }: Props = $props();
+  let { engine, game, onclose, onrocket }: Props = $props();
 
   const R = 100;
   // The map is a snapshot from the moment it opens: the world waits while it is up.
@@ -473,6 +475,7 @@
         <div class="buttons">
           <button type="button" class="btn amber" onclick={() => goTo(me)}>{t("map.findMe")}</button>
           {#if next}<button type="button" class="btn" onclick={() => next && goTo(next)}>{t("map.next")}</button>{/if}
+          {#if onrocket}<button type="button" class="btn rocket" onclick={onrocket}>{t("map.rocket")}</button>{/if}
         </div>
         <p class="how">{t("map.how")}</p>
         <h3 class="head">{t("map.places")} <span>{t("map.count", { n: list.length, total: map.marks.length })}</span></h3>

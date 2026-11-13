@@ -140,7 +140,7 @@ test("Chapter 1: from the dome to the stamp", async ({ page }, info) => {
   page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
   await start(page);
 
-  // Into the Moon dome, through the lamp countdown.
+  // Into the Moon dome: the camera dives in, then the rocket trip.
   await goTo(page, "dome-tranquility");
   await use(page);
   await page.waitForFunction(() => (window as unknown as { __poh: Poh }).__poh.worldId() === "tranquility", null, { timeout: 30_000 });

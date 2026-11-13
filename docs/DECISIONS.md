@@ -844,3 +844,13 @@ When any limit is hit the socket fails, the client stops after three tries and s
 **Why:** Team feedback, 2026-11-14: "Further improve the 3d animation too of traveling to other planets". The old cruise lasted under two seconds of one chase angle.
 
 **Alternatives considered:** A porthole view from inside the rocket (a new interior model for one shot), a warp-tunnel effect (reads as science fiction, not Dad's toy), passing a ringed planet (would suggest a real planet sits between the Earth and Mars).
+
+## 84. Fly Dad's rocket anywhere
+
+**Date:** 2026-11-14
+
+**Decision:** Dad's model rocket in the yard is now a way to travel: "Fly Dad's rocket" opens a "Where to?" card with three little planets (home, the Moon, Mars) and each place as a ticket under its planet. The map has the same button ("Fly to the Moon or Mars"), so it works from any world. A place is open on the same rule as the chapter list (after the prologue, or with Explore freely; the bonus after Chapter 3). Flying home lands you in front of the toy rocket. The 3, 2, 1 countdown is gone everywhere: a dome trip starts with the dive, every other trip goes straight to the rocket ride.
+
+**Why:** Team feedback, 2026-11-14: "Game should also have a way to go freely to mars and moon." The chapter list in the menu already allowed it, but nobody found it; a rocket in the yard and a button on the map are where a player looks.
+
+**Alternatives considered:** A parked rocket in every little world (each world would need room for it off the paths), a travel row on the HUD (more buttons on screen during play).

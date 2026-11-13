@@ -16,7 +16,7 @@ import { STORY_COPY } from "../../../content/chapters/common";
 import { FINALE_BEGUN, FINALE_COPY, MILO_VOICE, RECORD, V1_LETTER, finaleStep } from "../../../content/finale";
 import { torus } from "../../actors/parts";
 import { C, buildDish, buildHouse, buildLampPost, buildMailbox } from "./buildings";
-import { GROUND_PATCHES, type Site, HILL, HILL_TOP, HOME_RADIUS, MAILBOX, MEADOW, ORCHARD, PATH_HALF_WIDTH, PLACES, POND, POND_RADIUS, SITES, TERRAIN, TRAILS, TRAIL_LAMPS, clearOfTrails, local, site } from "./layout";
+import { GROUND_PATCHES, type Site, HILL, HILL_TOP, HOME_RADIUS, MAILBOX, MEADOW, ORCHARD, PATH_HALF_WIDTH, PLACES, POND, POND_RADIUS, SITES, TERRAIN, TRAILS, TRAIL_LAMPS, clearOfTrails, local, localDir, site } from "./layout";
 import { buildGarden, buildMeadow, groundMatrix, pathDistance, planTrees, scatterNature, treeShade } from "./nature";
 import { buildPaths } from "./paths";
 import { presence } from "../../../net/presence";
@@ -384,6 +384,16 @@ export function createHome(ctx: WorldContext): World {
 
   // ---- Dad's archive board: a card for each machine he never built a world for ----
   interactions.add({
+    id: "rocket",
+    position: local(SITES.rocket, 1.05, 0, 0.95),
+    radius: 1.7,
+    kind: "press",
+    // Dad's toy rocket flies to any little world that is open, any time.
+    label: () => (opened() && !store.value.carrying?.startsWith("part:") ? STORY_COPY.rocket : null),
+    onDone: () => bus.emit("rocket:open", {}),
+  });
+
+  interactions.add({
     id: "archive",
     position: shop.archive.stand,
     radius: 1.1,
@@ -680,8 +690,9 @@ export function createHome(ctx: WorldContext): World {
       };
     },
     spawn: { dir: spawnDir, forward: spawnForward },
-    // Back from a dome: standing at the workbench, facing it.
-    entries: { bench: { dir: inShed(0.9, -0.55), forward: shedForward } },
+    // Back from a dome: standing at the workbench, facing it. Home by Dad's rocket:
+    // in front of the toy rocket on its pad.
+    entries: { bench: { dir: inShed(0.9, -0.55), forward: shedForward }, rocket: { dir: localDir(SITES.rocket, 0.7, 3.1), forward: SITES.rocket.forward.clone().negate() } },
     intro: {
       lamp: shop.lampBulb.clone(),
       // A dolly back from Dad's lamp along one straight line, out through the

@@ -24,6 +24,7 @@
   import Toasts from "./hud/Toasts.svelte";
   import Notebook from "./notebook/Notebook.svelte";
   import ArchivePanel from "./panels/ArchivePanel.svelte";
+  import RocketPanel from "./panels/RocketPanel.svelte";
   import ChaptersPanel from "./panels/ChaptersPanel.svelte";
   import CreditsPanel from "./panels/CreditsPanel.svelte";
   import SettingsPanel from "./panels/SettingsPanel.svelte";
@@ -31,7 +32,6 @@
   import { keepPhoto } from "./photos";
   import { CHAPTERS } from "../content/chapters";
   import { SPREADS } from "../content/notebook";
-  import Countdown from "./story/Countdown.svelte";
   import { StoryDirector } from "./story/director";
   import Seismograph from "./story/Seismograph.svelte";
   import StoryCards from "./story/StoryCards.svelte";
@@ -65,8 +65,8 @@
   /** The short story plays before a new story starts. */
   let story = $state(false);
 
-  /** A trip into a dome waits for its countdown. */
-  let trip = $state<{ to: string; entry?: string; place: string; dive?: boolean } | null>(null);
+  /** A dive into one of Dad's domes, before the trip itself. */
+  let trip = $state<{ to: string; entry?: string } | null>(null);
 
   $effect(() => net.subscribe((next) => (netState = next)));
   // The story director plays chapter scripts and moves each chapter along.
@@ -124,25 +124,23 @@
 
   $effect(() => {
     const offs = [
-      engine.bus.on("travel", ({ to, entry }) => {
+      engine.bus.on("travel", ({ to, entry, via }) => {
         if (engine.traveling || trip) return;
         // A mirror panel, a breeze flag or the parts bag stays in its world: it goes back where it came from.
         if (/^(mirror|flag|bag):/.test(engine.store.value.carrying ?? "")) engine.store.update((s) => void (s.carrying = null));
+        // Looking into a dome on Dad's bench: the camera dives into its little world first.
+        // Otherwise (Dad's rocket, the chapter list) the rocket trip is the whole ride.
         const chapter = CHAPTERS.find((c) => c.world === to);
-        if (chapter) {
-          // Looking into a dome on Dad's bench: the camera dives into its little world first.
-          const dome = engine.world?.id === "home" ? engine.world.anchor(`dome-top-${to}`) : null;
-          if (dome) {
-            trip = { to, place: chapter.dome, dive: true, ...(entry ? { entry } : {}) };
-            audio.play("lamp-click");
-            void engine.diveInto(dome).then(() => {
-              const t = trip;
-              trip = null;
-              if (t) void engine.travel(t.to, t.entry);
-            });
-          } else trip = { to, place: chapter.dome, ...(entry ? { entry } : {}) };
-        }
-        else void engine.travel(to, entry);
+        const dome = chapter && via !== "rocket" && engine.world?.id === "home" ? engine.world.anchor(`dome-top-${to}`) : null;
+        if (dome) {
+          trip = { to, ...(entry ? { entry } : {}) };
+          audio.play("lamp-click");
+          void engine.diveInto(dome).then(() => {
+            const t = trip;
+            trip = null;
+            if (t) void engine.travel(t.to, t.entry);
+          });
+        } else void engine.travel(to, entry);
       }),
       engine.bus.on("notebook:open", ({ spread }) => {
         const index = SPREADS.findIndex((s) => s.id === spread);
@@ -170,6 +168,7 @@
         }, 1200);
       }),
       engine.bus.on("archive:open", () => flow.open("archive")),
+      engine.bus.on("rocket:open", () => flow.open("rocket")),
       engine.bus.on("hint:ask", ({ who, name, at }) => friendHint(who, name, at)),
       engine.bus.on("letter:delivered", ({ letter }) => {
         if (letter !== "to-the-lamp") return;
@@ -343,16 +342,6 @@
 <DriveCard {engine} />
 <ActivityMeter {engine} />
 <Seismograph {engine} {game} />
-{#if trip && !trip.dive}
-  <Countdown
-    place={trip.place}
-    ondone={() => {
-      const t = trip;
-      trip = null;
-      if (t) void engine.travel(t.to, t.entry);
-    }}
-  />
-{/if}
 <Toasts {engine} />
 <StampMoment {engine} />
 
@@ -382,7 +371,18 @@
     }}
   />
 {:else if flow.panel === "map"}
-  <MapPanel {engine} {game} onclose={() => flow.close()} />
+  <MapPanel {engine} {game} onclose={() => flow.close()} onrocket={chaptersOpen && !game.carrying?.startsWith("part:") ? () => flow.open("rocket") : undefined} />
+{:else if flow.panel === "rocket"}
+  <RocketPanel
+    {game}
+    here={engine.world?.id ?? "home"}
+    onclose={() => flow.close()}
+    ongo={(world) => {
+      flow.close();
+      // Home by rocket lands in the yard by the toy rocket; a little world at its lamp.
+      window.setTimeout(() => engine.bus.emit("travel", { to: world, entry: world === "home" ? "rocket" : "lamp", via: "rocket" }), 250);
+    }}
+  />
 {/if}
 
 <TravelScreen {engine} />

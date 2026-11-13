@@ -95,6 +95,7 @@ export interface GameEvents {
   "photo:taken": { count: number };
   /** Open Dad's archive cards (the board in the workshop). */
   "archive:open": Record<string, never>;
+  "rocket:open": Record<string, never>;
   /** A story card: Dad's handwritten note, or a fact from facts.json. The UI answers with story:card-done. */
   "story:card": { key: number; kind: "note" | "fact"; text: string; fact?: string };
   "story:card-done": { key: number };
@@ -116,7 +117,8 @@ export interface GameEvents {
   /** Kicks up a little dust (wheels, landings). */
   "dust:puff": { at: [number, number, number]; count: number; spread: number };
   /** Ask to go to another little world through the Looking Lamp. `entry` picks where to stand there. */
-  travel: { to: string; entry?: string };
+  /** `via: "rocket"` is a trip in Dad's rocket from the yard or the map: no dive into a dome. */
+  travel: { to: string; entry?: string; via?: "rocket" };
   /**
    * A trip through the Looking Lamp, for the travel screen: it starts as the
    * iris closes, `arrive` comes once the new world is ready and the screen has
