@@ -343,6 +343,52 @@ export class Engine {
   private readonly mapAnswer = { up: new Vector3(), facing: new Vector3(), heading: new Vector3(), objective: new Vector3() };
 
   private guideArrow = true;
+  /**
+   * The dive into one of Dad's domes on the way to its world: the camera swings
+   * in close over the glass, then pushes down into the little world while the
+   * lamp light closes around it.
+   */
+  private dive: { start: Vector3; startQ: Quaternion; point: Vector3; side: Vector3; age: number; seconds: number; resolve: (() => void) | null } | null = null;
+
+  /** Plays the dive into a dome at `point`; resolves when the light should start to close. */
+  diveInto(point: Vector3, seconds = 1.9): Promise<void> {
+    if (this.reducedMotion || this.mode !== "play") return Promise.resolve();
+    const toCamera = this.camera.position.clone().sub(point);
+    const up = point.clone().normalize();
+    const side = toCamera.addScaledVector(up, -toCamera.dot(up));
+    if (side.lengthSq() < 1e-6) side.copy(this.player.forward).negate();
+    side.normalize();
+    return new Promise((resolve) => {
+      this.dive = { start: this.camera.position.clone(), startQ: this.camera.quaternion.clone(), point: point.clone(), side, age: 0, seconds, resolve };
+      this.bus.emit("dust:puff", { at: [point.x, point.y, point.z], count: 10, spread: 0.5 });
+    });
+  }
+
+  private diveShot(dt: number): void {
+    const d = this.dive!;
+    d.age += dt;
+    const t = Math.min(1, d.age / d.seconds);
+    const up = this.scratch.copy(d.point).normalize();
+    // First a close, slightly high look at the glass, then down into it.
+    const close = d.point.clone().addScaledVector(d.side, 1.05).addScaledVector(up, 0.55);
+    const inside = d.point.clone().addScaledVector(d.side, 0.08).addScaledVector(up, 0.12);
+    const a = Math.min(1, t / 0.55);
+    const swing = a * a * (3 - 2 * a);
+    const b = Math.max(0, (t - 0.55) / 0.45);
+    const push = b * b * b;
+    const eye = d.start.clone().lerp(close, swing).lerp(inside, push);
+    this.cineMatrix.lookAt(eye, d.point.clone().addScaledVector(up, -0.05), up);
+    this.cineQuat.setFromRotationMatrix(this.cineMatrix);
+    this.camera.position.copy(eye);
+    this.camera.quaternion.copy(d.startQ).slerp(this.cineQuat, Math.min(1, swing * 1.2));
+    // The light closes on the dome, wherever it sits on screen.
+    const p = d.point.clone().project(this.camera);
+    this.post.irisCenter.set(Math.min(0.9, Math.max(0.1, p.x * 0.5 + 0.5)), Math.min(0.9, Math.max(0.1, p.y * 0.5 + 0.5)));
+    if (t >= 0.6 && d.resolve) {
+      d.resolve();
+      d.resolve = null;
+    }
+  }
   /** Shows or hides the paper arrow that points to the next stop (a setting). */
   setGuideArrow(on: boolean): void {
     this.guideArrow = on;
@@ -551,8 +597,13 @@ export class Engine {
     const from = this.world?.id ?? null;
     try {
       this.bus.emit("travel:start", { from, to: id });
-      this.post.irisCenter.set(0.5, 0.5);
-      await this.animateIris(0, 1, 0.7);
+      // After a dive the light closes on the dome; otherwise in the middle.
+      if (!this.dive) this.post.irisCenter.set(0.5, 0.5);
+      await this.animateIris(0, 1, this.dive ? 0.55 : 0.7);
+      if (this.dive) {
+        this.dive.resolve?.();
+        this.dive = null;
+      }
       const shut = performance.now();
       await this.loadWorld(id, entry, false);
       // Compile the new world's shaders while the light is still shut, so it opens smoothly.
@@ -862,6 +913,7 @@ export class Engine {
     }
 
     if (this.farewell && !shot && !titling) this.farewellShot(dt, world);
+    if (this.dive && !shot) this.diveShot(dt);
 
     // The low key light leans the same way wherever the player stands.
     const up = this.player.up;

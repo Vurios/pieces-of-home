@@ -824,3 +824,13 @@ When any limit is hit the socket fails, the client stops after three tries and s
 **Why:** Team feedback, 2026-11-14.
 
 **Alternatives considered:** Lifting trails higher above the grass (they would float on slopes), or drawing them without a depth test (they would show through hills and props).
+
+## 82. Into the dome, not a countdown
+
+**Date:** 2026-11-14
+
+**Decision:** Looking into one of Dad's domes no longer shows the 3, 2, 1 countdown. The camera swings close over the glass, pushes down into the little world, and the lamp light closes around the dome where it sits on screen; then the rocket trip plays. Each dome now holds a small planet with its machine on top: the gold lander base with its mirror panel and moonquake listener at Tranquility Base, the buggy by a winding rille at Hadley, Opportunity with blue wings by a little crater at Meridiani, and Ingenuity with crossed blades and rover tracks at Valinor Hills. The HUD steps aside during the dive and any trip. Reduced motion skips the dive and goes straight to the trip.
+
+**Why:** Team feedback, 2026-11-14: "when using tranquility base do something else instead of a countdown do animations too". A dive into the diorama ties the bench to the world you arrive in.
+
+**Alternatives considered:** A 2D zoom on a flat picture of the dome (breaks the 3D look); keeping the countdown over the dive (two transitions back to back felt slow).

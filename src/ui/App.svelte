@@ -66,7 +66,7 @@
   let story = $state(false);
 
   /** A trip into a dome waits for its countdown. */
-  let trip = $state<{ to: string; entry?: string; place: string } | null>(null);
+  let trip = $state<{ to: string; entry?: string; place: string; dive?: boolean } | null>(null);
 
   $effect(() => net.subscribe((next) => (netState = next)));
   // The story director plays chapter scripts and moves each chapter along.
@@ -129,7 +129,19 @@
         // A mirror panel, a breeze flag or the parts bag stays in its world: it goes back where it came from.
         if (/^(mirror|flag|bag):/.test(engine.store.value.carrying ?? "")) engine.store.update((s) => void (s.carrying = null));
         const chapter = CHAPTERS.find((c) => c.world === to);
-        if (chapter) trip = { to, place: chapter.dome, ...(entry ? { entry } : {}) };
+        if (chapter) {
+          // Looking into a dome on Dad's bench: the camera dives into its little world first.
+          const dome = engine.world?.id === "home" ? engine.world.anchor(`dome-top-${to}`) : null;
+          if (dome) {
+            trip = { to, place: chapter.dome, dive: true, ...(entry ? { entry } : {}) };
+            audio.play("lamp-click");
+            void engine.diveInto(dome).then(() => {
+              const t = trip;
+              trip = null;
+              if (t) void engine.travel(t.to, t.entry);
+            });
+          } else trip = { to, place: chapter.dome, ...(entry ? { entry } : {}) };
+        }
         else void engine.travel(to, entry);
       }),
       engine.bus.on("notebook:open", ({ spread }) => {
@@ -290,6 +302,9 @@
         return "";
     }
   });
+
+  // The game's own screens, a trip starting and the dive into a dome all clear the HUD away.
+  const quiet = $derived(flow.stage !== "play" || flow.covered || banners.traveling || banners.screens > 0 || !!trip);
 </script>
 
 {#if flow.stage === "title" || flow.stage === "menu"}
@@ -304,7 +319,7 @@
 
 <Hud
   {engine}
-  hidden={flow.stage !== "play" || flow.covered || banners.traveling || banners.screens > 0}
+  hidden={quiet}
   onnotebook={() => toggleNotebook(true)}
   onphoto={photo}
   onemote={() => (flow.emotes = !flow.emotes)}
@@ -312,10 +327,10 @@
   onhint={hint}
   onmap={() => engine.mapView() && flow.open("map")}
 />
-<MiniMap {engine} {game} hidden={flow.stage !== "play" || flow.covered || banners.traveling || banners.screens > 0 || !settings.value.miniMap} onopen={() => flow.open("map")} />
-<Guide {engine} {game} hidden={flow.stage !== "play" || flow.covered || banners.traveling || banners.screens > 0} notebookOpen={flow.notebook} />
-<PlaceCard {engine} hidden={flow.stage !== "play" || flow.covered || flow.notebook} />
-<FriendTags {engine} hidden={flow.stage !== "play" || flow.covered || banners.traveling || banners.screens > 0} />
+<MiniMap {engine} {game} hidden={quiet || !settings.value.miniMap} onopen={() => flow.open("map")} />
+<Guide {engine} {game} hidden={quiet} notebookOpen={flow.notebook} />
+<PlaceCard {engine} hidden={flow.stage !== "play" || flow.covered || flow.notebook || !!trip} />
+<FriendTags {engine} hidden={quiet} />
 <Speech {engine} />
 <HelpBadge />
 <StoryCards {engine} />
@@ -328,7 +343,7 @@
 <DriveCard {engine} />
 <ActivityMeter {engine} />
 <Seismograph {engine} {game} />
-{#if trip}
+{#if trip && !trip.dive}
   <Countdown
     place={trip.place}
     ondone={() => {

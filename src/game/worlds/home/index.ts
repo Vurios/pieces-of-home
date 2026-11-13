@@ -706,6 +706,13 @@ export function createHome(ctx: WorldContext): World {
       if (id === "lamp") return shop.lampBulb.clone();
       if (id === "dish") return local(SITES.dish, 0, 1.6, 0);
       if (id === "milo") return milo.root.position.clone();
+      // The glass top of a dome: where the camera dives in on the way to its world.
+      if (id.startsWith("dome-top-")) {
+        const world = id.slice("dome-top-".length);
+        if (world === BONUS.world) return shop.bonusDome.top.clone();
+        const i = DOME_WORLDS.indexOf(world);
+        return i >= 0 ? shop.domes[i]!.top.clone() : null;
+      }
       return null;
     },
     setPower(level: number) {

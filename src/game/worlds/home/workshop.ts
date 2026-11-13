@@ -338,43 +338,88 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
   lit(pool, new Vector3(lampBulbLocal.x + 0.2, BENCH_Y + 0.004, lampBulbLocal.z + 0.12), 7);
   const lampGlow: Object3D[] = [inner, bulb, halo, pool];
   const domeGeometry = new SphereGeometry(0.24, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2);
-  const worlds: { x: number; ground: string; detail: (x: number, y: number, z: number) => void }[] = [
+  // Dad's little worlds: a small planet in each dome with its machine on top, close enough
+  // to the glass that the camera's dive on the way in shows them (they used to sit
+  // inside the planet, out of sight).
+  const PLANET = 0.17;
+  /** A piece on the little planet's surface, `dx`/`dz` from its top, tipped to stand on it. */
+  const on = (x: number, z: number, dx: number, dz: number, lift: number, geometry: Parameters<typeof b.place>[0], color: string, yaw: number, scale: [number, number, number] | number): void => {
+    const h = Math.sqrt(Math.max(0, PLANET * PLANET - dx * dx - dz * dz));
+    const tip = 1 + lift / PLANET;
+    b.place(geometry, color, v(x + dx * tip, BENCH_Y + h * tip, z + dz * tip), [Math.atan2(dz, h), yaw, -Math.atan2(dx, h)], scale, m);
+  };
+  const crater = (x: number, z: number, dx: number, dz: number, r: number, rim: string, floor: string): void => {
+    on(x, z, dx, dz, 0.001, cylinder(14), rim, 0, [r, 0.004, r]);
+    on(x, z, dx, dz, 0.003, cylinder(14), floor, 0, [r * 0.7, 0.003, r * 0.7]);
+  };
+  const rock = (x: number, z: number, dx: number, dz: number, size: number, color: string): void => on(x, z, dx, dz, size * 0.3, sphere("low"), color, dx * 40, [size, size * 0.6, size * 0.8]);
+  const worlds: { x: number; ground: string; detail: (x: number, z: number) => void }[] = [
     {
       x: 0.25,
       ground: "#B9B4AA",
-      detail: (x, y, z) => {
-        // Tranquility Base: a tiny gold lander and a mirror panel.
-        b.place(box(0.004), C.brass, v(x, y + 0.13, z), [0, 0.4, 0], [0.05, 0.03, 0.05], m);
-        for (const dx of [-1, 1]) b.place(cylinder(4), C.metal, v(x + dx * 0.025, y + 0.11, z), [0, 0, dx * 0.5], [0.004, 0.04, 0.004], m);
-        b.place(box(0.002), "#59607A", v(x + 0.05, y + 0.11, z + 0.05), [0.6, 0, 0], [0.03, 0.002, 0.03], m);
+      detail: (x, z) => {
+        // Tranquility Base: the gold lander base that stayed behind, the mirror panel, the moonquake listener, the flag and craters.
+        on(x, z, 0, 0, 0.032, box(0.004), C.brass, 0.4, [0.05, 0.03, 0.05]);
+        for (const [a, b2] of [[1, 1], [1, -1], [-1, 1], [-1, -1]] as const) {
+          on(x, z, a * 0.026, b2 * 0.026, 0.012, cylinder(4), C.metal, 0, [0.003, 0.03, 0.003]);
+          on(x, z, a * 0.032, b2 * 0.032, 0.002, cylinder(8), C.metal, 0, [0.008, 0.002, 0.008]);
+        }
+        on(x, z, 0.07, 0.045, 0.006, box(0.002), "#3E4558", 0.6, [0.028, 0.004, 0.022]);
+        on(x, z, -0.065, 0.05, 0.007, box(0.003), "#C9B48C", 0.2, [0.016, 0.01, 0.016]);
+        for (const side of [-1, 1]) on(x, z, -0.065 + side * 0.016, 0.05, 0.007, box(0.001), "#59607A", 0.2, [0.016, 0.002, 0.012]);
+        on(x, z, 0.03, -0.07, 0.024, cylinder(4), "#E9E4D8", 0, [0.002, 0.05, 0.002]);
+        on(x, z, 0.04, -0.07, 0.04, box(0.001), "#F4F1EA", 0, [0.02, 0.012, 0.001]);
+        crater(x, z, -0.08, -0.06, 0.03, "#A7A196", "#8F8A82");
+        crater(x, z, 0.1, -0.02, 0.022, "#A7A196", "#8F8A82");
+        rock(x, z, -0.03, 0.1, 0.012, "#9C978E");
       },
     },
     {
       x: 0.85,
       ground: "#A9A49A",
-      detail: (x, y, z) => {
-        // Hadley: a tiny rover by a groove.
-        b.place(box(0.004), C.metal, v(x, y + 0.125, z + 0.02), [0.2, 0.3, 0], [0.05, 0.012, 0.03], m);
-        b.place(box(0.002), "#59607A", v(x - 0.02, y + 0.1, z - 0.03), [0.5, 0.6, 0], [0.02, 0.004, 0.11], m);
+      detail: (x, z) => {
+        // Hadley: the Moon buggy by the winding rille, mountains behind.
+        on(x, z, 0.01, 0.02, 0.018, box(0.004), "#C9CBC6", 0.5, [0.06, 0.008, 0.032]);
+        for (const [a, b2] of [[1, 1], [1, -1], [-1, 1], [-1, -1]] as const) on(x, z, 0.01 + a * 0.022, 0.02 + b2 * 0.016, 0.01, cylinder(10), "#4A4644", 0.5, [0.009, 0.006, 0.009]);
+        on(x, z, 0.0, 0.02, 0.026, box(0.002), "#59607A", 0.5, [0.018, 0.012, 0.004]);
+        on(x, z, 0.03, 0.03, 0.04, cylinder(4), C.metal, 0, [0.002, 0.03, 0.002]);
+        on(x, z, 0.03, 0.03, 0.056, cone(10), "#E9E4D8", 0, [0.012, 0.005, 0.012]);
+        for (let i = 0; i < 7; i += 1) on(x, z, -0.1 + i * 0.03, -0.05 - Math.sin(i * 0.9) * 0.025, 0.0, box(0.002), "#6E6A63", 0.4 + Math.sin(i) * 0.3, [0.034, 0.003, 0.012]);
+        on(x, z, -0.06, -0.09, 0.0, sphere("low"), "#9A958C", 0, [0.06, 0.04, 0.04]);
+        on(x, z, 0.06, -0.1, 0.0, sphere("low"), "#8F8A82", 0, [0.05, 0.03, 0.035]);
+        rock(x, z, 0.08, 0.06, 0.012, "#8F8A82");
       },
     },
     {
       x: 1.45,
       ground: "#B5643A",
-      detail: (x, y, z) => {
-        // Meridiani: a tiny rover with blue solar wings.
-        b.place(box(0.004), "#4C5A7A", v(x, y + 0.128, z + 0.02), [0.25, -0.4, 0], [0.06, 0.004, 0.04], m);
-        b.place(cylinder(4), C.metal, v(x, y + 0.145, z + 0.01), [0, 0, 0], [0.004, 0.03, 0.004], m);
+      detail: (x, z) => {
+        // Meridiani: Opportunity with its blue wings at the rim of a little crater, and a field of blueberries.
+        on(x, z, 0.02, 0.03, 0.014, box(0.004), "#D7D2C6", -0.4, [0.03, 0.012, 0.024]);
+        on(x, z, 0.02, 0.03, 0.024, box(0.002), "#3D4D78", -0.4, [0.07, 0.003, 0.04]);
+        on(x, z, 0.035, 0.045, 0.04, cylinder(4), C.metal, 0, [0.002, 0.03, 0.002]);
+        on(x, z, 0.035, 0.045, 0.056, box(0.002), "#D7D2C6", -0.4, [0.012, 0.006, 0.006]);
+        for (const [a, b2] of [[1, 1], [1, -1], [-1, 1], [-1, -1], [0, 1], [0, -1]] as const) on(x, z, 0.02 + a * 0.018, 0.03 + b2 * 0.014, 0.004, cylinder(8), "#4A4644", -0.4, [0.006, 0.005, 0.006]);
+        crater(x, z, -0.05, -0.04, 0.045, "#C98257", "#9E5531");
+        for (let i = 0; i < 6; i += 1) on(x, z, -0.05 + Math.cos(i) * 0.02, -0.04 + Math.sin(i * 1.7) * 0.02, 0.004, sphere("low"), "#4C5A7A", 0, 0.004);
+        rock(x, z, 0.09, -0.04, 0.014, "#8E4A2C");
+        rock(x, z, -0.09, 0.06, 0.01, "#8E4A2C");
       },
     },
     {
       x: 2.05,
       ground: "#8E3F2A",
-      detail: (x, y, z) => {
-        // Jezero: a tiny helicopter with crossed blades.
-        b.place(box(0.004), C.metal, v(x, y + 0.13, z + 0.02), [0.3, 0, 0], [0.018, 0.018, 0.018], m);
-        b.place(box(0.001), C.paper, v(x, y + 0.16, z + 0.025), [0.3, 0.5, 0], [0.07, 0.002, 0.008], m);
-        b.place(box(0.001), C.paper, v(x, y + 0.165, z + 0.025), [0.3, -0.5, 0], [0.07, 0.002, 0.008], m);
+      detail: (x, z) => {
+        // Valinor Hills: Ingenuity on its four thin legs with crossed blades, rover tracks and sand ripples.
+        on(x, z, 0.0, 0.02, 0.03, box(0.004), "#D7D2C6", 0.3, [0.018, 0.016, 0.018]);
+        for (const [a, b2] of [[1, 1], [1, -1], [-1, 1], [-1, -1]] as const) on(x, z, a * 0.016, 0.02 + b2 * 0.016, 0.014, cylinder(4), C.metal, 0, [0.0015, 0.03, 0.0015]);
+        on(x, z, 0.0, 0.02, 0.05, cylinder(4), C.metal, 0, [0.002, 0.026, 0.002]);
+        on(x, z, 0.0, 0.02, 0.058, box(0.001), C.paper, 0.5, [0.08, 0.002, 0.008]);
+        on(x, z, 0.0, 0.02, 0.066, box(0.001), C.paper, -0.5, [0.08, 0.002, 0.008]);
+        on(x, z, 0.0, 0.02, 0.072, box(0.001), "#2B3A63", 0.3, [0.02, 0.002, 0.016]);
+        for (let i = 0; i < 6; i += 1) for (const side of [-1, 1]) on(x, z, -0.11 + i * 0.03, 0.08 + side * 0.008 - i * 0.012, 0.001, box(0.002), "#6E2F1E", -0.4, [0.028, 0.002, 0.004]);
+        for (let i = 0; i < 4; i += 1) on(x, z, 0.06 + i * 0.01, -0.06 + i * 0.022, 0.001, box(0.002), "#A6553A", 0.9, [0.05, 0.003, 0.006]);
+        rock(x, z, -0.08, -0.05, 0.014, "#6E2F1E");
       },
     },
   ];
@@ -383,8 +428,8 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     b.place(cylinder(24), C.woodDark, v(world.x, BENCH_Y + 0.03, z), [0, 0, 0], [0.27, 0.06, 0.27], m);
     b.place(cylinder(24), C.brass, v(world.x, BENCH_Y + 0.065, z), [0, 0, 0], [0.25, 0.012, 0.25], m);
     // The little planet, sunk into the base so it reads as a world under glass.
-    b.place(sphere("mid"), world.ground, v(world.x, BENCH_Y + 0.0, z), [0, 0, 0], 0.17, m);
-    world.detail(world.x, BENCH_Y - 0.0, z);
+    b.place(sphere("mid"), world.ground, v(world.x, BENCH_Y + 0.0, z), [0, 0, 0], PLANET, m);
+    world.detail(world.x, z);
     // Dad's paper tag on a stake.
     b.place(cylinder(4), C.woodDark, v(world.x + 0.2, BENCH_Y + 0.12, z + 0.22), [0, 0, 0], [0.006, 0.18, 0.006], m);
     b.place(box(0.003), C.paper, v(world.x + 0.2, BENCH_Y + 0.2, z + 0.225), [0, -0.2, 0.08], [0.11, 0.065, 0.006], m);
