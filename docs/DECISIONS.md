@@ -810,3 +810,17 @@ When any limit is hit the socket fails, the client stops after three tries and s
 **Why:** Phase 06 tests and the no-hooks pass (#75).
 
 **Alternatives considered:** None; both were bugs.
+
+## 81. Feedback pass 3, part 1
+
+**Date:** 2026-11-14
+
+**Decision:** The team's "continue prompt" after the Phase 06 report came with a feedback list, so Phase 07 starts with it. First fixes:
+- Trails: straight trails were sampled as one strip from end to end (`sampleTrail` took a single step when a trail had no bend), and junction patches were one fan from the middle to the rim. On a round planet those long flat triangles dip 3 to 8 cm under the ground, so the grass hid whole stretches of trail at some camera angles. Every trail is now sampled every 0.28 m and junctions are built in six rings. A debug probe (`__poh.groundProbe(ahead, side)`) lists what lies under a spot, which found it.
+- No text highlight: `user-select: none` on the whole page (form fields excepted), images and SVG never drag.
+- Map: the wheel and a pinch zoom smoothly between 0.55 and 4 (the old steps were 1 to 3.2), so the whole little planet can float on the page; a flick keeps the globe turning for a moment.
+- Settings gain "Paper arrow" (on by default).
+
+**Why:** Team feedback, 2026-11-14.
+
+**Alternatives considered:** Lifting trails higher above the grass (they would float on slopes), or drawing them without a depth test (they would show through hills and props).

@@ -188,6 +188,23 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 
 ## Phase 07: Polish, QA, final deploy and the submission kit
 
+Team feedback pass 3 (2026-11-14), done first as part of the polish:
+
+- [x] No text highlight anywhere when holding the mouse (#81)
+- [x] Paper arrow can be turned off in Settings (#81)
+- [x] Map: smooth wheel and pinch zoom, zooms out to the whole planet, flick spin (#81)
+- [x] Trails no longer vanish at some camera angles (#81)
+- [ ] Loader: a 2.5D animated scene in the game's own style
+- [ ] Story intro: animated in 3D with the game's own world and kids
+- [ ] Dome entry: a 3D dive into Dad's little world instead of the countdown
+- [ ] Trip between worlds: a better 3D ride
+- [ ] Moon and Mars: more things to see around each planet
+- [ ] Free travel to the Moon and Mars at any time
+- [ ] Dad's notebook: tighter, fuller pages; better letter (mail) design
+- [ ] A short "what is happening and what to do" opening for new players
+- [ ] Every panel and card in one game style
+- [ ] Gameplay flow: clearer and more exciting
+
 - [ ] Performance pass
 - [ ] Accessibility pass
 - [ ] Independent accuracy audit
