@@ -26,6 +26,7 @@ import type { Shape } from "../../world/colliders";
 import { DEG } from "../../world/sphere";
 import { gable } from "../shapes";
 import { C } from "./buildings";
+import { type Museum, buildMuseum } from "./museum";
 import type { Site } from "./layout";
 
 /**
@@ -82,6 +83,8 @@ export interface WorkshopResult {
    * archive board. A cloth covers it until it opens.
    */
   bonusDome: { top: Vector3; stand: Vector3; cover: Object3D };
+  /** Remi's museum shelf: a keepsake and a photo for each stamp. */
+  museum: Museum;
   /** Is this world point inside? `margin` grows the box, for hysteresis. */
   isInside(point: Vector3, margin: number): boolean;
 }
@@ -574,6 +577,9 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     bonusCover.quaternion.setFromRotationMatrix(m);
   }
 
+  // ---- Remi's museum shelf on the left wall: it fills up as the stamps come ----
+  const museum = buildMuseum(b, toon, m, -hw + 0.01);
+
   // ---- Floor things ----
   b.place(cylinder(32), "#8E4E35", v(-0.2, fy + 0.012, 0.45), [0, 0, 0], [1.3, 0.02, 1.3], m);
   b.place(cylinder(32), C.amber, v(-0.2, fy + 0.016, 0.45), [0, 0, 0], [1.0, 0.02, 1.0], m);
@@ -646,6 +652,7 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     benchFront: at(-0.55, fy, BENCH_Z + 1.0),
     domes: [0.25, 0.85, 1.45, 2.05].map((x) => ({ top: at(x, BENCH_Y + 0.34, BENCH_Z - 0.05), stand: at(x, fy, BENCH_Z + 0.85) })),
     bonusDome: { top: at(bonusX, standTop + 0.27, bonusZ), stand: at(bonusX - 0.75, fy, bonusZ - 0.12), cover: bonusCover },
+    museum,
     dustCenter: at(-1.4, 1.5, -1.2),
     isInside(point: Vector3, margin: number): boolean {
       scratch.copy(point).applyMatrix4(inverse);

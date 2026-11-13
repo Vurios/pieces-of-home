@@ -245,6 +245,18 @@ export function createHome(ctx: WorldContext): World {
     kid.root.matrix.decompose(kid.root.position, kid.root.quaternion, kid.root.scale);
     root.add(kid.root);
     colliders.push(createColliderGroup(kid.root.matrix, [{ kind: "circle", x: 0, z: 0, radius: 0.28, height: 1.3 }]));
+    // Playing alone, the friends help: ask one and they say the next hint (Game Bible: hints, three tiers).
+    const name = id.charAt(0).toUpperCase() + id.slice(1);
+    const head = spot.position.clone().addScaledVector(up, 1.45);
+    // The context's helpers by their full name: the short names are declared further down.
+    ctx.interactions.add({
+      id: `friend-${id}`,
+      position: spot.position,
+      radius: 0.95,
+      kind: "press",
+      label: () => (ctx.store.value.carrying?.startsWith("part:") ? null : `Ask ${name} for a hint`),
+      onDone: () => ctx.bus.emit("hint:ask", { who: id, name, at: [head.x, head.y, head.z] }),
+    });
     return kid;
   });
 
@@ -380,6 +392,7 @@ export function createHome(ctx: WorldContext): World {
   const BONUS = CHAPTERS.find((c) => c.bonus)!;
   const BONUS_SEEN = "bonus:seen";
   root.add(shop.bonusDome.cover);
+  for (const item of shop.museum.items) root.add(item.object);
   const bonusRing = new Mesh(torus(0.12), toon.glow("#FFC877"));
   bonusRing.position.copy(shop.bonusDome.top).addScaledVector(shedDir, -0.27 * 0.85 + 0.03);
   bonusRing.quaternion.setFromRotationMatrix(SITES.shed.matrix);
@@ -510,6 +523,10 @@ export function createHome(ctx: WorldContext): World {
     milo: {
       player: { dir: inShed(-0.9, -0.6), forward: shedForward },
       camera: { position: local(SITES.shed, 0.45, SHED.floor + 1.7, -0.45), target: local(SITES.shed, -0.5, SHED.floor + 1.1, -2.0) },
+    },
+    museum: {
+      player: { dir: inShed(-1.2, -0.4), forward: shedForward },
+      camera: { position: local(SITES.shed, -1.15, 1.85, 0.1), target: local(SITES.shed, -2.85, 1.42, -0.78) },
     },
     "bonus-dome": {
       player: { dir: inShed(0.9, 0.2), forward: shedForward },
@@ -886,6 +903,8 @@ export function createHome(ctx: WorldContext): World {
         if (lampClick > 5) lampClick = -1;
       }
       for (const part of shop.lampGlow) part.visible = lampPower > 0;
+      // Remi's museum shelf: a keepsake and a photo for every stamp so far.
+      for (const item of shop.museum.items) item.object.visible = store.value.stamps.includes(item.stamp);
       // The bonus dome: the cloth slides off the first time Remi comes in after it opens.
       const bonusReady = bonusOpen(store.value);
       const cover = shop.bonusDome.cover;

@@ -152,6 +152,7 @@
         }, 1200);
       }),
       engine.bus.on("archive:open", () => flow.open("archive")),
+      engine.bus.on("hint:ask", ({ who, name, at }) => friendHint(who, name, at)),
       engine.bus.on("letter:delivered", ({ letter }) => {
         if (letter !== "to-the-lamp") return;
         const lamp = engine.world?.anchor("lamp");
@@ -250,6 +251,16 @@
     hintFor = key;
     const tiers = goal.hints ?? [goal.hint, goal.hint, goal.hint];
     engine.bus.emit("toast", { text: tiers[hintTier]! });
+  }
+
+  /** A friend in the workshop says the same hint out loud, one tier further each time. */
+  function friendHint(who: string, name: string, at: [number, number, number]): void {
+    const goal = goalFor(game, engine.input.device);
+    const key = `${goal.id}:${goal.title}`;
+    hintTier = key === hintFor ? Math.min(2, hintTier + 1) : 0;
+    hintFor = key;
+    const tiers = goal.hints ?? [goal.hint, goal.hint, goal.hint];
+    engine.bus.emit("say", { speaker: who, name, text: tiers[hintTier]!, at });
   }
 
   function toggleNotebook(open: boolean): void {

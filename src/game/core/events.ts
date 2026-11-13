@@ -80,6 +80,8 @@ export interface GameEvents {
   "title:done": Record<string, never>;
   /** Someone speaks. `at` is a world position for the bubble, or null for a caption only. */
   say: { speaker: string; name: string; text: string; at: [number, number, number] | null; recording?: boolean; line?: string };
+  /** A friend in the workshop was asked for a hint (solo play): the next hint tier, said by them. */
+  "hint:ask": { who: string; name: string; at: [number, number, number] };
   /** A small paper note at the edge of the screen. */
   toast: { text: string };
   /** A chapter or beat is complete. Two short lines for the big ink stamp. */
