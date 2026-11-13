@@ -1,27 +1,60 @@
 <script lang="ts">
-  import { SPREADS } from "../../content/notebook";
+  import { CHAPTERS, bonusOpen } from "../../content/chapters";
+  import { FINALE_TITLE, finaleOpen } from "../../content/finale";
+  import { PROLOGUE } from "../../content/goals";
+  import type { GameState } from "../../game/core/state";
   import Icon from "../Icon.svelte";
   import Panel from "../Panel.svelte";
   import { t } from "../settings.svelte";
 
-  /** Chapter select. Only Home is built so far; the rest arrive in later phases. */
+  /**
+   * Chapter select: every chapter with where it stands. A world opens once
+   * the prologue is stamped (or Explore freely is on); the bonus world once
+   * Chapter 3 is stamped; the Finale once every main chapter is stamped.
+   * "Go" takes you there through the Looking Lamp.
+   */
   interface Props {
+    game: Readonly<GameState>;
     onclose: () => void;
     onhome: () => void;
+    ongo: (world: string) => void;
   }
-  let { onclose, onhome }: Props = $props();
+  let { game, onclose, onhome, ongo }: Props = $props();
+
+  interface Row {
+    id: string;
+    tag: string;
+    name: string;
+    open: boolean;
+    done: boolean;
+    go: () => void;
+  }
+
+  const opened = $derived(game.stamps.includes("prologue") || game.flags.includes("explore-freely"));
+  const rows = $derived<Row[]>([
+    { id: "prologue", tag: t("chapters.home"), name: PROLOGUE.chapter, open: true, done: game.stamps.includes("prologue"), go: onhome },
+    ...CHAPTERS.map((c) => ({
+      id: c.id,
+      tag: c.bonus ? "Bonus" : c.world === "meridiani" || c.world === "valinor" ? "Mars" : "Moon",
+      name: c.title,
+      open: opened && (!c.bonus || bonusOpen(game) || game.flags.includes("explore-freely")),
+      done: game.stamps.includes(c.id),
+      go: () => ongo(c.world),
+    })),
+    { id: "finale", tag: t("chapters.home"), name: FINALE_TITLE, open: finaleOpen(game), done: game.stamps.includes("finale"), go: onhome },
+  ]);
 </script>
 
 <Panel title={t("chapters.title")} lede={t("chapters.lede")} icon="book" {onclose}>
   <ol class="chapters">
-    {#each SPREADS as s (s.id)}
-      <li class:soon={s.world !== "Home"}>
-        <span class="tag">{s.world}</span>
-        <span class="name">{s.chapter}</span>
-        {#if s.world === "Home"}
-          <button type="button" class="btn amber" onclick={onhome}>{t("chapters.go")}</button>
+    {#each rows as row (row.id)}
+      <li class:soon={!row.open}>
+        <span class="tag">{row.tag}</span>
+        <span class="name">{row.name}{#if row.done}<span class="stamped">Stamped</span>{/if}</span>
+        {#if row.open}
+          <button type="button" class="btn amber" onclick={row.go}>{t("chapters.go")}</button>
         {:else}
-          <span class="later"><Icon name="lock" size={16} /> {t("chapters.soon")}</span>
+          <span class="later"><Icon name="lock" size={16} /> Not yet</span>
         {/if}
       </li>
     {/each}
@@ -55,7 +88,21 @@
     justify-self: start;
   }
   .name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
     font: 700 1.2rem/1.2 var(--hand);
+  }
+  .stamped {
+    padding: 2px 8px;
+    border: 1.5px solid #b8433a;
+    border-radius: 3px;
+    color: #b8433a;
+    font: 700 0.7rem/1.2 var(--label);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transform: rotate(-3deg);
   }
   .soon .name {
     color: var(--ink-soft);
@@ -80,7 +127,7 @@
       grid-template-columns: 1fr auto;
     }
     .tag {
-      grid-column: 1 / -1;
+      display: none;
     }
   }
 </style>

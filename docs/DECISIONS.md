@@ -689,3 +689,23 @@ The loader is kept cheap so it never slows the game loading underneath it: shado
 
 **Alternatives considered:** A sixth dome on the crowded workbench (against the roomy-layout rule), letting the bonus raise Milo's stage (would shift the Finale's record stage), a 3D descent flight for the landing (the card keeps it readable and testable; the camera then sweeps over the real crater instead), showing the microbe story with a "maybe" (we only show checked facts).
 
+## 70. English only: the Filipino text is removed
+
+**Date:** 2026-11-13
+
+**Decision:** At the team's request, the game ships in English only. The language setting, the Filipino string table and every translation file are gone, and the Game Bible no longer lists Filipino UI (P1) or Filipino story text (P2). Read-aloud uses an English voice. A translation pass that had started in this session was thrown away before it was committed.
+
+**Why:** Direct instruction from the team ("don't add a Tagalog version, remove it entirely").
+
+**Alternatives considered:** Keeping the translation hooks with no translations (dead code and a setting that does nothing), hiding the setting but keeping the files (still ships text nobody reviewed).
+
+## 71. Chapter select lists every world
+
+**Date:** 2026-11-13
+
+**Decision:** The Chapters panel now shows the Prologue, all four chapters, the bonus chapter and the Finale. Each row says Moon, Mars, Bonus or Home, shows a small "Stamped" mark once done, and has a Go button once that world is open (after the prologue, or with Explore freely; the bonus after Chapter 3; the Finale after every main chapter). Go starts play and travels through the Looking Lamp. Before, every built world still said "Coming soon".
+
+**Why:** Phase 05, section 6 ("Chapter select and Explore freely").
+
+**Alternatives considered:** Leaving chapter travel to the domes only (slower for anyone who wants to go back to a world from the menu).
+

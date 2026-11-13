@@ -6,7 +6,7 @@ There is no deadline. The full scope in the Game Bible gets built: P0, then P1, 
 - **Repo:** https://github.com/Vurios/pieces-of-home (public). No CI: the team asked for straight pushes to `main`. Run typecheck, tests and e2e locally before pushing.
 - **Team rule for this run:** the agent asks the team before starting each next phase prompt.
 
-**Now:** Phase 05 in progress. Chapters 1 (Tranquility Base), 2 (Hadley-Apennine, the rideable Moon buggy, #60), 3 (Meridiani Planum) and 4 (Valinor Hills, Thin Air, #63) and the Finale (The Long Light, #59) are playable end to end, each with a full playthrough test. Team feedback pass (#61, #62): a CSS opening scene before the notebook, no black flicker, a freer camera with real zoom, a bigger map, big true-story cards with photos, space suits on the Moon and Mars, a 3D trip between worlds, a 3D closing shot, and roomier, more detailed Moon and Mars. Phase 06 waits until Phase 05 is complete. **Next up:** the Filipino story text (P2), the writing pass and the remaining checklist items, then Phase 06. Ask the team before starting Phase 07.
+**Now:** Phase 05 in progress. Chapters 1 (Tranquility Base), 2 (Hadley-Apennine, the rideable Moon buggy, #60), 3 (Meridiani Planum) and 4 (Valinor Hills, Thin Air, #63) and the Finale (The Long Light, #59) are playable end to end, each with a full playthrough test. Team feedback pass (#61, #62): a CSS opening scene before the notebook, no black flicker, a freer camera with real zoom, a bigger map, big true-story cards with photos, space suits on the Moon and Mars, a 3D trip between worlds, a 3D closing shot, and roomier, more detailed Moon and Mars. Phase 06 waits until Phase 05 is complete. **Next up:** the writing pass and the remaining checklist items, then Phase 06. The team dropped the Filipino text (#70). Ask the team before starting Phase 07.
 
 ## State summary (2026-11-11)
 
@@ -92,7 +92,7 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Menu as notebook tabs: Continue, New story (with confirm), Play together, Chapters (after the prologue or with Explore freely), Field Guide, Settings, Credits
 - [x] HUD: ink stamps (Notebook, Photo, Emote, Settings, Hint) with key or pad glyphs, interact prompt glyphs, speech bubbles with typed text and voice blips, captions, stamp moment, toasts, emote wheel with preset phrases, touch stick and buttons
 - [x] Notebook: cover and contents, a spread per machine (pencil until done, then inked), polaroids with exact credits, Then and now, Deeper notes, the letters still to deliver, page turns by drag, keys and gamepad, read-aloud, rough.js sketches and perfect-freehand underlines
-- [x] Settings: five audio buses, subtitles, bubbles, read-aloud, high contrast, text size, dyslexia-friendly font, motion, key remap, quality tier, language (Filipino stub), Explore freely
+- [x] Settings: five audio buses, subtitles, bubbles, read-aloud, high contrast, text size, dyslexia-friendly font, motion, key remap, quality tier, Explore freely (English only, #70)
 - [x] Field Guide (`/field-guide/`) and About (`/about/`) as static semantic pages from the same data, with a print sheet and numbered sources (DECISIONS #25)
 - [x] Type system: Kalam, Atkinson Hyperlegible Next, Zilla Slab, OpenDyslexic, self-hosted (DECISIONS #22)
 - [x] Gamepad for every 2D screen (DECISIONS #26)
@@ -164,6 +164,8 @@ Open items carried forward from the art review (to finish in Phases 03 and 05):
 - [x] Team feedback pass 2: the trip is a rocket ride with a skip (#64), one illustrated set of pop-up game cards (#65), Mars landscapes and suit details (#66); the notebook never scrolls (two spreads per machine)
 - [x] Prologue beats completed: Mom's key, the lamp that clicks on, globe pins that light up, photo and emote tips (#67)
 - [x] Archive cards (P2): six cards on the workshop board and in the Field Guide, 44 new checked facts (#68)
+- [x] Filipino text: removed at the team's request; the game is English only, with no language setting (#70)
+- [x] Chapter select: every chapter, the bonus and the Finale with Go, Stamped and Not yet
 - [x] The Surveyor 3 bonus chapter (P2): the Ocean of Storms world, landing table and cutters card games, parts bag and sample box, the cloth-covered dome, Milo's scoop arm, notebook spread and patch; playthrough in `tests/e2e/chapters.spec.ts` (#69)
 - [x] Audio pass: recorded foley and instruments, NASA recordings with captions, word-following voices (DECISIONS #49)
 - [ ] Writing pass

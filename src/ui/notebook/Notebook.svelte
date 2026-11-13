@@ -216,7 +216,7 @@
     }
     const u = new SpeechSynthesisUtterance(pageText());
     u.rate = 0.95;
-    u.lang = settings.value.language === "fil" ? "fil-PH" : "en-US";
+    u.lang = "en-US";
     u.onend = () => (reading = false);
     reading = true;
     window.speechSynthesis.speak(u);

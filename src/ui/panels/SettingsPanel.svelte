@@ -237,14 +237,6 @@
           <span class="text">{t("settings.explore")}<span class="help">{t("settings.exploreHelp")}</span></span>
           <input class="switch" type="checkbox" role="switch" checked={s.exploreFreely} onchange={(e) => set("exploreFreely", e.currentTarget.checked)} />
         </label>
-        <label class="field">
-          <span class="eyebrow">{t("settings.language")}</span>
-          <select class="select" value={s.language} onchange={(e) => set("language", e.currentTarget.value as Settings["language"])}>
-            <option value="en">{t("settings.lang.en")}</option>
-            <option value="fil">{t("settings.lang.fil")}</option>
-          </select>
-          <span class="help">{t("settings.languageHelp")}</span>
-        </label>
       {/if}
     </div>
   </div>
@@ -427,15 +419,6 @@
   }
   .or {
     color: var(--pencil);
-  }
-  .field {
-    display: grid;
-    gap: 8px;
-    margin-top: 22px;
-    max-width: 22rem;
-  }
-  .field .eyebrow {
-    margin: 0;
   }
   @keyframes show {
     from {

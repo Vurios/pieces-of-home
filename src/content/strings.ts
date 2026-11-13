@@ -1,7 +1,5 @@
 /**
- * Every UI string, so the game can be translated. English is complete.
- * Filipino is ready for translators: any key it leaves out falls back to
- * English (Game Bible 13: Filipino UI is P1).
+ * Every UI string in one place. The game is in English only (DECISIONS #70).
  *
  * Copy rules: short sentences, grade 3 to 5, no em dashes.
  */
@@ -104,7 +102,6 @@ export const EN = {
   "settings.motionHelp": "Less motion stops camera sway, page turns and wobbly lines.",
   "settings.controlsHelp": "Choose a key, then press the new key. Arrow keys always walk too.",
   "settings.qualityHelp": "Auto picks the best look your device can keep smooth.",
-  "settings.languageHelp": "More languages are on the way.",
   "settings.sound": "Sound",
   "settings.master": "Everything",
   "settings.music": "Music",
@@ -174,9 +171,6 @@ export const EN = {
   "settings.tipsHelp": "Short tips that show how to walk, look and use things.",
   "settings.tipsAgain": "Show the tips again",
   "settings.tipsReset": "The tips will show again.",
-  "settings.language": "Language",
-  "settings.lang.en": "English",
-  "settings.lang.fil": "Filipino (coming soon)",
   "together.title": "Play together",
   "together.makeHelp": "Get a new code to share with up to 3 friends.",
   "together.joinHelp": "Pick the words your friend shared.",
@@ -202,19 +196,11 @@ export const EN = {
   "chapters.lede": "Visit any world you have opened.",
   "chapters.go": "Go",
   "chapters.home": "Home",
-  "chapters.soon": "Coming soon",
 } as const;
 
 export type StringKey = keyof typeof EN;
 
-export const FIL: Partial<Record<StringKey, string>> = {
-  // Filipino translations go here. Missing keys use English.
-};
-
-export type Language = "en" | "fil";
-const TABLES: Record<Language, Partial<Record<StringKey, string>>> = { en: EN, fil: FIL };
-
-export function translate(language: Language, key: StringKey, values: Record<string, string | number> = {}): string {
-  const text = TABLES[language][key] ?? EN[key];
+export function translate(key: StringKey, values: Record<string, string | number> = {}): string {
+  const text: string = EN[key];
   return text.replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? `{${name}}`));
 }

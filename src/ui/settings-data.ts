@@ -1,5 +1,4 @@
 import { BUSES, type Bus } from "../audio/audio";
-import type { Language } from "../content/strings";
 
 /**
  * Player settings, saved on this device only. Applied to the page through
@@ -13,7 +12,6 @@ export interface Settings {
   readingFont: "standard" | "dyslexic";
   highContrast: boolean;
   motion: "system" | "reduce" | "full";
-  language: Language;
   exploreFreely: boolean;
   /** Show the little map in the corner. */
   miniMap: boolean;
@@ -37,7 +35,6 @@ export function defaultSettings(): Settings {
     readingFont: "standard",
     highContrast: false,
     motion: "system",
-    language: "en",
     exploreFreely: false,
     miniMap: true,
     missionFolded: false,
@@ -72,7 +69,6 @@ export function reviveSettings(raw: unknown): Settings {
     readingFont: pick(v["readingFont"], ["standard", "dyslexic"] as const, d.readingFont),
     highContrast: bool("highContrast", d.highContrast),
     motion: pick(v["motion"], ["system", "reduce", "full"] as const, d.motion),
-    language: pick(v["language"], ["en", "fil"] as const, d.language),
     exploreFreely: bool("exploreFreely", d.exploreFreely),
     miniMap: bool("miniMap", d.miniMap),
     missionFolded: bool("missionFolded", d.missionFolded),

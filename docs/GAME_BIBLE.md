@@ -395,7 +395,7 @@ The architecture follows Messenger's: a central audio controller with named cues
 - Read-aloud option for notebook pages (browser speech).
 - **Field Guide mode:** the whole story and every fact as a simple, screen-reader-friendly, printable web page. It works on any device and doubles as a classroom handout.
 - **Low-end devices:** automatic quality tiers. Targets school laptops and mid-range phones, portrait and landscape.
-- **Language:** English first, strings ready for translation, Filipino UI in P1 and Filipino story text in P2.
+- **Language:** English only. The team removed the Filipino UI and story text (DECISIONS #70).
 
 ---
 
@@ -423,8 +423,8 @@ The architecture follows Messenger's: a central audio controller with named cues
 There is no deadline. Everything below gets built, in this order, each tier finished and polished before the next starts.
 
 - **P0 (first):** loading and title sequence; Home and Prologue; Chapter 1 (Moon); Chapter 3 (Mars); Finale; notebook; photo mode; audio; solo play; Field Guide; basic co-op (join, see each other, emotes, shared progress); live deploy.
-- **P1:** Chapter 2 (LRV); Chapter 4 (Ingenuity); co-op puzzle roles; museum free roam; Filipino UI strings.
-- **P2:** Archive cards; the Surveyor 3 bonus chapter (Milo's scoop arm); real voice lines if a teammate records them; Filipino translation of all story text; a final polish pass on every world.
+- **P1:** Chapter 2 (LRV); Chapter 4 (Ingenuity); co-op puzzle roles; museum free roam.
+- **P2:** Archive cards; the Surveyor 3 bonus chapter (Milo's scoop arm); real voice lines if a teammate records them; a final polish pass on every world.
 - Never trade quality for speed. A tier is done only when it meets the quality bar in `CLAUDE.md`.
 - **Budgets:** first playable download under 8 MB; each world loads on its own, under 4 MB; 60 fps on a mid-range laptop, steady 30 fps on a mid-range phone; title interactive within 5 seconds on a typical connection.
 

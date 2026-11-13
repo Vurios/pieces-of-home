@@ -335,7 +335,16 @@
 {:else if flow.panel === "archive"}
   <ArchivePanel onclose={() => flow.close()} />
 {:else if flow.panel === "chapters"}
-  <ChaptersPanel onclose={() => flow.close()} onhome={home} />
+  <ChaptersPanel
+    {game}
+    onclose={() => flow.close()}
+    onhome={home}
+    ongo={(world) => {
+      home();
+      // Into play first, then through the Looking Lamp to the chosen world.
+      window.setTimeout(() => engine.bus.emit("travel", { to: world, entry: "lamp" }), 600);
+    }}
+  />
 {:else if flow.panel === "map"}
   <MapPanel {engine} {game} onclose={() => flow.close()} />
 {/if}

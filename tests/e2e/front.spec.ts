@@ -153,6 +153,27 @@ test("the notebook opens, turns with the keys and passes axe", async ({ page }, 
   await expect(book).toBeHidden();
 });
 
+test("chapter select lists every world and goes to an open one", async ({ page }, info) => {
+  test.skip(info.project.name === "phone", "one size is enough");
+  test.setTimeout(180_000);
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem("seeded")) return;
+    const save = { version: 1, world: "home", miloStage: 3, carrying: null, delivered: ["to-the-lamp"], stamps: ["prologue", "chapter-1", "chapter-2", "chapter-3"], flags: ["seen-notebook"] };
+    localStorage.setItem("poh.save.v1", JSON.stringify(save));
+    sessionStorage.setItem("seeded", "1");
+  });
+  await toMenu(page);
+  await page.getByRole("button", { name: /chapters/i }).click();
+  const list = page.locator(".chapters li");
+  await expect(list).toHaveCount(7);
+  await expect(list.filter({ hasText: "Stamped" })).toHaveCount(4);
+  await expect(list.filter({ hasText: "Bonus: Ocean of Storms" }).getByRole("button", { name: "Go" })).toBeVisible();
+  await expect(list.filter({ hasText: "Finale" })).toContainText("Not yet");
+  await axe(page, "chapter select");
+  await list.filter({ hasText: "Chapter 2" }).getByRole("button", { name: "Go" }).click();
+  await page.waitForFunction(() => (window as unknown as { __poh: { worldId(): string | null } }).__poh.worldId() === "hadley", null, { timeout: 90_000 });
+});
+
 test("the Field Guide works without 3D and passes axe", async ({ page }) => {
   await page.goto("/field-guide/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Pieces of Home: Field Guide");

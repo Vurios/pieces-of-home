@@ -32,7 +32,7 @@ class SettingsStore {
     root.dataset["text"] = s.textSize;
     root.dataset["font"] = s.readingFont;
     root.dataset["contrast"] = s.highContrast ? "high" : "normal";
-    root.lang = s.language === "fil" ? "fil" : "en";
+    root.lang = "en";
     const reduce = s.motion === "reduce" || (s.motion === "system" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     root.dataset["motion"] = reduce ? "reduce" : "full";
     for (const bus of BUSES) audio.setVolume(bus, s.volume[bus]);
@@ -44,7 +44,7 @@ class SettingsStore {
   }
 
   t(key: StringKey, values?: Record<string, string | number>): string {
-    return translate(this.value.language, key, values);
+    return translate(key, values);
   }
 }
 
