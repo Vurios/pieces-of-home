@@ -1,6 +1,7 @@
 import {
   AdditiveBlending,
   BackSide,
+  BoxGeometry,
   BufferAttribute,
   BufferGeometry,
   CanvasTexture,
@@ -8,6 +9,7 @@ import {
   DirectionalLight,
   Group,
   HemisphereLight,
+  InstancedMesh,
   Matrix4,
   Mesh,
   MeshBasicMaterial,
@@ -35,9 +37,10 @@ import type { ToonLibrary } from "./toon";
  * world left behind, Remi (in a space suit) walks over to Dad's toy rocket on
  * its launch pad and climbs in. The door shuts, the engine lights in a cloud
  * of smoke, and the rocket lifts off. The camera chases it across the starry
- * night to the next little world, where it turns over and settles down on its
- * fins in a ring of dust, and the door opens. Then the lamp light closes and
- * opens on the world itself.
+ * night, past tumbling rocks and a comet, then flies alongside for a moment
+ * while the rocket rolls past it, and follows it on to the next little world,
+ * where it turns over and settles down on its fins in a ring of dust, and the
+ * door opens. Then the lamp light closes and opens on the world itself.
  *
  * Everything is built once and reused: the planets only change their dress.
  */
@@ -397,10 +400,34 @@ const window01 = (t: number, a: number, b: number): number => {
 
 /**
  * The trip's beats, in seconds. Remi walks to Dad's toy rocket and climbs in,
- * it lifts off in a cloud of smoke, flies across the night to the next little
- * world, turns over and settles down on its fins, and the door opens.
+ * it lifts off in a cloud of smoke, flies across the night (the camera rides
+ * alongside it from `pass` to `passEnd` while it rolls past), comes in to the
+ * next little world, turns over and settles down on its fins, and the door opens.
  */
-const BEAT = { inside: 1.2, doorShut: 1.45, ignite: 1.5, lift: 1.95, cruise: 3.0, land: 4.75, touch: 5.9, open: 6.0, end: 6.7 };
+const BEAT = { inside: 1.2, doorShut: 1.45, ignite: 1.5, lift: 1.95, cruise: 3.0, pass: 4.55, passEnd: 5.75, land: 6.9, touch: 8.05, open: 8.15, end: 8.85 };
+/** The moment the rocket draws level with the camera riding alongside. */
+const PASS_MID = (BEAT.pass + BEAT.passEnd) / 2;
+
+/** How far along the flight path the rocket is at a time in the cruise (0 to 1), easing in and out. */
+const cruiseK = (t: number): number => {
+  const u = Math.max(0, Math.min(1, (t - BEAT.cruise) / (BEAT.land - BEAT.cruise)));
+  return u * u * (3 - 2 * u);
+};
+
+/** A lumpy little space rock in the toy style: two lumps and a few dents. */
+function buildRock(toon: ToonLibrary): Mesh {
+  const b = new Batcher();
+  b.place(sphere("low"), "#8E8174", [0, 0, 0], [0, 0, 0], [1, 0.78, 0.86]);
+  b.place(sphere("low"), "#9C8F80", [0.45, 0.22, 0.1], [0.4, 0.2, 0], [0.62, 0.5, 0.55]);
+  for (const [x, y, z, r] of [[0.1, 0.72, 0.2, 0.26], [-0.62, 0.3, 0.42, 0.2], [0.3, -0.5, 0.6, 0.18]] as const) {
+    const n = new Vector3(x, y, z).normalize();
+    const q = new Quaternion().setFromUnitVectors(Y_AXIS, n);
+    const m = new Matrix4().compose(new Vector3(x, y, z), q, new Vector3(1, 1, 1));
+    b.place(cylinder(10), "#6F6459", [0, 0, 0], [0, 0, 0], [r, 0.05, r], m);
+  }
+  const [mesh] = b.build({ solid: toon.toon({ vertexColors: true, paint: 0.12, objectSpace: true, rim: 0.45 }) }, { castShadow: false, receiveShadow: false });
+  return mesh!;
+}
 
 export class TripScene {
   readonly scene = new Scene();
@@ -430,6 +457,21 @@ export class TripScene {
   private reduced = false;
   private emitClock = 0;
   private touched = false;
+  /** Called once at each sound in the trip: lift-off, the rocket rushing past, the landing. */
+  onCue: ((name: "launch" | "whoosh" | "land") => void) | null = null;
+  private cued = new Set<string>();
+  private silent = false;
+  /** Thin streaks of light along the way, so the flight feels fast. */
+  private streaks: InstancedMesh<BoxGeometry, MeshBasicMaterial>;
+  /** Little rocks that tumble past on the way. */
+  private rocks: { mesh: Mesh; spin: Vector3 }[] = [];
+  /** A comet far off across the night, with a soft tail. */
+  private comet = new Group();
+  private cometMaterials: SpriteMaterial[] = [];
+  private readonly cometFrom = new Vector3();
+  private readonly cometDrift = new Vector3();
+  private readonly qRoll = new Quaternion();
+  private readonly side = new Vector3();
   // Where things are on this trip.
   private readonly padTop = new Vector3();
   private readonly landing = new Vector3();
@@ -530,10 +572,30 @@ export class TripScene {
     this.trail = new Points(trailGeometry, new PointsMaterial({ map: this.glow, size: 0.7, color: "#FFC777", transparent: true, depthWrite: false, blending: AdditiveBlending, opacity: 0 }));
     this.trail.frustumCulled = false;
 
+    // Streaks of light, laid out along the flight path at the start of each trip.
+    this.streaks = new InstancedMesh(new BoxGeometry(1, 1, 1), new MeshBasicMaterial({ color: "#FFE6C0", transparent: true, opacity: 0, blending: AdditiveBlending, depthWrite: false }), 170);
+    this.streaks.frustumCulled = false;
+    // Rocks: one shape, turned and sized differently each time.
+    const rock = buildRock(toon);
+    for (let i = 0; i < 9; i += 1) {
+      const mesh = new Mesh(rock.geometry, rock.material);
+      this.rocks.push({ mesh, spin: new Vector3() });
+      this.scene.add(mesh);
+    }
+    // The comet: a pale head and a tail of softer glows.
+    for (let i = 0; i < 9; i += 1) {
+      const material = new SpriteMaterial({ map: this.glow, color: i === 0 ? "#F4FAFF" : "#A9D4FF", transparent: true, depthWrite: false, blending: AdditiveBlending, opacity: i === 0 ? 1 : 0.55 * (1 - i / 9) });
+      const sprite = new Sprite(material);
+      sprite.position.set(i * 0.9, i * 0.22, 0);
+      sprite.scale.setScalar(i === 0 ? 2.4 : 2.2 + i * 0.35);
+      this.cometMaterials.push(material);
+      this.comet.add(sprite);
+    }
+
     const key = new DirectionalLight("#FFF1DC", 2.1);
     key.position.set(8, 12, 10);
     const fill = new HemisphereLight("#8E9AC4", "#2A2440", 1.25);
-    this.scene.add(this.sky, this.stars, this.from.root, this.to.root, this.pad, this.rocket.root, this.kid.root, this.puffs.group, this.trail, this.flameLight, key, fill);
+    this.scene.add(this.sky, this.stars, this.comet, this.from.root, this.to.root, this.pad, this.rocket.root, this.kid.root, this.puffs.group, this.trail, this.streaks, this.flameLight, key, fill);
   }
 
   /** Sets up a trip from one world to another. */
@@ -560,6 +622,7 @@ export class TripScene {
     this.curve.v1.copy(top).add(new Vector3(2, 10, -2));
     this.curve.v2.copy(this.landing).addScaledVector(this.landUp, 15).addScaledVector(this.landSide, -5);
     this.curve.v3.copy(this.landing).addScaledVector(this.landUp, 5.5);
+    this.layOut();
     // Upright on the landing spot, turned so the door faces the camera.
     this.qLanded.setFromUnitVectors(Y_AXIS, this.landUp);
     const toCamera = this.landSide.clone().multiplyScalar(5.4).add(new Vector3().crossVectors(this.landUp, this.landSide).normalize().multiplyScalar(3.4)).normalize();
@@ -571,6 +634,8 @@ export class TripScene {
     this.progress = 0;
     this.frozen = false;
     this.touched = false;
+    this.cued.clear();
+    this.silent = false;
     this.emitClock = 0;
     this.history = [];
     this.puffs.clear();
@@ -578,8 +643,67 @@ export class TripScene {
     this.place(0);
   }
 
+  /**
+   * Lays out what the rocket passes on the way: streaks of light and rocks
+   * around the flight path (kept clear of the camera's ride alongside), and the
+   * comet far off to one side.
+   */
+  private layOut(): void {
+    const random = mulberry(19);
+    const at = new Vector3();
+    const tangent = new Vector3();
+    const side = new Vector3();
+    const lift = new Vector3();
+    const out = new Vector3();
+    const q = new Quaternion();
+    const m = new Matrix4();
+    const scale = new Vector3();
+    /** A spot around the path at `k`, `r` out from it, never where the camera rides alongside. */
+    const around = (k: number, r: number): Vector3 => {
+      this.curve.getPoint(k, at);
+      this.curve.getTangent(k, tangent);
+      side.crossVectors(tangent, Y_AXIS).normalize();
+      lift.crossVectors(side, tangent).normalize();
+      let a = random() * Math.PI * 2;
+      // The camera rides out along `side`: swing things on that side round below or above it.
+      if (Math.cos(a) > 0.55 && r < 7.5) a += Math.PI * 0.5 * (Math.sin(a) >= 0 ? 1 : -1);
+      return out.copy(side).multiplyScalar(Math.cos(a) * r).addScaledVector(lift, Math.sin(a) * r).add(at);
+    };
+    for (let i = 0; i < this.streaks.count; i += 1) {
+      const k = 0.02 + random() * 0.96;
+      const p = around(k, 1.4 + random() * 7);
+      q.setFromUnitVectors(Y_AXIS, tangent);
+      const width = 0.014 + random() * 0.014;
+      m.compose(p, q, scale.set(width, 0.6 + random() * 1.4, width));
+      this.streaks.setMatrixAt(i, m);
+    }
+    this.streaks.instanceMatrix.needsUpdate = true;
+    this.rocks.forEach((rock, i) => {
+      const k = 0.16 + (i / this.rocks.length) * 0.72 + random() * 0.05;
+      rock.mesh.position.copy(around(k, 3.6 + random() * 5));
+      rock.mesh.scale.setScalar(0.28 + random() * 0.6);
+      rock.mesh.rotation.set(random() * 6, random() * 6, random() * 6);
+      rock.spin.set(random() - 0.5, random() - 0.5, random() - 0.5).multiplyScalar(1.6);
+    });
+    // The comet: ahead and up, off to the far side of the path, drifting slowly.
+    this.curve.getPoint(0.55, at);
+    this.curve.getTangent(0.55, tangent);
+    side.crossVectors(tangent, Y_AXIS).normalize();
+    this.cometFrom.copy(at).addScaledVector(tangent, 26).addScaledVector(side, -20).add(new Vector3(0, 16, 0));
+    this.cometDrift.copy(tangent).multiplyScalar(-0.5).addScaledVector(side, 0.9).add(new Vector3(0, -0.25, 0));
+    this.comet.position.copy(this.cometFrom);
+  }
+
+  private cue(name: "launch" | "whoosh" | "land", at: number): void {
+    if (this.time < at || this.cued.has(name)) return;
+    this.cued.add(name);
+    if (!this.silent) this.onCue?.(name);
+  }
+
   /** Jumps ahead to the landing, for a player who has seen the trip before. */
   skip(): void {
+    this.cued.add("launch");
+    this.cued.add("whoosh");
     if (this.time < BEAT.land + 0.5) {
       this.time = BEAT.land + 0.5;
       this.puffs.clear();
@@ -589,6 +713,7 @@ export class TripScene {
 
   /** Plays the trip up to a moment (0 to 1) and holds it there, for screenshots. */
   seek(t: number): void {
+    this.silent = true;
     const end = t * BEAT.end;
     while (this.time < end) this.update(Math.min(1 / 30, end - this.time + 1e-4), false);
     this.frozen = true;
@@ -653,11 +778,14 @@ export class TripScene {
       thrust = window01(t, BEAT.ignite, BEAT.lift) * (0.8 + lift * 0.4);
     } else if (t < BEAT.land) {
       const u = (t - BEAT.cruise) / (BEAT.land - BEAT.cruise);
-      const k = u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2;
+      const k = cruiseK(t);
       this.curve.getPoint(k, this.base);
       this.curve.getTangent(Math.min(0.999, Math.max(0.001, k)), this.nose);
       r.root.quaternion.setFromUnitVectors(Y_AXIS, this.nose);
-      thrust = 1 - u * 0.5;
+      // One happy roll as it rushes past the camera riding alongside.
+      const roll = this.reduced ? 0 : window01(t, PASS_MID - 0.35, BEAT.passEnd + 0.1) * Math.PI * 2;
+      if (roll > 0) r.root.quaternion.multiply(this.qRoll.setFromAxisAngle(Y_AXIS, roll));
+      thrust = 1 - u * 0.5 + window01(t, BEAT.pass, PASS_MID) * (1 - window01(t, PASS_MID, BEAT.passEnd)) * 0.35;
     } else {
       // Turn over, then settle down on the fins with the engine braking.
       const u = Math.min(1, (t - BEAT.land) / (BEAT.touch - BEAT.land));
@@ -725,6 +853,26 @@ export class TripScene {
     this.trail.geometry.attributes["position"]!.needsUpdate = true;
     this.to.glow = window01(t, BEAT.cruise, BEAT.land) * 0.45 * (1 - window01(t, BEAT.land, BEAT.touch));
 
+    // ---- What it passes on the way ----
+    const cruising = window01(t, BEAT.lift + 0.4, BEAT.cruise + 0.3) * (1 - window01(t, BEAT.land - 0.4, BEAT.land + 0.3));
+    this.streaks.material.opacity = cruising * 0.5;
+    this.streaks.visible = cruising > 0.01;
+    for (const rock of this.rocks) {
+      rock.mesh.visible = cruising > 0.01;
+      rock.mesh.rotation.x += rock.spin.x * dt;
+      rock.mesh.rotation.y += rock.spin.y * dt;
+      rock.mesh.rotation.z += rock.spin.z * dt;
+    }
+    this.comet.position.copy(this.cometFrom).addScaledVector(this.cometDrift, t);
+    this.comet.quaternion.copy(this.camera.quaternion);
+    const flicker = this.reduced ? 1 : 0.92 + Math.sin(t * 3.1) * 0.08;
+    this.cometMaterials.forEach((material, i) => (material.opacity = (i === 0 ? 1 : 0.55 * (1 - i / 9)) * flicker));
+
+    // ---- Sounds ----
+    this.cue("launch", BEAT.ignite);
+    this.cue("whoosh", PASS_MID - 0.45);
+    this.cue("land", BEAT.land + 0.25);
+
     this.placeCamera(t);
   }
 
@@ -737,16 +885,33 @@ export class TripScene {
     this.eye.copy(padEye);
     this.look.copy(padLook);
     const up = this.v3.set(0, 1, 0);
-    // In flight: behind and beside the rocket, looking ahead of it.
+    // In flight: behind and beside the rocket, looking ahead of it. After the ride
+    // alongside it drops in lower behind, with the next world growing ahead.
     const chase = window01(t, BEAT.cruise - 0.15, BEAT.cruise + 0.55) * (1 - window01(t, BEAT.land - 0.1, BEAT.land + 0.6));
     if (chase > 0) {
-      const side = new Vector3().crossVectors(this.nose, Y_AXIS);
+      const side = this.side.crossVectors(this.nose, Y_AXIS);
       if (side.lengthSq() < 1e-4) side.set(1, 0, 0);
       side.normalize();
-      const chaseEye = this.center.clone().addScaledVector(this.nose, -6.5).addScaledVector(side, 3.2).add(new Vector3(0, 1.8, 0));
-      const chaseLook = this.center.clone().addScaledVector(this.nose, 4);
+      const late = window01(t, BEAT.passEnd, BEAT.passEnd + 0.8);
+      const chaseEye = this.center.clone().addScaledVector(this.nose, -6.5 + late * 1.2).addScaledVector(side, 3.2 - late * 1.5).add(new Vector3(0, 1.8 - late * 0.5, 0));
+      const chaseLook = this.center.clone().addScaledVector(this.nose, 4).lerp(this.to.root.position, late * 0.3);
       this.eye.lerp(chaseEye, chase);
       this.look.lerp(chaseLook, chase);
+    }
+    // The ride alongside: the camera flies beside the path a little slower than the
+    // rocket, so it comes up from behind, rolls past, and pulls away ahead. It cuts
+    // in (a cut reads cleaner than a swoop past the rocket) and eases back out.
+    const over = t >= BEAT.pass && t < BEAT.passEnd + 0.6 && !this.reduced ? 1 - window01(t, BEAT.passEnd, BEAT.passEnd + 0.6) : 0;
+    if (over > 0) {
+      const level = cruiseK(PASS_MID);
+      const k = level + (cruiseK(t) - level) * 0.7;
+      const at = this.curve.getPoint(k);
+      const tangent = this.curve.getTangent(k);
+      const side = this.side.crossVectors(tangent, Y_AXIS).normalize();
+      const overEye = at.addScaledVector(side, 5.2).add(new Vector3(0, 1.2, 0));
+      const overLook = this.center.clone().addScaledVector(this.nose, 1.6);
+      this.eye.lerp(overEye, over);
+      this.look.lerp(overLook, over);
     }
     // At the landing: beside the spot, low, watching it come down.
     const land = window01(t, BEAT.land - 0.1, BEAT.land + 0.6);
@@ -783,5 +948,10 @@ export class TripScene {
     this.stars.material.dispose();
     this.trail.geometry.dispose();
     this.trail.material.dispose();
+    this.streaks.geometry.dispose();
+    this.streaks.material.dispose();
+    this.streaks.dispose();
+    this.rocks[0]?.mesh.geometry.dispose();
+    for (const material of this.cometMaterials) material.dispose();
   }
 }

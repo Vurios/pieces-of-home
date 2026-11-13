@@ -327,6 +327,14 @@ export const RECIPES: Record<string, Recipe> = {
     tone(c, "sine", 70, 46, 0.2, 0.18, 2.2);
   },
 
+  /** The rocket rushing past the camera: a rising then falling swish of air, like a car going by, and a low hum under it. */
+  "rocket-whoosh": (c) => {
+    const swish = burst(c, "pink", "bandpass", 500, 1.4, 0.55, 0.42, 1.3);
+    swish.frequency.exponentialRampToValueAtTime(1900 * c.rate, c.at + 0.55);
+    swish.frequency.exponentialRampToValueAtTime(380 * c.rate, c.at + 1.3);
+    tone(c, "triangle", 150, 92, 0.45, 0.07, 1.1, 0.05, 1.1);
+  },
+
   /** The rocket settling down on its fins: a braking hiss and a soft bump. */
   "rocket-land": (c) => {
     burst(c, "pink", "bandpass", 900, 0.9, 0.2, 0.22, 1.1);

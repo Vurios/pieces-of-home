@@ -677,6 +677,8 @@ export class Engine {
     if (!this.trip) {
       this.trip = new TripScene(this.toon);
       this.trip.resize(window.innerWidth, window.innerHeight);
+      const LEVEL = { launch: 0.6, whoosh: 0.5, land: 0.55 } as const;
+      this.trip.onCue = (name) => this.bus.emit("sfx", { name: `rocket-${name}`, level: LEVEL[name] });
     }
     return this.trip;
   }

@@ -72,8 +72,6 @@
 
   $effect(() => {
     let slowTimer = 0;
-    let launchTimer = 0;
-    let landTimer = 0;
     const offs = [
       engine.bus.on("travel:start", ({ to }) => {
         trip = named(to);
@@ -89,9 +87,6 @@
         slow = false;
         flying = true;
         skipped = false;
-        // The rocket's sounds follow its beats (see src/game/render/trip.ts): lift-off, then landing.
-        launchTimer = window.setTimeout(() => audio.play("rocket-launch", { level: 0.6 }), 1500);
-        landTimer = window.setTimeout(() => audio.play("rocket-land", { level: 0.55 }), 4950);
       }),
       engine.bus.on("travel:arrive", () => {
         window.clearTimeout(slowTimer);
@@ -107,8 +102,6 @@
     ];
     return () => {
       window.clearTimeout(slowTimer);
-      window.clearTimeout(launchTimer);
-      window.clearTimeout(landTimer);
       offs.forEach((off) => off());
       banners.traveling = false;
     };

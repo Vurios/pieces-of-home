@@ -109,6 +109,7 @@ export const CUES: Record<string, CueSpec> = {
   rotor: { recipe: "rotor", bus: "effects", volume: 1, group: "Chapter 4", label: "Rotor whir", loop: "spin" },
   "hover-hop": { recipe: "hover-hop", bus: "effects", volume: 0.9, minGap: 0.4, group: "Chapter 4", label: "Hover hop" },
   "rocket-launch": { recipe: "rocket-launch", bus: "effects", volume: 0.8, group: "Trips", label: "Rocket lift-off" },
+  "rocket-whoosh": { recipe: "rocket-whoosh", bus: "effects", volume: 0.7, group: "Trips", label: "Rocket rushing past" },
   "rocket-land": { recipe: "rocket-land", bus: "effects", volume: 0.8, group: "Trips", label: "Rocket landing" },
 
   "dish-servo": { recipe: "dish-servo", bus: "effects", volume: 0.9, minGap: 1, group: "Finale", label: "Dish servo" },

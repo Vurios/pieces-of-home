@@ -834,3 +834,13 @@ When any limit is hit the socket fails, the client stops after three tries and s
 **Why:** Team feedback, 2026-11-14: "when using tranquility base do something else instead of a countdown do animations too". A dive into the diorama ties the bench to the world you arrive in.
 
 **Alternatives considered:** A 2D zoom on a flat picture of the dome (breaks the 3D look); keeping the countdown over the dive (two transitions back to back felt slow).
+
+## 83. A longer, livelier rocket trip
+
+**Date:** 2026-11-14
+
+**Decision:** The trip between worlds grows from 6.7 to 8.85 seconds, and the extra time goes to the flight. Thin streaks of light line the path so the speed reads, little rocks tumble past, and a comet drifts far off. Halfway, the camera cuts to ride alongside, a little slower than the rocket, so Dad's rocket comes up from behind, does one happy roll as it passes, and pulls away; then the camera drops in behind it with the next world growing ahead. A new "whoosh" sound plays as it passes. The trip now calls its own sounds (lift-off, whoosh, landing) on its beats, so they stay in step when a player skips ahead; the old fixed timers in the travel screen are gone. Skip still jumps to the landing.
+
+**Why:** Team feedback, 2026-11-14: "Further improve the 3d animation too of traveling to other planets". The old cruise lasted under two seconds of one chase angle.
+
+**Alternatives considered:** A porthole view from inside the rocket (a new interior model for one shot), a warp-tunnel effect (reads as science fiction, not Dad's toy), passing a ringed planet (would suggest a real planet sits between the Earth and Mars).
