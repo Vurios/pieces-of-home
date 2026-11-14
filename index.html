@@ -120,10 +120,11 @@
         height: 100%;
         width: auto;
         aspect-ratio: 2.4;
-        translate: -50% 0;
+        /* One transform, not translate plus transform: the build's CSS minifier
+         * drops the separate translate when both are set. */
         /* The camera's eye is on the notebook: the room behind it is soft and dim. */
         filter: blur(2.5px) brightness(0.74) saturate(0.92);
-        transform: scale(1.012);
+        transform: translateX(-50%) scale(1.012);
         transition:
           filter 0.7s var(--ease),
           transform 0.7s var(--ease);
@@ -838,7 +839,7 @@
       }
       #boot[data-state="leaving"] .backdrop {
         filter: none;
-        transform: none;
+        transform: translateX(-50%);
       }
       #boot[data-state="leaving"] .night {
         opacity: 0;
