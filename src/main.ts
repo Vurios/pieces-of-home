@@ -65,7 +65,7 @@ async function boot(): Promise<void> {
   // No graphics chip (WebGL drawn in software): the loading page holds its loops still.
   if (engine.softwareGpu) loader?.calm();
   if (import.meta.env.DEV || params.has("test")) {
-    (window as unknown as { __poh: unknown }).__poh = { ...engine.debugApi(), flow: () => flow.stage };
+    (window as unknown as { __poh: unknown }).__poh = { ...engine.debugApi(), flow: () => flow.stage, mixer: () => audio.mixer };
   }
 
   // Fonts and the audio click render while the world builds.

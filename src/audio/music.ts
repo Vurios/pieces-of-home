@@ -1,5 +1,5 @@
 import { crackle, dustHiss, wind } from "./buffers";
-import { brush, feltPiano, flute, gain, glassBell, kalimba, Loop, musicBox, osc, Pad, pluck, sub } from "./instruments";
+import { brush, feltPiano, flute, gain, glassBell, kalimba, Loop, musicBox, osc, Pad, pluck, shaker, strum, sub, toyBass, twinkle } from "./instruments";
 import type { Mixer } from "./mixer";
 import { ANSWER, MOTIF, PENTATONIC, midiToHz, motifEvents } from "./motif";
 import { nearestChordTone, walkPhrase } from "./theory";
@@ -27,13 +27,21 @@ interface Chord {
 
 interface Arrangement {
   bpm: number;
+  /** Where the off-beat eighth falls: 0.5 is straight, about 0.6 is a gentle skip. */
+  swing: number;
   progression: Chord[];
   barsPerChord: number;
   pad: number;
   cutoff: number;
+  /** The bouncy toy bass (0 for none). */
   bass: number;
-  /** Chance of a felt-piano note on each beat. */
+  /** Chance of a felt-piano answer note on an off-beat. */
   piano: number;
+  /** The strum on the backbeat, or a broken-chord lullaby on the Moon. */
+  comp: number;
+  compStyle: "strum" | "arp";
+  /** A soft shaker on the eighths (0 for none). */
+  shaker: number;
   lead: "box" | "glass" | "piano" | "pluck";
   leadLevel: number;
   /** Bars between motif statements. */
@@ -49,73 +57,36 @@ interface Arrangement {
   space: number;
   /** A little bouncing kalimba figure on chord tones, for a playful, cute lift (0 for none). */
   bounce: number;
+  /** Chance of a glockenspiel twinkle at the end of each four-bar phrase. */
+  sparkle: number;
 }
 
-const GMAJ7: Chord = { root: 43, pad: [55, 59, 62, 66] };
-const EM7: Chord = { root: 40, pad: [55, 59, 62, 64] };
-const CMAJ7: Chord = { root: 36, pad: [55, 59, 60, 64] };
-const D9: Chord = { root: 38, pad: [54, 57, 60, 64] };
+/*
+ * Plain, sweet triads (with the root doubled on top) instead of major
+ * sevenths: no two notes a semitone apart, so nothing rubs or sounds eerie.
+ * Every world walks a friendly progression, mostly I, vi, IV and V in G.
+ */
+const G: Chord = { root: 43, pad: [55, 59, 62, 67] };
+const EM: Chord = { root: 40, pad: [55, 59, 64, 67] };
+const C: Chord = { root: 36, pad: [55, 60, 64, 67] };
+const D: Chord = { root: 38, pad: [54, 57, 62, 66] };
+const BM: Chord = { root: 47, pad: [54, 59, 62, 66] };
+const AM: Chord = { root: 45, pad: [57, 60, 64, 69] };
 
 export const ARRANGEMENTS: Record<Exclude<Scene, "silent">, Arrangement> = {
-  // Title: the pad breathes between two chords while the music box remembers the motif.
-  title: { bpm: 72, progression: [GMAJ7, CMAJ7], barsPerChord: 2, pad: 0.4, cutoff: 1100, bass: 0, piano: 0.22, lead: "box", leadLevel: 0.17, motifEvery: 4, phraseEvery: 0, stretch: 1, crackle: 0.25, dust: 0, air: 0, space: 1.1, bounce: 0.045 },
-  // Home: warm major sevenths, cosy, with a little kalimba bouncing along.
-  home: { bpm: 80, progression: [GMAJ7, EM7, CMAJ7, D9], barsPerChord: 2, pad: 0.36, cutoff: 1300, bass: 0.13, piano: 0.4, lead: "box", leadLevel: 0.16, motifEvery: 8, phraseEvery: 4, stretch: 1, crackle: 0.18, dust: 0, air: 0, space: 1, bounce: 0.055 },
-  // Moon: sparse glassy bells, long gaps, lots of air, no bass.
-  moon: {
-    bpm: 58,
-    progression: [
-      { root: 0, pad: [62, 67, 71, 76] },
-      { root: 0, pad: [64, 67, 71, 74] },
-      { root: 0, pad: [60, 67, 71, 76] },
-      { root: 0, pad: [62, 66, 69, 76] },
-    ],
-    barsPerChord: 4,
-    pad: 0.12,
-    cutoff: 2400,
-    bass: 0,
-    piano: 0,
-    lead: "glass",
-    leadLevel: 0.14,
-    motifEvery: 8,
-    phraseEvery: 2,
-    stretch: 2,
-    crackle: 0.08,
-    dust: 0,
-    air: 0.45,
-    space: 2,
-    bounce: 0.03,
-  },
-  // Mars: low warm pads, pentatonic phrases, filtered dust.
-  mars: {
-    bpm: 74,
-    progression: [
-      { root: 40, pad: [52, 55, 59, 66] },
-      { root: 36, pad: [52, 55, 59, 62] },
-      { root: 43, pad: [50, 55, 59, 64] },
-      { root: 38, pad: [50, 55, 57, 62] },
-    ],
-    barsPerChord: 2,
-    pad: 0.42,
-    cutoff: 880,
-    bass: 0.15,
-    piano: 0.2,
-    lead: "pluck",
-    leadLevel: 0.14,
-    motifEvery: 8,
-    phraseEvery: 2,
-    stretch: 1,
-    crackle: 0.12,
-    dust: 0.42,
-    air: 0,
-    space: 1.2,
-    bounce: 0.05,
-  },
-  // Finale: the whole theme, building as the dish turns.
-  finale: { bpm: 78, progression: [GMAJ7, EM7, CMAJ7, D9], barsPerChord: 2, pad: 0.46, cutoff: 1300, bass: 0.18, piano: 0.5, lead: "box", leadLevel: 0.18, motifEvery: 4, phraseEvery: 0, stretch: 1, crackle: 0.18, dust: 0, air: 0, space: 1.3, bounce: 0.04 },
+  // Title: a sunny little waltz-step hello. The music box remembers the motif over a light strum.
+  title: { bpm: 92, swing: 0.58, progression: [G, C, EM, D], barsPerChord: 2, pad: 0.14, cutoff: 1500, bass: 0.12, piano: 0.12, comp: 0.055, compStyle: "strum", shaker: 0, lead: "box", leadLevel: 0.16, motifEvery: 4, phraseEvery: 0, stretch: 1, crackle: 0, dust: 0, air: 0, space: 0.8, bounce: 0.05, sparkle: 0.5 },
+  // Home: a skipping, cosy tune. Toy bass, strum on the backbeat, a shaker, the kalimba bouncing along.
+  home: { bpm: 100, swing: 0.6, progression: [G, EM, C, D], barsPerChord: 2, pad: 0.12, cutoff: 1500, bass: 0.14, piano: 0.14, comp: 0.06, compStyle: "strum", shaker: 0.022, lead: "box", leadLevel: 0.15, motifEvery: 8, phraseEvery: 2, stretch: 1, crackle: 0, dust: 0, air: 0, space: 0.7, bounce: 0.05, sparkle: 0.4 },
+  // Moon: a lullaby. A broken chord rocks gently on a little music box, bells sing over it, no bass.
+  moon: { bpm: 84, swing: 0.5, progression: [G, BM, C, D], barsPerChord: 2, pad: 0.1, cutoff: 2200, bass: 0, piano: 0, comp: 0.045, compStyle: "arp", shaker: 0, lead: "glass", leadLevel: 0.13, motifEvery: 8, phraseEvery: 2, stretch: 1.5, crackle: 0, dust: 0, air: 0.12, space: 1.2, bounce: 0.03, sparkle: 0.6 },
+  // Mars: a sunny desert trot. Pentatonic plucks, a bouncing bass and a breath of warm dust.
+  mars: { bpm: 96, swing: 0.58, progression: [EM, C, G, D], barsPerChord: 2, pad: 0.14, cutoff: 1200, bass: 0.14, piano: 0.1, comp: 0.055, compStyle: "strum", shaker: 0.026, lead: "pluck", leadLevel: 0.14, motifEvery: 8, phraseEvery: 2, stretch: 1, crackle: 0, dust: 0.14, air: 0, space: 0.8, bounce: 0.05, sparkle: 0.3 },
+  // Finale: the whole theme, building as the dish turns, with a little record warmth.
+  finale: { bpm: 100, swing: 0.58, progression: [G, EM, C, D, G, AM, C, D], barsPerChord: 2, pad: 0.18, cutoff: 1600, bass: 0.16, piano: 0.2, comp: 0.07, compStyle: "strum", shaker: 0.028, lead: "box", leadLevel: 0.17, motifEvery: 4, phraseEvery: 0, stretch: 1, crackle: 0.05, dust: 0, air: 0, space: 0.9, bounce: 0.045, sparkle: 0.5 },
 };
 
-type Layer = "pad" | "bass" | "piano" | "lead" | "pulse" | "bells" | "plucks" | "counter" | "sting" | "held" | "bounce";
+type Layer = "pad" | "bass" | "piano" | "lead" | "pulse" | "bells" | "plucks" | "counter" | "sting" | "held" | "bounce" | "comp" | "shaker";
 
 /**
  * The kalimba's little figure over one bar: which beat (in eighths) and which
@@ -152,7 +123,7 @@ export class Score {
   private timer = 0;
   private nextBeat = 0;
   private beatIndex = 0;
-  private chord: Chord = GMAJ7;
+  private chord: Chord = G;
   private statements = 0;
   private counterNote = 71;
   private friendFade = [0, 0, 0];
@@ -162,13 +133,14 @@ export class Score {
     crackleBed?: AudioBuffer,
   ) {
     const out = mx.input("music");
-    for (const name of ["pad", "bass", "piano", "lead", "pulse", "bells", "plucks", "counter", "sting", "held", "bounce"] as Layer[]) {
+    for (const name of ["pad", "bass", "piano", "lead", "pulse", "bells", "plucks", "counter", "sting", "held", "bounce", "comp", "shaker"] as Layer[]) {
       const g = gain(mx.ctx, name === "sting" || name === "held" ? 1 : 0);
       g.connect(out);
       this.layers.set(name, g);
     }
     const low = mx.tier === "low";
-    this.pad = new Pad(mx, this.layer("pad"), low ? 3 : 4, !low);
+    // A triangle pad: warm and round, never a buzzing drone.
+    this.pad = new Pad(mx, this.layer("pad"), low ? 3 : 4, !low, 1200, "triangle");
     this.pad.setLevel(1, 0.01);
     this.crackle = new Loop(mx, crackleBed ?? crackle(5), out, 0);
   }
@@ -286,7 +258,7 @@ export class Score {
 
   private applyLevels(seconds: number): void {
     if (this.scene === "silent") {
-      for (const name of ["pad", "bass", "piano", "lead", "pulse", "bells", "plucks", "counter", "bounce"] as Layer[]) this.fade(name, 0, seconds);
+      for (const name of ["pad", "bass", "piano", "lead", "pulse", "bells", "plucks", "counter", "bounce", "comp", "shaker"] as Layer[]) this.fade(name, 0, seconds);
       this.crackle.setLevel(0, seconds);
       this.bed("dust", 0, seconds);
       this.bed("air", 0, seconds);
@@ -302,6 +274,9 @@ export class Score {
     this.fade("piano", soft * (this.focus ? 0.5 : 1), seconds);
     this.fade("lead", soft, seconds);
     this.fade("bounce", a.bounce > 0 && this.stormStage !== "return" ? (this.focus ? 0.55 : 1) : 0, seconds);
+    this.fade("comp", a.comp > 0 ? soft * (this.focus ? 0.6 : 1) : 0, seconds);
+    const build = this.scene === "finale" ? this.build : 1;
+    this.fade("shaker", a.shaker > 0 && !this.focus && this.stormStage !== "return" ? build : 0, seconds);
     this.fade("pulse", this.focus && !this.stormStage ? 1 : 0, seconds);
     this.fade("bells", this.friends >= 1 ? soft : 0, seconds * 1.6);
     this.fade("plucks", this.friends >= 2 ? soft : 0, seconds * 1.6);
@@ -316,7 +291,7 @@ export class Score {
     const now = this.mx.now;
     if (stage === "thin") {
       // Everything thins away over several seconds to one held tone and the crackle.
-      for (const name of ["pad", "bass", "piano", "lead", "pulse", "bells", "plucks", "counter", "bounce"] as Layer[]) this.fade(name, 0, 6);
+      for (const name of ["pad", "bass", "piano", "lead", "pulse", "bells", "plucks", "counter", "bounce", "comp", "shaker"] as Layer[]) this.fade(name, 0, 6);
       this.bed("dust", 0, 6);
       this.bed("air", 0, 6);
       this.crackle.setLevel(0.3, 4);
@@ -369,12 +344,41 @@ export class Score {
     const chord = this.chord;
     const low = this.mx.tier === "low";
 
-    // Felt piano: a chord tone now and then, sometimes on the off-beat.
+    const off = beat * a.swing;
+    // The toy bass bounces: root on one, fifth on three, and now and then a hop up the octave before the next bar.
+    if (a.bass > 0 && chord.root > 0) {
+      if (inBar === 0) toyBass(this.mx, this.layer("bass"), midiToHz(chord.root), t, a.bass, beat * 0.95);
+      else if (inBar === 2) toyBass(this.mx, this.layer("bass"), midiToHz(chord.root + 7), t, a.bass * 0.85, beat * 0.9);
+      else if (inBar === 3 && Math.random() < 0.4) toyBass(this.mx, this.layer("bass"), midiToHz(chord.root + 12), t + off, a.bass * 0.6, beat * 0.45);
+    }
+    // The comp: a strum on the backbeat, or on the Moon a broken chord rocking like a cradle.
+    if (a.comp > 0) {
+      if (a.compStyle === "strum") {
+        if (inBar === 1 || inBar === 3) strum(this.mx, this.layer("comp"), chord.pad.slice(0, 3).map((n) => n + 12), t, a.comp, beat * 0.55);
+        if (inBar === 2 && !low && Math.random() < 0.35) strum(this.mx, this.layer("comp"), chord.pad.slice(1, 4).map((n) => n + 12), t + off, a.comp * 0.7, beat * 0.4);
+      } else {
+        const ROCK = [0, 1, 2, 3, 2, 1, 2, 1];
+        for (const half of [0, 1]) {
+          const step = ROCK[(inBar * 2 + half) % ROCK.length]!;
+          kalimba(this.mx, this.layer("comp"), midiToHz(chord.pad[step]! + 12), t + half * off, a.comp * (half === 0 ? 1 : 0.8), 1.1);
+        }
+      }
+    }
+    // A shaker on the eighths, a little louder on the off-beat, so the tune skips along.
+    if (a.shaker > 0 && !low) {
+      shaker(this.mx, this.layer("shaker"), t, a.shaker * 0.7);
+      shaker(this.mx, this.layer("shaker"), t + off, a.shaker);
+    }
+    // Felt piano: now and then a chord tone answers on the off-beat.
     if (a.piano > 0 && Math.random() < a.piano * (this.focus ? 0.4 : 1) * (low ? 0.7 : 1)) {
-      const tone = chord.pad[Math.floor(Math.random() * chord.pad.length)]! + (Math.random() < 0.5 ? 12 : 0);
-      const off = Math.random() < 0.3 ? beat * 0.5 : 0;
+      const tone = chord.pad[Math.floor(Math.random() * chord.pad.length)]! + 12;
       const instrument = this.scene === "mars" ? pluck : feltPiano;
-      instrument(this.mx, this.layer("piano"), midiToHz(tone), t + off, 0.09, this.scene === "mars" ? 0.9 : 2.2);
+      instrument(this.mx, this.layer("piano"), midiToHz(tone), t + off, 0.08, this.scene === "mars" ? 0.8 : 1.4);
+    }
+    // A twinkle up the chord at the end of a four-bar phrase.
+    if (a.sparkle > 0 && inBar === 3 && bar % 4 === 3 && !this.focus && Math.random() < a.sparkle) {
+      const top = chord.pad.slice(1).map((n) => n + 24);
+      twinkle(this.mx, this.layer("bounce"), top, t + off, 0.075);
     }
     // The kalimba's bouncing figure, on chord tones up high. Every fourth bar rests, so it never nags.
     if (a.bounce > 0 && bar % 4 !== 3 && !(this.scene === "moon" && bar % 2 === 1)) {
@@ -383,7 +387,7 @@ export class Score {
         if (this.scene === "moon" && eighth % 2 === 1) continue;
         if (low && eighth % 2 === 1) continue;
         const note = chord.pad[tone % chord.pad.length]! + (this.scene === "moon" ? 24 : 12);
-        kalimba(this.mx, this.layer("bounce"), midiToHz(note), t + (eighth % 2) * beat * 0.5, a.bounce * (eighth === 0 ? 1 : 0.78));
+        kalimba(this.mx, this.layer("bounce"), midiToHz(note), t + (eighth % 2) * off, a.bounce * (eighth === 0 ? 1 : 0.78));
       }
     }
     // Focus: a soft pulse on the root and fifth, in eighths.
@@ -457,7 +461,6 @@ export class Score {
     if (bar % a.barsPerChord === 0) {
       this.chord = a.progression[Math.floor(bar / a.barsPerChord) % a.progression.length]!;
       this.pad.setChord(this.chord.pad, t, 0.8);
-      if (a.bass > 0 && this.chord.root > 0) sub(this.mx, this.layer("bass"), midiToHz(this.chord.root), t, a.bass, a.barsPerChord * 4 * beat - 0.6);
     }
     if (this.wantStatement) {
       this.wantStatement = false;

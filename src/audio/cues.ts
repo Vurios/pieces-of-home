@@ -55,7 +55,7 @@ const step = (surface: string, label: string, volume: number, sample?: Pick<CueS
 
 export const CUES: Record<string, CueSpec> = {
   "lamp-click": { recipe: "lamp-click", bus: "effects", volume: 1, pitch: 0.04, group: "Home", label: "Lamp click" },
-  "lamp-hum": { recipe: "lamp-hum", bus: "ambience", volume: 1, group: "Home", label: "Lamp hum", loop: "brightness" },
+  "lamp-hum": { recipe: "lamp-hum", bus: "ambience", volume: 1, group: "Home", label: "Lamp glow twinkles", loop: "brightness" },
   "page-flip": { recipe: "page-flip", bus: "ui", volume: 0.8, pitch: 0.08, vary: 0.15, minGap: 0.08, group: "Paper", label: "Page flip", sample: "page", sampleGain: 0.3 },
   "book-open": { recipe: "page-flip", bus: "ui", volume: 0.8, minGap: 0.2, group: "Paper", label: "Notebook opens", sample: "book-open", sampleGain: 0.21 },
   "book-close": { recipe: "page-flip", bus: "ui", volume: 0.8, minGap: 0.2, group: "Paper", label: "Notebook closes", sample: "book-close", sampleGain: 0.21 },

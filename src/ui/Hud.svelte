@@ -3,6 +3,7 @@
   import type { TouchStick } from "../game/core/input";
   import type { Engine } from "../game/engine";
   import Icon, { type IconName } from "./Icon.svelte";
+  import SoundPopover from "./hud/SoundPopover.svelte";
   import { t } from "./settings.svelte";
 
   /**
@@ -23,6 +24,10 @@
   let { engine, hidden, onnotebook, onphoto, onemote, onsettings, onhint, onmap }: Props = $props();
 
   let prompt = $state<PromptInfo | null>(null);
+  let soundOpen = $state(false);
+  $effect(() => {
+    if (hidden) soundOpen = false;
+  });
   let device = $state<InputDevice>("keyboard");
   let stick = $state({ active: false, originX: 0, originY: 0, x: 0, y: 0 });
   let touchCapable = $state(false);
@@ -64,6 +69,7 @@
     photo: { index: 4, glyph: "LB" },
     emote: { index: 3, glyph: "Y" },
     settings: { index: 9, glyph: "Menu" },
+    sound: { index: -1, glyph: "" },
   };
 
   $effect(() => {
@@ -76,6 +82,7 @@
       if (!pad) return;
       for (const s of stamps) {
         const index = PAD[s.id]!.index;
+        if (index < 0) continue;
         const down = Boolean(pad.buttons[index]?.pressed);
         if (down && !was.get(index) && !hidden) s.act();
         was.set(index, down);
@@ -94,6 +101,7 @@
     { id: "notebook", icon: "book", label: t("hud.notebook"), key: "N", tint: "#c9dcc0", tilt: -2, act: onnotebook },
     { id: "photo", icon: "camera", label: t("hud.photo"), key: "C", tint: "#c3d7e6", tilt: 1.5, act: onphoto },
     { id: "emote", icon: "smile", label: t("hud.emote"), key: "G", tint: "#f3cabd", tilt: -1, act: onemote },
+    { id: "sound", icon: "speaker", label: t("hud.sound"), key: "V", tint: "#f6dc9a", tilt: -1.5, act: () => (soundOpen = !soundOpen) },
     { id: "settings", icon: "gear", label: t("hud.settings"), key: "Esc", tint: "#e6dcc4", tilt: 2, act: onsettings },
   ]);
 
@@ -106,7 +114,11 @@
     else if (event.code === "KeyG") onemote();
     else if (event.code === "KeyH") onhint();
     else if (event.code === "KeyM") onmap();
-    else if (event.key === "Escape") onsettings();
+    else if (event.code === "KeyV") soundOpen = !soundOpen;
+    else if (event.key === "Escape") {
+      if (soundOpen) soundOpen = false;
+      else onsettings();
+    }
   }
 </script>
 
@@ -115,12 +127,12 @@
 {#if !hidden}
   <nav class="tools" aria-label="Game">
     {#each stamps as s (s.id)}
-      <button type="button" class="tool" style:--tint={s.tint} style:--tilt={s.tilt + "deg"} onclick={s.act} aria-keyshortcuts={s.key === "Esc" ? "Escape" : s.key}>
+      <button type="button" class="tool" data-sound-toggle={s.id === "sound" ? "" : undefined} aria-expanded={s.id === "sound" ? soundOpen : undefined} style:--tint={s.tint} style:--tilt={s.tilt + "deg"} onclick={s.act} aria-keyshortcuts={s.key === "Esc" ? "Escape" : s.key}>
         <span class="stamp">
           <span class="art"><Icon name={s.icon} size={24} /></span>
           <span class="label">{s.label}</span>
         </span>
-        {#if !touchCapable}<span class="key" aria-hidden="true">{device === "gamepad" ? PAD[s.id]!.glyph : s.key}</span>{/if}
+        {#if !touchCapable && !(device === "gamepad" && !PAD[s.id]!.glyph)}<span class="key" aria-hidden="true">{device === "gamepad" ? PAD[s.id]!.glyph : s.key}</span>{/if}
       </button>
     {/each}
     <button type="button" class="tool hint" style:--tint="#f6c46e" style:--tilt="-1.5deg" onclick={onhint} aria-keyshortcuts="H">
@@ -131,6 +143,16 @@
       {#if !touchCapable && device !== "gamepad"}<span class="key" aria-hidden="true">H</span>{/if}
     </button>
   </nav>
+  {#if soundOpen}
+    <SoundPopover
+      place="stamps"
+      onclose={() => (soundOpen = false)}
+      onmore={() => {
+        soundOpen = false;
+        onsettings();
+      }}
+    />
+  {/if}
 
   {#if prompt}
     <div class="prompt" class:touch={touchCapable} role="status" aria-live="polite">

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { banners } from "./hud/banners.svelte";
+  import SoundCorner from "./hud/SoundCorner.svelte";
   import { untrack } from "svelte";
   import { audio } from "../audio/audio";
   import type { GameState } from "../game/core/state";
@@ -336,6 +337,9 @@
 {/if}
 {#if story}
   <StoryIntro {engine} ondone={() => begin(true)} />
+{/if}
+{#if (flow.stage === "title" || flow.stage === "menu" || story) && !flow.panel}
+  <SoundCorner onmore={() => flow.open("settings")} />
 {/if}
 {#if adventure}
   <AdventureCard ondone={adventureDone} />

@@ -39,9 +39,7 @@
   const ACTIONS: Action[] = ["forward", "back", "left", "right", "jump", "interact", "run"];
 
   function setVolume(bus: Bus, value: number): void {
-    settings.update((d) => {
-      d.volume[bus] = value;
-    });
+    settings.setVolume(bus, value);
   }
 
   function set<K extends keyof Settings>(key: K, value: Settings[K]): void {

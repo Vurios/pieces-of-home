@@ -238,6 +238,69 @@ export function flute(mx: Mixer, out: AudioNode, hz: number, at: number, level: 
   amp.connect(out);
 }
 
+/**
+ * Toy bass: a round, plucky "boop". A sine and a quiet octave that start a
+ * hair sharp and drop onto the note, like a rubber band, then die quickly.
+ * It bounces under the music instead of droning.
+ */
+export function toyBass(mx: Mixer, out: AudioNode, hz: number, at: number, level: number, length = 0.5): void {
+  const ctx = mx.ctx;
+  const end = at + length;
+  const body = osc(ctx, "sine", hz * 1.05, at, end + 0.05);
+  body.frequency.exponentialRampToValueAtTime(hz, at + 0.04);
+  const top = osc(ctx, "triangle", hz * 2, at, end + 0.05);
+  const tg = gain(ctx, 0.22);
+  const amp = gain(ctx);
+  amp.gain.setValueAtTime(0, at);
+  amp.gain.linearRampToValueAtTime(level, at + 0.008);
+  amp.gain.exponentialRampToValueAtTime(level * 0.35, at + 0.16);
+  amp.gain.exponentialRampToValueAtTime(0.0001, end);
+  amp.gain.setValueAtTime(0, end + 0.01);
+  body.connect(amp);
+  top.connect(tg).connect(amp);
+  amp.connect(out);
+}
+
+/**
+ * A soft strum, like a ukulele: the chord's notes plucked a moment apart,
+ * low to high, each one short. Played on the backbeat it makes the music hop.
+ */
+export function strum(mx: Mixer, out: AudioNode, notes: readonly number[], at: number, level: number, length = 0.42, spread = 0.016): void {
+  notes.forEach((note, i) => {
+    const hz = 440 * 2 ** ((note - 69) / 12);
+    const t = at + i * spread;
+    if (sampled(mx, out, "harp", hz, t, level * 0.8, length)) return;
+    const ctx = mx.ctx;
+    const end = t + length;
+    const f = filter(ctx, "lowpass", Math.min(hz * 5, 7000), 1.2);
+    f.frequency.setValueAtTime(Math.min(hz * 5, 7000), t);
+    f.frequency.exponentialRampToValueAtTime(Math.max(200, hz * 1.5), t + 0.18);
+    const amp = gain(ctx);
+    pluckEnvelope(amp.gain, t, 0.003, level, end);
+    osc(ctx, "triangle", hz, t, end + 0.05).connect(f).connect(amp).connect(out);
+  });
+}
+
+/** A shaker: a whisper of high noise, a little louder on the off-beat. */
+export function shaker(mx: Mixer, out: AudioNode, at: number, level: number): void {
+  const ctx = mx.ctx;
+  const f = filter(ctx, "highpass", 6500, 0.7);
+  const amp = gain(ctx);
+  amp.gain.setValueAtTime(0, at);
+  amp.gain.linearRampToValueAtTime(level, at + 0.012);
+  amp.gain.exponentialRampToValueAtTime(0.0001, at + 0.07);
+  amp.gain.setValueAtTime(0, at + 0.08);
+  noise(mx, "white", at, 0.09).connect(f).connect(amp).connect(out);
+}
+
+/**
+ * A twinkle: three or four quick glockenspiel notes skipping up the chord,
+ * like a sprinkle of fairy dust at the end of a phrase.
+ */
+export function twinkle(mx: Mixer, out: AudioNode, notes: readonly number[], at: number, level: number, gap = 0.075): void {
+  notes.forEach((note, i) => musicBox(mx, out, 440 * 2 ** ((note - 69) / 12), at + i * gap, level * (1 - i * 0.12), 1.1));
+}
+
 /** Soft sub bass: a sine that swells in and out. */
 export function sub(mx: Mixer, out: AudioNode, hz: number, at: number, level: number, hold: number): void {
   const ctx = mx.ctx;
@@ -273,6 +336,7 @@ export class Pad {
     count: number,
     rich: boolean,
     cutoff = 900,
+    private wave: OscillatorType = "sawtooth",
   ) {
     const ctx = mx.ctx;
     this.out = gain(ctx, 0);
@@ -289,7 +353,7 @@ export class Pad {
       const pair: OscillatorNode[] = [];
       for (const cents of rich ? [-7, 7] : [0]) {
         const o = ctx.createOscillator();
-        o.type = "sawtooth";
+        o.type = this.wave;
         o.frequency.value = 196;
         o.detune.value = cents + (v - count / 2) * 1.5;
         o.connect(each);

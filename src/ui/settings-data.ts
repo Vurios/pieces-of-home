@@ -6,6 +6,10 @@ import { BUSES, type Bus } from "../audio/audio";
  */
 export interface Settings {
   volume: Record<Bus, number>;
+  /** All sound off, without losing the slider positions. */
+  muted: boolean;
+  /** The player has moved a volume slider themselves. */
+  volumeChosen: boolean;
   subtitles: boolean;
   bubbles: boolean;
   textSize: "s" | "m" | "l" | "xl";
@@ -28,9 +32,18 @@ export interface Settings {
 
 export const SETTINGS_KEY = "poh.settings.v1";
 
+/**
+ * Volumes the game started at before it got quieter. A player who never moved
+ * a slider still has these saved, so they move to the new, softer defaults.
+ */
+const OLD_VOLUME: Record<Bus, number> = { master: 0.8, music: 0.6, ambience: 0.7, effects: 0.8, voices: 0.8, ui: 0.7 };
+
 export function defaultSettings(): Settings {
   return {
-    volume: { master: 0.8, music: 0.6, ambience: 0.7, effects: 0.8, voices: 0.8, ui: 0.7 },
+    // Soft at first: a new player does not know yet where the sound settings are.
+    volume: { master: 0.55, music: 0.5, ambience: 0.6, effects: 0.75, voices: 0.8, ui: 0.65 },
+    muted: false,
+    volumeChosen: false,
     subtitles: true,
     bubbles: true,
     textSize: "m",
@@ -60,12 +73,16 @@ export function reviveSettings(raw: unknown): Settings {
   if (typeof rawVolume === "object" && rawVolume !== null) {
     for (const bus of BUSES) {
       const n = (rawVolume as Record<string, unknown>)[bus];
-      if (typeof n === "number" && Number.isFinite(n)) volume[bus] = Math.max(0, Math.min(1, n));
+      if (typeof n !== "number" || !Number.isFinite(n)) continue;
+      if (v["volumeChosen"] !== true && n === OLD_VOLUME[bus]) continue;
+      volume[bus] = Math.max(0, Math.min(1, n));
     }
   }
   const bool = (key: keyof Settings, fallback: boolean): boolean => (typeof v[key] === "boolean" ? (v[key] as boolean) : fallback);
   return {
     volume,
+    muted: bool("muted", d.muted),
+    volumeChosen: bool("volumeChosen", d.volumeChosen),
     subtitles: bool("subtitles", d.subtitles),
     bubbles: bool("bubbles", d.bubbles),
     textSize: pick(v["textSize"], ["s", "m", "l", "xl"] as const, d.textSize),

@@ -1,4 +1,4 @@
-import { breeze, campfire, clock, crickets, dustHiss, katydids, pond, roomTone, wind } from "./buffers";
+import { breeze, campfire, clock, crickets, dustHiss, katydids, pond, twinkles, wind } from "./buffers";
 import { Loop } from "./instruments";
 import type { Mixer } from "./mixer";
 
@@ -15,11 +15,8 @@ interface Bed {
 
 export const SOUNDSCAPES: Record<string, Record<string, Bed[]>> = {
   home: {
-    // Dad's workshop: the still air of a shed and the wall clock.
-    workshop: [
-      { make: () => roomTone(5, 170, 0.06), level: 1 },
-      { make: () => clock(0.07), level: 1 },
-    ],
+    // Dad's workshop: the wall clock ticking softly. No low room rumble: a dark shed with a drone sounds spooky.
+    workshop: [{ make: () => clock(0.045), level: 1 }],
     // Dusk outside: crickets and a soft breeze.
     dusk: [
       { make: () => crickets(6, 5, 0.07), level: 1 },
@@ -29,11 +26,11 @@ export const SOUNDSCAPES: Record<string, Record<string, Bed[]>> = {
     pond: [{ make: () => pond(8, 0.05), level: 1, rich: true }],
     camp: [{ make: () => campfire(6, 0.06), level: 1 }],
   },
-  // The real Moon is silent: there is no air to carry sound. Dad's model only has a quiet room.
-  moon: { room: [{ make: () => roomTone(6, 120, 0.045), level: 1 }] },
+  // The real Moon is silent: there is no air to carry sound. Dad's model only has a few soft star twinkles.
+  moon: { room: [{ make: () => twinkles(9, 6, 0.028), level: 1 }] },
   mars: {
-    wind: [{ make: () => wind(8, 250, 800, 0.07), level: 1 }],
-    dust: [{ make: () => dustHiss(6, 0.03), level: 1, rich: true }],
+    wind: [{ make: () => wind(8, 300, 900, 0.05), level: 1 }],
+    dust: [{ make: () => dustHiss(6, 0.02), level: 1, rich: true }],
   },
   finale: {
     night: [

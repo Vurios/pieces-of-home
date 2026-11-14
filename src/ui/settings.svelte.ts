@@ -35,7 +35,24 @@ class SettingsStore {
     root.lang = "en";
     const reduce = s.motion === "reduce" || (s.motion === "system" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     root.dataset["motion"] = reduce ? "reduce" : "full";
-    for (const bus of BUSES) audio.setVolume(bus, s.volume[bus]);
+    for (const bus of BUSES) audio.setVolume(bus, bus === "master" && s.muted ? 0 : s.volume[bus]);
+  }
+
+  /** A volume the player picked: it unmutes and is remembered as their choice. */
+  setVolume(bus: (typeof BUSES)[number], value: number): void {
+    this.update((d) => {
+      d.volume[bus] = value;
+      d.volumeChosen = true;
+      if (value > 0) d.muted = false;
+    });
+  }
+
+  setMuted(muted: boolean): void {
+    this.update((d) => {
+      d.muted = muted;
+      d.volumeChosen = true;
+      if (!muted && d.volume.master < 0.05) d.volume.master = 0.4;
+    });
   }
 
   /** True when motion should be reduced, from the setting or the device. */

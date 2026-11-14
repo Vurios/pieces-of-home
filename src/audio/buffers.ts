@@ -148,6 +148,27 @@ export function roomTone(seconds = 5, hz = 180, level = 0.05): AudioBuffer {
   return buffer;
 }
 
+/**
+ * Star twinkles: a few tiny, high bell pings from the G major pentatonic,
+ * scattered far apart and mostly in one ear or the other, like stars
+ * winking. Cute, not cold: no drone underneath.
+ */
+export function twinkles(seconds = 9, count = 7, level = 0.03): AudioBuffer {
+  const { buffer, data } = make(seconds, 2);
+  const notes = [79, 81, 83, 86, 88, 91, 93];
+  for (let k = 0; k < count; k += 1) {
+    const hz = 440 * 2 ** ((notes[Math.floor(Math.random() * notes.length)]! - 69) / 12);
+    const at = (k + Math.random() * 0.7) * (seconds / count);
+    const pan = Math.random();
+    const amp = level * (0.6 + Math.random() * 0.4);
+    data.forEach((ch, c) => {
+      const side = c === 0 ? 1 - pan * 0.7 : 0.3 + pan * 0.7;
+      addEvent(ch, at, 1.2, (t) => amp * side * Math.exp(-t * 4.5) * (Math.sin(2 * Math.PI * hz * t) + 0.25 * Math.sin(2 * Math.PI * hz * 2.76 * t) * Math.exp(-t * 18)));
+    });
+  }
+  return buffer;
+}
+
 /** A soft evening breeze: pink-ish noise that swells and settles. */
 export function breeze(seconds = 8, level = 0.05): AudioBuffer {
   const { buffer, data } = make(seconds, 2);

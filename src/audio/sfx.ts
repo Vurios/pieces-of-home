@@ -58,10 +58,12 @@ function chime(c: SfxCall, notes: number[], spacing: number, peak: number, delay
 export const RECIPES: Record<string, Recipe> = {
   // ---- Home and paper ----
 
-  /** Dad's lamp switch: a bright noise tick for the contact, a falling sine for the body of the switch. */
+  /** Dad's lamp switch: a bright little "tik", a bubbly blip up, and two music-box notes as the light comes on. */
   "lamp-click": (c) => {
-    burst(c, "white", "highpass", 1800, 0.7, 0.001, 0.5, 0.03);
-    tone(c, "sine", 180, 60, 0.003, 0.5, 0.14, 0.004, 0.08);
+    burst(c, "white", "highpass", 2400, 0.7, 0.001, 0.3, 0.02);
+    tone(c, "triangle", 900, 760, 0.001, 0.14, 0.05);
+    tone(c, "sine", 520, 1180, 0.004, 0.16, 0.12, 0.03, 0.08);
+    chime(c, [86, 91], 0.09, 0.12, 0.12);
   },
   /** A page turning: noise swept upward through a bandpass, then the soft flap of the page landing. */
   "page-flip": (c) => {
@@ -90,11 +92,11 @@ export const RECIPES: Record<string, Recipe> = {
     holdEnvelope(g.gain, c.at, 0.02, 0.4 * c.level, 0.22, 0.1);
     noise(c.mx, "white", c.at, 0.4).connect(f).connect(chop).connect(g).connect(c.out);
   },
-  /** The ink stamp: a deep falling thunk, a wooden knock and a dull slap of rubber on paper. */
+  /** The ink stamp: a soft rubbery "pomf", a wooden knock and a slap of rubber on paper. */
   stamp: (c) => {
-    tone(c, "sine", 140, 55, 0.002, 0.75, 0.26, 0, 0.12);
-    burst(c, "pink", "bandpass", 420, 4, 0.001, 0.45, 0.07);
-    burst(c, "white", "lowpass", 1100, 0.7, 0.001, 0.35, 0.05);
+    tone(c, "sine", 260, 150, 0.002, 0.45, 0.16, 0, 0.1);
+    burst(c, "pink", "bandpass", 600, 3, 0.001, 0.35, 0.06);
+    burst(c, "white", "lowpass", 1400, 0.7, 0.001, 0.25, 0.04);
     // A small happy ding once the ink is down.
     chime(c, [91], 0, 0.09, 0.14);
   },
@@ -155,8 +157,9 @@ export const RECIPES: Record<string, Recipe> = {
   /** Land: a soft thud; `param` is the landing speed, louder for bigger drops. */
   land: (c) => {
     const k = Math.min(1, Math.max(0.25, c.param / 8));
-    tone(c, "sine", 95, 48, 0.002, 0.55 * k, 0.16);
-    burst(c, "brown", "lowpass", 320, 0.7, 0.002, 0.45 * k, 0.12);
+    // A soft, cushiony "pof", not a heavy thud.
+    tone(c, "sine", 210, 120, 0.002, 0.32 * k, 0.12, 0, 0.08);
+    burst(c, "pink", "lowpass", 700, 0.7, 0.002, 0.3 * k, 0.09);
   },
   /** A small puff of moon dust: an airy swell that dies away. */
   "regolith-puff": (c) => {
@@ -191,29 +194,31 @@ export const RECIPES: Record<string, Recipe> = {
       pluckEnvelope(g.gain, c.at + i * 0.13, 0.004, 0.08 * c.level, c.at + i * 0.13 + 0.09);
       o.connect(f).connect(g).connect(c.out);
     });
-    tone(c, "sawtooth", 140, 260, 0.05, 0.04, 0.3, 0.42);
+    tone(c, "triangle", 300, 620, 0.05, 0.06, 0.3, 0.42);
     tone(c, "sine", 1100, 1700, 0.004, 0.16, 0.12, 0.78, 0.08);
     tone(c, "sine", 1500, 2200, 0.004, 0.14, 0.1, 0.9, 0.06);
   },
-  /** Milo is happy: two quick sine bleeps that bend upward. */
+  /** Milo is happy: three quick chirps that bend upward, the last with a giggly wobble. */
   "milo-happy": (c) => {
-    tone(c, "sine", 880, 1320, 0.003, 0.18, 0.09, 0, 0.06);
-    tone(c, "sine", 1320, 1980, 0.003, 0.16, 0.12, 0.11, 0.08);
+    tone(c, "sine", 880, 1320, 0.003, 0.17, 0.08, 0, 0.05);
+    tone(c, "sine", 1100, 1650, 0.003, 0.15, 0.08, 0.09, 0.05);
+    const o = tone(c, "sine", 1320, 1980, 0.003, 0.15, 0.18, 0.18, 0.07);
+    const wob = osc(c.mx.ctx, "sine", 22, c.at + 0.18, c.at + 0.4);
+    const d = gain(c.mx.ctx, 60);
+    wob.connect(d).connect(o.frequency);
   },
   /** Milo is curious: one rising glide that tips up at the end, like a question. */
   "milo-curious": (c) => {
     const o = tone(c, "sine", 600, 900, 0.01, 0.18, 0.32, 0, 0.2);
     o.frequency.exponentialRampToValueAtTime(1250 * c.rate, c.at + 0.3);
   },
-  /** Milo dozes in the shade: a slow falling glide with a wobble, and a soft breath. */
+  /** Milo dozes in the shade: a little yawn that slides down, then three tiny snore bubbles. */
   "milo-sleepy": (c) => {
-    const o = tone(c, "triangle", 700, 280, 0.05, 0.14, 0.9, 0, 0.85);
-    const wob = osc(c.mx.ctx, "sine", 6, c.at, c.at + 0.95);
-    const d = gain(c.mx.ctx, 18);
+    const o = tone(c, "sine", 1000, 560, 0.04, 0.14, 0.6, 0, 0.55);
+    const wob = osc(c.mx.ctx, "sine", 7, c.at, c.at + 0.65);
+    const d = gain(c.mx.ctx, 14);
     wob.connect(d).connect(o.frequency);
-    const g = gain(c.mx.ctx);
-    holdEnvelope(g.gain, c.at + 0.6, 0.3, 0.05 * c.level, 0.2, 0.5);
-    noise(c.mx, "pink", c.at + 0.6, 1.1).connect(filter(c.mx.ctx, "lowpass", 700)).connect(g).connect(c.out);
+    [0.8, 1.15, 1.5].forEach((delay, i) => tone(c, "sine", 520 - i * 40, 760 - i * 60, 0.004, 0.07, 0.08, delay, 0.06));
   },
   /** Milo hops: a springy "boing" (a sine that leaps and wobbles) and a small landing tap. */
   "milo-hop": (c) => {
@@ -285,8 +290,8 @@ export const RECIPES: Record<string, Recipe> = {
   },
   /** The steering servo: a buzzy square that rises and settles. */
   servo: (c) => {
-    const o = tone(c, "square", 300, 420, 0.01, 0.05, 0.35, 0, 0.18);
-    o.frequency.exponentialRampToValueAtTime(310 * c.rate, c.at + 0.34);
+    const o = tone(c, "triangle", 500, 700, 0.01, 0.08, 0.3, 0, 0.16);
+    o.frequency.exponentialRampToValueAtTime(560 * c.rate, c.at + 0.29);
   },
 
   // ---- Chapter 3: Meridiani ----
@@ -326,11 +331,16 @@ export const RECIPES: Record<string, Recipe> = {
 
   /** Dad's toy rocket lifting off: a soft roar that swells and rumbles away, and a little whoosh on top. */
   "rocket-launch": (c) => {
-    const roar = burst(c, "brown", "lowpass", 220, 0.7, 0.35, 0.5, 2.6);
+    const roar = burst(c, "brown", "lowpass", 220, 0.7, 0.35, 0.36, 2.6);
     roar.frequency.exponentialRampToValueAtTime(520 * c.rate, c.at + 1.2);
     roar.frequency.exponentialRampToValueAtTime(160 * c.rate, c.at + 2.6);
     burst(c, "pink", "bandpass", 1400, 1.2, 0.5, 0.12, 1.6, 0.25);
-    tone(c, "sine", 70, 46, 0.2, 0.18, 2.2);
+    tone(c, "sine", 70, 46, 0.2, 0.1, 2.2);
+    // A happy "wheee" as it goes.
+    const whee = tone(c, "sine", 520, 1500, 0.15, 0.06, 1.4, 0.3, 1.2);
+    const vib = osc(c.mx.ctx, "sine", 6, c.at + 0.3, c.at + 1.8);
+    const vd = gain(c.mx.ctx, 25);
+    vib.connect(vd).connect(whee.frequency);
   },
 
   /** The rocket rushing past the camera: a rising then falling swish of air, like a car going by, and a low hum under it. */
@@ -353,8 +363,8 @@ export const RECIPES: Record<string, Recipe> = {
   /** The dish turning: a geared motor (a square through a bandpass, chopped like teeth on a gear) that ends with a clunk. */
   "dish-servo": (c) => {
     const ctx = c.mx.ctx;
-    const m = osc(ctx, "square", 90 * c.rate, c.at, c.at + 1.3);
-    m.frequency.linearRampToValueAtTime(120 * c.rate, c.at + 1.0);
+    const m = osc(ctx, "triangle", 180 * c.rate, c.at, c.at + 1.3);
+    m.frequency.linearRampToValueAtTime(240 * c.rate, c.at + 1.0);
     const f = filter(ctx, "bandpass", 600, 2);
     const chop = gain(ctx, 0.6);
     const teeth = osc(ctx, "square", 22, c.at, c.at + 1.3);
@@ -365,11 +375,10 @@ export const RECIPES: Record<string, Recipe> = {
     m.connect(f).connect(chop).connect(g).connect(c.out);
     burst(c, "brown", "lowpass", 300, 0.7, 0.002, 0.4, 0.1, 1.15);
   },
-  /** The needle drops: a soft thump, a burst of crackle, then a low hum as the record turns. */
+  /** The needle drops: a soft tap and a short sparkle of crackle as the record starts to turn. */
   "needle-drop": (c) => {
-    burst(c, "brown", "lowpass", 200, 0.7, 0.002, 0.5, 0.1);
-    burst(c, "white", "highpass", 3000, 0.7, 0.003, 0.12, 0.25, 0.04);
-    tone(c, "sine", 60, 60, 0.2, 0.04, 1.2, 0.05);
+    burst(c, "pink", "lowpass", 500, 0.7, 0.002, 0.3, 0.08);
+    burst(c, "white", "highpass", 3000, 0.7, 0.003, 0.08, 0.2, 0.04);
   },
 
   // ---- Photos, emotes, friends ----
@@ -416,32 +425,42 @@ export const RECIPES: Record<string, Recipe> = {
 /** Sounds that keep going: machines, wind and hiss. Each has one control from 0 to 1. */
 export const LOOPS: Record<string, LoopRecipe> = {
   /**
-   * Dad's lamp: a 60 Hz mains hum with a soft second harmonic, through a
-   * lowpass. `value` is the brightness.
+   * Dad's lamp glowing. No mains hum: a buzzing drone in a dark room sounds
+   * spooky. Instead, every few seconds, one or two tiny music-box notes
+   * twinkle from the G major pentatonic, as if the light is happy to be on.
+   * `value` is the brightness. The id stays "lamp-hum" for the cue table.
    */
   "lamp-hum": (mx, out, value) => {
     const ctx = mx.ctx;
     const g = gain(ctx, 0);
-    const f = filter(ctx, "lowpass", 400);
-    const a = osc(ctx, "sine", 60, mx.now, Infinity);
-    const b = osc(ctx, "triangle", 120.4, mx.now, Infinity);
-    const bg = gain(ctx, 0.3);
-    a.connect(f);
-    b.connect(bg).connect(f);
-    f.connect(g).connect(out);
-    const set = (v: number): void => void g.gain.setTargetAtTime(v * 0.05, mx.now, 0.4);
+    g.connect(out);
+    const NOTES = [79, 83, 86, 88, 91, 93, 95];
+    let level = value;
+    let timer = 0;
+    const sparkle = (): void => {
+      if (level > 0.02 && ctx.state === "running") {
+        const first = NOTES[Math.floor(Math.random() * NOTES.length)]!;
+        musicBox(mx, g, midiToHz(first), mx.now + 0.05, 0.05, 1.4);
+        if (Math.random() < 0.5) musicBox(mx, g, midiToHz(first + (Math.random() < 0.5 ? 3 : 5)), mx.now + 0.17, 0.035, 1.2);
+      }
+      timer = window.setTimeout(sparkle, 2200 + Math.random() * 2600);
+    };
+    timer = window.setTimeout(sparkle, 900);
+    const set = (v: number): void => {
+      level = v;
+      g.gain.setTargetAtTime(v, mx.now, 0.4);
+    };
     set(value);
     return {
       set,
       stop: () => {
+        window.clearTimeout(timer);
         g.gain.setTargetAtTime(0, mx.now, 0.2);
-        a.stop(mx.now + 1);
-        b.stop(mx.now + 1);
       },
     };
   },
   /** The rover's electric motor: a sawtooth whine through a bandpass; `value` is speed. */
-  "motor-whine": (mx, out, value) => machine(mx, out, value, "sawtooth", 160, 620, 1200, 0.05),
+  "motor-whine": (mx, out, value) => machine(mx, out, value, "triangle", 220, 760, 1200, 0.06),
   /** The rock grinder: a low saw buzz with gritty noise chopped fast. `value` is pressure. */
   grinder: (mx, out, value) => {
     const handle = machine(mx, out, value, "sawtooth", 120, 170, 900, 0.05);

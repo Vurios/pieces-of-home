@@ -167,6 +167,7 @@ export class AudioEngine {
       .then(() => bank.load("inst"))
       .then(() => Promise.all(["eagle-landed", "mars-wind", "ingenuity-hum", "voyager-plasma"].map((id) => bank.load(id))));
     for (const bus of BUSES) mx.setVolume(bus, this.volumes[bus]);
+    mx.fadeIn(3);
     mx.muffle(this.muffled);
     this.score = new Score(mx, this.crackleBed ?? undefined);
     this.ambience = new Ambience(mx);

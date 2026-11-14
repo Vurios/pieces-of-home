@@ -70,21 +70,14 @@ const NOTES: { from: [number, number]; lead: string; x: number; y: number; ancho
 ];
 
 /**
- * Dad's drawing of his lamp. Each stroke comes in three hand-wobbled copies
- * that take turns about ten times a second (the "boiling line" of hand-drawn
- * animation), and each draws itself in as its share of the game loads. His
- * notes appear beside each part once it is drawn, and a warm glow sits behind
- * the bulb for when the light comes on.
+ * Dad's drawing of his lamp. Each stroke draws itself in as its share of the
+ * game loads, then holds still: no boiling line here, because three copies
+ * swapping ten times a second read as a flicker on the page. His notes appear
+ * beside each part once it is drawn, and a warm glow sits behind the bulb for
+ * when the light comes on.
  */
 export function lampSketch(): string {
-  const groups = STROKES.map((paths, i) => {
-    const frames: string[] = [];
-    for (let f = 0; f < 3; f += 1) {
-      const random = seeded(101 + i * 17 + f * 1009);
-      frames.push(`<g class="f f${f}">${paths.map((p) => `<path pathLength="1" d="${f === 0 ? p : wobble(p, random, 1.1)}"/>`).join("")}</g>`);
-    }
-    return `<g class="s s${i}">${frames.join("")}</g>`;
-  }).join("");
+  const groups = STROKES.map((paths, i) => `<g class="s s${i}">${paths.map((p) => `<path pathLength="1" d="${p}"/>`).join("")}</g>`).join("");
   const notes = NOTES.map((n, i) => {
     const lines = LOADER.parts[i] ?? [];
     const text = lines.map((line, k) => `<tspan x="${n.x}" dy="${k === 0 ? 0 : 22}">${escape(line)}</tspan>`).join("");
@@ -112,11 +105,11 @@ export function travelDoodle(): string {
     <g class="ink">
       <path class="dash" d="${j(route)}"/>
       <path class="dash faint" d="${j(back)}"/>
-      <circle cx="52" cy="104" r="30" class="fill"/>
+      <circle cx="52" cy="104" r="30" class="home"/>
       <path d="${j("M24 112 C 40 104, 62 106, 80 98")}"/>
       <path d="${j("M44 92 L 44 80 L 52 72 L 60 80 L 60 92 Z")}" class="fill"/>
       <rect x="49" y="83" width="6" height="9" class="glow"/>
-      <circle cx="226" cy="44" r="17" class="fill"/>
+      <circle cx="226" cy="44" r="17" class="moon"/>
       <path d="${j("M219 33 C 230 38, 230 52, 219 56", 0.5)}"/>
       <circle cx="230" cy="40" r="2.2"/><circle cx="222" cy="50" r="1.6"/>
       <circle cx="372" cy="104" r="22" class="mars"/>

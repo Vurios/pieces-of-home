@@ -1011,3 +1011,17 @@ Measured on the RTX 4050 laptop (dev build): main-thread long tasks before the l
 **Why:** Team feedback, 2026-11-14: "optimize the game and make it smoother". The Game Bible's target is 60 fps on a mid laptop, and a mid laptop usually has built-in graphics.
 
 **Alternatives considered:** A GPU benchmark at startup (adds wait and download), dropping the tier during the title (a tier change rebuilds every shader, the stutter this pass removes).
+
+## 98. Cuter music and sound; a quieter, findable volume
+
+**Date:** 2026-11-14
+
+**Decision:** The score keeps its motif but changes its clothes. Sweet triads (G, Em, C, D, with Bm and Am) replace the major sevenths, so no two pad notes sit a semitone apart. Tempos rise (title 92, home 100, Mars 96, finale 100 bpm) with a gentle swing. A plucky toy bass bounces root and fifth instead of a sub-bass drone; a ukulele-like strum lands on the backbeat; a soft shaker skips on the eighths; a glockenspiel twinkle ends each four-bar phrase. The pad is a quiet triangle instead of a loud detuned sawtooth, and the vinyl crackle is gone except a touch in the finale. The Moon is now a lullaby (a rocking broken chord on a music box) over a few star twinkles, not a low room rumble. The lamp no longer hums at 60 Hz: tiny music-box notes twinkle while it is on. The workshop loses its low room tone. Sound effects soften: a cheerful lamp click with two chime notes, a "pomf" stamp and landing, a chirpier happy Milo, a yawn and snore bubbles for sleepy Milo, a "wheee" on the rocket, triangle waves instead of buzzy saws and squares on servos and motors.
+
+New players start softer (master 55, music 50) and the sound rises from silence over three seconds. A player who never moved a slider moves to the new defaults; a chosen volume is kept. A Sound button sits in the corner of the title, menu and storybook (with a "Too loud? Turn it down here." tag on a first visit) and a Sound stamp (key V) joins the play stamps. Both open one big volume slider, a Sound off switch and a link to the full sound settings.
+
+The loading page's lamp drawing holds still once drawn (its three boiling copies read as a flicker), and its inks are mixed: blue for Dad's drawing only, sepia headings, a green list title, graphite writing, red ticks and dots.
+
+**Why:** Team feedback, 2026-11-14: the music and sound effects felt "too creepy" (slow sustained chords, a hum and a rumble in a dark room, crackle and random notes), the sound was "too loud when opening the game", players did not know where to turn it down, the loading page lamp "is flickering", and the notebook had "too much blue text".
+
+**Alternatives considered:** Only lowering the music (the eerie parts were the drones and dissonant voicings, not the loudness), recorded music (the Bible keeps all music made in code), a mute button with no slider (kids need "quieter", not only "off").

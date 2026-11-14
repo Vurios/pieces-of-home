@@ -14,7 +14,7 @@ export type Bus = "master" | "music" | "ambience" | "effects" | "voices" | "ui";
 export const BUSES: Bus[] = ["master", "music", "ambience", "effects", "voices", "ui"];
 export type AudioTier = "low" | "medium" | "high";
 
-export const DEFAULT_VOLUMES: Record<Bus, number> = { master: 0.8, music: 0.6, ambience: 0.7, effects: 0.8, voices: 0.8, ui: 0.7 };
+export const DEFAULT_VOLUMES: Record<Bus, number> = { master: 0.55, music: 0.5, ambience: 0.6, effects: 0.75, voices: 0.8, ui: 0.65 };
 
 /** How much of each bus goes to the room. */
 const SENDS: Partial<Record<Bus, number>> = { music: 0.32, effects: 0.12, voices: 0.06, ambience: 0.05 };
@@ -118,7 +118,20 @@ export class Mixer {
     // A squared curve feels even across the slider: half way sounds about half as loud.
     const v = this.volumes[bus] ** 2 * (bus === "master" ? 1.1 : 1);
     if (instant) fader.gain.value = v;
-    else fader.gain.setTargetAtTime(v, this.now, 0.05);
+    else {
+      // Holds wherever a fade-in has got to, then moves on from there.
+      if (fader.gain.cancelAndHoldAtTime) fader.gain.cancelAndHoldAtTime(this.now);
+      fader.gain.setTargetAtTime(v, this.now, 0.05);
+    }
+  }
+
+  /** The first sound of a visit rises gently from silence instead of starting at full volume. */
+  fadeIn(seconds: number): void {
+    const g = this.faders.get("master")!.gain;
+    const v = this.volumes.master ** 2 * 1.1;
+    g.cancelScheduledValues(this.now);
+    g.setValueAtTime(0.0001, this.now);
+    g.linearRampToValueAtTime(v, this.now + seconds);
   }
 
   /**
