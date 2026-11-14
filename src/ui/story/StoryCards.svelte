@@ -1,8 +1,11 @@
 <script lang="ts">
   import { audio } from "../../audio/audio";
   import { fact } from "../../content/facts";
-  import { type FactStory, factStory } from "../../content/notebook";
+  import { type FactStory, type MachineSpread, factStory } from "../../content/notebook";
   import type { Engine } from "../../game/engine";
+  import Icon from "../Icon.svelte";
+  import Sketch from "../drawing/Sketch.svelte";
+  import { DRAWINGS } from "../drawing/machines";
 
   /**
    * Story cards: Dad's handwritten notes on his lined paper, and true stories.
@@ -23,8 +26,25 @@
     kind: "note" | "fact";
     text: string;
     source: string | null;
+    sourceUrl: string | null;
     story: FactStory | null;
+    /** The machine this story belongs to: the one whose notebook page holds the fact. */
+    machine: MachineSpread | null;
+    /** Where it happened: from the notebook page, else the world the player is standing in. */
+    place: string | null;
   }
+  /**
+   * The real place each little world shows, for stories that are not on a
+   * machine's notebook page (Eagle's descent stage, say). A story never borrows
+   * another machine's name or drawing.
+   */
+  const PLACE_OF_WORLD: Record<string, string> = {
+    tranquility: "Tranquility Base, the Moon",
+    hadley: "Hadley-Apennine, the Moon",
+    meridiani: "Meridiani Planum, Mars",
+    valinor: "Valinor Hills, Mars",
+    storms: "Ocean of Storms, the Moon",
+  };
   let card = $state<Card | null>(null);
   let button = $state<HTMLButtonElement | null>(null);
   let more = $state(false);
@@ -37,7 +57,10 @@
       } catch {
         story = null;
       }
-      card = { key: p.key, kind: p.kind, text: p.text, source: p.fact ? fact(p.fact).sourceTitle : null, story };
+      const entry = p.fact ? fact(p.fact) : null;
+      const machine = story?.spread ?? null;
+      const place = story?.where ?? PLACE_OF_WORLD[engine.world?.id ?? ""] ?? null;
+      card = { key: p.key, kind: p.kind, text: p.text, source: entry?.sourceTitle ?? null, sourceUrl: entry?.sourceUrl ?? null, story, machine, place };
       more = false;
       audio.ui(p.kind === "note" ? "page" : "toast");
     }),
@@ -108,32 +131,57 @@
       </div>
     {:else}
       {@const story = card.story}
-      <div class="card fact" class:pictured={Boolean(story?.image)} role="dialog" aria-live="polite" aria-label="A true story">
-        {#if story?.image}
-          <figure class="photo">
-            <img src={story.image.file} alt={story.image.alt} decoding="async" />
-            <figcaption>{story.image.credit}</figcaption>
-          </figure>
-        {/if}
+      {@const machine = card.machine}
+      <div class="card fact" class:solo={!story?.image && !machine} role="dialog" aria-live="polite" aria-label="A true story">
+        <div class="pic">
+          {#if story?.image}
+            <figure class="photo">
+              <img src={story.image.file} alt={story.image.alt} decoding="async" />
+              <figcaption>{story.image.credit}</figcaption>
+            </figure>
+          {:else if machine}
+            <figure class="drawn">
+              <div class="sheet"><Sketch id={`fact-${machine.id}`} prims={DRAWINGS[machine.drawing]} color="var(--dad-ink)" still /></div>
+              <figcaption>Dad's drawing. Not to scale.</figcaption>
+            </figure>
+          {/if}
+        </div>
         <div class="words">
           <p class="from">
             <span class="badge">True story</span>
-            {#if story?.where}<span class="where">{story.where}</span>{/if}
+            {#if machine}<span class="who">{machine.name}</span>{:else if card.place}<span class="who"><Icon name="pin" size={15} /> {card.place}</span>{/if}
           </p>
-          {#if story?.spread}<p class="machine">{story.spread.nickname}</p>{/if}
           <p class="text">{card.text}</p>
-          {#if story && (story.details.length || story.when)}
+          {#if story && (story.details.length || story.when || (story.where && machine))}
             {#if more}
-              <ul class="details" aria-label="More about it">
-                {#if story.when}<li><b>When:</b> {story.when}</li>{/if}
-                {#each story.details as line, i (i)}<li>{line}</li>{/each}
-              </ul>
+              <dl class="notes" aria-label="More about it">
+                {#if story.when}<div class="row"><dt>When</dt><dd>{story.when}</dd></div>{/if}
+                {#if story.where && machine}<div class="row"><dt><Icon name="pin" size={16} /> Where</dt><dd>{story.where}</dd></div>{/if}
+                {#if story.details.length}
+                  <div class="row facts">
+                    <dt>The facts</dt>
+                    <dd>
+                      <ol>
+                        {#each story.details as line, i (i)}<li style:--i={i}>{line}</li>{/each}
+                      </ol>
+                    </dd>
+                  </div>
+                {/if}
+              </dl>
             {:else}
-              <button type="button" class="more" onclick={() => (more = true)}>More about it</button>
+              <button type="button" class="more" onclick={() => (more = true)}><Icon name="look" size={18} /> More about it</button>
             {/if}
           {/if}
           <div class="foot">
-            {#if card.source}<p class="source">From: {card.source}</p>{/if}
+            <div class="cite">
+              {#if card.source}
+                <p class="source">
+                  Source:
+                  {#if card.sourceUrl}<a href={card.sourceUrl} target="_blank" rel="noopener noreferrer">{card.source} <Icon name="external" size={12} /></a>{:else}{card.source}{/if}
+                </p>
+              {/if}
+              {#if story?.spread}<p class="kept"><Icon name="book" size={16} /> Find it again in Dad's notebook.</p>{/if}
+            </div>
             <button type="button" class="btn amber got" bind:this={button} onclick={done}>Got it <kbd>E</kbd></button>
           </div>
         </div>
@@ -180,30 +228,38 @@
     margin: 0;
     padding-left: 30px;
     font: 700 1.55rem/32px var(--hand);
-    color: var(--dad-ink);
+    color: var(--ink);
   }
 
-  /* ---- The true story: a big index card with a taped photo ---- */
+  /* ---- The true story: a museum label card, with a taped photo or Dad's drawing ---- */
   .fact {
-    width: min(880px, calc(100vw - 32px));
-    padding: 26px 30px 20px;
+    width: min(920px, calc(100vw - 32px));
+    padding: 24px 30px 20px 24px;
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 230px 1fr;
     gap: 26px;
     align-items: start;
     background:
       var(--grain),
-      repeating-linear-gradient(to bottom, transparent 0 33px, rgba(92, 115, 147, 0.12) 33px 34px),
+      linear-gradient(90deg, rgba(242, 165, 65, 0.16) 0 254px, transparent 254px),
       var(--card);
-    background-position: 0 0, 0 70px, 0 0;
-    transform: translateX(-50%) rotate(0.5deg);
-    border-top: 8px solid var(--sky);
+    transform: translateX(-50%) rotate(0.4deg);
+    border-radius: 6px 10px 8px 12px;
+    border: 3px solid var(--ink);
+    box-shadow:
+      0 6px 0 var(--ink),
+      0 26px 50px -10px rgba(10, 8, 24, 0.55);
   }
-  .fact.pictured {
-    grid-template-columns: minmax(220px, 300px) 1fr;
+  .fact.solo {
+    grid-template-columns: 1fr;
+    background: var(--grain), var(--card);
   }
-  .photo {
-    margin: 4px 0 0;
+  .solo .pic {
+    display: none;
+  }
+  .photo,
+  .drawn {
+    margin: 2px 0 0;
     padding: 10px 10px 8px;
     background: #fff;
     box-shadow:
@@ -219,7 +275,19 @@
     object-fit: cover;
     background: #ddd;
   }
-  .photo figcaption {
+  .drawn .sheet {
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    padding: 12px;
+    box-sizing: border-box;
+    background:
+      linear-gradient(rgba(35, 63, 115, 0.08) 1px, transparent 1px) 0 0 / 14px 14px,
+      linear-gradient(90deg, rgba(35, 63, 115, 0.08) 1px, transparent 1px) 0 0 / 14px 14px,
+      #fdfaf2;
+  }
+  .photo figcaption,
+  .drawn figcaption {
     margin-top: 6px;
     font: 400 0.72rem/1.2 var(--read);
     color: var(--ink-soft);
@@ -229,11 +297,11 @@
     animation: words-in 0.5s ease-out 0.18s both;
   }
   .from {
-    margin: 0 0 8px;
+    margin: 0 0 10px;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 10px 14px;
     font: 700 0.82rem/1 var(--label);
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -250,56 +318,142 @@
     color: var(--clay-deep);
     rotate: -3deg;
   }
-  .where {
-    letter-spacing: 0.06em;
-  }
-  .machine {
-    margin: 0 0 4px;
-    font: 700 1.15rem/1.2 var(--hand);
-    color: var(--dad-ink);
+  .who {
+    letter-spacing: 0.02em;
+    text-transform: none;
+    font: 700 1rem/1.2 var(--read);
+    color: var(--ink);
   }
   .fact .text {
     margin: 0;
-    font: 700 1.5rem/1.4 var(--read);
+    font: 700 1.55rem/1.4 var(--read);
+    color: var(--ink);
     text-wrap: pretty;
   }
   .more {
-    margin: 14px 0 0;
-    padding: 6px 12px;
-    border: 2px dashed var(--ink-soft);
-    border-radius: 6px;
-    background: transparent;
+    margin: 16px 0 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: #fff6e2;
     color: var(--ink);
-    font: 700 0.95rem/1 var(--read);
+    font: 700 1rem/1 var(--read);
     cursor: pointer;
+    box-shadow: 0 3px 0 var(--ink);
+    transition:
+      transform 0.15s var(--ease-spring),
+      box-shadow 0.15s ease;
   }
   .more:hover,
   .more:focus-visible {
-    border-style: solid;
-    background: rgba(242, 165, 65, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 var(--ink);
   }
-  .details {
-    margin: 14px 0 0;
-    padding: 10px 14px 10px 30px;
-    background: rgba(255, 255, 255, 0.75);
-    border-left: 4px solid var(--amber);
-    font: 400 1rem/1.45 var(--read);
+  .more :global(.icon),
+  .notes :global(.icon),
+  .kept :global(.icon),
+  .who :global(.icon),
+  .source :global(.icon) {
+    display: inline-block;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vertical-align: -3px;
+  }
+  /* Field notes: when, where and the facts, like the label beside a museum piece. */
+  .notes {
+    margin: 16px 0 0;
+    display: grid;
+    border: 2px solid rgba(43, 38, 34, 0.18);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.82);
+    overflow: hidden;
     animation: words-in 0.3s ease-out both;
   }
-  .details li + li {
-    margin-top: 2px;
+  .row {
+    display: grid;
+    grid-template-columns: 118px 1fr;
+    gap: 12px;
+    padding: 9px 14px;
+  }
+  .row + .row {
+    border-top: 1.5px dashed rgba(43, 38, 34, 0.18);
+  }
+  dt {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font: 700 0.74rem/1.4 var(--label);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--clay-deep);
+  }
+  dd {
+    margin: 0;
+    font: 400 1.02rem/1.45 var(--read);
+    color: var(--ink);
+  }
+  .facts dt {
+    align-self: start;
+    padding-top: 2px;
+  }
+  .facts ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 6px;
+    counter-reset: fact;
+  }
+  .facts li {
+    position: relative;
+    padding-left: 30px;
+    counter-increment: fact;
+    animation: words-in 0.3s ease-out calc(0.08s * var(--i)) both;
+  }
+  .facts li::before {
+    content: counter(fact);
+    position: absolute;
+    left: 0;
+    top: 1px;
+    width: 21px;
+    height: 21px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--amber);
+    border: 1.5px solid var(--ink);
+    font: 700 0.72rem/1 var(--read);
   }
   .foot {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
     gap: 16px;
-    margin-top: 14px;
+    margin-top: 16px;
   }
-  .source {
+  .cite {
+    display: grid;
+    gap: 4px;
+  }
+  .source,
+  .kept {
     margin: 0;
     font: 400 0.82rem/1.3 var(--read);
     color: var(--ink-soft);
+  }
+  .source a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .kept {
+    font: 400 0.98rem/1.3 var(--hand);
   }
   .sign {
     margin: 2px 0 0;
@@ -345,15 +499,23 @@
     }
   }
   @media (max-width: 680px) {
-    .fact.pictured {
+    .fact {
       grid-template-columns: 1fr;
+      background: var(--grain), var(--card);
     }
-    .photo {
-      max-width: 220px;
+    .photo,
+    .drawn {
+      max-width: 200px;
+    }
+    .row {
+      grid-template-columns: 1fr;
+      gap: 2px;
     }
   }
   :global(:root[data-motion="reduce"]) .card,
   :global(:root[data-motion="reduce"]) .photo,
+  :global(:root[data-motion="reduce"]) .drawn,
+  :global(:root[data-motion="reduce"]) .facts li,
   :global(:root[data-motion="reduce"]) .words {
     animation: none;
   }

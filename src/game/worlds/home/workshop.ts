@@ -62,6 +62,8 @@ export interface WorkshopResult {
   roof: Group;
   /** Glass and other see-through pieces, drawn after everything else. */
   glass: Object3D[];
+  /** The museum labels in front of the domes: the real place each little world shows. */
+  labels: Object3D[];
   globes: Group[];
   /** The lamp's glowing parts (shade, bulb, halo, pool), so the lamp can click on. */
   lampGlow: Object3D[];
@@ -91,6 +93,11 @@ export interface WorkshopResult {
 
 export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextures: { moon: Texture; mars: Texture }): WorkshopResult {
   const m = s.matrix;
+  // The site may be drawn larger than the model: loose meshes take its turn and its size from here.
+  const siteTurn = new Quaternion();
+  const siteSize = new Vector3();
+  m.decompose(new Vector3(), siteTurn, siteSize);
+  const k = siteSize.x;
   const { halfWidth: hw, halfDepth: hd, wallHeight: wh, floor: fy } = SHED;
   const wallMid = fy + wh / 2;
   const top = fy + wh;
@@ -315,10 +322,10 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
 
   // The lamp's lit parts: the warm inside of the shade, the bulb, a soft halo
   // and a pool of light on the bench. Unlit, so they glow at any power level.
-  const quaternion = new Quaternion().setFromRotationMatrix(m);
   const lit = (mesh: Mesh, local: Vector3, order: number): void => {
     mesh.position.copy(local.clone().applyMatrix4(m));
-    mesh.quaternion.premultiply(quaternion);
+    mesh.quaternion.premultiply(siteTurn);
+    mesh.scale.multiplyScalar(k);
     mesh.renderOrder = order;
     glass.push(mesh);
   };
@@ -353,9 +360,11 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     on(x, z, dx, dz, 0.003, cylinder(14), floor, 0, [r * 0.7, 0.003, r * 0.7]);
   };
   const rock = (x: number, z: number, dx: number, dz: number, size: number, color: string): void => on(x, z, dx, dz, size * 0.3, sphere("low"), color, dx * 40, [size, size * 0.6, size * 0.8]);
-  const worlds: { x: number; ground: string; detail: (x: number, z: number) => void }[] = [
+  const worlds: { x: number; ground: string; place: string; world: string; detail: (x: number, z: number) => void }[] = [
     {
       x: 0.25,
+      place: "Tranquility Base",
+      world: "Moon",
       ground: "#B9B4AA",
       detail: (x, z) => {
         // Tranquility Base: the gold lander base that stayed behind, the mirror panel, the moonquake listener, the flag and craters.
@@ -376,6 +385,8 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     },
     {
       x: 0.85,
+      place: "Hadley-Apennine",
+      world: "Moon",
       ground: "#A9A49A",
       detail: (x, z) => {
         // Hadley: the Moon buggy by the winding rille, mountains behind.
@@ -392,6 +403,8 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     },
     {
       x: 1.45,
+      place: "Meridiani Planum",
+      world: "Mars",
       ground: "#B5643A",
       detail: (x, z) => {
         // Meridiani: Opportunity with its blue wings at the rim of a little crater, and a field of blueberries.
@@ -408,6 +421,8 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     },
     {
       x: 2.05,
+      place: "Valinor Hills",
+      world: "Mars",
       ground: "#8E3F2A",
       detail: (x, z) => {
         // Valinor Hills: Ingenuity on its four thin legs with crossed blades, rover tracks and sand ripples.
@@ -423,6 +438,18 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
       },
     },
   ];
+  // A museum label leaning in front of each dome, big enough to read from the room:
+  // the real place the little world shows, and that it is a model.
+  const labels: Object3D[] = [];
+  const labelGeometry = new PlaneGeometry(0.5, 0.2);
+  for (const world of worlds) {
+    const card = new Mesh(labelGeometry, new MeshBasicMaterial({ map: labelTexture(world.place, world.world), toneMapped: false }));
+    card.position.copy(new Vector3(world.x, BENCH_Y + 0.065, BENCH_Z + 0.34).applyMatrix4(m));
+    card.quaternion.copy(siteTurn);
+    card.rotateX(-1.05);
+    card.scale.setScalar(k);
+    labels.push(card);
+  }
   for (const world of worlds) {
     const z = BENCH_Z - 0.05;
     b.place(cylinder(24), C.woodDark, v(world.x, BENCH_Y + 0.03, z), [0, 0, 0], [0.27, 0.06, 0.27], m);
@@ -430,16 +457,13 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     // The little planet, sunk into the base so it reads as a world under glass.
     b.place(sphere("mid"), world.ground, v(world.x, BENCH_Y + 0.0, z), [0, 0, 0], PLANET, m);
     world.detail(world.x, z);
-    // Dad's paper tag on a stake.
-    b.place(cylinder(4), C.woodDark, v(world.x + 0.2, BENCH_Y + 0.12, z + 0.22), [0, 0, 0], [0.006, 0.18, 0.006], m);
-    b.place(box(0.003), C.paper, v(world.x + 0.2, BENCH_Y + 0.2, z + 0.225), [0, -0.2, 0.08], [0.11, 0.065, 0.006], m);
-    b.place(box(0.001), C.ink, v(world.x + 0.2, BENCH_Y + 0.205, z + 0.23), [0, -0.2, 0.08], [0.07, 0.006, 0.002], m);
-    b.place(box(0.001), C.ink, v(world.x + 0.19, BENCH_Y + 0.188, z + 0.23), [0, -0.2, 0.08], [0.05, 0.006, 0.002], m);
+    // (Its museum label leans in front: see labelTexture.)
 
     const dome = new Mesh(domeGeometry, glassMaterial);
     const p = new Vector3(world.x, BENCH_Y + 0.07, z).applyMatrix4(m);
     dome.position.copy(p);
-    dome.quaternion.setFromRotationMatrix(m);
+    dome.quaternion.copy(siteTurn);
+    dome.scale.setScalar(k);
     dome.renderOrder = 8;
     glass.push(dome);
   }
@@ -455,8 +479,8 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
   b.place(cylinder(12), C.clay, v(2.5, BENCH_Y + 0.155, BENCH_Z - 0.3), [0, 0, 0], [0.065, 0.02, 0.065], m);
   const jar = new Mesh(cylinderGlass(), glassMaterial);
   jar.position.copy(new Vector3(2.5, BENCH_Y + 0.075, BENCH_Z - 0.3).applyMatrix4(m));
-  jar.quaternion.setFromRotationMatrix(m);
-  jar.scale.set(0.075, 0.095, 0.075);
+  jar.quaternion.copy(siteTurn);
+  jar.scale.set(0.075 * k, 0.095 * k, 0.075 * k);
   jar.renderOrder = 8;
   glass.push(jar);
 
@@ -523,7 +547,8 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     const holder = new Group();
     holder.add(spin);
     holder.position.copy(new Vector3(spot.x, baseY + 0.36, tableZ).applyMatrix4(m));
-    holder.quaternion.setFromRotationMatrix(m);
+    holder.quaternion.copy(siteTurn);
+    holder.scale.setScalar(k);
     globes.push(holder);
   }
 
@@ -585,8 +610,8 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     b.place(box(0.001), C.ink, v(bonusX - 0.21, standTop + 0.205, bonusZ + 0.13), [0, 0.9, 0.08], [0.07, 0.006, 0.002], m);
     const dome = new Mesh(domeGeometry, glassMaterial);
     dome.position.copy(new Vector3(bonusX, standTop + 0.05, bonusZ).applyMatrix4(m));
-    dome.quaternion.setFromRotationMatrix(m);
-    dome.scale.setScalar(0.85);
+    dome.quaternion.copy(siteTurn);
+    dome.scale.setScalar(0.85 * k);
     dome.renderOrder = 8;
     glass.push(dome);
   }
@@ -614,12 +639,16 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     const string = new Mesh(new TorusGeometry(0.19, 0.006, 4, 24), toon.toon({ color: C.clay }));
     string.rotation.x = Math.PI / 2;
     string.position.set(0, 0.07, 0);
-    for (const part of [drape, hem, knot, string]) {
+    // The parts sit in a sized frame, so the cloth's own whisk-away animation can scale the cover freely.
+    const sized = new Group();
+    sized.scale.setScalar(k);
+    bonusCover.add(sized);
+    for (const part of [drape, hem, knot, string, ...bonusCover.children.filter((c) => c !== sized)]) {
       part.castShadow = true;
-      bonusCover.add(part);
+      sized.add(part);
     }
     bonusCover.position.copy(new Vector3(bonusX, standTop + 0.06, bonusZ).applyMatrix4(m));
-    bonusCover.quaternion.setFromRotationMatrix(m);
+    bonusCover.quaternion.copy(siteTurn);
   }
 
   // ---- Remi's museum shelf on the left wall: it fills up as the stamps come ----
@@ -682,6 +711,7 @@ export function buildWorkshop(b: Batcher, s: Site, toon: ToonLibrary, globeTextu
     frontWall,
     roof,
     glass,
+    labels,
     globes,
     lampGlow,
     pins,
@@ -746,6 +776,49 @@ function poolTexture(): CanvasTexture {
   poolMap = new CanvasTexture(canvas);
   poolMap.colorSpace = SRGBColorSpace;
   return poolMap;
+}
+
+/**
+ * A dome's museum label, drawn on a canvas: cream card, an ink border, the
+ * place in Dad's hand, the world in red small caps, and "Model, not to scale".
+ * Drawn again once the game's fonts have loaded.
+ */
+function labelTexture(place: string, world: string): CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 500;
+  canvas.height = 200;
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  texture.anisotropy = 4;
+  const draw = (): void => {
+    const c = canvas.getContext("2d");
+    if (!c) return;
+    c.fillStyle = "#2b2622";
+    c.fillRect(0, 0, 500, 200);
+    c.fillStyle = "#fbf3e2";
+    c.beginPath();
+    c.roundRect(8, 8, 484, 184, 14);
+    c.fill();
+    c.strokeStyle = "rgba(43, 38, 34, 0.25)";
+    c.lineWidth = 2;
+    c.setLineDash([8, 7]);
+    c.strokeRect(22, 22, 456, 156);
+    c.setLineDash([]);
+    c.textAlign = "center";
+    c.fillStyle = "#b13f2c";
+    c.font = '700 26px "Zilla Slab", Georgia, serif';
+    c.fillText((world === "Moon" ? "THE MOON" : world.toUpperCase()).split("").join(String.fromCharCode(8202)), 250, 62);
+    c.fillStyle = "#2b2622";
+    c.font = '700 52px "Kalam", "Segoe Print", sans-serif';
+    c.fillText(place, 250, 122, 440);
+    c.fillStyle = "#6b6258";
+    c.font = '400 22px "Atkinson Hyperlegible Next", "Segoe UI", sans-serif';
+    c.fillText("Model, not to scale", 250, 164);
+    texture.needsUpdate = true;
+  };
+  draw();
+  if (typeof document !== "undefined" && document.fonts) void document.fonts.ready.then(draw);
+  return texture;
 }
 
 let jarGeometry: SphereGeometry | null = null;

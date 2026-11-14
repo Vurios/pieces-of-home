@@ -103,7 +103,9 @@ export class Input {
   private lookX = 0;
   private lookY = 0;
   private stickPointer: number | null = null;
-  private lookPointers = new Map<number, { x: number; y: number }>();
+  private lookPointers = new Map<number, { x: number; y: number; travelled: number; mouse: boolean }>();
+  /** A mouse drag holds the cursor still (pointer lock), so only the camera moves. */
+  private locking = false;
   private padButtons: boolean[] = [];
   private abort = new AbortController();
   private stickListeners = new Set<(stick: TouchStick) => void>();
@@ -124,6 +126,14 @@ export class Input {
     element.addEventListener("contextmenu", (event) => event.preventDefault(), { signal });
     element.addEventListener("wheel", this.onWheel, { signal, passive: true });
     window.addEventListener("gamepadconnected", () => this.setDevice("gamepad"), { signal });
+    // A lock that lands after the button is already up lets go at once.
+    document.addEventListener(
+      "pointerlockchange",
+      () => {
+        if (this.locked && ![...this.lookPointers.values()].some((p) => p.mouse)) document.exitPointerLock?.();
+      },
+      { signal },
+    );
   }
 
   dispose(): void {
@@ -255,6 +265,7 @@ export class Input {
     this.virtualHeld.clear();
     this.pressed.clear();
     this.lookPointers.clear();
+    this.unlockCursor();
     this.stickPointer = null;
     this.setStick(false, 0, 0);
   };
@@ -282,8 +293,34 @@ export class Input {
         return;
       }
     }
-    this.lookPointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    this.lookPointers.set(event.pointerId, { x: event.clientX, y: event.clientY, travelled: 0, mouse: event.pointerType === "mouse" });
   };
+
+  private get locked(): boolean {
+    return document.pointerLockElement === this.element;
+  }
+
+  /**
+   * Once a mouse drag has really started (a few pixels, so a plain click is
+   * still a click), the cursor is locked where it is and hidden; the camera
+   * turns from the raw mouse movement instead. It comes back on release, in
+   * the same spot. The press still counts as the gesture the browser needs.
+   */
+  private lockCursor(): void {
+    if (this.locked || this.locking || !this.element.requestPointerLock) return;
+    this.locking = true;
+    try {
+      const result = this.element.requestPointerLock() as unknown;
+      if (result instanceof Promise) result.catch(() => undefined).finally(() => (this.locking = false));
+      else this.locking = false;
+    } catch {
+      this.locking = false;
+    }
+  }
+
+  private unlockCursor(): void {
+    if (this.locked) document.exitPointerLock?.();
+  }
 
   private onPointerMove = (event: PointerEvent): void => {
     if (event.pointerId === this.stickPointer) {
@@ -314,10 +351,15 @@ export class Input {
       return;
     }
     const scale = event.pointerType === "touch" ? 0.006 : 0.0045;
-    this.lookX += (event.clientX - last.x) * scale;
-    this.lookY += (event.clientY - last.y) * scale;
+    // While the cursor is locked, the screen position stands still: read the raw movement.
+    const dx = this.locked ? event.movementX : event.clientX - last.x;
+    const dy = this.locked ? event.movementY : event.clientY - last.y;
+    this.lookX += dx * scale;
+    this.lookY += dy * scale;
     last.x = event.clientX;
     last.y = event.clientY;
+    last.travelled += Math.abs(dx) + Math.abs(dy);
+    if (last.mouse && last.travelled > 4) this.lockCursor();
   };
 
   private onPointerUp = (event: PointerEvent): void => {
@@ -325,7 +367,9 @@ export class Input {
       this.stickPointer = null;
       this.setStick(false, 0, 0);
     }
+    const was = this.lookPointers.get(event.pointerId);
     this.lookPointers.delete(event.pointerId);
+    if (was?.mouse) this.unlockCursor();
   };
 
   private readGamepad(): { moveX: number; moveY: number; lookX: number; lookY: number; zoom: number; run: boolean; interact: boolean } | null {

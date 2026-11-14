@@ -582,7 +582,13 @@ export class Engine {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.quality.maxPixelRatio) * this.governor.scale);
     this.renderer.shadowMap.enabled = this.quality.shadowMap > 0;
     this.renderer.shadowMap.type = PCFShadowMap;
+    // High redraws the shadows every frame; Medium and Low every other frame (see `shadowTick`),
+    // which halves the shadow pass, about a quarter of a frame's work, for a lag nobody sees.
+    this.renderer.shadowMap.autoUpdate = this.quality.tier === "high";
+    this.renderer.shadowMap.needsUpdate = true;
   }
+
+  private shadowTick = 0;
 
   /** Sets the tier by hand (from Settings), or null to go back to automatic. */
   setQuality(tier: QualityTier | null): void {
@@ -1095,6 +1101,7 @@ export class Engine {
     else this.scratch.copy(this.player.position).addScaledVector(up, 0.6).project(this.camera);
     this.post.focus = Math.max(0.12, Math.min(0.88, this.scratch.y * 0.5 + 0.5));
     this.cullHorizon(world);
+    if (!this.renderer.shadowMap.autoUpdate) this.renderer.shadowMap.needsUpdate = (this.shadowTick++ & 1) === 0;
     const renderStart = performance.now();
     this.post.render(this.scene, this.camera, this.elapsed);
     this.renderCost = performance.now() - renderStart;

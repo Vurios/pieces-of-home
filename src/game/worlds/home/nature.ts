@@ -40,7 +40,7 @@ export function pathDistance(dir: Vector3): number {
 
 const KEEP_OUT: { dir: Vector3; radius: number }[] = [
   { dir: SITES.house.dir, radius: 7.0 },
-  { dir: SITES.shed.dir, radius: 6.6 },
+  { dir: SITES.shed.dir, radius: 7.6 },
   { dir: SITES.garden.dir, radius: 4.8 },
   { dir: SITES.dish.dir, radius: 3.2 },
   { dir: latLonToDir(MAILBOX.lat, MAILBOX.lon), radius: 1.6 },

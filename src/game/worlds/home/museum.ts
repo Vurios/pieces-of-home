@@ -140,7 +140,10 @@ export function buildMuseum(b: Batcher, toon: ToonLibrary, m: Matrix4, wallX: nu
   for (let i = 0; i < 3; i += 1) b.place(box(0.002), "#2B2622", v(wallX + 0.02, shelfY + 0.535 - i * 0.022, signZ - 0.02 * i), [0, 0, 0], [0.004, 0.008, 0.4 - i * 0.1], m);
   b.place(sphere("low"), "#C8553D", v(wallX + 0.02, shelfY + 0.57, signZ), [0, 0, 0], 0.016, m);
 
-  const quaternion = new Quaternion().setFromRotationMatrix(m);
+  // The site may be drawn larger than its model: take its turn and size apart (a scaled matrix is not a pure rotation).
+  const quaternion = new Quaternion();
+  const size = new Vector3();
+  m.decompose(new Vector3(), quaternion, size);
   const materials = new Map<string, Mesh["material"]>();
   const mat = (color: string): Mesh["material"] => {
     let found = materials.get(color);
@@ -159,6 +162,7 @@ export function buildMuseum(b: Batcher, toon: ToonLibrary, m: Matrix4, wallX: nu
     const holder = new Group();
     holder.position.copy(new Vector3(wallX + 0.15, shelfY + 0.02, z).applyMatrix4(m));
     holder.quaternion.copy(quaternion);
+    holder.scale.setScalar(size.x);
     const keepsake = new Group();
     look.keepsake(keepsake, mat);
     keepsake.rotation.y = Math.PI / 2 - 0.3;

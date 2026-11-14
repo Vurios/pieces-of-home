@@ -33,10 +33,12 @@ export const STORY = {
 export const ADVENTURE = {
   kicker: "How it works",
   title: "Your adventure",
+  /** The heart of the game, said first: the machines and their true stories. */
+  goal: "People left machines on the Moon and Mars. They are not forgotten. Meet them, and learn their true stories.",
   steps: [
     { title: "Find Dad's letters", text: "Mom has the key. Dad's first letter is waiting in the mailbox." },
-    { title: "Step into his little worlds", text: "Look into a glass dome on Dad's bench to go inside. Give each letter to its machine." },
-    { title: "Finish Milo", text: "Every world gives Milo a new part. Find out what each machine was for." },
+    { title: "Visit the real machines", text: "Each glass dome on Dad's bench is a little model of a real place. Look into one to go inside." },
+    { title: "Learn and finish Milo", text: "Read each True Story. Every machine you meet gives Milo a new part." },
   ],
   help: "Follow the paper arrow and the note in the corner. Stuck? Press H for a hint. Nothing can go wrong, so take your time.",
   keysLabel: "Keys",

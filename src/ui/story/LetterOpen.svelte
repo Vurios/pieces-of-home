@@ -1,6 +1,9 @@
 <script lang="ts">
   import { audio } from "../../audio/audio";
   import type { Engine } from "../../game/engine";
+  import { SPREADS } from "../../content/notebook";
+  import Sketch from "../drawing/Sketch.svelte";
+  import { DRAWINGS } from "../drawing/machines";
   import InkStamp from "../notebook/InkStamp.svelte";
   import { settings } from "../settings.svelte";
 
@@ -27,6 +30,9 @@
   let open = $state<{ key: number; to: string; world: string; text: string; delivered: boolean } | null>(null);
   let button = $state<HTMLButtonElement | null>(null);
   const stamp = $derived(open ? (STAMP_ART[open.world] ?? STAMP_ART["Home"]!) : null);
+  /** The machine this letter is for: its real name, where it is, and Dad's sketch of it. */
+  const machine = $derived(open ? (SPREADS.find((s) => s.letterTo.toLowerCase() === open!.to.toLowerCase()) ?? null) : null);
+  const place = $derived(machine ? (machine.chapter.split(": ")[1] ?? machine.world) : null);
 
   $effect(() =>
     engine.bus.on("letter:open", (p) => {
@@ -97,10 +103,15 @@
           </div>
           <div class="flap"><i class="seal"></i></div>
         </div>
-        <article class="sheet card">
+        <article class="sheet card" class:sketched={Boolean(machine)}>
+          <p class="head"><span>From Dad's workshop</span>{#if place}<span class="dot" aria-hidden="true">·</span><span>for {place}</span>{/if}</p>
           <p class="to">{open.to},</p>
           <p class="body">{open.text}</p>
-          <p class="sign">Dad</p>
+          <p class="sign"><span class="love">Love,</span> Dad <svg class="heart" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 27 C 10 22, 4.8 17.6, 5 12 C 5.2 8.4, 8 6, 11 6.2 C 13.3 6.4, 15 7.8, 16 10 C 17 7.8, 18.8 6.4, 21 6.2 C 24.4 6, 27.2 8.5, 27.2 12.1 C 27.3 17.6, 22 22, 16 27 Z" /></svg></p>
+          {#if machine}
+            <div class="doodle" aria-hidden="true"><Sketch id={`letter-${machine.id}`} prims={DRAWINGS[machine.drawing]} color="var(--dad-ink)" still /></div>
+            <p class="real"><span class="label">The real machine</span> <b>{machine.name}</b></p>
+          {/if}
           {#if open.delivered}
             <div class="mark" aria-hidden="true"><InkStamp lines={["Delivered.", "By Remi."]} top="BY LAMPLIGHT" bottom={POSTS[open.world] ?? "HOME POST"} size={112} tilt={-10} /></div>
           {/if}
@@ -130,7 +141,7 @@
   }
   .stage {
     position: relative;
-    width: min(560px, calc(100vw - 32px));
+    width: min(600px, calc(100vw - 32px));
     display: grid;
     place-items: center;
   }
@@ -175,7 +186,7 @@
   .peek span {
     height: 3px;
     border-radius: 2px;
-    background: rgba(43, 70, 140, 0.35);
+    background: rgba(43, 38, 34, 0.3);
   }
   .peek span:nth-child(2) {
     width: 80%;
@@ -235,7 +246,7 @@
     bottom: 11%;
     max-width: 66%;
     font: 700 clamp(1.05rem, 2.4vw, 1.45rem) / 1.1 var(--hand);
-    color: var(--dad-ink, #2b4a8a);
+    color: var(--ink);
   }
   .flap {
     transform-origin: top center;
@@ -284,22 +295,85 @@
     rotate: -1deg;
     animation: sheet-out 2s cubic-bezier(0.3, 0.9, 0.3, 1) both;
   }
+  /* Black ink for the words; Dad's blue pen only for his name, the heart and his sketch. */
+  .head {
+    margin: -6px 0 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font: 700 0.74rem/1 var(--label);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--clay-deep, #8e3523);
+  }
+  .head .dot {
+    color: var(--ink-soft);
+  }
   .to {
     margin: 0 0 6px;
-    font: 700 1.55rem/34px var(--hand);
-    color: var(--dad-ink, #2b4a8a);
+    font: 700 1.6rem/34px var(--hand);
+    color: var(--ink);
   }
   .body {
     margin: 0;
     font: 400 1.45rem/34px var(--hand);
-    color: var(--dad-ink, #2b4a8a);
+    color: #3a322c;
+  }
+  .sheet.sketched .to,
+  .sheet.sketched .body {
+    padding-right: 96px;
   }
   .sign {
     margin: 6px 0 0;
-    text-align: right;
-    font: 700 1.5rem/34px var(--hand);
+    display: flex;
+    justify-content: flex-end;
+    align-items: baseline;
+    gap: 8px;
+    font: 700 1.6rem/34px var(--hand);
     color: var(--dad-ink, #2b4a8a);
     padding-right: 12px;
+    rotate: -2deg;
+  }
+  .love {
+    font-weight: 400;
+    font-size: 1.3rem;
+    color: var(--ink);
+  }
+  .heart {
+    width: 22px;
+    height: 22px;
+    align-self: center;
+    fill: #e26a5a;
+    stroke: var(--ink);
+    stroke-width: 2;
+  }
+  /* Dad's sketch of the machine in the margin, in his blue pen. */
+  .doodle {
+    position: absolute;
+    right: 18px;
+    top: 72px;
+    width: 120px;
+    rotate: 6deg;
+    opacity: 0.85;
+  }
+  .real {
+    margin: 14px 0 0;
+    padding: 8px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    border: 2px dashed rgba(43, 38, 34, 0.35);
+    border-radius: 8px;
+    background: rgba(242, 165, 65, 0.12);
+    font: 400 0.98rem/1.3 var(--read);
+    color: var(--ink);
+  }
+  .real .label {
+    font: 700 0.7rem/1 var(--label);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
   }
   /* The Delivered stamp lands on the top corner, over the edge, like a postmark. */
   .mark {
@@ -313,7 +387,7 @@
   .foot {
     display: flex;
     justify-content: flex-end;
-    margin-top: 16px;
+    margin-top: 14px;
   }
   kbd {
     margin-left: 6px;
@@ -411,6 +485,13 @@
     }
     .body {
       font-size: 1.25rem;
+    }
+    .sheet.sketched .to,
+    .sheet.sketched .body {
+      padding-right: 0;
+    }
+    .doodle {
+      display: none;
     }
     .mark {
       right: -8px;

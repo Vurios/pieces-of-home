@@ -429,6 +429,71 @@ function buildRock(toon: ToonLibrary): Mesh {
   return mesh!;
 }
 
+/**
+ * A burst of little stars: glowing points that fly out, slow down and wink
+ * out. For the landing, so arriving feels like a small celebration.
+ */
+class Sparkles {
+  readonly points: Points<BufferGeometry, PointsMaterial>;
+  private positions: Float32Array;
+  private velocity: Float32Array;
+  private age: Float32Array;
+  private life = 1.1;
+
+  constructor(glow: CanvasTexture, private count = 42) {
+    this.positions = new Float32Array(count * 3);
+    this.velocity = new Float32Array(count * 3);
+    this.age = new Float32Array(count).fill(99);
+    const geometry = new BufferGeometry();
+    geometry.setAttribute("position", new BufferAttribute(this.positions, 3));
+    this.points = new Points(geometry, new PointsMaterial({ map: glow, size: 0.42, color: "#FFE3A1", transparent: true, depthWrite: false, blending: AdditiveBlending, opacity: 0 }));
+    this.points.frustumCulled = false;
+  }
+
+  /** Throws the stars out from `at`, mostly along `up` and round the `side` plane. */
+  burst(at: Vector3, up: Vector3, side: Vector3, speed: number): void {
+    const other = new Vector3().crossVectors(up, side).normalize();
+    const random = mulberry(73);
+    for (let i = 0; i < this.count; i += 1) {
+      const a = (i / this.count) * Math.PI * 2 + random() * 0.4;
+      const rise = 0.6 + random() * 1.4;
+      const out = 0.7 + random() * 0.6;
+      const v = new Vector3().addScaledVector(side, Math.cos(a) * out).addScaledVector(other, Math.sin(a) * out).addScaledVector(up, rise).multiplyScalar(speed);
+      this.velocity.set([v.x, v.y, v.z], i * 3);
+      this.positions.set([at.x, at.y, at.z], i * 3);
+      this.age[i] = random() * 0.12;
+    }
+  }
+
+  update(dt: number, up: Vector3): void {
+    if (!this.points.visible && this.age[0]! > this.life) return;
+    let alive = 0;
+    let oldest = 0;
+    for (let i = 0; i < this.count; i += 1) {
+      if (this.age[i]! > this.life) continue;
+      this.age[i]! += dt;
+      alive += 1;
+      oldest = Math.max(oldest, this.age[i]!);
+      const drag = Math.exp(-3.2 * dt);
+      for (let k = 0; k < 3; k += 1) {
+        // A little fall back toward the ground, like confetti.
+        this.velocity[i * 3 + k] = this.velocity[i * 3 + k]! * drag - up.getComponent(k) * 2.2 * dt;
+        this.positions[i * 3 + k]! += this.velocity[i * 3 + k]! * dt;
+      }
+    }
+    const material = this.points.material;
+    material.opacity = alive ? Math.max(0, 1 - oldest / this.life) : 0;
+    material.size = 0.42 * (0.8 + 0.2 * Math.sin(oldest * 30));
+    this.points.visible = alive > 0;
+    this.points.geometry.attributes["position"]!.needsUpdate = true;
+  }
+
+  clear(): void {
+    this.age.fill(99);
+    this.points.visible = false;
+  }
+}
+
 export class TripScene {
   readonly scene = new Scene();
   readonly camera = new PerspectiveCamera(40, 1, 0.1, 400);
@@ -457,6 +522,10 @@ export class TripScene {
   private reduced = false;
   private emitClock = 0;
   private touched = false;
+  /** Stars thrown up where the rocket lands. */
+  private sparkles: Sparkles;
+  /** The camera's field of view before any speed kick. */
+  private baseFov = 40;
   /** Called once at each sound in the trip: lift-off, the rocket rushing past, the landing. */
   onCue: ((name: "launch" | "whoosh" | "land") => void) | null = null;
   private cued = new Set<string>();
@@ -563,6 +632,7 @@ export class TripScene {
     this.kid = new Character("remi", toon);
     this.kid.setSuit(true);
     this.puffs = new Puffs(this.puffTexture, 70);
+    this.sparkles = new Sparkles(this.glow);
     this.flameLight = new PointLight("#FFB25E", 0, 7, 1.6);
 
     // A soft glow streaming behind the rocket in flight.
@@ -595,7 +665,7 @@ export class TripScene {
     const key = new DirectionalLight("#FFF1DC", 2.1);
     key.position.set(8, 12, 10);
     const fill = new HemisphereLight("#8E9AC4", "#2A2440", 1.25);
-    this.scene.add(this.sky, this.stars, this.comet, this.from.root, this.to.root, this.pad, this.rocket.root, this.kid.root, this.puffs.group, this.trail, this.streaks, this.flameLight, key, fill);
+    this.scene.add(this.sky, this.stars, this.comet, this.from.root, this.to.root, this.pad, this.rocket.root, this.kid.root, this.puffs.group, this.sparkles.points, this.trail, this.streaks, this.flameLight, key, fill);
   }
 
   /** Sets up a trip from one world to another. */
@@ -639,6 +709,7 @@ export class TripScene {
     this.emitClock = 0;
     this.history = [];
     this.puffs.clear();
+    this.sparkles.clear();
     this.kid.root.visible = true;
     this.place(0);
   }
@@ -707,6 +778,7 @@ export class TripScene {
     if (this.time < BEAT.land + 0.5) {
       this.time = BEAT.land + 0.5;
       this.puffs.clear();
+      this.sparkles.clear();
       this.history = [];
     }
   }
@@ -721,7 +793,8 @@ export class TripScene {
 
   resize(width: number, height: number): void {
     this.camera.aspect = width / height;
-    this.camera.fov = this.camera.aspect < 0.8 ? 56 : 40;
+    this.baseFov = this.camera.aspect < 0.8 ? 56 : 40;
+    this.camera.fov = this.baseFov;
     this.camera.updateProjectionMatrix();
   }
 
@@ -785,6 +858,12 @@ export class TripScene {
       // One happy roll as it rushes past the camera riding alongside.
       const roll = this.reduced ? 0 : window01(t, PASS_MID - 0.35, BEAT.passEnd + 0.1) * Math.PI * 2;
       if (roll > 0) r.root.quaternion.multiply(this.qRoll.setFromAxisAngle(Y_AXIS, roll));
+      // A toy's flight: a gentle bob and sway, never ruler-straight.
+      if (!this.reduced) {
+        const sway = Math.sin(t * 5.3) * 0.06 * (1 - window01(t, BEAT.land - 0.6, BEAT.land));
+        r.root.quaternion.multiply(this.qRoll.setFromAxisAngle(this.v3.set(1, 0, 0), sway));
+        this.base.addScaledVector(this.side.crossVectors(this.nose, Y_AXIS).normalize(), Math.sin(t * 3.1) * 0.18);
+      }
       thrust = 1 - u * 0.5 + window01(t, BEAT.pass, PASS_MID) * (1 - window01(t, PASS_MID, BEAT.passEnd)) * 0.35;
     } else {
       // Turn over, then settle down on the fins with the engine braking.
@@ -805,9 +884,12 @@ export class TripScene {
           const out = this.landSide.clone().multiplyScalar(Math.cos(a)).add(this.v1.crossVectors(this.landUp, this.landSide).multiplyScalar(Math.sin(a)));
           this.puffs.emit(this.landing.clone().addScaledVector(this.landUp, 0.1), out.multiplyScalar(2.6), 0.9, 1.1, this.to.dustColor);
         }
+        // And a handful of little stars, for arriving.
+        if (!this.reduced) this.sparkles.burst(this.landing.clone().addScaledVector(this.landUp, 0.4), this.landUp, this.landSide, 2.4);
       }
     }
     r.root.position.copy(this.base);
+    this.squash(t);
     this.center.copy(r.middle).applyQuaternion(r.root.quaternion).add(this.base);
 
     // ---- Fire and smoke ----
@@ -834,6 +916,7 @@ export class TripScene {
       }
     }
     this.puffs.update(dt);
+    this.sparkles.update(dt, this.landUp);
 
     // ---- A glowing trail in flight ----
     const flying = t > BEAT.cruise - 0.3 && t < BEAT.land + 0.4;
@@ -855,7 +938,9 @@ export class TripScene {
 
     // ---- What it passes on the way ----
     const cruising = window01(t, BEAT.lift + 0.4, BEAT.cruise + 0.3) * (1 - window01(t, BEAT.land - 0.4, BEAT.land + 0.3));
-    this.streaks.material.opacity = cruising * 0.5;
+    // The streaks brighten with speed, fastest in the middle of the flight.
+    const speed = t > BEAT.cruise && t < BEAT.land ? Math.sin(Math.PI * Math.max(0, Math.min(1, (t - BEAT.cruise) / (BEAT.land - BEAT.cruise)))) : 0;
+    this.streaks.material.opacity = cruising * (0.4 + 0.45 * speed);
     this.streaks.visible = cruising > 0.01;
     for (const rock of this.rocks) {
       rock.mesh.visible = cruising > 0.01;
@@ -923,9 +1008,52 @@ export class TripScene {
       this.look.lerp(landLook, land);
       up.lerp(this.landUp, land).normalize();
     }
+    // A little shake while the engine lights and the rocket leaves the pad.
+    if (!this.reduced) {
+      const rumble = window01(t, BEAT.ignite, BEAT.lift) * (1 - window01(t, BEAT.lift + 0.2, BEAT.cruise));
+      if (rumble > 0) this.eye.add(this.v1.set(Math.sin(t * 71) * 0.05, Math.cos(t * 59) * 0.05, Math.sin(t * 47) * 0.04).multiplyScalar(rumble));
+    }
     cam.position.copy(this.eye);
     cam.up.copy(up);
     cam.lookAt(this.look);
+    // Banking into the flight, like a plane following another one.
+    if (!this.reduced && chase > 0) cam.rotateZ(Math.sin(t * 1.3) * 0.06 * chase);
+    // The view widens with speed (a "whoosh" you feel), and eases back for the landing.
+    const flightSpeed = t > BEAT.cruise && t < BEAT.land ? Math.sin(Math.PI * Math.max(0, Math.min(1, (t - BEAT.cruise) / (BEAT.land - BEAT.cruise)))) : 0;
+    const kick = this.reduced ? 0 : flightSpeed * 9 + window01(t, BEAT.lift, BEAT.lift + 0.35) * (1 - window01(t, BEAT.lift + 0.35, BEAT.cruise)) * 4;
+    const fov = this.baseFov + kick;
+    if (Math.abs(cam.fov - fov) > 0.01) {
+      cam.fov = fov;
+      cam.updateProjectionMatrix();
+    }
+  }
+
+  /**
+   * Squash and stretch, the oldest trick in cartoons: the rocket crouches as
+   * the engine lights, stretches tall as it leaps off the pad, stays a touch
+   * long at full speed, and squashes on touchdown with a springy wobble.
+   */
+  private squash(t: number): void {
+    const s = this.rocket.root.scale;
+    if (this.reduced) {
+      s.set(1, 1, 1);
+      return;
+    }
+    let y = 1;
+    // Crouch on the pad, then spring up.
+    const crouch = window01(t, BEAT.ignite, BEAT.lift) * (1 - window01(t, BEAT.lift, BEAT.lift + 0.12));
+    y -= 0.14 * crouch;
+    const leap = window01(t, BEAT.lift, BEAT.lift + 0.12) * (1 - window01(t, BEAT.lift + 0.12, BEAT.cruise));
+    y += 0.24 * leap;
+    // Long and lean at speed.
+    if (t > BEAT.cruise && t < BEAT.land) y += 0.07 * Math.sin(Math.PI * ((t - BEAT.cruise) / (BEAT.land - BEAT.cruise)));
+    // Touchdown: a squash, then a spring that wobbles out.
+    if (t >= BEAT.touch - 0.05) {
+      const u = t - (BEAT.touch - 0.05);
+      y -= 0.24 * Math.exp(-u * 6) * Math.cos(u * 22);
+    }
+    const xz = 1 / Math.sqrt(Math.max(0.5, y));
+    s.set(xz, y, xz);
   }
 
   /** Where the rocket is on screen (0 to 1), for the light that closes over the view. */
@@ -948,6 +1076,8 @@ export class TripScene {
     this.stars.material.dispose();
     this.trail.geometry.dispose();
     this.trail.material.dispose();
+    this.sparkles.points.geometry.dispose();
+    this.sparkles.points.material.dispose();
     this.streaks.geometry.dispose();
     this.streaks.material.dispose();
     this.streaks.dispose();

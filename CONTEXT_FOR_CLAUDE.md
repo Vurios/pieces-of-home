@@ -34,6 +34,15 @@ Paste this file (or point Claude Code at it) at the start of a session, for exam
 
 Friends Nori, Lumi and Theo give hints. Mom waits on the porch. There are no fail states and no timers.
 
+### Project details at a glance
+
+- **Main goal (the heart of the game):** help players learn about the machines people left on the Moon and Mars, and why they are not forgotten. The story (Dad's letters, Milo, the workshop) is the way in; every chapter is built around one real machine, what it did, why it stayed behind and what it still does or taught us. Each true story card shows the real machine's name, a sourced fact, a "More about it" panel (when, where, the facts) and its source.
+- **Who it is for:** ages **8 to 12** is the best fit (about grades 3 to 7). The reading level is grade 3 to 5, the controls are simple, there are no fail states, and the story deals gently with loss. The Game Bible's primary band is 8 to 13; younger players (6 to 7) can play with a grown-up reading along. Secondary audience: teachers and parents, families playing together (1 to 4 player co-op), space fans and the judges.
+- **Where to play:** a laptop or desktop with a keyboard and mouse (Chrome, Edge, Firefox or Safari). Phones and small touch screens get a friendly "Best on a computer" note with a "Play anyway" button.
+- **Length:** the Game Bible aims for 30 to 40 minutes for the whole story, 6 to 10 minutes a chapter, with the first real NASA fact within 3 minutes. Progress saves on the device.
+- **Kid safety:** no text or voice chat, no usernames, no accounts, no ads, no tracking. Co-op uses private room codes, preset emotes and phrases.
+- **Format:** free, in the browser, nothing to install. Open source (MIT code; NASA media credited; CC0 and SIL OFL assets).
+
 ## 3. Rules that always apply (from `CLAUDE.md` and the team)
 
 - **Accuracy:** every number, date and claim a player sees comes from `src/data/facts.json`, and every fact there has a source URL. Never invent a fact; if one cannot be verified, remove the claim and log it. `npm run check:facts` gates the build. Dioramas are labeled "Model, not to scale". Real NASA images carry their exact credit line.

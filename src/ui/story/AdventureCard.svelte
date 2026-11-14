@@ -61,6 +61,7 @@
     <span class="tape" aria-hidden="true"></span>
     <p class="kicker">{ADVENTURE.kicker}</p>
     <h2 id="adv-title">{ADVENTURE.title}</h2>
+    <p class="goal"><span class="star" aria-hidden="true">★</span>{ADVENTURE.goal}</p>
     <ol class="steps">
       <li style:--i={0}>
         <span class="n" aria-hidden="true">1</span>
@@ -199,9 +200,30 @@
     rotate: -2deg;
   }
   h2 {
-    margin: 2px 0 18px;
+    margin: 2px 0 10px;
     font: 700 clamp(2rem, 3.4vw, 2.7rem) / 1.05 var(--hand);
     color: var(--ink);
+  }
+  /* The main goal, said first and big: the machines left behind, and their true stories. */
+  .goal {
+    margin: 0 0 18px;
+    padding: 10px 16px 10px 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    background: #fff1cf;
+    box-shadow: 0 3px 0 var(--ink);
+    font: 700 1.15rem/1.35 var(--read);
+    color: var(--ink);
+    rotate: -0.4deg;
+  }
+  .goal .star {
+    flex: none;
+    color: #e0902a;
+    font-size: 1.3rem;
+    line-height: 1;
   }
   .steps {
     display: grid;

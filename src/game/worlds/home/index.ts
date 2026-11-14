@@ -1,4 +1,4 @@
-import { Color, DirectionalLight, Group, HemisphereLight, Matrix4, Mesh, MeshBasicMaterial, PointLight, Vector3 } from "three";
+import { Color, DirectionalLight, Group, HemisphereLight, Matrix4, Mesh, MeshBasicMaterial, PointLight, Quaternion, Vector3 } from "three";
 import { Character, type KidId } from "../../actors/character";
 import { Milo } from "../../actors/milo";
 import { Mom } from "../../actors/mom";
@@ -16,7 +16,7 @@ import { STORY_COPY } from "../../../content/chapters/common";
 import { FINALE_BEGUN, FINALE_COPY, MILO_VOICE, RECORD, V1_LETTER, finaleStep } from "../../../content/finale";
 import { torus } from "../../actors/parts";
 import { C, buildDish, buildHouse, buildLampPost, buildMailbox } from "./buildings";
-import { GROUND_PATCHES, type Site, HILL, HILL_TOP, HOME_RADIUS, MAILBOX, MEADOW, ORCHARD, PATH_HALF_WIDTH, PLACES, POND, POND_RADIUS, SITES, TERRAIN, TRAILS, TRAIL_LAMPS, clearOfTrails, local, localDir, site } from "./layout";
+import { GROUND_PATCHES, type Site, HILL, HILL_TOP, HOME_RADIUS, MAILBOX, MEADOW, ORCHARD, PATH_HALF_WIDTH, PLACES, POND, POND_RADIUS, SHED_SCALE, SITES, TERRAIN, TRAILS, TRAIL_LAMPS, clearOfTrails, local, localDir, site } from "./layout";
 import { buildGarden, buildMeadow, groundMatrix, pathDistance, planTrees, scatterNature, treeShade } from "./nature";
 import { buildPaths } from "./paths";
 import { presence } from "../../../net/presence";
@@ -73,7 +73,9 @@ export async function createHome(ctx: WorldContext): Promise<World> {
   const reach = (radius: number): number => Math.cos(Math.min(Math.PI, radius / HOME_RADIUS));
   const shade = treeShade(trees).map((spot) => ({ ...spot, cos: reach(spot.radius) }));
   const ground = patches.map((patch) => ({ ...patch, cos: reach(patch.radius + 0.5) }));
-  const shedCos = reach(4.6);
+  // Bare ground round the workshop, grown with it (SHED_SCALE).
+  const shedBare = 4.6 * SHED_SCALE;
+  const shedCos = reach(shedBare);
   const pondCos = reach(POND_RADIUS + 0.4);
   const planetGeometry = buildPlanetGeometry(terrain, Math.round((quality.terrainDetail * HOME_RADIUS) / 15), (dir, _r, normal, out) => {
     const n = fbm3(dir.x * 5, dir.y * 5, dir.z * 5, 2, 3);
@@ -83,7 +85,7 @@ export async function createHome(ctx: WorldContext): Promise<World> {
 
     if (dir.dot(shedDir) > shedCos) {
       const shed = angleBetween(dir, shedDir) * HOME_RADIUS;
-      if (shed < 4.6) out.lerp(DIRT, Math.min(1, (4.6 - shed) / 1.2) * 0.85);
+      if (shed < shedBare) out.lerp(DIRT, Math.min(1, (shedBare - shed) / 1.2) * 0.85);
     }
 
     const path = pathDistance(dir);
@@ -189,7 +191,7 @@ export async function createHome(ctx: WorldContext): Promise<World> {
   shedFrame.matrix.copy(SITES.shed.matrix);
   shedFrame.add(shop.frontWall, shop.roof);
   root.add(shedFrame);
-  for (const object of [...shop.glass, ...shop.globes]) root.add(object);
+  for (const object of [...shop.glass, ...shop.globes, ...shop.labels]) root.add(object);
   shop.frontWall.traverse((o) => {
     if (o instanceof Mesh) {
       o.castShadow = quality.shadowMap > 0;
@@ -220,7 +222,7 @@ export async function createHome(ctx: WorldContext): Promise<World> {
   const fill = new HemisphereLight("#A99CD2", "#5E554C", 1.8);
   root.add(fill);
 
-  const lampLight = new PointLight("#FFC27A", 5.5, 9, 1.4);
+  const lampLight = new PointLight("#FFC27A", 5.5, 9 * SHED_SCALE, 1.4);
   // Dad's lamp turns itself on. In a new story it waits dark until Remi first steps into the
   // workshop, then clicks on by itself (Game Bible, Prologue). Older saves and the title see it lit.
   const lampWaits = (): boolean => {
@@ -243,7 +245,7 @@ export async function createHome(ctx: WorldContext): Promise<World> {
   // Cool dusk light falls in through the workshop window, so the room is not one note of amber.
   let windowLight: PointLight | null = null;
   if (quality.tier !== "low") {
-    windowLight = new PointLight("#8FA3D9", 2.4, 5.5, 1.5);
+    windowLight = new PointLight("#8FA3D9", 2.4, 5.5 * SHED_SCALE, 1.5);
     windowLight.position.copy(local(SITES.shed, SHED.halfWidth - 0.6, 1.7, -0.2));
     root.add(windowLight);
   }
@@ -252,6 +254,8 @@ export async function createHome(ctx: WorldContext): Promise<World> {
   const milo = new Milo(toon);
   surfaceMatrix(shop.miloSpot.position, shedDir, shop.miloSpot.forward, milo.root.matrix);
   milo.root.matrix.decompose(milo.root.position, milo.root.quaternion, milo.root.scale);
+  // Milo is part of the bench, so he grows with the workshop and stays in step with the domes and the lamp.
+  milo.root.scale.multiplyScalar(SHED_SCALE);
   milo.setParts(miloParts(ctx.store.value));
   root.add(milo.root);
 
@@ -297,7 +301,7 @@ export async function createHome(ctx: WorldContext): Promise<World> {
   root.add(waitingLetter);
 
   // ---- Particles ----
-  const motes = new Floaters({ count: Math.round(46 * quality.particles), center: shop.dustCenter, radius: 1.3, color: "#FFE2A6", size: 0.035, glow: true, speed: 0.4, blink: false, seed: 4 });
+  const motes = new Floaters({ count: Math.round(46 * quality.particles), center: shop.dustCenter, radius: 1.3 * SHED_SCALE, color: "#FFE2A6", size: 0.035, glow: true, speed: 0.4, blink: false, seed: 4 });
   const gardenTop = SITES.garden.dir.clone().multiplyScalar(HOME_RADIUS + 1.0);
   const fireflies = new Floaters({ count: Math.round(26 * quality.particles), center: gardenTop, radius: 3, color: "#F6E27A", size: 0.07, glow: true, speed: 0.6, blink: true, seed: 8 });
   const hillFlies = new Floaters({
@@ -387,13 +391,16 @@ export async function createHome(ctx: WorldContext): Promise<World> {
 
   // ---- Dad's domes: look into one and the Looking Lamp takes you inside ----
   const DOME_WORLDS = ["tranquility", "hadley", "meridiani", "valinor"];
+  /** The workshop's turn without its size (its matrix is scaled, so it is not a pure rotation). */
+  const shedTurn = new Quaternion();
+  SITES.shed.matrix.decompose(new Vector3(), shedTurn, new Vector3());
   const domeGlows = shop.domes.map((dome) => {
     // A warm ring under the glass: soft for the next world to visit, bright once its stamp is earned.
     const ring = new Mesh(torus(0.12), toon.glow("#FFC877"));
-    ring.position.copy(dome.top).addScaledVector(shedDir, -0.27);
-    ring.quaternion.setFromRotationMatrix(SITES.shed.matrix);
+    ring.position.copy(dome.top).addScaledVector(shedDir, -0.27 * SHED_SCALE);
+    ring.quaternion.copy(shedTurn);
     ring.rotateX(Math.PI / 2);
-    ring.scale.setScalar(0.255);
+    ring.scale.setScalar(0.255 * SHED_SCALE);
     ring.visible = false;
     root.add(ring);
     return ring;
@@ -426,10 +433,10 @@ export async function createHome(ctx: WorldContext): Promise<World> {
   root.add(shop.bonusDome.cover);
   for (const item of shop.museum.items) root.add(item.object);
   const bonusRing = new Mesh(torus(0.12), toon.glow("#FFC877"));
-  bonusRing.position.copy(shop.bonusDome.top).addScaledVector(shedDir, -0.27 * 0.85 + 0.03);
-  bonusRing.quaternion.setFromRotationMatrix(SITES.shed.matrix);
+  bonusRing.position.copy(shop.bonusDome.top).addScaledVector(shedDir, (-0.27 * 0.85 + 0.03) * SHED_SCALE);
+  bonusRing.quaternion.copy(shedTurn);
   bonusRing.rotateX(Math.PI / 2);
-  bonusRing.scale.setScalar(0.22);
+  bonusRing.scale.setScalar(0.22 * SHED_SCALE);
   bonusRing.visible = false;
   root.add(bonusRing);
   /** Seconds since the cloth started to slide off, or -1. */
@@ -1029,7 +1036,7 @@ export async function createHome(ctx: WorldContext): Promise<World> {
           coverFall += dt * (frame.reducedMotion ? 4 : 1);
           const t = Math.min(1, coverFall / 1.1);
           // It is whisked up and away, like a magician's cloth.
-          cover.position.copy(coverHome).addScaledVector(shedDir, 0.35 * t);
+          cover.position.copy(coverHome).addScaledVector(shedDir, 0.35 * SHED_SCALE * t);
           cover.scale.set(1 - 0.9 * t * t, 1 + 0.4 * t - 1.3 * t * t, 1 - 0.9 * t * t);
           cover.visible = t < 0.98;
           if (coverFall > 0.5 && coverFall - dt <= 0.5) bus.emit("sfx", { name: "envelope-pickup", at: [coverHome.x, coverHome.y, coverHome.z] });

@@ -135,8 +135,12 @@
   $effect(() => {
     if (hidden) return;
     let frame = 0;
+    let odd = false;
     const tick = (): void => {
       frame = requestAnimationFrame(tick);
+      // Thirty times a second is plenty for a little map, and halves its cost.
+      odd = !odd;
+      if (odd) return;
       const v = engine.mapView();
       if (map !== (v?.map ?? null)) {
         map = v?.map ?? null;

@@ -55,13 +55,17 @@ export function padLift(radius: number): number {
   return -0.5 * (HOME_RADIUS / Math.cos(radius / HOME_RADIUS) - HOME_RADIUS);
 }
 
-export const PAD = { house: 4.1, shed: 4.0, garden: 3.0, dish: 1.8, treehouse: 2.4, playground: 3.2, camp: 2.6, weather: 2.3, rocket: 2.4, windpump: 2.2, balloon: 2.0 };
+/** How much bigger than its model the workshop is drawn (its insides, bench and domes grow with it; people do not). */
+export const SHED_SCALE = 1.25;
+
+export const PAD = { house: 4.1, shed: 5.2, garden: 3.0, dish: 1.8, treehouse: 2.4, playground: 3.2, camp: 2.6, weather: 2.3, rocket: 2.4, windpump: 2.2, balloon: 2.0 };
 
 export const SITES = {
   spawn: { lat: -5, lon: 2, heading: 2 },
   // The house is drawn at 1.2 times its model size so it never looks smaller than the shed.
   house: site(11, -25, 146, padLift(PAD.house), 1.2),
-  shed: site(10, 25, 214, padLift(PAD.shed)),
+  // Dad's workshop is drawn 1.25 times its model size: a roomier inside, and his bench of little worlds big enough to read.
+  shed: site(10, 25, 214, padLift(PAD.shed), SHED_SCALE),
   garden: site(-22, -22, 28, padLift(PAD.garden)),
   dish: site(-10, 54, 290, padLift(PAD.dish)),
   // Places to find, round the rest of the planet. Each faces the path that reaches it.
@@ -274,7 +278,7 @@ export const TRAIL_LAMPS: Vector3[] = [
  */
 export const PLACES: { id: string; dir: Vector3; radius: number }[] = [
   { id: "home", dir: SITES.house.dir.clone().lerp(latLonToDir(MAILBOX.lat, MAILBOX.lon), 0.3).normalize(), radius: 7.0 },
-  { id: "workshop", dir: SITES.shed.dir, radius: 6.0 },
+  { id: "workshop", dir: SITES.shed.dir, radius: 7.2 },
   { id: "garden", dir: SITES.garden.dir, radius: 4.6 },
   { id: "dish", dir: SITES.dish.dir, radius: 3.6 },
   { id: "hill", dir: HILL_TOP, radius: 5.5 },

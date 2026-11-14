@@ -221,6 +221,7 @@ Team feedback pass 4 (2026-11-14):
 - [x] `CONTEXT_FOR_CLAUDE.md` for new Claude Code sessions
 - [x] Laptops with built-in graphics start on Medium; resolution adapts in the opening (#97)
 - [x] Cuter music and sound effects, softer first volume with a fade-in, a Sound button on every screen, a still lamp drawing and mixed inks on the loading page (#98)
+- [x] Learning about the machines up front; museum-label true stories; black-ink letters; a 1.25x workshop with labeled domes; musical voice chirps; cursor lock while turning the camera; a livelier trip; a desktop-only note on phones; lighter shadows and mini-map (#99)
 
 - [ ] Performance pass
 - [ ] Accessibility pass

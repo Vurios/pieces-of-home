@@ -17,13 +17,15 @@
     options?: SketchOptions;
     color?: string;
     label?: string;
+    /** Draw it once and hold still: no boiling line. */
+    still?: boolean;
   }
-  let { id, prims, viewBox = "0 0 320 220", seed = 7, pencil = false, options = {}, color, label }: Props = $props();
+  let { id, prims, viewBox = "0 0 320 220", seed = 7, pencil = false, options = {}, color, label, still = false }: Props = $props();
   const frames = $derived(cachedBoil(`${id}:${seed}:${JSON.stringify(options)}`, prims, seed, options));
 </script>
 
-<svg {viewBox} class="sketch" class:pencil role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : "true"} style:--stroke={color}>
-  {#each frames as frame, f (f)}
+<svg {viewBox} class="sketch" class:pencil class:still role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : "true"} style:--stroke={color}>
+  {#each still ? frames.slice(0, 1) : frames as frame, f (f)}
     <g class="frame f{f}">
       {#each frame as d, i (i)}<path {d} />{/each}
     </g>
@@ -65,6 +67,9 @@
     33.34% {
       visibility: hidden;
     }
+  }
+  .still .frame {
+    animation: none;
   }
   :global(:root[data-motion="reduce"]) .frame {
     animation: none;

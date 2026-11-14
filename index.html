@@ -38,7 +38,6 @@
         --ink: #2b2622;
         --dad: #233f73;
         --sepia: #5a3423;
-        --leaf: #2f6b4c;
         --pencil: #6b6258;
         --paper: #f6efe1;
         --clay: #b13f2c;
@@ -106,6 +105,91 @@
         margin: 0;
       }
 
+      /* ---------- Made for a computer ---------- */
+      #desk-only {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: grid;
+        place-items: center;
+        padding: 16px;
+        background: rgba(23, 19, 42, 0.86);
+        backdrop-filter: blur(4px);
+      }
+      #desk-only[hidden] {
+        display: none;
+      }
+      #desk-only .desk-card {
+        width: min(420px, 100%);
+        box-sizing: border-box;
+        padding: 22px 22px 20px;
+        border: 3px solid #2b2622;
+        border-radius: 10px 14px 12px 16px;
+        background: #fbf6ec;
+        box-shadow: 0 6px 0 #2b2622, 0 24px 40px rgba(0, 0, 0, 0.45);
+        color: #2b2622;
+        text-align: center;
+        font-family: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
+        rotate: -1deg;
+      }
+      #desk-only .desk-art {
+        width: 132px;
+        margin: 0 auto 6px;
+        display: block;
+      }
+      #desk-only .desk-art .screen {
+        fill: #efe5d0;
+        stroke: #2b2622;
+        stroke-width: 3;
+      }
+      #desk-only .desk-art .glass {
+        fill: #2a2650;
+      }
+      #desk-only .desk-art .bulb {
+        fill: #ffd27a;
+      }
+      #desk-only .desk-art .line {
+        stroke: #ffd27a;
+        stroke-width: 2;
+        stroke-linecap: round;
+      }
+      #desk-only .desk-art .base {
+        fill: #d9c9a8;
+        stroke: #2b2622;
+        stroke-width: 3;
+        stroke-linejoin: round;
+      }
+      #desk-only .desk-tag {
+        margin: 0 0 6px;
+        color: #b13f2c;
+        font: 700 0.78rem/1 "Zilla Slab", Georgia, serif;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      #desk-only h2 {
+        margin: 0 0 8px;
+        font: 700 1.55rem/1.2 "Kalam", "Segoe Print", ui-rounded, sans-serif;
+      }
+      #desk-only .desk-why {
+        margin: 0 0 16px;
+        font-size: 1rem;
+        line-height: 1.45;
+        color: #4a423b;
+      }
+      #desk-only #desk-go {
+        padding: 10px 20px;
+        border: 2px solid #2b2622;
+        border-radius: 999px;
+        background: #f2a541;
+        color: #2b2622;
+        font: 700 1rem/1 "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
+        box-shadow: 0 3px 0 #2b2622;
+        cursor: pointer;
+      }
+      #desk-only #desk-go:focus-visible {
+        outline: 3px solid #fffaf0;
+        outline-offset: 3px;
+      }
       /* ---------- The workshop at night ---------- */
       #boot .room {
         position: absolute;
@@ -563,7 +647,7 @@
       #boot .log h2 {
         display: inline-block;
         margin: 0 0 0.35em;
-        color: var(--leaf);
+        color: var(--ink);
         font: 700 1.45em/1.1 var(--hand);
         background: linear-gradient(transparent 60%, rgba(242, 165, 65, 0.5) 60% 92%, transparent 92%) no-repeat;
       }
@@ -1117,6 +1201,25 @@
       <p id="boot-live" class="sr" role="status" aria-live="polite"></p>
     </div>
     <div id="ui"></div>
+    <!--
+      Made for a computer: on a phone or a small touch screen, a note asks for a
+      laptop or desktop first. "Play anyway" hides it for this visit.
+    -->
+    <div id="desk-only" role="dialog" aria-modal="true" aria-labelledby="desk-h" hidden>
+      <div class="desk-card">
+        <svg class="desk-art" viewBox="0 0 120 80" aria-hidden="true" focusable="false">
+          <rect x="18" y="8" width="84" height="52" rx="5" class="screen" />
+          <rect x="25" y="15" width="70" height="38" rx="2" class="glass" />
+          <circle cx="60" cy="34" r="9" class="bulb" />
+          <path d="M56 43 L 64 43 M57 46 L 63 46" class="line" />
+          <path d="M8 66 L 112 66 L 104 74 L 16 74 Z" class="base" />
+        </svg>
+        <p class="desk-tag">Best on a computer</p>
+        <h2 id="desk-h">Pieces of Home is made for a laptop or desktop.</h2>
+        <p class="desk-why">It needs a keyboard and mouse and a bigger screen. Open this page on a computer for the full adventure.</p>
+        <button type="button" id="desk-go">Play anyway</button>
+      </div>
+    </div>
     <noscript>
       <p style="position: fixed; inset: auto 0 16px; z-index: 60; text-align: center; font-size: 20px; color: #f7efe1">
         This game needs JavaScript. You can read the story in the <a href="/field-guide/" style="color: #ffe2ae">Field Guide</a>.
@@ -1261,6 +1364,29 @@
           if (travel && travel.pauseAnimations) travel.pauseAnimations();
         }
         set(0.02);
+      })();
+    </script>
+    <script>
+      // A phone or a small touch screen: say the game is made for a computer, once per visit.
+      (function () {
+        var small = window.matchMedia("(max-width: 900px), (pointer: coarse) and (hover: none)").matches;
+        var seen = false;
+        try {
+          seen = sessionStorage.getItem("poh.desk-ok") === "1";
+        } catch (e) {}
+        // Test runs (?test) skip it, so the phone checks reach the game.
+        if (!small || seen || /[?&]test(?![a-z])/.test(location.search)) return;
+        var note = document.getElementById("desk-only");
+        if (!note) return;
+        note.hidden = false;
+        var go = document.getElementById("desk-go");
+        go.focus();
+        go.addEventListener("click", function () {
+          note.hidden = true;
+          try {
+            sessionStorage.setItem("poh.desk-ok", "1");
+          } catch (e) {}
+        });
       })();
     </script>
     <script type="module" src="/src/main.ts"></script>

@@ -51,7 +51,7 @@ export const VOICES: Record<string, VoiceSpec> = {
   theo: { kind: "talk", hz: 295, formant: 1.26, syllable: 0.078, bounce: 2, breath: 0.03, lilt: 2, tilt: 1.7, level: 0.37 },
   mom: { kind: "talk", hz: 262, formant: 1.16, syllable: 0.092, bounce: 1.4, breath: 0.08, lilt: 0, tilt: 1.8, level: 0.24 },
   dad: { kind: "hum", hz: 118, formant: 0.92, syllable: 0.19, bounce: 1.3, breath: 0.08, lilt: 0, tilt: 1.9, level: 0.48 },
-  milo: { kind: "bleep", hz: 1000, formant: 1, syllable: 0.085, bounce: 0, breath: 0, lilt: 0, tilt: 1, level: 0.12 },
+  milo: { kind: "bleep", hz: 1000, formant: 1, syllable: 0.085, bounce: 0, breath: 0, lilt: 0, tilt: 1, level: 0.17 },
 };
 
 /** Vowel shapes: the first four formants in Hz for a medium mouth (a, e, i, o, u). */
@@ -258,7 +258,11 @@ const HISS_TONE = (cluster: string): [number, number] => {
   return [6400, 3];
 };
 
-export function speak(mx: Mixer, out: AudioNode, speaker: string, text: string, at = mx.now): Speaking {
+/**
+ * The old full murmur: a formant voice babbling every syllable of the line.
+ * Kept for the audio lab; the game now speaks with `speak` (short chirps).
+ */
+export function murmur(mx: Mixer, out: AudioNode, speaker: string, text: string, at = mx.now): Speaking {
   const spec = VOICES[speaker] ?? VOICES["remi"]!;
   if (spec.kind === "bleep") return bleep(mx, out, spec, text, at);
   const ctx = mx.ctx;
@@ -404,14 +408,93 @@ export function speak(mx: Mixer, out: AudioNode, speaker: string, text: string, 
   };
 }
 
+/**
+ * How the characters speak (team feedback, 2026-11-14: the full murmur under
+ * every line was "too annoying"). A line now opens with a short, musical
+ * chirp, a few notes long, the way storybook games give each character a
+ * little sound signature, and then the caption carries the words in quiet.
+ *
+ * Up to six notes, one per word from the start of the line, each a soft
+ * "doo" that pops up into a note of the game's pentatonic scale. The tune
+ * follows the line: questions lift at the end, exclamations sit higher,
+ * statements settle. Each character has their own register and colour:
+ * Remi a round flute-like tone, Nori a bright skip, Lumi airy, Theo low and
+ * bouncy, Dad a warm hum, Milo his bleeps.
+ */
+export function speak(mx: Mixer, out: AudioNode, speaker: string, text: string, at = mx.now): Speaking {
+  const spec = VOICES[speaker] ?? VOICES["remi"]!;
+  if (spec.kind === "bleep") return bleep(mx, out, spec, text, at);
+  const ctx = mx.ctx;
+  const plan = planLine(spec, text, Math.floor(Math.random() * 1e9));
+  // One note per word (the first syllable of each), at most six, with a steady little rhythm.
+  const firsts = plan.filter((p, i) => i === 0 || plan[i - 1]!.close);
+  const notes = (firsts.length ? firsts : plan).slice(0, 6);
+  const humming = spec.kind === "hum";
+  const step = humming ? 0.2 : 0.105;
+  const ending = endingOf(text);
+  const voice = gain(ctx, 0);
+  // A soft "mouth": a lowpass that keeps the tone round, never buzzy.
+  const mouth = filter(ctx, "lowpass", humming ? 900 : Math.min(4200, spec.hz * 6 * spec.formant), 0.8);
+  voice.connect(mouth).connect(out);
+  voice.gain.value = 1;
+  const stops: OscillatorNode[] = [];
+  let end = at;
+  notes.forEach((n, i) => {
+    const t = at + i * step * (n.stress > 0.5 ? 1.08 : 1);
+    const last = i === notes.length - 1;
+    const length = humming ? 0.26 : last ? 0.22 : 0.13;
+    const hz = humming ? n.hz * 2 : spec.hz * 2 ** (toScale(12 * Math.log2(n.hz / spec.hz)) / 12);
+    const o = osc(ctx, humming ? "sine" : spec.tilt < 1.7 ? "triangle" : "sine", hz * (humming ? 1 : 0.84), t, t + length + 0.05);
+    // The "bwip": a quick slide up into the note, and on the last note a lift for a question.
+    if (!humming) o.frequency.exponentialRampToValueAtTime(hz, t + 0.03);
+    if (last && ending === "question") o.frequency.exponentialRampToValueAtTime(hz * 1.33, t + length);
+    else if (last && ending === "statement") o.frequency.exponentialRampToValueAtTime(hz * 0.94, t + length);
+    // A quiet octave on top gives the cheerful voices a bit of sparkle.
+    const top = osc(ctx, "sine", hz * 2, t, t + length + 0.05);
+    const tg = gain(ctx, humming ? 0.05 : 0.12);
+    const g = gain(ctx);
+    const peak = spec.level * (humming ? 0.5 : 0.42) * (0.85 + 0.15 * n.stress);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(peak, t + (humming ? 0.04 : 0.012));
+    g.gain.setTargetAtTime(0, t + length * 0.45, length * 0.25);
+    o.connect(g);
+    top.connect(tg).connect(g);
+    g.connect(voice);
+    // Lumi's airy voice: a breath of noise under each note.
+    if (spec.breath > 0.1) {
+      const b = filter(ctx, "bandpass", hz * 3, 1.2);
+      const bg = gain(ctx);
+      bg.gain.setValueAtTime(0, t);
+      bg.gain.linearRampToValueAtTime(peak * spec.breath * 0.6, t + 0.02);
+      bg.gain.setTargetAtTime(0, t + 0.05, 0.03);
+      const air = ctx.createBufferSource();
+      air.buffer = mx.noise("white");
+      air.start(t, Math.random());
+      air.stop(t + length + 0.05);
+      air.connect(b).connect(bg).connect(voice);
+    }
+    stops.push(o, top);
+    end = t + length;
+  });
+  const duration = end - at;
+  mx.duck(duration);
+  return {
+    duration,
+    stop: () => {
+      voice.gain.cancelScheduledValues(mx.now);
+      voice.gain.setTargetAtTime(0, mx.now, 0.02);
+    },
+  };
+}
+
 /** Milo's bleeps: a chip voice hopping between high pentatonic notes; questions end with an upward chirp. */
 function bleep(mx: Mixer, out: AudioNode, spec: VoiceSpec, text: string, at: number): Speaking {
   const ctx = mx.ctx;
   const random = seeded(Math.floor(Math.random() * 1e9));
   const ending = endingOf(text);
-  const count = Math.max(2, Math.min(14, Math.round(text.length / 6)));
+  const count = Math.max(2, Math.min(6, Math.round(text.length / 8)));
   const duration = count * spec.syllable + 0.2;
-  const o = osc(ctx, "square", 1000, at, at + duration + 0.1);
+  const o = osc(ctx, "triangle", 1000, at, at + duration + 0.1);
   const f = filter(ctx, "lowpass", 2600, 1);
   const g = gain(ctx, 0);
   o.connect(f).connect(g).connect(out);

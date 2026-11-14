@@ -1025,3 +1025,24 @@ The loading page's lamp drawing holds still once drawn (its three boiling copies
 **Why:** Team feedback, 2026-11-14: the music and sound effects felt "too creepy" (slow sustained chords, a hum and a rumble in a dark room, crackle and random notes), the sound was "too loud when opening the game", players did not know where to turn it down, the loading page lamp "is flickering", and the notebook had "too much blue text".
 
 **Alternatives considered:** Only lowering the music (the eerie parts were the drones and dissonant voicings, not the loudness), recorded music (the Bible keeps all music made in code), a mute button with no slider (kids need "quieter", not only "off").
+
+## 99. Learning about the machines comes first; a roomier workshop; friendlier cards, voices and trips
+
+**Date:** 2026-11-14
+
+**Decision:**
+
+1. **The main goal is said first.** "Your adventure" opens with it in a highlighted line ("People left machines on the Moon and Mars. They are not forgotten. Meet them, and learn their true stories."), its steps are now Find Dad's letters, Visit the real machines, Learn and finish Milo, and the menu's New story reads "Meet the machines left on the Moon and Mars".
+2. **True story cards** became museum labels: the real machine's name at the top (or, for a story that is not on a machine's notebook page, only the place, never another machine's name), a taped NASA photo or, when there is none, Dad's still drawing of the machine marked "Not to scale", and "More about it" opens field notes (When, Where, The facts, numbered). The source is a link, and "Find it again in Dad's notebook" shows only when the fact is on a notebook page.
+3. **Dad's letters** are in black ink; Dad's blue pen is kept for his name, a small heart and his margin sketch of the machine. A header says "From Dad's workshop, for <place>" and a dashed line names the real machine.
+4. **The workshop is drawn 1.25 times its model size** (`SHED_SCALE`). The room, the bench, the domes, the globes and Milo grow; the kids do not, so the room has space for four players and the bench of little worlds reads from across the room. Loose meshes take the site's turn and size from a decomposed matrix (a scaled matrix is not a pure rotation). Each dome has a museum label (place, the Moon or Mars, "Model, not to scale") drawn on a canvas. The loading page's workshop picture was rendered again.
+5. **Voices:** the full formant murmur under every line is replaced by a short musical chirp, one soft note per word for up to six words, on the game's pentatonic scale, shaped by the line (questions lift, statements settle). Dad hums a few warm notes; Milo bleeps at most six times. The old murmur stays as `murmur` for the audio lab.
+6. **Camera drag:** after a 4 pixel mouse drag the cursor locks in place (Pointer Lock) and the camera turns from raw mouse movement; it comes back on release, where it was. A plain click stays a click.
+7. **Trips:** toy squash and stretch on the rocket (it crouches as the engine lights, leaps tall, squashes and wobbles on touchdown), a gentle bob and sway in flight, the camera shakes at lift-off, banks in the chase and widens its view with speed, the star streaks brighten with speed, and a burst of little stars celebrates the landing. Reduced motion keeps none of these.
+8. **Phones and small touch screens** see a "Best on a computer" card before the game, with "Play anyway" (remembered for the visit). Test runs skip it.
+9. **Loading page:** "Things that kept working" is in black ink (no green).
+10. **Speed:** on Medium and Low the shadow map redraws every other frame; the mini-map works at 30 updates a second.
+
+**Why:** Team feedback, 2026-11-14 (the true story and letter cards, too much blue and no green text, a bigger workshop with the table models emphasized, the challenge's goal of learning about the machines left behind as the main focus, a desktop-only sign on mobile, the cursor moving while dragging the camera, a better trip animation, annoying murmur sounds, and more speed).
+
+**Alternatives considered:** A new, larger workshop model (much more work and a new layout to balance; scaling the site keeps every proportion that was already tuned). GSAP for the trip (the trip already runs on its own timeline in Three.js, so the new motion is written there). A mute toggle for voices only (the voices are part of the characters; they are now short and musical instead).
