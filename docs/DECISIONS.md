@@ -888,3 +888,13 @@ Dad's letters are now read. Each letter had words written for it that never reac
 **Why:** Team feedback, 2026-11-14: the notebook "has too much spacing and some pages has nothing placed in it", and "improve mail UI too". Reading the letters is also the heart of the story: they are what the game is about.
 
 **Alternatives considered:** Keeping two spreads and adding pictures to fill them (no more sourced pictures to add), showing the letter text as a note card (loses the feeling of opening mail).
+
+## 88. The title flight keeps the lamp lit and the room clear
+
+**Date:** 2026-11-14
+
+**Decision:** During the title and the short story, Dad's lamp is always lit, even at night or before the player has pulled its chain in the workshop. The flight from the lamp no longer passes through anyone: Remi is hidden until the camera flies down to him, and the friends who wait in the workshop stay out of the room until the title is over.
+
+**Why:** Team feedback, 2026-11-14: "after turning on the light switch when it is night the lamp is dark and also when zooming out animation my character clips out in the animation like i can see my character pass through". The night save turns the lamp off until it is clicked, and the friend at the desk sat right on the camera's path.
+
+**Alternatives considered:** Bending the camera path around the desk (the path is tuned to frame the lamp and window), fading the characters (still a ghost passing by the lens).

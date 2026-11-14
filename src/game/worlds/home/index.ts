@@ -934,8 +934,9 @@ export function createHome(ctx: WorldContext): World {
       mom.update(dt, head, frame.reducedMotion);
       for (const kid of friends) {
         // A friend played by a real player in the room is not also waiting here; in the
-        // short story Remi opens the workshop alone, so the friends are not there yet.
-        const away = presence.kids.has(kid.id) || frame.story === true;
+        // short story Remi opens the workshop alone, so the friends are not there yet. The
+        // title's flight starts at Dad's desk, so they stay out of its way until it ends.
+        const away = presence.kids.has(kid.id) || frame.story === true || frame.title === true;
         kid.root.visible = !away;
         (kid.root.userData["body"] as { radius: number }).radius = away ? 0.001 : 0.28;
         if (away) continue;
@@ -949,11 +950,15 @@ export function createHome(ctx: WorldContext): World {
       places.update(dt, frame.time, frame.reducedMotion);
       if (firstFrame) {
         firstFrame = false;
-        lampPower = lampWaits() ? 0 : 1;
+        // The light was just turned on: the title flies out from a lit lamp.
+        lampPower = lampWaits() && !frame.title && !frame.story ? 0 : 1;
         pinGlow = pinsLit() ? 1 : 0;
       }
-      // The lamp waits dark in a new story, then clicks on when Remi first walks in.
-      if (lampWaits()) {
+      // The lamp waits dark in a new story, then clicks on when Remi first walks in. During the
+      // title and the short story it shines: that is the light the player just turned on.
+      if (frame.title || frame.story) {
+        if (lampClick < 0) lampPower = 1;
+      } else if (lampWaits()) {
         if (lampClick < 0) lampPower = 0;
         if (inside && lampClick < 0) lampClick = 0;
       }

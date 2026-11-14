@@ -127,6 +127,8 @@ export interface FrameInfo {
   reducedMotion: boolean;
   /** The short story before a new game is playing (see the engine's storyShot). */
   story?: boolean;
+  /** The title is up: the flight from Dad's lamp, the menu, the flight down to Remi. */
+  title?: boolean;
 }
 
 export interface World {

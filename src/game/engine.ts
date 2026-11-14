@@ -899,7 +899,7 @@ export class Engine {
     const riding = !shot && !titling && (world.ride?.(dt, input, this.player) ?? false);
     this.riding = riding;
     if (!riding) this.player.update(dt, input, this.follow.forward, this.follow.right, world);
-    world.update(dt, { player: this.player, carrying: this.store.value.carrying, time: this.elapsed, reducedMotion: this.reducedMotion, story: this.storyView !== null });
+    world.update(dt, { player: this.player, carrying: this.store.value.carrying, time: this.elapsed, reducedMotion: this.reducedMotion, story: this.storyView !== null, title: titling });
     this.interactions.update(dt, this.player.position, this.player.forward, input);
     // Which named place the player is in, for the place-name card.
     const zone = shot || titling || !world.zoneAt ? null : world.zoneAt(this.player.up);
@@ -908,8 +908,10 @@ export class Engine {
       this.bus.emit("player:zone", { zone });
     }
 
-    // Character pose on the sphere.
+    // Character pose on the sphere. Remi stays out of the title's flight from the lamp (the
+    // camera would pass through him on its way out of the workshop) until it flies down to him.
     const kid = this.kid.root;
+    kid.visible = !(titling && this.title !== null && this.title.phase !== "leaving" && this.storyView === null);
     kid.matrix.makeBasis(this.scratch.crossVectors(this.player.up, this.player.forward).normalize(), this.player.up, this.player.forward);
     kid.matrix.setPosition(this.player.position);
     kid.matrix.decompose(kid.position, kid.quaternion, kid.scale);
