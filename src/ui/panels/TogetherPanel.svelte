@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { tick } from "svelte";
+  import { audio } from "../../audio/audio";
   import { KID_NAMES } from "../../content/story";
   import type { NetClient, NetState } from "../../net/client";
   import type { Coop } from "../../net/coop";
@@ -12,7 +14,9 @@
   /**
    * Play together (Phase 06). Make a private room or join one with a code,
    * then pick which kid to play. No typing anywhere: codes are three kid-safe
-   * words and a number, picked from lists, so nobody can type a name or a message.
+   * words and a number, so nobody can type a name or a message. Joining shows
+   * the code as four paper tiles, like the code a friend sees: spin a tile with
+   * its arrows (or the arrow keys), or tap it to pick from a board of words.
    */
   interface Props {
     net: NetClient;
@@ -29,6 +33,80 @@
   let busy = $state(false);
   let words = $state<[string, string, string]>([ROOM_WORDS[0]!, ROOM_WORDS[1]!, ROOM_WORDS[2]!]);
   let number = $state(1);
+  /** Which tile's board is open: 0 to 2 for the words, 3 for the number. */
+  let board = $state<number | null>(null);
+  let boardEl: HTMLElement | null = $state(null);
+
+  const NUMBERS = Array.from({ length: 99 }, (_, n) => n + 1);
+
+  const tileText = (i: number): string => (i === 3 ? String(number) : words[i]!);
+  const tileLabel = (i: number): string => (i === 3 ? t("together.number") : t("together.word", { n: i + 1 }));
+  const focusTile = (i: number): void => {
+    void tick().then(() => document.querySelector<HTMLElement>(`[data-tile="${i}"]`)?.focus({ preventScroll: true }));
+  };
+
+  function setWord(i: number, word: string): void {
+    const next = [...words] as [string, string, string];
+    next[i] = word;
+    words = next;
+  }
+
+  function spin(i: number, step: number): void {
+    if (i === 3) number = ((((number - 1 + step) % 99) + 99) % 99) + 1;
+    else {
+      // Skip words the other tiles already show: a code never repeats a word.
+      let at = (ROOM_WORDS as readonly string[]).indexOf(words[i]!);
+      do at = (at + step + ROOM_WORDS.length) % ROOM_WORDS.length;
+      while (words.some((w, j) => j !== i && w === ROOM_WORDS[at]));
+      setWord(i, ROOM_WORDS[at]!);
+    }
+    audio.ui("tick");
+  }
+
+  async function toggleBoard(i: number): Promise<void> {
+    board = board === i ? null : i;
+    audio.ui("pop");
+    if (board === null) return;
+    await tick();
+    boardEl?.querySelector<HTMLElement>("[aria-pressed='true']")?.focus({ preventScroll: true });
+  }
+
+  function choose(value: string | number): void {
+    if (board === null) return;
+    const i = board;
+    if (i === 3) number = value as number;
+    else setWord(i, value as string);
+    board = null;
+    audio.ui("tick");
+    focusTile(i);
+  }
+
+  function tileKey(event: KeyboardEvent, i: number): void {
+    if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+      event.preventDefault();
+      event.stopPropagation();
+      spin(i, event.key === "ArrowUp" ? -1 : 1);
+      return;
+    }
+    // A letter jumps to the first word that starts with it. Nothing is typed anywhere.
+    if (i < 3 && /^[a-z]$/i.test(event.key)) {
+      const found = ROOM_WORDS.find((w) => w.startsWith(event.key.toLowerCase()));
+      if (found) {
+        setWord(i, found);
+        audio.ui("tick");
+      }
+    }
+  }
+
+  function boardKey(event: KeyboardEvent): void {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    event.stopPropagation();
+    const i = board;
+    board = null;
+    if (i !== null) focusTile(i);
+  }
+  const repeated = $derived(new Set(words).size < 3);
 
   const inRoom = $derived(room.status === "connected" || room.status === "reconnecting" || room.status === "connecting");
   const mine = $derived(room.seats.find((s) => s.seat === room.you)?.kid ?? null);
@@ -134,31 +212,62 @@
         <span class="mark" aria-hidden="true"><Icon name="plus" size={22} /></span>
         <h3 id="tg-make">{t("together.make")}</h3>
         <p class="help">{t("together.makeHelp")}</p>
+        <div class="crew" aria-hidden="true">
+          {#each KID_IDS as kid, i (kid)}
+            <span class="crew-kid" style:--i={i}><KidFace {kid} size={64} /></span>
+          {/each}
+        </div>
         <button type="button" class="btn amber" disabled={busy} onclick={make}>{t("together.make")}</button>
       </section>
 
-      <section class="option" aria-labelledby="tg-join">
+      <section class="option join-card" aria-labelledby="tg-join">
         <span class="mark" aria-hidden="true"><Icon name="door" size={22} /></span>
         <h3 id="tg-join">{t("together.join")}</h3>
         <p class="help">{t("together.joinHelp")}</p>
-        <div class="pickers">
-          {#each [0, 1, 2] as i (i)}
-            <label>
-              <span class="eyebrow">{t("together.word", { n: i + 1 })}</span>
-              <select class="select" bind:value={words[i]}>
-                {#each ROOM_WORDS as w (w)}<option value={w}>{w}</option>{/each}
-              </select>
-            </label>
+        <div class="tiles" role="group" aria-label={t("together.code")}>
+          {#each [0, 1, 2, 3] as i (i)}
+            <div class="tile-col" class:num={i === 3} class:open={board === i}>
+              <button type="button" class="spin up" tabindex="-1" aria-label={`${tileLabel(i)}: ${t("together.before")}`} onclick={() => spin(i, -1)}>
+                <svg viewBox="0 0 20 12" aria-hidden="true"><path d="M3 9.5 L 10 3 L 17 9.5" /></svg>
+              </button>
+              <button
+                type="button"
+                class="tile"
+                data-tile={i}
+                aria-label={`${tileLabel(i)}: ${tileText(i)}`}
+                aria-expanded={board === i}
+                aria-describedby="tg-tile-help"
+                onclick={() => toggleBoard(i)}
+                onkeydown={(e) => tileKey(e, i)}
+              >
+                {#key tileText(i)}<span class="tile-word">{tileText(i)}</span>{/key}
+              </button>
+              <button type="button" class="spin down" tabindex="-1" aria-label={`${tileLabel(i)}: ${t("together.after")}`} onclick={() => spin(i, 1)}>
+                <svg viewBox="0 0 20 12" aria-hidden="true"><path d="M3 2.5 L 10 9 L 17 2.5" /></svg>
+              </button>
+            </div>
           {/each}
-          <label>
-            <span class="eyebrow">{t("together.number")}</span>
-            <select class="select" bind:value={number}>
-              {#each Array.from({ length: 99 }, (_, n) => n + 1) as n (n)}<option value={n}>{n}</option>{/each}
-            </select>
-          </label>
         </div>
-        <button type="button" class="btn" disabled={new Set(words).size < 3} onclick={() => enter(`${words.join("-")}-${number}`)}>{t("together.joinGo")}</button>
+        <p class="tile-help" id="tg-tile-help">{t("together.tileHelp")}</p>
+        {#if repeated}<p class="help warn" role="status">{t("together.sameWord")}</p>{/if}
+        <button type="button" class="btn amber join-go" disabled={repeated} onclick={() => enter(`${words.join("-")}-${number}`)}>{t("together.joinGo")}</button>
       </section>
+      {#if board !== null}
+        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+        <div class="board" class:numbers={board === 3} role="group" aria-label={tileLabel(board)} bind:this={boardEl} onkeydown={boardKey}>
+          <p class="board-title">{board === 3 ? t("together.pickNumber") : t("together.pickWord", { n: board + 1 })}</p>
+          <div class="chips">
+            {#if board === 3}
+              {#each NUMBERS as n (n)}<button type="button" class="chip-btn" aria-pressed={n === number} onclick={() => choose(n)}>{n}</button>{/each}
+            {:else}
+              {#each ROOM_WORDS as w (w)}
+                {@const usedElsewhere = words.some((x, j) => j !== board && x === w)}
+                <button type="button" class="chip-btn" aria-pressed={w === words[board]} disabled={usedElsewhere} onclick={() => choose(w)}>{w}</button>
+              {/each}
+            {/if}
+          </div>
+        </div>
+      {/if}
     </div>
   {/if}
   <p class="safe"><Icon name="lock" size={18} /> {t("together.safe")}</p>
@@ -217,9 +326,6 @@
   .option > .btn {
     margin-top: auto;
   }
-  .eyebrow {
-    margin: 4px 0 6px;
-  }
   .code {
     display: flex;
     flex-wrap: wrap;
@@ -239,18 +345,228 @@
     flex-wrap: wrap;
     gap: 10px;
   }
-  .pickers {
+  /* The code as four paper tiles, each with little spin arrows above and below. */
+  .tiles {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px 10px;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) 64px;
+    gap: 8px;
     width: 100%;
-    margin-bottom: 16px;
+    margin: 2px 0 4px;
   }
-  .pickers label {
+  .tile-col {
     display: grid;
+    justify-items: center;
+    gap: 2px;
   }
-  .pickers .eyebrow {
-    margin: 0 0 6px;
+  .tile {
+    position: relative;
+    width: 100%;
+    min-height: 52px;
+    padding: 6px 4px;
+    overflow: hidden;
+    border: 2px solid var(--ink);
+    border-radius: 10px 8px 11px 7px;
+    background: #f9d79a;
+    box-shadow: 0 3px 0 var(--ink);
+    color: var(--ink);
+    font: 700 1.05rem/1.1 var(--read);
+    cursor: pointer;
+    transition:
+      transform 0.15s var(--ease-spring),
+      background 0.15s;
+  }
+  .tile-col:nth-child(2) .tile {
+    rotate: 0.8deg;
+  }
+  .tile-col:nth-child(3) .tile {
+    rotate: -0.6deg;
+  }
+  .tile-col.num .tile {
+    background: #fffaf0;
+  }
+  .tile:hover {
+    transform: translateY(-2px);
+  }
+  .tile:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 var(--ink);
+  }
+  .tile-col.open .tile {
+    background: var(--amber);
+  }
+  .tile-word {
+    display: block;
+    animation: roll 0.22s var(--ease-spring);
+  }
+  @keyframes roll {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+  }
+  .spin {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 26px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .spin:hover {
+    background: rgba(242, 165, 65, 0.22);
+    color: var(--ink);
+  }
+  .spin svg {
+    width: 20px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .tile-help {
+    margin: 2px 0 10px;
+    color: var(--ink-soft);
+    font: 400 0.84rem/1.3 var(--read);
+  }
+  /* Four friends waiting on the Make card: who can come along. */
+  .crew {
+    display: flex;
+    justify-content: center;
+    align-self: stretch;
+    margin: 10px 0 18px;
+  }
+  .crew-kid {
+    display: grid;
+    place-items: center;
+    width: 76px;
+    height: 76px;
+    margin: 0 -6px;
+    border: 2.4px solid var(--ink);
+    border-radius: 50%;
+    background: #fdf0cf;
+    box-shadow: 0 3px 0 var(--ink);
+    rotate: calc((var(--i) - 1.5) * 4deg);
+    translate: 0 calc(var(--i) * var(--i) * 1px - var(--i) * 3px);
+  }
+  .crew-kid:nth-child(2) {
+    background: #e3ecd6;
+  }
+  .crew-kid:nth-child(3) {
+    background: #e8dff0;
+  }
+  .crew-kid:nth-child(4) {
+    background: #d9e6f0;
+  }
+  /* The board: every word as a little paper chip, like letter tiles spread on a
+     table. It lies over the Make card, beside the tiles it sets, so the panel
+     never grows or scrolls. */
+  .cards {
+    position: relative;
+  }
+  .board {
+    position: absolute;
+    z-index: 2;
+    left: -4px;
+    top: -4px;
+    bottom: -4px;
+    width: calc(50% - 3px);
+    display: flex;
+    flex-direction: column;
+    padding: 12px 14px 14px;
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    background: #fffaf0;
+    box-shadow:
+      0 4px 0 var(--ink),
+      0 22px 36px -18px rgba(20, 12, 4, 0.55);
+    animation: board-in 0.22s var(--ease-spring);
+  }
+  .board-title {
+    margin: 0 0 8px;
+    font: 700 1rem var(--hand);
+  }
+  /* A little paper arrow on the board's edge, pointing at the tiles. */
+  .board::after {
+    content: "";
+    position: absolute;
+    right: -13px;
+    top: 192px;
+    width: 22px;
+    height: 22px;
+    background: #fffaf0;
+    border-right: 2px solid var(--ink);
+    border-top: 2px solid var(--ink);
+    rotate: 45deg;
+  }
+  .chips {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-content: start;
+    gap: 6px;
+    overflow-y: auto;
+    padding: 2px 4px 4px 2px;
+  }
+  .board.numbers .chips {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    gap: 3px;
+  }
+  .board.numbers .chip-btn {
+    min-height: 27px;
+    font-size: 0.82rem;
+  }
+  @media (max-width: 720px) {
+    .board {
+      width: auto;
+      right: -4px;
+    }
+    .board::after {
+      display: none;
+    }
+  }
+  .chip-btn {
+    min-height: 34px;
+    padding: 2px 4px;
+    border: 1.5px solid rgba(43, 38, 34, 0.35);
+    border-radius: 7px;
+    background: #fffdf6;
+    color: var(--ink);
+    font: 700 0.88rem var(--read);
+    cursor: pointer;
+  }
+  .chip-btn:hover:not(:disabled) {
+    border-color: var(--ink);
+    background: #fdf0cf;
+  }
+  .chip-btn[aria-pressed="true"] {
+    border: 2px solid var(--ink);
+    background: #f9d79a;
+    box-shadow: 0 2px 0 var(--ink);
+  }
+  .chip-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+  .warn {
+    color: #9a3a22;
+  }
+  .join-go {
+    align-self: stretch;
+  }
+  @keyframes board-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+  :global(:root[data-motion="reduce"]) :is(.tile-word, .board) {
+    animation: none;
   }
   .safe {
     display: flex;

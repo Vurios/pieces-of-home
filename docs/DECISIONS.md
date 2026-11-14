@@ -910,3 +910,13 @@ The plain HTML Field Guide still exists, but only as the fallback for computers 
 **Why:** Team feedback, 2026-11-14: "fix field credits it should be adapted ingame not a different page". Leaving the game for a website page broke the feeling of the game and its style.
 
 **Alternatives considered:** Restyling the web page to look like the game (still a different page, and the 3D world is lost behind it), dropping the plain page (no path left for computers without 3D).
+
+## 90. Play together: paper tiles instead of browser dropdowns
+
+**Date:** 2026-11-14
+
+**Decision:** Joining a room no longer uses the browser's own dropdown lists. The code shows as four paper tiles, the same tiles a friend sees on their room code. Each tile has little arrows above and below to spin it, the arrow keys spin a focused tile, and a letter key jumps to the first word with that letter. Tapping a tile lays a board of every word (or every number) over the Make card, with a paper arrow pointing at the tile it sets; the words the other tiles use are greyed out, and spinning skips them, so a code can never repeat a word. The Make card shows the four kids, so the "up to four" is easy to see. Still no typing anywhere.
+
+**Why:** Team feedback, 2026-11-14 ("fix play together UI", with a picture of the native dropdown): the dropdown looked like a web form, not the game.
+
+**Alternatives considered:** A styled custom dropdown (still a list to scroll through), a single scroll wheel per word (hard with a mouse, slow with 40 words).

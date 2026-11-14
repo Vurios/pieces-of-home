@@ -149,6 +149,17 @@ test("menu, settings and credits pass axe", async ({ page }, info) => {
   await page.keyboard.press("ArrowDown");
   await expect(guide.getByRole("heading", { name: "The Moon buggy" })).toBeVisible();
   await axe(page, "field guide panel");
+  await page.keyboard.press("Escape");
+  // Play together: the code is set with paper tiles and a word board, never a browser dropdown.
+  await page.getByRole("button", { name: "Play together" }).click();
+  const together = page.getByRole("dialog", { name: "Play together" });
+  await expect(together.locator("select")).toHaveCount(0);
+  await together.getByRole("button", { name: "Word 2: otter" }).click();
+  await together.getByRole("button", { name: "koala", exact: true }).click();
+  await expect(together.getByRole("button", { name: "Word 2: koala" })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(together.getByRole("button", { name: "Word 2: lamp" })).toHaveCount(0);
+  await axe(page, "play together");
 });
 
 test("the notebook opens, turns with the keys and passes axe", async ({ page }, info) => {
