@@ -25,6 +25,7 @@
   import Notebook from "./notebook/Notebook.svelte";
   import ArchivePanel from "./panels/ArchivePanel.svelte";
   import RocketPanel from "./panels/RocketPanel.svelte";
+  import LetterOpen from "./story/LetterOpen.svelte";
   import ChaptersPanel from "./panels/ChaptersPanel.svelte";
   import CreditsPanel from "./panels/CreditsPanel.svelte";
   import SettingsPanel from "./panels/SettingsPanel.svelte";
@@ -145,8 +146,8 @@
       engine.bus.on("notebook:open", ({ spread }) => {
         const index = SPREADS.findIndex((s) => s.id === spread);
         audio.ui("page");
-        // Each machine has two spreads; open at its first.
-        flow.setNotebook(true, index * 2 + 1);
+        // One spread per machine, after the cover.
+        flow.setNotebook(true, index + 1);
       }),
       engine.bus.on("title:done", () => {
         flow.setStage("play");
@@ -334,6 +335,7 @@
 <Speech {engine} />
 <HelpBadge />
 <StoryCards {engine} />
+<LetterOpen {engine} />
 <StoryGames {engine} />
 <DishGame {engine} />
 <FinaleGames {engine} />
@@ -350,7 +352,13 @@
   <EmoteWheel {engine} onclose={() => (flow.emotes = false)} />
 {/if}
 {#if flow.notebook}
-  <Notebook {game} page={flow.notebookPage} onclose={() => toggleNotebook(false)} onpage={(p) => (flow.notebookPage = p)} />
+  <Notebook
+    {game}
+    page={flow.notebookPage}
+    onclose={() => toggleNotebook(false)}
+    onpage={(p) => (flow.notebookPage = p)}
+    onread={(letter) => engine.bus.emit("letter:open", { key: Date.now(), ...letter, delivered: true })}
+  />
 {/if}
 {#if flow.panel === "settings"}
   <SettingsPanel {engine} onclose={() => flow.close()} />

@@ -5,6 +5,7 @@
   import { readLastPage } from "../story/last-page";
   import { logNoteText, readLogNote } from "../story/log-note";
   import { CHAPTERS } from "../../content/chapters";
+  import { FINALE_COPY, V1_LETTER } from "../../content/finale";
   import type { GameState } from "../../game/core/state";
   import { DRAWINGS } from "../drawing/machines";
   import Sketch from "../drawing/Sketch.svelte";
@@ -26,21 +27,25 @@
    * Turning a page is a real leaf: its front shows the page you are leaving
    * and its back shows the page you are turning to, so nothing pops.
    *
-   * Each machine has two spreads, the way a real notebook would: first the
-   * drawing, the photos and what we learned; then Then and Now, the stamp
-   * and Dad's deeper notes. Pages never scroll. If a page is a little too
-   * full on a short screen, its writing shrinks a touch to fit.
+   * Each machine has one full spread: on the left Dad's drawing, what it was
+   * for, his note and Then and Now; on the right the photos, what we learned,
+   * his deeper notes and the letters delivered there (each one can be read
+   * again), with the chapter's stamp pressed in once it is done. Pages never
+   * scroll. If a page is a little too full on a short screen, its writing
+   * shrinks a touch to fit.
    */
   interface Props {
     game: Readonly<GameState>;
     page: number;
     onclose: () => void;
     onpage: (page: number) => void;
+    /** Opens one of Dad's delivered letters to read again. */
+    onread?: ((letter: { to: string; world: string; text: string }) => void) | undefined;
   }
-  let { game, page, onclose, onpage }: Props = $props();
+  let { game, page, onclose, onpage, onread }: Props = $props();
 
-  // The cover, two spreads per machine, and the last page (Finale).
-  const PER = 2;
+  // The cover, one spread per machine, and the last page (Finale).
+  const PER = 1;
   const LAST = SPREADS.length * PER + 1;
   const total = LAST + 1;
   /** The machine and which of its two spreads a page index shows, or null for the cover and the last page. */
@@ -51,6 +56,12 @@
   }
   const logNote = readLogNote();
   const POSTS: Record<MachineSpread["world"], string> = { Home: "HOME POST", Moon: "MOON POST", Mars: "MARS POST", Space: "DEEP SPACE POST" };
+  /** The letters Dad sent to a machine and the things around it, from its chapter (or the Finale). */
+  function lettersFor(spread: MachineSpread): { id: string; address: string; letter: string }[] {
+    if (spread.id === "voyager") return [{ id: V1_LETTER, address: FINALE_COPY.address, letter: FINALE_COPY.letter }];
+    return CHAPTERS.find((c) => c.spread === spread.id)?.letters.map((l) => ({ id: l.id, address: l.address, letter: l.letter })) ?? [];
+  }
+
   /** The stamp that closes a machine's chapter. */
   function stampFor(spread: MachineSpread): [string, string] | null {
     if (spread.id === "lamp") return ["Left on.", "Still shining."];
@@ -115,7 +126,6 @@
   const rightIndex = $derived(flip ? (flip.dir > 0 ? flip.to : flip.from) : shown);
   const pageLabel = $derived(t("notebook.page", { a: shown * 2 + 1, b: shown * 2 + 2, n: total * 2 }));
   const current = $derived(machineAt(shown)?.spread ?? null);
-  const currentPart = $derived(machineAt(shown)?.part ?? 0);
   const currentInked = $derived(current ? inkedFor(current) : true);
 
   function inkedFor(spread: MachineSpread): boolean {
@@ -194,17 +204,13 @@
   function pageText(): string {
     if (shown === LAST) return finished ? `What will you discover next? ${lastName ?? ""} Leave the light on for whoever comes next.` : "The last page is still blank.";
     if (!current) return `${COVER.title}. ${COVER.dedication} ${COVER.signature}.`;
-    if (currentPart === 1) {
-      const more: string[] = [current.nickname];
-      if (currentInked) {
-        if (current.thenNow.length) more.push(`${t("notebook.thenNow")}. ${current.thenNow.map((f) => factText(f)).join(" ")}`);
-        if (current.deeper.length) more.push(`${t("notebook.deeper")}. ${current.deeper.map((f) => f.kid).join(" ")}`);
-      }
-      return more.join(". ");
-    }
     const parts = [current.nickname, current.name, `${t("notebook.forWhat")}. ${current.forWhat}`];
-    if (currentInked && current.learned.length) parts.push(`${t("notebook.learned")}. ${current.learned.map((f) => factText(f)).join(" ")}`);
     parts.push(`${t("notebook.dad")}. ${current.dadNote}`);
+    if (currentInked) {
+      if (current.thenNow.length) parts.push(`${t("notebook.thenNow")}. ${current.thenNow.map((f) => factText(f)).join(" ")}`);
+      if (current.learned.length) parts.push(`${t("notebook.learned")}. ${current.learned.map((f) => factText(f)).join(" ")}`);
+      if (current.deeper.length) parts.push(`${t("notebook.deeper")}. ${current.deeper.map((f) => f.kid).join(" ")}`);
+    }
     return parts.join(". ");
   }
 
@@ -322,6 +328,24 @@
     <p>{spread.dadNote}</p>
     <p class="note-sig">{COVER.signature}</p>
   </aside>
+  {#if !inked && spread.thenNow.length}
+    <section class="now ghost" aria-hidden="true">
+      <h3 class="label">{t("notebook.thenNow")}</h3>
+      <div class="ghost-lines">{#each [84, 62] as w, i (i)}<span style:width={`${w}%`}></span>{/each}</div>
+    </section>
+  {/if}
+  {#if inked && spread.thenNow.length}
+    <section class="now">
+      <h3 class="label">{t("notebook.thenNow")}</h3>
+      {#each spread.thenNow as f (f.id)}<p>{factText(f)} <a class="src" href={f.sourceUrl} target="_blank" rel="noopener noreferrer" aria-label={`${t("notebook.source")}: ${f.sourceTitle}`}>{t("notebook.source")}</a></p>{/each}
+    </section>
+  {/if}
+  {#if inked && spread.id === "ingenuity" && logNote}
+    <aside class="log-note">
+      <h3 class="label">{t("notebook.yourNote")}</h3>
+      <p>{logNoteText(logNote)}</p>
+    </aside>
+  {/if}
 {/snippet}
 
 {#snippet machineRight(spread: MachineSpread, index: number)}
@@ -346,6 +370,47 @@
         </ul>
       </section>
     {/if}
+    {#if spread.deeper.length}
+      <section class="deeper">
+        <h3 class="label">{t("notebook.deeper")}</h3>
+        {#each spread.deeper as f (f.id)}
+          <p>{f.kid}{f.deeper ? ` ${f.deeper}` : ""} <a href={f.sourceUrl} target="_blank" rel="noopener noreferrer">{f.sourceTitle}</a></p>
+        {/each}
+      </section>
+    {/if}
+    {#if spread.id === "lamp"}
+      <section class="letters">
+        <h3 class="label">{t("notebook.letters")}</h3>
+        <p class="help">{t("notebook.lettersHelp")}</p>
+        <ul>
+          {#each SPREADS.filter((x) => x.id !== "lamp") as s, i (s.id)}
+            <li><Envelope to={s.letterTo} world={s.world} done={isComplete(s, game)} doneLabel={t("notebook.delivered")} tilt={TILTS[i % 5]! * 0.6} /></li>
+          {/each}
+        </ul>
+      </section>
+    {:else}
+      {@const sent = lettersFor(spread).filter((l) => game.delivered.includes(l.id) || settings.value.exploreFreely)}
+      {#if sent.length}
+        <section class="sent">
+          <h3 class="label">{t("notebook.sent")}</h3>
+          <ul>
+            {#each sent as l (l.id)}
+              <li>
+                <button type="button" class="sent-letter" onclick={() => onread?.({ to: l.address, world: spread.world, text: l.letter })} aria-label={`${t("notebook.read")}: ${l.address}`}>
+                  <span class="sent-env" aria-hidden="true"></span>
+                  <span class="sent-to">{l.address}</span>
+                  <span class="sent-read" aria-hidden="true">{t("notebook.read")}</span>
+                </button>
+              </li>
+            {/each}
+          </ul>
+        </section>
+      {/if}
+    {/if}
+    {#if stampFor(spread)}
+      {@const stamp = stampFor(spread)!}
+      <div class="stamp-corner"><InkStamp lines={stamp} top="DELIVERED BY REMI" bottom={POSTS[spread.world]} size={118} tilt={index % 2 ? -9 : 7} label={`Stamp: ${stamp[0]} ${stamp[1]}`} /></div>
+    {/if}
   {:else}
     <div class="pending">
       {#if spread.images.length > 0}
@@ -364,71 +429,30 @@
       <div class="ghost-lines" aria-hidden="true">
         {#each [92, 78, 86, 54] as w, i (i)}<span style:width={`${w}%`}></span>{/each}
       </div>
-    </div>
-  {/if}
-{/snippet}
-
-{#snippet moreLeft(spread: MachineSpread, index: number)}
-  {@const inked = inkedFor(spread)}
-  {@const stamp = stampFor(spread)}
-  <header class="head small">
-    <p class="kicker"><span>{spread.world}</span><span class="sep" aria-hidden="true"></span><span>{t("notebook.continued")}</span></p>
-    <h2 class="nick-title" class:pencil={!inked}>{spread.nickname}</h2>
-    <Underline width={170} seed={index * 7} color={inked ? "var(--amber)" : "rgba(140,129,115,0.45)"} />
-  </header>
-  {#if inked}
-    {#if spread.thenNow.length}
-      <section class="now big">
-        <h3 class="label">{t("notebook.thenNow")}</h3>
-        {#each spread.thenNow as f (f.id)}<p>{factText(f)} <a class="src" href={f.sourceUrl} target="_blank" rel="noopener noreferrer" aria-label={`${t("notebook.source")}: ${f.sourceTitle}`}>{t("notebook.source")}</a></p>{/each}
-      </section>
-    {/if}
-    {#if spread.id === "ingenuity" && logNote}
-      <aside class="log-note">
-        <h3 class="label">{t("notebook.yourNote")}</h3>
-        <p>{logNoteText(logNote)}</p>
-      </aside>
-    {/if}
-    {#if stamp}
-      <div class="stamp-mark"><InkStamp lines={stamp} top="DELIVERED BY REMI" bottom={POSTS[spread.world]} size={168} tilt={index % 2 ? -6 : 5} label={`Stamp: ${stamp[0]} ${stamp[1]}`} /></div>
-    {/if}
-  {:else}
-    <p class="pencil-note">{t("notebook.pencil")}</p>
-    <div class="ghost-lines" aria-hidden="true">
-      {#each [88, 72, 80] as w, i (i)}<span style:width={`${w}%`}></span>{/each}
-    </div>
-    <div class="stamp-ghost" aria-hidden="true"></div>
-  {/if}
-{/snippet}
-
-{#snippet moreRight(spread: MachineSpread)}
-  {#if inkedFor(spread)}
-    {#if spread.deeper.length}
-      <section class="deeper open">
-        <h3 class="label">{t("notebook.deeper")}</h3>
-        {#each spread.deeper as f (f.id)}
-          <p>{f.kid}{f.deeper ? ` ${f.deeper}` : ""} <a href={f.sourceUrl} target="_blank" rel="noopener noreferrer">{f.sourceTitle}</a></p>
-        {/each}
-      </section>
-    {/if}
-    {#if spread.id === "lamp"}
-      <section class="letters">
-        <h3 class="label">{t("notebook.letters")}</h3>
-        <p class="help">{t("notebook.lettersHelp")}</p>
-        <ul>
-          {#each SPREADS.filter((x) => x.id !== "lamp") as s, i (s.id)}
-            <li><Envelope to={s.letterTo} world={s.world} done={isComplete(s, game)} doneLabel={t("notebook.delivered")} tilt={TILTS[i % 5]! * 0.6} /></li>
-          {/each}
-        </ul>
-      </section>
-    {:else if !spread.deeper.length}
-      <p class="dad-last">{spread.dadNote}</p>
-      <p class="signoff">{COVER.signature}</p>
-    {/if}
-  {:else}
-    <h3 class="label ghost-label">{t("notebook.deeper")}</h3>
-    <div class="ghost-lines" aria-hidden="true">
-      {#each [92, 78, 86, 54, 70] as w, i (i)}<span style:width={`${w}%`}></span>{/each}
+      {#if lettersFor(spread).length}
+        <section class="sent">
+          <h3 class="label ghost-label">{t("notebook.toDeliver")}</h3>
+          <ul>
+            {#each lettersFor(spread) as l (l.id)}
+              <li>
+                {#if game.delivered.includes(l.id)}
+                  <button type="button" class="sent-letter" onclick={() => onread?.({ to: l.address, world: spread.world, text: l.letter })} aria-label={`${t("notebook.read")}: ${l.address}`}>
+                    <span class="sent-env" aria-hidden="true"></span>
+                    <span class="sent-to">{l.address}</span>
+                    <span class="sent-read" aria-hidden="true">{t("notebook.read")}</span>
+                  </button>
+                {:else}
+                  <span class="sent-letter sealed">
+                    <span class="sent-env" aria-hidden="true"></span>
+                    <span class="sent-to">{l.address}</span>
+                    <span class="sent-read">{t("notebook.sealed")}</span>
+                  </span>
+                {/if}
+              </li>
+            {/each}
+          </ul>
+        </section>
+      {/if}
     </div>
   {/if}
 {/snippet}
@@ -476,8 +500,6 @@
         {#if side === "left"}{@render coverLeft()}{:else}{@render coverRight()}{/if}
       {:else if index === LAST}
         {#if side === "left"}{@render lastLeft()}{:else}{@render lastRight()}{/if}
-      {:else if m && m.part === 1}
-        {#if side === "left"}{@render moreLeft(m.spread, index)}{:else}{@render moreRight(m.spread)}{/if}
       {:else if m && side === "left"}
         {@render machineLeft(m.spread, m.at + 1)}
       {:else if m}
@@ -701,17 +723,6 @@
     overflow: hidden;
     padding: 38px 46px 54px;
   }
-  .head.small {
-    margin-bottom: 8px;
-  }
-  .now.big {
-    margin-top: 30px;
-    padding: 22px 22px 12px;
-  }
-  .now.big p {
-    font-size: 1.12rem;
-    line-height: 1.55;
-  }
   .log-note {
     margin-top: 22px;
     padding: 14px 18px 10px;
@@ -727,22 +738,6 @@
   .log-note p {
     margin: 0;
     font: 700 1.25rem/28px var(--hand);
-  }
-  .deeper.open {
-    margin-top: 0;
-    border-top: 0;
-  }
-  .deeper.open p {
-    margin: 0 0 12px;
-    font-size: 1rem;
-    line-height: 1.5;
-  }
-  .stamp-ghost {
-    width: 150px;
-    height: 150px;
-    margin: 28px auto 0;
-    border: 3px dashed rgba(140, 129, 115, 0.35);
-    border-radius: 50%;
   }
   .page.left .scroll {
     padding-right: 54px;
@@ -1040,8 +1035,8 @@
   /* ---------- Machine, left page ---------- */
   .drawing {
     position: relative;
-    margin: 14px auto 0;
-    max-width: 360px;
+    margin: 6px auto 0;
+    max-width: 300px;
   }
   .drawing figcaption {
     margin-top: 2px;
@@ -1089,17 +1084,17 @@
   .photos {
     display: grid;
     justify-items: center;
-    gap: 22px;
-    margin: 10px 4px 18px;
+    gap: 14px;
+    margin: 2px 4px 12px;
   }
   .photos > :global(.photo) {
-    width: min(100%, 330px);
+    width: min(100%, 290px);
   }
   .photos.two {
     grid-template-columns: 1fr 1fr;
   }
   .photos.two > :global(.photo) {
-    width: 100%;
+    width: 80%;
   }
   .place {
     display: flex;
@@ -1182,8 +1177,89 @@
     margin: 22px 0 0;
     opacity: 0.92;
   }
+  /* The chapter's stamp, pressed into the corner of the page like a postmark. */
+  .stamp-corner {
+    display: flex;
+    justify-content: flex-end;
+    margin: -18px -10px -26px 0;
+    opacity: 0.9;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  /* The letters delivered here: little envelopes to read again. */
+  .sent {
+    margin-top: 16px;
+  }
+  .sent ul {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+  }
+  .sent-letter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 40px;
+    padding: 4px 10px 4px 6px;
+    border: 1.5px solid rgba(43, 38, 34, 0.25);
+    border-radius: 6px;
+    background: #fffdf6;
+    color: var(--ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition:
+      transform 0.12s ease,
+      border-color 0.12s ease;
+  }
+  .sent-letter.sealed {
+    cursor: default;
+    border-style: dashed;
+    background: transparent;
+  }
+  .sent-letter.sealed .sent-to {
+    color: var(--pencil-ink);
+  }
+  .sent-letter.sealed .sent-env {
+    filter: grayscale(1);
+    opacity: 0.6;
+  }
+  .sent-letter.sealed .sent-read {
+    color: var(--pencil-ink);
+  }
+  button.sent-letter:hover,
+  button.sent-letter:focus-visible {
+    transform: translateY(-1px) rotate(-0.4deg);
+    border-color: var(--ink);
+  }
+  .sent-env {
+    flex: none;
+    width: 34px;
+    height: 23px;
+    border: 2px solid var(--ink);
+    border-radius: 3px;
+    background:
+      linear-gradient(to bottom right, transparent calc(50% - 1px), var(--ink) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)) left top / 50% 60% no-repeat,
+      linear-gradient(to bottom left, transparent calc(50% - 1px), var(--ink) calc(50% - 1px) calc(50% + 1px), transparent calc(50% + 1px)) right top / 50% 60% no-repeat,
+      repeating-linear-gradient(-45deg, #c0573e 0 4px, #fffdf6 4px 7px, #3d5a8a 7px 11px, #fffdf6 11px 14px);
+    box-shadow: inset 0 0 0 3px #f3e7cf;
+  }
+  .sent-to {
+    flex: 1;
+    font: 700 1.05rem/1.2 var(--hand);
+    color: var(--dad-ink);
+  }
+  .sent-read {
+    font: 700 0.74rem/1 var(--label);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--amber-ink);
+  }
   .letters {
-    margin-top: 18px;
+    margin-top: 6px;
   }
   .letters .help {
     color: var(--ink-soft);
@@ -1205,8 +1281,12 @@
   .pending {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
     min-height: 100%;
+  }
+  .now.ghost {
+    border-style: dashed;
+    border-color: rgba(140, 129, 115, 0.45);
   }
   .corners {
     display: grid;

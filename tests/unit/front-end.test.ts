@@ -7,7 +7,7 @@ import { LETTER_TO_THE_LAMP, SEEN_NOTEBOOK, TIP_ORDER, goalFor, tipFor } from ".
 import { GUIDE } from "../../src/content/guide";
 import { PLACE_COPY, PLACE_IDS, placeFlag, placesFound } from "../../src/content/places";
 import { STORY } from "../../src/content/story";
-import { STORY_ART } from "../../src/ui/title/StoryArt";
+import { readFileSync } from "node:fs";
 import { PATHS, PLACES, TRAIL_SPECS, sampleTrail } from "../../src/game/worlds/home/layout";
 import { createInitialState, reviveState } from "../../src/game/core/state";
 import { SPREADS, factText, isComplete } from "../../src/content/notebook";
@@ -218,10 +218,11 @@ describe("places on Home", () => {
 });
 
 describe("the opening story", () => {
-  it("has a drawing for every page, short plain lines and no em dashes or numbers", () => {
+  it("has a shot in the home world for every page, short plain lines and no em dashes or numbers", () => {
     expect(STORY.pages.length).toBeGreaterThanOrEqual(4);
+    const home = readFileSync(new URL("../../src/game/worlds/home/index.ts", import.meta.url), "utf8");
     for (const page of STORY.pages) {
-      expect(STORY_ART[page.art]).toBeDefined();
+      expect(home).toContain(`"story-${page.art}"`);
       expect(page.text).not.toMatch(/—/);
       expect(page.text).not.toMatch(/[0-9]/);
       expect(page.text.split(/\s+/).length).toBeLessThanOrEqual(28);

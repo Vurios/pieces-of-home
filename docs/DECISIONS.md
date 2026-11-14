@@ -876,3 +876,15 @@ Loops move in steps, about a dozen frames a second, like paper stop motion. The 
 **Why:** Team feedback, 2026-11-14: "further improve the story animation u can make image 1 and 2 2.5d/3d animated and it should match the game's style".
 
 **Alternatives considered:** Animated 2D drawings (still not the game's look), a pre-rendered video (big, and it would not match the player's own world and settings).
+
+## 87. One full spread per machine, and Dad's letters opened
+
+**Date:** 2026-11-14
+
+**Decision:** Dad's notebook now has one spread per machine instead of two (9 spreads in all, was 16). The second spreads were mostly empty: the lamp's right page was blank, and "Deeper notes" often held one line. Now the left page has the drawing, what it was for, Dad's note and Then and Now; the right page has the photos, what we learned, the deeper notes and "Letters delivered here", with the chapter's stamp pressed into the corner like a postmark. The lamp's spread holds the grid of letters still in the notebook. Pages still in pencil are full too: a ghost "Then and now" box and the chapter's letters still sealed, so a player can see who the letters are for before going.
+
+Dad's letters are now read. Each letter had words written for it that never reached the screen. When Remi delivers one, the envelope drops in, its flap opens, the letter slides out in Dad's hand, and a red "Delivered. By Remi." stamp lands on its corner; the moment after it waits until the player folds it up (E, Enter, click, tap or A). Any delivered letter can be read again from its notebook page.
+
+**Why:** Team feedback, 2026-11-14: the notebook "has too much spacing and some pages has nothing placed in it", and "improve mail UI too". Reading the letters is also the heart of the story: they are what the game is about.
+
+**Alternatives considered:** Keeping two spreads and adding pictures to fill them (no more sourced pictures to add), showing the letter text as a note card (loses the feeling of opening mail).

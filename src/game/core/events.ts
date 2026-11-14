@@ -99,6 +99,9 @@ export interface GameEvents {
   /** A story card: Dad's handwritten note, or a fact from facts.json. The UI answers with story:card-done. */
   "story:card": { key: number; kind: "note" | "fact"; text: string; fact?: string };
   "story:card-done": { key: number };
+  /** Dad's letter, opened: on a delivery (the story waits for it) or reread from the notebook. The UI answers with letter:open-done. */
+  "letter:open": { key: number; to: string; world: string; text: string; delivered?: boolean };
+  "letter:open-done": { key: number };
   /** A small game on screen (the microscope, the storm calls). The UI answers with story:game-done. */
   "story:game": { key: number; id: string };
   "story:game-done": { key: number };

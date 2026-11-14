@@ -42,6 +42,9 @@ const NAMES: Record<Speaker, string> = { remi: "Remi", nori: "Nori", lumi: "Lumi
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => window.setTimeout(resolve, ms));
 
+/** Which post a little world's letters go by, for the stamp on the envelope. */
+const WORLD_POST: Record<string, string> = { tranquility: "Moon", hadley: "Moon", storms: "Moon", meridiani: "Mars", valinor: "Mars" };
+
 export class StoryDirector {
   private chain: Promise<void> = Promise.resolve();
   private depth = 0;
@@ -167,6 +170,21 @@ export class StoryDirector {
     return this.card("fact", factText(fact(line.fact)), line.fact);
   }
 
+  /** Shows Dad's letter opened, with the Delivered stamp, and waits until it is folded up. */
+  private openLetter(to: string, world: string, text: string): Promise<void> {
+    const key = ++this.key;
+    this.engine.interactions.blocked = true;
+    return new Promise((resolve) => {
+      const off = this.engine.bus.on("letter:open-done", (done) => {
+        if (done.key !== key) return;
+        off();
+        this.engine.interactions.blocked = this.waiting.size > 0;
+        resolve();
+      });
+      this.engine.bus.emit("letter:open", { key, to, world: WORLD_POST[world] ?? "Home", text, delivered: true });
+    });
+  }
+
   private card(kind: "note" | "fact", text: string, id?: string): Promise<void> {
     const key = ++this.key;
     this.engine.interactions.blocked = true;
@@ -213,7 +231,9 @@ export class StoryDirector {
     const chapter = CHAPTERS.find((c) => c.letters.some((l) => l.id === letter));
     if (!chapter) return;
     const def = chapter.letters.find((l) => l.id === letter)!;
-    await this.play([{ wait: 0.9 }, ...def.beat]);
+    await sleep(700);
+    await this.openLetter(def.address, chapter.world, def.letter);
+    await this.play([{ wait: 0.4 }, ...def.beat]);
     const s = this.engine.store.value;
     if (chapter.letters.every((l) => s.delivered.includes(l.id))) {
       this.engine.bus.emit("activity:start", { id: chapter.activity });
