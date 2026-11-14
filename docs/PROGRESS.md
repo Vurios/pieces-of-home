@@ -6,6 +6,8 @@ There is no deadline. The full scope in the Game Bible gets built: P0, then P1, 
 - **Repo:** https://github.com/Vurios/pieces-of-home (public). No CI: the team asked for straight pushes to `main`. Run typecheck, tests and e2e locally before pushing.
 - **Team rule for this run:** the agent asks the team before starting each next phase prompt.
 
+**Now (2026-11-14):** Phase 07 is under way. Team feedback pass 3 and its second list are done: loader, 3D story, dome dives, rocket trips and free travel, the notebook and opened letters, an in-game Field Guide and About, Play together tiles, the night title flight, cuter voices, music and sounds, things in orbit round the Moon and Mars worlds, and a "Your adventure" card for new players (#81 to #93). README.md is current. **Next up:** the rest of Phase 07 (performance, accessibility, accuracy and licensing audits, bug bash, final polish, final deploy). The submission kit waits until the team asks for it.
+
 **Now (2026-11-13):** Phases 05 and 06 are built. Every chapter, the bonus and the Finale have full playthrough tests, plus one test from the title to the credits; a fresh play-tester played Chapter 1 with no hooks and its findings are fixed (#75). Co-op is in: private rooms with word codes, character select, shared story and Milo, travel together, late join, reconnect, friends with name tags and map dots, emotes and preset phrases, "hold it steady" roles at station games, a kind solo fallback, and tests for two, three and four players (#76 to #80). The game is English only (#70). **Next up:** ask the team before starting Phase 07 (polish, QA, final deploy, submission kit).
 
 ## State summary (2026-11-11)
