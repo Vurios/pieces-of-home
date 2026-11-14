@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  export type IconName = "book" | "camera" | "smile" | "gear" | "pencil" | "close" | "left" | "right" | "speaker" | "wave" | "heart" | "star" | "look" | "question" | "yay" | "tap" | "copy" | "type" | "motion" | "keys" | "picture" | "people" | "external" | "plus" | "door" | "lock" | "check" | "pin";
+  export type IconName = "book" | "camera" | "smile" | "gear" | "pencil" | "close" | "left" | "right" | "speaker" | "wave" | "heart" | "star" | "look" | "question" | "yay" | "tap" | "copy" | "type" | "motion" | "keys" | "picture" | "people" | "external" | "plus" | "door" | "lock" | "check" | "pin" | "rocket";
 </script>
 
 <script lang="ts">
@@ -41,6 +41,13 @@
     door: ["M8 27 L 8 5.5 L 24 5.5 L 24 27", "M5 27 L 27 27", "M19.5 16.5 L 19.6 17.6", "M12 27 L 12 9 L 20 9"],
     lock: ["M8 15 L 24 15 L 24 27 L 8 27 Z", "M11 15 L 11 11 C 11 7.8, 13.2 5.6, 16 5.6 C 18.8 5.6, 21 7.8, 21 11 L 21 15", "M16 20 L 16 22.5"],
     check: ["M6.5 16.5 C 8.5 18.5, 11 21, 13 23.5 C 17 16.5, 21 11, 26 6.5"],
+    rocket: [
+      "M16 4.6 C 20.4 7.6, 22 12.6, 21.6 18.4 L 10.4 18.4 C 10 12.6, 11.6 7.6, 16 4.6 Z",
+      "M16 10.6 C 17.3 10.6, 18.3 11.6, 18.3 12.9 C 18.3 14.2, 17.3 15.2, 16 15.2 C 14.7 15.2, 13.7 14.2, 13.7 12.9 C 13.7 11.6, 14.7 10.6, 16 10.6 Z",
+      "M10.6 15.6 L 7.4 19.6 L 7.6 22.4 L 10.6 20.6",
+      "M21.4 15.6 L 24.6 19.6 L 24.4 22.4 L 21.4 20.6",
+      "M13.2 18.6 C 13.4 21.6, 14.4 24.2, 16 26.8 C 17.6 24.2, 18.6 21.6, 18.8 18.6",
+    ],
     pin: ["M16 27.5 C 12 22, 8.5 17.5, 8.5 13 C 8.5 8.6, 11.8 5.4, 16 5.4 C 20.2 5.4, 23.5 8.6, 23.5 13 C 23.5 17.5, 20 22, 16 27.5 Z", "M16 10.4 C 17.5 10.4, 18.6 11.5, 18.6 13 C 18.6 14.5, 17.5 15.6, 16 15.6 C 14.5 15.6, 13.4 14.5, 13.4 13 C 13.4 11.5, 14.5 10.4, 16 10.4 Z"],
   };
   const paths = $derived(PATHS[name]);

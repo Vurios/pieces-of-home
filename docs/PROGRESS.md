@@ -206,8 +206,8 @@ Team feedback pass 3 (2026-11-14), done first as part of the polish:
 - [x] Title fly-out: the lamp lit at night; the camera never passes through Remi or a friend
 - [x] Cuter voices (murmur), music and sound effects (decision 91)
 - [x] A short "what is happening and what to do" opening for new players (decision 93)
-- [ ] Every panel and card in one game style
-- [ ] Gameplay flow: clearer and more exciting
+- [x] Every panel and card in one game style: every panel is on the shared taped-paper sheet; the Field Guide, About, Play together and rocket icon were the outliers and are fixed (#89, #90)
+- [x] Gameplay flow: clearer and more exciting: "Your adventure" card, letters opened on delivery, dives into the domes, the rocket ride and free travel (#82 to #87, #93)
 
 - [ ] Performance pass
 - [ ] Accessibility pass

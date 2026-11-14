@@ -53,7 +53,7 @@
   ]);
 </script>
 
-<Panel title={t("rocket.title")} lede={t("rocket.lede")} icon="pin" size="lg" {onclose}>
+<Panel title={t("rocket.title")} lede={t("rocket.lede")} icon="rocket" size="lg" {onclose}>
   <div class="bodies">
     {#each bodies as body (body.id)}
       <section class="body {body.id}" aria-label={body.name}>
