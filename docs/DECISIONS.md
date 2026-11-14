@@ -948,3 +948,15 @@ Everything keeps well clear of the machines and the walked paths. Nothing is lab
 **Why:** Team feedback, 2026-11-14: "for both mars and moon, add more things like assets or objects around the planet so that it doesnt look boring".
 
 **Alternatives considered:** More boulders and craters on the ground only (the worlds already had them, and the sky stayed empty), labelled real orbiters such as a Moon reconnaissance orbiter (would add claims to source and keep accurate).
+
+## 93. "Your adventure": one card that says what to do
+
+**Date:** 2026-11-14
+
+**Decision:** When a new story starts, right after the camera lands behind Remi, one card explains the whole game in three steps, each with a small moving drawing: find Dad's letters (Mom has the key, the first letter is in the mailbox), step into his little worlds (look into a glass dome to go inside, give each letter to its machine), and finish Milo (every world gives a part). Under them: follow the paper arrow and the note in the corner, press H when stuck, nothing can go wrong; and the five keys that matter (WASD, E, N, M, H). E, Enter, Space, Escape, a click, a tap or gamepad A or B closes it, and then Mom hands over the key and the step-by-step tips begin as before. It shows once per new story and is skipped by Continue.
+
+Also fixed while testing it: skipping the story in the middle of a lamp-light cut could leave the light closed, so the world looked like a flat amber screen. The newest iris animation now always wins, and ending the story stops any cut still moving.
+
+**Why:** Team feedback, 2026-11-14: "there should be a short tutorial or an entry of whats happening and what to do or maybe an animation will do too for that". The story said what was happening; nothing yet said plainly what the player does.
+
+**Alternatives considered:** A playable tutorial level (the prologue already teaches one control at a time; a second one would slow the start), more story pages (the story is about feelings, not keys).

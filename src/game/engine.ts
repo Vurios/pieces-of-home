@@ -328,6 +328,8 @@ export class Engine {
   /** Ends the story: the camera stays where it is, ready to fly down to Remi. */
   storyEnd(): void {
     this.storyToken += 1;
+    // Skipping mid-cut must not leave the lamp light closed: stop any iris still moving, then open it.
+    this.irisToken += 1;
     this.storyView = null;
     this.post.iris = 0;
   }
@@ -746,11 +748,16 @@ export class Engine {
     });
   }
 
+  /** The newest iris animation wins: an older one still running stops where it is. */
+  private irisToken = 0;
+
   private animateIris(from: number, to: number, seconds: number): Promise<void> {
     const duration = this.reducedMotion ? 0.15 : seconds;
+    const token = ++this.irisToken;
     return new Promise((resolve) => {
       const start = performance.now();
       const step = (): void => {
+        if (token !== this.irisToken) return resolve();
         const t = Math.min(1, (performance.now() - start) / (duration * 1000));
         const eased = t * t * (3 - 2 * t);
         this.post.iris = from + (to - from) * eased;

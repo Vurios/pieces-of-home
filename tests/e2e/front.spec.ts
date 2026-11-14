@@ -53,6 +53,12 @@ test("the light, the title and the chain lead to the menu, then into play", asyn
   await page.getByRole("button", { name: "Skip story" }).click();
   await expect(story).toBeHidden();
   await expect(stage(page)).toHaveAttribute("data-stage", "ready", { timeout: 30_000 });
+  // Then one card says what the game is about and what to do. Any of the usual keys closes it.
+  const adventure = page.getByRole("dialog", { name: "Your adventure" });
+  await expect(adventure).toBeVisible();
+  await axe(page, "your adventure");
+  await page.keyboard.press("KeyE");
+  await expect(adventure).toBeHidden();
   expect(errors).toEqual([]);
 });
 
@@ -106,6 +112,10 @@ test("a gamepad alone gets from the loader to the notebook", async ({ page }, in
   await expect(page.getByRole("dialog", { name: "The story so far" })).toBeVisible();
   await tap(B);
   await expect(stage(page)).toHaveAttribute("data-stage", "ready", { timeout: 30_000 });
+  // A closes the "Your adventure" card.
+  await expect(page.getByRole("dialog", { name: "Your adventure" })).toBeVisible();
+  await tap(A);
+  await expect(page.getByRole("dialog", { name: "Your adventure" })).toBeHidden();
   await tap(VIEW);
   const book = page.locator(".notebook");
   await expect(book).toBeVisible();

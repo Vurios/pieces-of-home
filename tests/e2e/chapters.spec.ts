@@ -694,6 +694,7 @@ test("From the title to the credits", async ({ page }, info) => {
   await page.getByRole("button", { name: /New story/ }).click();
   await page.getByRole("button", { name: "Skip story" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-stage", "ready", { timeout: 60_000 });
+  await page.getByRole("button", { name: /Let's go!/ }).click();
 
   // The prologue: Dad's letter from the mailbox to the lamp, and its stamp.
   await useUntil(page, "mailbox", (s) => s.carrying === "to-the-lamp");

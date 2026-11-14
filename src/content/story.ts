@@ -26,5 +26,29 @@ export const STORY = {
   ] satisfies StoryPage[],
 } as const;
 
+/**
+ * "Your adventure": the card after the story that says what the game is about
+ * and what to do, in three steps, with the keys that matter.
+ */
+export const ADVENTURE = {
+  kicker: "How it works",
+  title: "Your adventure",
+  steps: [
+    { title: "Find Dad's letters", text: "Mom has the key. Dad's first letter is waiting in the mailbox." },
+    { title: "Step into his little worlds", text: "Look into a glass dome on Dad's bench to go inside. Give each letter to its machine." },
+    { title: "Finish Milo", text: "Every world gives Milo a new part. Find out what each machine was for." },
+  ],
+  help: "Follow the paper arrow and the note in the corner. Stuck? Press H for a hint. Nothing can go wrong, so take your time.",
+  keysLabel: "Keys",
+  keys: [
+    { key: "WASD", label: "walk" },
+    { key: "E", label: "use" },
+    { key: "N", label: "notebook" },
+    { key: "M", label: "map" },
+    { key: "H", label: "hint" },
+  ],
+  go: "Let's go!",
+};
+
 /** The four kids' names, for name tags and co-op character select. */
 export const KID_NAMES: Record<"remi" | "nori" | "lumi" | "theo", string> = { remi: "Remi", nori: "Nori", lumi: "Lumi", theo: "Theo" };

@@ -49,6 +49,7 @@
   import { settings, t } from "./settings.svelte";
   import Menu from "./title/Menu.svelte";
   import StoryIntro from "./title/StoryIntro.svelte";
+  import AdventureCard from "./story/AdventureCard.svelte";
   import TitleScreen from "./title/TitleScreen.svelte";
 
   interface Props {
@@ -66,6 +67,9 @@
   let flash = $state(false);
   /** The short story plays before a new story starts. */
   let story = $state(false);
+  /** "Your adventure": shown once, when a new story lands behind Remi. */
+  let adventure = $state(false);
+  let adventureNext = false;
 
   /** A dive into one of Dad's domes, before the trip itself. */
   let trip = $state<{ to: string; entry?: string } | null>(null);
@@ -152,6 +156,13 @@
       }),
       engine.bus.on("title:done", () => {
         flow.setStage("play");
+        if (adventureNext) {
+          adventureNext = false;
+          adventure = true;
+          banners.screens += 1;
+          engine.holdStill += 1;
+          return;
+        }
         greet();
       }),
       // Dad's dish on the hill: it turns, the radio hisses, a few faint blips come in.
@@ -239,10 +250,18 @@
     if (fresh && !story) return;
     story = false;
     if (fresh) engine.store.load(null);
+    adventureNext = fresh;
     flow.close();
     flow.setStage("title");
     audio.setHum(0.4);
     engine.leaveTitle();
+  }
+
+  function adventureDone(): void {
+    adventure = false;
+    banners.screens = Math.max(0, banners.screens - 1);
+    engine.holdStill = Math.max(0, engine.holdStill - 1);
+    greet();
   }
 
   function home(): void {
@@ -317,6 +336,9 @@
 {/if}
 {#if story}
   <StoryIntro {engine} ondone={() => begin(true)} />
+{/if}
+{#if adventure}
+  <AdventureCard ondone={adventureDone} />
 {/if}
 
 <Hud
