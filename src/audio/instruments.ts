@@ -175,6 +175,29 @@ export function feltPiano(mx: Mixer, out: AudioNode, hz: number, at: number, lev
 }
 
 /** Pluck: a sawtooth through a resonant lowpass that snaps shut, like a muted string. */
+/**
+ * A kalimba (thumb piano): a round sine body with a fast, bright tine on top
+ * that dies in a moment. Short and soft, for the music's bouncing figure.
+ */
+export function kalimba(mx: Mixer, out: AudioNode, hz: number, at: number, level: number, length = 0.9): void {
+  const ctx = mx.ctx;
+  const end = at + length;
+  const body = osc(ctx, "sine", hz, at, end + 0.05);
+  const bg = gain(ctx);
+  pluckEnvelope(bg.gain, at, 0.004, level, end);
+  body.connect(bg).connect(out);
+  // The tine: a little partial at about five times the note, gone in a tenth of a second.
+  const tine = osc(ctx, "sine", hz * 5.4, at, at + 0.14);
+  const tg = gain(ctx);
+  pluckEnvelope(tg.gain, at, 0.001, level * 0.22, at + 0.12);
+  tine.connect(tg).connect(out);
+  // A soft knock of the thumb.
+  const knock = osc(ctx, "triangle", hz * 0.5, at, at + 0.06);
+  const kg = gain(ctx);
+  pluckEnvelope(kg.gain, at, 0.001, level * 0.3, at + 0.05);
+  knock.connect(kg).connect(out);
+}
+
 export function pluck(mx: Mixer, out: AudioNode, hz: number, at: number, level: number, length = 0.7): void {
   if (sampled(mx, out, "harp", hz, at, level, Math.max(length, 1.2))) return;
   const ctx = mx.ctx;

@@ -5,7 +5,13 @@ import { contour, endingOf, seeded } from "./theory";
 
 /**
  * The murmur: gibberish voices that follow the real words, the way cozy games
- * like Animal Crossing and A Short Hike talk.
+ * talk: small, bubbly and a little sing-song.
+ *
+ * Kept cute on purpose (team feedback, 2026-11-14): the kids talk high and
+ * quick through a small mouth, every syllable lands on a note of the game's
+ * pentatonic scale, each one pops up into its note like a little "bwip", the
+ * mouth bounces between syllables instead of droning, and the consonants are
+ * soft taps rather than hisses.
  *
  * One line is one continuous voice. The throat is an oscillator with a soft,
  * voice-like spread of harmonics (falling off the way a real glottal pulse
@@ -39,11 +45,11 @@ export interface VoiceSpec {
 
 /** Remi mid and steady, Nori higher and bouncy, Lumi soft and breathy, Theo lower and cheerful. */
 export const VOICES: Record<string, VoiceSpec> = {
-  remi: { kind: "talk", hz: 248, formant: 1.12, syllable: 0.1, bounce: 1.1, breath: 0.08, lilt: 0, tilt: 1.25, level: 0.41 },
-  nori: { kind: "talk", hz: 318, formant: 1.2, syllable: 0.085, bounce: 2.6, breath: 0.05, lilt: 1, tilt: 1.15, level: 0.4 },
-  lumi: { kind: "talk", hz: 288, formant: 1.18, syllable: 0.115, bounce: 0.9, breath: 0.38, lilt: 0, tilt: 1.7, level: 0.4 },
-  theo: { kind: "talk", hz: 205, formant: 1.08, syllable: 0.095, bounce: 1.6, breath: 0.06, lilt: 2, tilt: 1.3, level: 0.4 },
-  mom: { kind: "talk", hz: 212, formant: 1.03, syllable: 0.11, bounce: 1.2, breath: 0.12, lilt: 0, tilt: 1.4, level: 0.25 },
+  remi: { kind: "talk", hz: 340, formant: 1.32, syllable: 0.082, bounce: 1.6, breath: 0.04, lilt: 1, tilt: 1.75, level: 0.38 },
+  nori: { kind: "talk", hz: 420, formant: 1.42, syllable: 0.072, bounce: 2.8, breath: 0.03, lilt: 2, tilt: 1.65, level: 0.36 },
+  lumi: { kind: "talk", hz: 385, formant: 1.38, syllable: 0.09, bounce: 1.3, breath: 0.22, lilt: 0, tilt: 1.95, level: 0.37 },
+  theo: { kind: "talk", hz: 295, formant: 1.26, syllable: 0.078, bounce: 2, breath: 0.03, lilt: 2, tilt: 1.7, level: 0.37 },
+  mom: { kind: "talk", hz: 262, formant: 1.16, syllable: 0.092, bounce: 1.4, breath: 0.08, lilt: 0, tilt: 1.8, level: 0.24 },
   dad: { kind: "hum", hz: 118, formant: 0.92, syllable: 0.19, bounce: 1.3, breath: 0.08, lilt: 0, tilt: 1.9, level: 0.48 },
   milo: { kind: "bleep", hz: 1000, formant: 1, syllable: 0.085, bounce: 0, breath: 0, lilt: 0, tilt: 1, level: 0.12 },
 };
@@ -108,6 +114,17 @@ export function syllablesOf(text: string): { vowel: number; letter: string; cons
     else cluster = "";
   }
   return out;
+}
+
+/** Major pentatonic steps above the voice's base note: 0, 2, 4, 7 and 9 semitones. */
+const SCALE = [0, 2, 4, 7, 9];
+/** The nearest note of the pentatonic scale to a pitch, in semitones from the base. */
+export function toScale(semis: number): number {
+  const octave = Math.floor(semis / 12);
+  const within = semis - octave * 12;
+  let best = 0;
+  for (const step of [...SCALE, 12]) if (Math.abs(step - within) < Math.abs(best - within)) best = step;
+  return octave * 12 + best;
 }
 
 /** Little words that never carry the stress of a sentence. */
@@ -182,7 +199,9 @@ export function planLine(spec: VoiceSpec, text: string, seed: number): Syllable[
       const nudge = (LETTER_PITCH[s.letter] ?? 0) * spec.bounce * 0.35;
       const accent = stress * spec.bounce * 0.9;
       const lilt = spec.lilt && index % 3 === 1 ? spec.lilt : 0;
-      const semis = contour(i, count, phrase.ending) + accent + nudge + (random() * 2 - 1) * spec.bounce * 0.25 + lilt;
+      const raw = contour(i, count, phrase.ending) + accent + nudge + (random() * 2 - 1) * spec.bounce * 0.25 + lilt;
+      // Talking voices land on the notes of the game's pentatonic scale, so the babble sounds sung.
+      const semis = spec.kind === "talk" ? toScale(raw) : raw;
       const last = i === count - 1;
       const glide = last && phrase.ending === "question" ? 2.5 : last && phrase.ending === "statement" ? -1.2 : stress > 0.5 ? -0.6 : -0.25;
       plan.push({ at: t, dur, hz: spec.hz * 2 ** (semis / 12), glide, vowel: s.vowel, consonant: s.consonant, onset: s.onset, cluster: s.cluster, stress, close });
@@ -254,9 +273,9 @@ export function speak(mx: Mixer, out: AudioNode, speaker: string, text: string, 
   // The throat: soft harmonics, a little vibrato and a slow wander so it never sounds machine-steady.
   const throat = osc(ctx, "sine", plan[0]!.hz, at, end + 0.3);
   throat.setPeriodicWave(throatWave(ctx, spec.tilt));
-  const vibrato = osc(ctx, "sine", 5.3, at, end + 0.3);
+  const vibrato = osc(ctx, "sine", hum ? 5.3 : 6.4, at, end + 0.3);
   const wander = osc(ctx, "sine", 1.7, at, end + 0.3);
-  vibrato.connect(gain(ctx, spec.hz * 0.009)).connect(throat.frequency);
+  vibrato.connect(gain(ctx, spec.hz * (hum ? 0.009 : 0.013))).connect(throat.frequency);
   wander.connect(gain(ctx, spec.hz * 0.006)).connect(throat.frequency);
   // Breath: noise through the same mouth.
   const breath = ctx.createBufferSource();
@@ -283,6 +302,13 @@ export function speak(mx: Mixer, out: AudioNode, speaker: string, text: string, 
     return f;
   });
   throatGain.connect(filter(ctx, "lowpass", 520, 0.6)).connect(gain(ctx, 0.14)).connect(mouth);
+  // A soft sine an octave up gives the small voices a bit of sparkle.
+  if (!hum) {
+    const sparkle = osc(ctx, "sine", plan[0]!.hz * 2, at, end + 0.3);
+    vibrato.connect(gain(ctx, spec.hz * 0.026)).connect(sparkle.frequency);
+    sparkle.connect(gain(ctx, 0.07)).connect(mouth);
+    for (const s of plan) sparkle.frequency.setTargetAtTime(s.hz * 2, at + s.at, 0.012);
+  }
   // A touch of presence, then a gentle top roll-off, so it sits forward but never buzzes.
   const presence = ctx.createBiquadFilter();
   presence.type = "peaking";
@@ -313,7 +339,12 @@ export function speak(mx: Mixer, out: AudioNode, speaker: string, text: string, 
     const v = t + lead;
     const shape = hum ? (s.vowel % 2 === 0 ? HUM : VOWELS[3]!) : VOWELS[s.vowel]!;
     const open = peak * (hum ? 0.7 + 0.3 * s.stress : 0.82 + 0.18 * s.stress);
-    throat.frequency.setTargetAtTime(s.hz, t, hum ? 0.05 : 0.018);
+    if (hum) throat.frequency.setTargetAtTime(s.hz, t, 0.05);
+    else {
+      // A little "bwip": start a few semitones under the note and pop up into it.
+      throat.frequency.setTargetAtTime(s.hz * 0.84, t, 0.004);
+      throat.frequency.setTargetAtTime(s.hz, t + 0.012, 0.014);
+    }
     throat.frequency.setTargetAtTime(s.hz * 2 ** (s.glide / 12), v + (s.dur - lead) * 0.45, (s.dur - lead) * 0.35);
     switch (kind) {
       case "stop": {
@@ -321,7 +352,7 @@ export function speak(mx: Mixer, out: AudioNode, speaker: string, text: string, 
         env.setTargetAtTime(peak * 0.02, t, 0.006);
         tone.frequency.setValueAtTime(STOP_BURST[s.cluster[0]!] ?? 2500, v - 0.002);
         tone.Q.setValueAtTime(1.2, v - 0.002);
-        noiseGain.gain.setTargetAtTime(peak * 0.45, v, 0.002);
+        noiseGain.gain.setTargetAtTime(peak * 0.2, v, 0.002);
         noiseGain.gain.setTargetAtTime(0, v + 0.008, 0.007);
         break;
       }
@@ -330,7 +361,7 @@ export function speak(mx: Mixer, out: AudioNode, speaker: string, text: string, 
         env.setTargetAtTime(peak * 0.12, t, 0.01);
         tone.frequency.setValueAtTime(hz, t);
         tone.Q.setValueAtTime(q, t);
-        noiseGain.gain.setTargetAtTime(peak * 0.2, t, 0.008);
+        noiseGain.gain.setTargetAtTime(peak * 0.07, t, 0.008);
         noiseGain.gain.setTargetAtTime(0, v - 0.008, 0.01);
         break;
       }
@@ -356,7 +387,7 @@ export function speak(mx: Mixer, out: AudioNode, speaker: string, text: string, 
     env.setTargetAtTime(open, v, hum ? 0.04 : 0.014);
     // The end of a word closes the mouth; inside a word it only eases a little.
     if (s.close) env.setTargetAtTime(0, t + s.dur - 0.035, hum ? 0.05 : 0.018);
-    else env.setTargetAtTime(open * (hum ? 0.6 : 0.5), t + s.dur * 0.82, 0.025);
+    else env.setTargetAtTime(open * (hum ? 0.6 : 0.22), t + s.dur * 0.78, hum ? 0.025 : 0.014);
   }
   env.setTargetAtTime(0, end - 0.06, 0.03);
   mx.duck(duration + 0.25);

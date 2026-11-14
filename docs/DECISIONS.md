@@ -920,3 +920,15 @@ The plain HTML Field Guide still exists, but only as the fallback for computers 
 **Why:** Team feedback, 2026-11-14 ("fix play together UI", with a picture of the native dropdown): the dropdown looked like a web form, not the game.
 
 **Alternatives considered:** A styled custom dropdown (still a list to scroll through), a single scroll wheel per word (hard with a mouse, slow with 40 words).
+
+## 91. Cuter voices, music and sounds
+
+**Date:** 2026-11-14
+
+**Decision:** The murmur voices are small and bubbly now. The kids talk higher (about 295 to 420 Hz) and quicker through a smaller mouth, every syllable lands on a note of the game's pentatonic scale so the babble sounds sung, each syllable pops up into its note with a little "bwip", the mouth bounces between syllables instead of droning, consonants are soft taps instead of hisses, the vibrato is a touch quicker, and a soft sine an octave up adds sparkle. Dad's hum and Milo's bleeps are unchanged.
+
+The music is brighter and lighter: a little faster on every world (home 80 bpm, Mars 74, Moon 58), the pads open up, the record crackle is quieter, and a new kalimba layer bounces a five-note figure on chord tones (resting every fourth bar, sparse on the Moon, fewer notes on low-power devices, softer in focus, gone in the Long Storm). The UI and pickup sounds are rounder: menu ticks are a tiny wooden "tok" with a soft bell, pops are bubbles, a picked-up letter skips up three music-box notes, emotes pop like soap bubbles, toasts go "ding-ding", the stamp ends on a happy ding, and a jump has a soft springy boing.
+
+**Why:** Team feedback, 2026-11-14: "improve murmur voice sound and also background music and sfxs make it cuter".
+
+**Alternatives considered:** Recorded "animalese" letter samples (would need recording or sourcing per-letter clips under our license rules, and a big download), only raising pitch (sounded like sped-up tape, not cute).

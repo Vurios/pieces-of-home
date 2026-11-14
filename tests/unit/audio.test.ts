@@ -99,6 +99,24 @@ describe("voices", () => {
     expect(mean(nori)).toBeGreaterThan(mean(theo));
   });
 
+  it("keeps the kids' babble cute: high, quick and on the pentatonic scale", async () => {
+    const { toScale } = await import("../../src/audio/voices");
+    for (const kid of ["remi", "nori", "lumi", "theo"]) {
+      expect(VOICES[kid]!.hz).toBeGreaterThan(280);
+      expect(VOICES[kid]!.syllable).toBeLessThan(0.095);
+    }
+    expect(toScale(1)).toBe(0);
+    expect(toScale(5.6)).toBe(7);
+    expect(toScale(-1)).toBe(0);
+    expect(toScale(-2.6)).toBe(-3);
+    const plan = planLine(VOICES["nori"]!, "Whoa! Let's go see the rover!", 3);
+    for (const s of plan) {
+      const semis = 12 * Math.log2(s.hz / VOICES["nori"]!.hz);
+      expect(Math.abs(semis - Math.round(semis))).toBeLessThan(1e-6);
+      expect([0, 2, 4, 7, 9]).toContain(((Math.round(semis) % 12) + 12) % 12);
+    }
+  });
+
   it("gives every character a voice, and Milo bleeps instead of words", () => {
     for (const id of ["remi", "nori", "lumi", "theo", "mom", "dad", "milo"]) expect(VOICES[id]).toBeDefined();
     expect(VOICES["milo"]!.kind).toBe("bleep");
@@ -132,6 +150,9 @@ describe("arrangements", () => {
     expect(ARRANGEMENTS.moon.air).toBeGreaterThan(0);
     expect(ARRANGEMENTS.mars.dust).toBeGreaterThan(0);
     expect(ARRANGEMENTS.moon.bpm).toBeLessThan(ARRANGEMENTS.home.bpm);
+    // A little kalimba bounces along on every world, quietly.
+    for (const a of Object.values(ARRANGEMENTS)) expect(a.bounce).toBeGreaterThan(0);
+    for (const a of Object.values(ARRANGEMENTS)) expect(a.bounce).toBeLessThan(0.08);
   });
 });
 

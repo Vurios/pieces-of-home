@@ -95,20 +95,24 @@ export const RECIPES: Record<string, Recipe> = {
     tone(c, "sine", 140, 55, 0.002, 0.75, 0.26, 0, 0.12);
     burst(c, "pink", "bandpass", 420, 4, 0.001, 0.45, 0.07);
     burst(c, "white", "lowpass", 1100, 0.7, 0.001, 0.35, 0.05);
+    // A small happy ding once the ink is down.
+    chime(c, [91], 0, 0.09, 0.14);
   },
-  /** A paper toast sliding in: a short soft swish and a tiny tap as it settles. */
+  /** A paper toast sliding in: a short soft swish, then a tiny two-note "ding-ding" as it settles. */
   toast: (c) => {
-    const f = burst(c, "pink", "bandpass", 1400, 0.8, 0.06, 0.18, 0.2);
+    const f = burst(c, "pink", "bandpass", 1400, 0.8, 0.06, 0.14, 0.2);
     f.frequency.exponentialRampToValueAtTime(2400 * c.rate, c.at + 0.18);
-    tone(c, "sine", 900, 700, 0.002, 0.08, 0.05, 0.2);
+    chime(c, [88, 93], 0.08, 0.1, 0.16);
   },
-  /** Menu tick: a very short high blip. */
+  /** Menu tick: a tiny wooden "tok" with a soft bell on top, like tapping a xylophone bar. */
   tick: (c) => {
-    tone(c, "sine", 900, 420, 0.002, 0.12, 0.07);
+    tone(c, "triangle", 1250, 980, 0.001, 0.12, 0.05);
+    tone(c, "sine", 2490, 2490, 0.001, 0.035, 0.09);
   },
-  /** Menu pop: a soft rising bubble. */
+  /** Menu pop: a round bubble that bloops up, with a little sparkle at the top. */
   pop: (c) => {
-    tone(c, "sine", 520, 900, 0.003, 0.22, 0.09, 0, 0.05);
+    tone(c, "sine", 380, 1050, 0.003, 0.24, 0.11, 0, 0.06);
+    tone(c, "sine", 2100, 2100, 0.002, 0.04, 0.08, 0.05);
   },
 
   // ---- Feet ----
@@ -142,10 +146,11 @@ export const RECIPES: Record<string, Recipe> = {
   "step-dust": (c) => {
     burst(c, "pink", "bandpass", 1500, 0.7, 0.01, 0.55, 0.14);
   },
-  /** Jump: a little cloth whoosh that rises. */
+  /** Jump: a little cloth whoosh that rises, and a soft springy "boing" under it. */
   jump: (c) => {
-    const f = burst(c, "pink", "bandpass", 450, 1.2, 0.03, 0.26, 0.18);
+    const f = burst(c, "pink", "bandpass", 450, 1.2, 0.03, 0.18, 0.18);
     f.frequency.exponentialRampToValueAtTime(1500 * c.rate, c.at + 0.16);
+    tone(c, "sine", 300, 620, 0.004, 0.12, 0.16, 0, 0.12);
   },
   /** Land: a soft thud; `param` is the landing speed, louder for bigger drops. */
   land: (c) => {
@@ -162,10 +167,11 @@ export const RECIPES: Record<string, Recipe> = {
 
   // ---- Letters ----
 
-  /** Picking up a letter: a paper rustle and two bright music-box notes. */
+  /** Picking up a letter: a paper rustle, a bubbly pop, and three bright music-box notes skipping up. */
   "envelope-pickup": (c) => {
-    burst(c, "pink", "bandpass", 2200, 1, 0.01, 0.2, 0.12);
-    chime(c, [83, 88], 0.09, 0.22, 0.05);
+    burst(c, "pink", "bandpass", 2200, 1, 0.01, 0.16, 0.12);
+    tone(c, "sine", 420, 980, 0.003, 0.14, 0.09, 0.02, 0.05);
+    chime(c, [84, 88, 91], 0.075, 0.2, 0.06);
   },
   /** Delivering a letter: the motif's first three notes and the high G, rising, with a glassy shimmer on top. */
   "delivery-chime": (c) => {
@@ -385,10 +391,11 @@ export const RECIPES: Record<string, Recipe> = {
     const p = burst(c, "pink", "bandpass", 1600, 0.9, 0.03, 0.14, 0.2, 0.82);
     p.frequency.exponentialRampToValueAtTime(2600, c.at + 1.0);
   },
-  /** An emote bubble pops up: a quick rising blip and a puff. */
+  /** An emote bubble pops up: a bubbly two-step blip, like a soap bubble, and a tiny puff. */
   "emote-pop": (c) => {
-    tone(c, "sine", 520, 980, 0.002, 0.2, 0.1, 0, 0.06);
-    burst(c, "white", "bandpass", 3000, 1, 0.001, 0.05, 0.03);
+    tone(c, "sine", 460, 900, 0.002, 0.18, 0.08, 0, 0.05);
+    tone(c, "sine", 700, 1400, 0.002, 0.14, 0.09, 0.07, 0.05);
+    burst(c, "white", "bandpass", 3000, 1, 0.001, 0.04, 0.03);
   },
   /** A friend joins: the motif's first three notes, rising. */
   "join-chime": (c) => {
