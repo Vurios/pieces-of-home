@@ -1098,6 +1098,17 @@ export class Engine {
         return rows;
       },
       setQuality: (tier: QualityTier | null) => this.setQuality(tier),
+      // Where named objects are, in world space and on screen (0 to 1, z above 1 is behind the camera).
+      where: (name: string) => {
+        const rows: { at: number[]; screen: number[] }[] = [];
+        this.scene.traverse((o) => {
+          if (o.name !== name) return;
+          const p = o.getWorldPosition(new Vector3());
+          const q = p.clone().project(this.camera);
+          rows.push({ at: p.toArray().map((v) => Math.round(v * 10) / 10), screen: [Math.round((q.x * 0.5 + 0.5) * 100) / 100, Math.round((0.5 - q.y * 0.5) * 100) / 100, Math.round(q.z * 100) / 100] });
+        });
+        return rows;
+      },
       /** Sends a game event, for screenshots of moments such as the stamp. */
       emit: <K extends keyof GameEvents>(type: K, payload: GameEvents[K]) => this.bus.emit(type, payload),
       travel: (id: string, entry?: string) => this.travel(id, entry),

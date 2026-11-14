@@ -11,6 +11,8 @@ import { distanceToArc } from "../shapes";
 import type { Bookmark, FrameInfo, SoundSpot, World, WorldContext } from "../types";
 import { PaintedEarth } from "../kit/earth";
 import { LampBeam, type Site, arcPoints, at, buildTag, chapterRuntime, headingToward, siteOn } from "../kit/little-world";
+import { moonOrbiters } from "../kit/orbiters";
+import { addSurroundings } from "../kit/surroundings";
 import { buildDescentStage, buildFlag, buildFootprints, rock } from "../tranquility/machines";
 import { buildBuggy, buildOverlookFlag, buildParkingMarks, buildScienceStation, buildTrackMarks, buildWheelTray } from "./machines";
 
@@ -485,5 +487,14 @@ export function createHadley(ctx: WorldContext): World {
       ctx.interactions.clear();
     },
   };
+  // More to see round the planet: things in orbit, small stones off the paths.
+  addSurroundings(world, {
+    toon,
+    particles: quality.particles,
+    shadows: quality.shadowMap > 0,
+    seed: 23,
+    orbits: moonOrbiters(HADLEY_RADIUS, 3),
+    stones: { count: 320, colors: ["#8E8A84", "#7C7873", "#A39E97"] },
+  });
   return world;
 }

@@ -11,6 +11,8 @@ import { distanceToArc } from "../shapes";
 import type { Bookmark, FrameInfo, World, WorldContext } from "../types";
 import { PaintedEarth } from "../kit/earth";
 import { LampBeam, type Site, arcPoints, at, buildTag, chapterRuntime, headingToward, siteOn } from "../kit/little-world";
+import { moonOrbiters } from "../kit/orbiters";
+import { addSurroundings } from "../kit/surroundings";
 import { buildCamera, buildDescentStage, buildFlag, buildFootprints, buildMirrorArray, buildSeismometer, rock } from "./machines";
 
 /**
@@ -469,5 +471,15 @@ export function createTranquility(ctx: WorldContext): World {
     },
   };
   void surfaceMatrix;
+  // More to see round the planet: things in orbit, low hills on the skyline, small stones off the paths.
+  addSurroundings(world, {
+    toon,
+    particles: quality.particles,
+    shadows: quality.shadowMap > 0,
+    seed: 11,
+    orbits: moonOrbiters(MOON_RADIUS, 5),
+    stones: { count: 320, colors: ["#8E8A84", "#7C7873", "#A39E97"] },
+    hills: { count: 3, colors: ["#A8A39C", "#9D988F"] },
+  });
   return world;
 }

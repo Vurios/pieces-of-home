@@ -198,7 +198,7 @@ Team feedback pass 3 (2026-11-14), done first as part of the polish:
 - [x] Story intro: animated in 3D with the game's own world and kids (#86)
 - [x] Dome entry: a 3D dive into Dad's little world instead of the countdown (#82)
 - [x] Trip between worlds: a better 3D ride (#83)
-- [ ] Moon and Mars: more things to see around each planet
+- [x] Moon and Mars: more things to see around each planet (decision 92)
 - [x] Free travel to the Moon and Mars at any time (#84)
 - [x] Dad's notebook: tighter, fuller pages; better letter (mail) design (#87)
 - [x] Field Guide and Credits inside the game, not a separate page (decision 89)
@@ -216,7 +216,7 @@ Team feedback pass 3 (2026-11-14), done first as part of the polish:
 - [ ] Bug bash
 - [ ] Final visual polish
 - [ ] Final deploy
-- [ ] Submission kit in `docs/submission/`
+- [ ] Submission kit in `docs/submission/` (on hold at the team's request, 2026-11-14: README.md only for now)
 
 ## Open notes
 

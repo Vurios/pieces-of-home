@@ -39,6 +39,8 @@ export interface ToonOptions {
    * On by default. Off for the ground.
    */
   nearFade?: boolean;
+  /** Off for things far out in the sky, so a world's haze never washes them away. On by default. */
+  fog?: boolean;
 }
 
 function createBandTexture(): DataTexture {
@@ -170,6 +172,7 @@ export class ToonLibrary {
       gradientMap: this.bands,
       side: options.side ?? FrontSide,
     });
+    if (options.fog === false) material.fog = false;
     if (options.emissive !== undefined) {
       material.emissive = new Color(options.emissive);
       material.emissiveIntensity = options.emissiveIntensity ?? 1;

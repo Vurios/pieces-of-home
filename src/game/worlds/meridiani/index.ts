@@ -13,6 +13,8 @@ import { WaitForTheWind } from "../../puzzles/wait-for-wind";
 import { distanceToArc } from "../shapes";
 import type { Bookmark, FrameInfo, SoundSpot, World, WorldContext } from "../types";
 import { LampBeam, type Site, arcPoints, at, buildTag, chapterRuntime, headingToward, siteOn } from "../kit/little-world";
+import { marsOrbiters } from "../kit/orbiters";
+import { addSurroundings } from "../kit/surroundings";
 import { dressMars, facetRock } from "../kit/mars";
 import { bounceMark, buildFlagRack, buildLander, buildOutcrop, buildRover } from "./machines";
 
@@ -623,5 +625,14 @@ export function createMeridiani(ctx: WorldContext): World {
       ctx.interactions.clear();
     },
   };
+  // More to see round the planet: things in orbit, small stones off the paths.
+  addSurroundings(world, {
+    toon,
+    particles: quality.particles,
+    shadows: quality.shadowMap > 0,
+    seed: 41,
+    orbits: marsOrbiters(MARS_RADIUS, 7),
+    stones: { count: 320, colors: ["#6A4236", "#5C3B33", "#8E5238", "#4E342F"] },
+  });
   return world;
 }

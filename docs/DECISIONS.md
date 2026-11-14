@@ -932,3 +932,19 @@ The music is brighter and lighter: a little faster on every world (home 80 bpm, 
 **Why:** Team feedback, 2026-11-14: "improve murmur voice sound and also background music and sfxs make it cuter".
 
 **Alternatives considered:** Recorded "animalese" letter samples (would need recording or sourcing per-letter clips under our license rules, and a big download), only raising pitch (sounded like sped-up tape, not cute).
+
+## 92. More to see round the Moon and Mars worlds
+
+**Date:** 2026-11-14
+
+**Decision:** Every Moon and Mars world now has company in its sky and more texture on its ground, added by one shared helper (`src/game/worlds/kit/surroundings.ts`) after each world is built:
+
+- Things in orbit (`kit/orbiters.ts`): two little model probes (gold or silver foil, blue solar wings, a white dish looking down) round each Moon world, and round each Mars world its two small lumpy moons plus a probe. The first one always starts low in the sky ahead of the arrival spot, on the side away from the Sun, so the first look round shows it; then it drifts across. They ignore the world's haze so Mars's dusty sky never hides them, and they slow down with reduced motion.
+- Low rounded hills on the skyline of Tranquility Base and the Ocean of Storms (Hadley already has its mountains; Meridiani stays flat like the real plain).
+- A scatter of a few hundred small stones (fewer on slow devices), kept off the paths, the marked places and the craters.
+
+Everything keeps well clear of the machines and the walked paths. Nothing is labelled, so no new facts are claimed; the worlds stay "Model, not to scale".
+
+**Why:** Team feedback, 2026-11-14: "for both mars and moon, add more things like assets or objects around the planet so that it doesnt look boring".
+
+**Alternatives considered:** More boulders and craters on the ground only (the worlds already had them, and the sky stayed empty), labelled real orbiters such as a Moon reconnaissance orbiter (would add claims to source and keep accurate).
