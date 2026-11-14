@@ -17,7 +17,7 @@
   let confirming = $state(false);
 
   type Doodle = "letter" | "book" | "kids" | "pages" | "leaf" | "wrench" | "heart";
-  type Item = { id: string; label: string; sub?: string; doodle: Doodle; paper: string; act: () => void; href?: string };
+  type Item = { id: string; label: string; sub?: string; doodle: Doodle; paper: string; act: () => void };
 
   const items = $derived.by((): Item[] => {
     const list: Item[] = [];
@@ -32,7 +32,7 @@
     });
     list.push({ id: "together", label: t("menu.together"), doodle: "kids", paper: "#bcd3a6", act: () => open("together") });
     if (chapters) list.push({ id: "chapters", label: t("menu.chapters"), doodle: "pages", paper: "#e8c9a8", act: () => open("chapters") });
-    list.push({ id: "guide", label: t("menu.guide"), doodle: "leaf", paper: "#b9d0dc", act: () => undefined, href: "/field-guide/" });
+    list.push({ id: "guide", label: t("menu.guide"), doodle: "leaf", paper: "#b9d0dc", act: () => open("guide") });
     list.push({ id: "settings", label: t("menu.settings"), doodle: "wrench", paper: "#e6dcc6", act: () => open("settings") });
     list.push({ id: "credits", label: t("menu.credits"), doodle: "heart", paper: "#efbfb1", act: () => open("credits") });
     return list;
@@ -160,20 +160,13 @@
   <ul>
     {#each items as item, i (item.id)}
       <li style:--i={i} style:--tilt={`${TILT[i % TILT.length]}deg`} style:--reach={`${REACH[i % REACH.length]}px`}>
-        {#if item.href}
-          <a class="tab" href={item.href} style:--paper={item.paper}>
-            {@render doodle(item.doodle)}
-            <span class="words"><span class="label">{item.label}</span></span>
-          </a>
-        {:else}
-          <button type="button" class="tab" class:lead={i === 0} style:--paper={item.paper} onclick={item.act}>
-            {@render doodle(item.doodle)}
-            <span class="words">
-              <span class="label">{item.label}</span>
-              {#if item.sub}<span class="sub">{item.sub}</span>{/if}
-            </span>
-          </button>
-        {/if}
+        <button type="button" class="tab" class:lead={i === 0} style:--paper={item.paper} onclick={item.act}>
+          {@render doodle(item.doodle)}
+          <span class="words">
+            <span class="label">{item.label}</span>
+            {#if item.sub}<span class="sub">{item.sub}</span>{/if}
+          </span>
+        </button>
       </li>
     {/each}
   </ul>

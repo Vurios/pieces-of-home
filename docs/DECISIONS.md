@@ -898,3 +898,15 @@ Dad's letters are now read. Each letter had words written for it that never reac
 **Why:** Team feedback, 2026-11-14: "after turning on the light switch when it is night the lamp is dark and also when zooming out animation my character clips out in the animation like i can see my character pass through". The night save turns the lamp off until it is clicked, and the friend at the desk sat right on the camera's path.
 
 **Alternatives considered:** Bending the camera path around the desk (the path is tuned to frame the lamp and window), fading the characters (still a ghost passing by the lens).
+
+## 89. The Field Guide and About open inside the game
+
+**Date:** 2026-11-14
+
+**Decision:** The menu's Field Guide now opens a panel in the game instead of leaving for another page. It is a drawer of paper tabs (the story, one tab per machine with Dad's sketch, Dad's archive, using it in class, sources) beside one ruled index card. Each machine card has Dad's sketch, his note, where it is, what it was for, what we learned, Then and Now, deeper notes and the photos with their credits, every fact with its source link. "Print this guide" lays every page out one after another for paper (19 A4 pages) and prints only that. The About page is now a tab inside Credits: how to play, safe to play together, For grown-ups, facts and honesty, who made it. The NASA line stays in Credits.
+
+The plain HTML Field Guide still exists, but only as the fallback for computers without WebGL (the loader's kind paper note links to it), as the Game Bible asks.
+
+**Why:** Team feedback, 2026-11-14: "fix field credits it should be adapted ingame not a different page". Leaving the game for a website page broke the feeling of the game and its style.
+
+**Alternatives considered:** Restyling the web page to look like the game (still a different page, and the 3D world is lost behind it), dropping the plain page (no path left for computers without 3D).

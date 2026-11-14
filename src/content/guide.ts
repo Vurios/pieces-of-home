@@ -1,7 +1,12 @@
+import { ARCHIVE } from "./archive";
+import type { FactEntry } from "./facts";
+import { SPREADS } from "./notebook";
+
 /**
- * Words for the Field Guide and the About page. Both are plain HTML pages
- * built from the same notebook and fact data as the game, so they work
- * without 3D, with a screen reader, and on paper.
+ * Words for the Field Guide and the About page. In the game both open as
+ * panels (Field Guide from the menu, About inside Credits). The same words
+ * also build a plain HTML Field Guide for computers without 3D, so it still
+ * works with a screen reader and on paper.
  *
  * Grade 3 to 5 wording for the story parts. The notes for grown-ups can go a
  * little higher. No numbers or claims here: those come from facts.json.
@@ -11,6 +16,12 @@ export const GUIDE = {
   kicker: "For families and classrooms",
   lede: "The whole story and every fact from the game, on one page. It works without 3D, with a screen reader, and on paper.",
   print: "Print this guide",
+  gameLede: "The whole story and every fact from the game, for families and classrooms.",
+  startHere: "Start here",
+  more: "More to read",
+  printHint: "This prints the whole guide: the story, every machine and every source.",
+  printShort: "Print",
+  pickOne: "Pick a machine to start",
   play: "Play the game",
   about: "About this game",
   contents: "In this guide",
@@ -74,3 +85,13 @@ export const ABOUT = {
   guideLink: "Read the Field Guide",
   creditsLink: "See every credit",
 };
+
+/** Every fact the Field Guide shows, in the order it first shows them, for the numbered source list. */
+export function guideFacts(): FactEntry[] {
+  const seen = new Map<string, FactEntry>();
+  for (const spread of SPREADS) {
+    for (const entry of [...(spread.place ? [spread.place] : []), ...spread.learned, ...spread.thenNow, ...spread.deeper]) seen.set(entry.id, entry);
+  }
+  for (const card of ARCHIVE) for (const entry of [card.place, ...card.facts, ...card.more]) seen.set(entry.id, entry);
+  return [...seen.values()];
+}

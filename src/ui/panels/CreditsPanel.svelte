@@ -1,14 +1,20 @@
 <script lang="ts">
   import credits from "../../data/credits.json";
+  import { ABOUT } from "../../content/guide";
   import Icon from "../Icon.svelte";
   import Panel from "../Panel.svelte";
   import { t } from "../settings.svelte";
 
-  /** Every picture, font and library, with its maker, license and a link to the source. */
+  /**
+   * Every picture, font and library, with its maker, license and a link to the
+   * source; and, on its own tab, the About page: how to play, why it is safe to
+   * play together, a note for grown-ups and where the facts come from.
+   */
   interface Props {
     onclose: () => void;
   }
   let { onclose }: Props = $props();
+  let tab = $state<"credits" | "about">("credits");
 
   const host = (url: string): string => new URL(url).hostname.replace(/^www\./, "");
   type Media = (typeof credits.media)[number];
@@ -35,11 +41,41 @@
 </script>
 
 <Panel title={t("credits.title")} lede={t("credits.lede")} icon="star" size="lg" {onclose}>
-  <p class="note">
-    <span>{t("credits.note")}</span>
-    <a href="/about/">{t("menu.about")}</a>
-  </p>
+  <p class="note">{t("credits.note")}</p>
 
+  <div class="tabs" role="tablist" aria-label={t("credits.title")}>
+    <button type="button" role="tab" id="cr-tab-credits" aria-controls="cr-credits" aria-selected={tab === "credits"} class:on={tab === "credits"} onclick={() => (tab = "credits")}>{t("credits.title")}</button>
+    <button type="button" role="tab" id="cr-tab-about" aria-controls="cr-about" aria-selected={tab === "about"} class:on={tab === "about"} onclick={() => (tab = "about")}>{t("menu.about")}</button>
+  </div>
+
+  {#if tab === "about"}
+  <div id="cr-about" role="tabpanel" aria-labelledby="cr-tab-about" class="about">
+    <p class="about-lede">{ABOUT.lede}</p>
+    <div class="about-grid">
+      <section class="about-card" aria-labelledby="ab-play">
+        <h3 id="ab-play">{ABOUT.playTitle}</h3>
+        <ul>{#each ABOUT.play as line, i (i)}<li>{line}</li>{/each}</ul>
+      </section>
+      <section class="about-card sage" aria-labelledby="ab-safe">
+        <h3 id="ab-safe">{ABOUT.safeTitle}</h3>
+        <p>{ABOUT.safe}</p>
+      </section>
+      <section class="about-card wide warm" aria-labelledby="ab-grown">
+        <h3 id="ab-grown">{ABOUT.grownTitle}</h3>
+        {#each ABOUT.grown as line, i (i)}<p>{line}</p>{/each}
+      </section>
+      <section class="about-card" aria-labelledby="ab-facts">
+        <h3 id="ab-facts">{ABOUT.factsTitle}</h3>
+        <p>{ABOUT.facts}</p>
+      </section>
+      <section class="about-card" aria-labelledby="ab-made">
+        <h3 id="ab-made">{ABOUT.madeTitle}</h3>
+        <p>{ABOUT.made}</p>
+      </section>
+    </div>
+  </div>
+  {:else}
+  <div id="cr-credits" role="tabpanel" aria-labelledby="cr-tab-credits">
   <section aria-labelledby="cr-pics">
     <h3 id="cr-pics" class="eyebrow">{t("credits.images")}</h3>
     <ul class="grid">
@@ -129,6 +165,8 @@
       {/each}
     </ul>
   </section>
+  </div>
+  {/if}
 </Panel>
 
 <style>
@@ -148,11 +186,83 @@
     font-weight: 700;
     line-height: 1.4;
   }
-  .note a {
-    color: var(--clay-deep);
-    font: 700 1.05rem var(--hand);
-    text-decoration: underline 2px wavy;
-    text-underline-offset: 5px;
+  /* Two paper tabs: the credits, and the About page. */
+  .tabs {
+    display: flex;
+    gap: 10px;
+    margin: 18px 0 0;
+    border-bottom: 2px solid var(--ink);
+    padding-left: 6px;
+  }
+  .tabs button {
+    min-height: 44px;
+    margin-bottom: -2px;
+    padding: 6px 18px 4px;
+    border: 2px solid var(--line-strong);
+    border-bottom: 0;
+    border-radius: 12px 14px 0 0;
+    background: #efe6d4;
+    color: var(--ink-soft);
+    font: 700 1.15rem var(--hand);
+    cursor: pointer;
+    transition: transform 0.15s var(--ease-spring), background 0.15s;
+  }
+  .tabs button:hover {
+    transform: translateY(-2px);
+  }
+  .tabs button.on {
+    background: #fffdf6;
+    border-color: var(--ink);
+    color: var(--ink);
+    box-shadow: inset 0 4px 0 var(--amber);
+  }
+  .about-lede {
+    margin: 20px 0 0;
+    font: 400 1.25rem/1.45 var(--hand);
+    max-width: 60ch;
+  }
+  .about-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .about-card {
+    margin: 0;
+    padding: 14px 18px 8px;
+    background: #fffdf6;
+    border: 2px solid var(--line-strong);
+    border-radius: 10px;
+    box-shadow: 0 2px 0 rgba(43, 38, 34, 0.1);
+  }
+  .about-card.wide {
+    grid-column: 1 / -1;
+  }
+  .about-card.sage {
+    border-color: rgba(85, 115, 88, 0.55);
+    background: #f3f6ee;
+  }
+  .about-card.warm {
+    border-color: rgba(184, 102, 28, 0.45);
+    background: #fdf3e2;
+  }
+  .about-card h3 {
+    margin: 0 0 8px;
+    font: 700 1.25rem var(--hand);
+  }
+  .about-card p,
+  .about-card li {
+    margin: 0 0 8px;
+    line-height: 1.5;
+  }
+  .about-card ul {
+    margin: 0;
+    padding-left: 20px;
+  }
+  @media (max-width: 720px) {
+    .about-grid {
+      grid-template-columns: 1fr;
+    }
   }
   section {
     margin-top: 24px;

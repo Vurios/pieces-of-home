@@ -7,7 +7,7 @@
  * "menu", then "ready" once the player can walk.
  */
 export type Stage = "loading" | "waiting" | "title" | "menu" | "play";
-export type PanelId = "settings" | "credits" | "together" | "chapters" | "map" | "archive" | "rocket";
+export type PanelId = "settings" | "credits" | "together" | "chapters" | "map" | "archive" | "rocket" | "guide";
 
 class Flow {
   stage = $state<Stage>("loading");

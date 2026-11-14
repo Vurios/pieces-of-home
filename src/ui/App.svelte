@@ -28,6 +28,7 @@
   import LetterOpen from "./story/LetterOpen.svelte";
   import ChaptersPanel from "./panels/ChaptersPanel.svelte";
   import CreditsPanel from "./panels/CreditsPanel.svelte";
+  import GuidePanel from "./panels/GuidePanel.svelte";
   import SettingsPanel from "./panels/SettingsPanel.svelte";
   import TogetherPanel from "./panels/TogetherPanel.svelte";
   import { keepPhoto } from "./photos";
@@ -366,6 +367,8 @@
   <CreditsPanel onclose={() => flow.close()} />
 {:else if flow.panel === "together"}
   <TogetherPanel {net} {coop} onclose={() => flow.close()} />
+{:else if flow.panel === "guide"}
+  <GuidePanel onclose={() => flow.close()} />
 {:else if flow.panel === "archive"}
   <ArchivePanel onclose={() => flow.close()} />
 {:else if flow.panel === "chapters"}

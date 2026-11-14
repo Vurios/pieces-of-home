@@ -135,6 +135,20 @@ test("menu, settings and credits pass axe", async ({ page }, info) => {
   await page.getByRole("button", { name: "Credits" }).click();
   await expect(page.getByRole("dialog", { name: "Credits" })).toBeVisible();
   await axe(page, "credits");
+  // About is a tab inside Credits, not a separate page.
+  await page.getByRole("tab", { name: "About this game" }).click();
+  await expect(page.getByRole("heading", { name: "For grown-ups" })).toBeVisible();
+  await axe(page, "about");
+  await page.keyboard.press("Escape");
+  // The Field Guide opens inside the game too.
+  await page.getByRole("button", { name: "Field Guide" }).click();
+  const guide = page.getByRole("dialog", { name: "Field Guide" });
+  await expect(guide).toBeVisible();
+  await guide.getByRole("button", { name: /The little mirrors/ }).click();
+  await expect(guide.getByRole("heading", { name: "The little mirrors" })).toBeVisible();
+  await page.keyboard.press("ArrowDown");
+  await expect(guide.getByRole("heading", { name: "The Moon buggy" })).toBeVisible();
+  await axe(page, "field guide panel");
 });
 
 test("the notebook opens, turns with the keys and passes axe", async ({ page }, info) => {

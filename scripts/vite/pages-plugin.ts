@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import type { Plugin } from "vite";
 import credits from "../../src/data/credits.json";
-import { ABOUT, GUIDE } from "../../src/content/guide";
+import { ABOUT, GUIDE, guideFacts } from "../../src/content/guide";
 import { ARCHIVE } from "../../src/content/archive";
 import { type MachineSpread, SPREADS, factText, formatDate, spreadYear } from "../../src/content/notebook";
 import type { FactEntry } from "../../src/content/facts";
@@ -35,18 +35,8 @@ function heroLamp(): string {
 const heading = (id: string, n: number, text: string): string =>
   `<h2 id="${id}"><span class="num" aria-hidden="true">${String(n).padStart(2, "0")}</span>${esc(text)}</h2>`;
 
-/** Facts in the order the guide first shows them, for the numbered source list. */
-function collectFacts(): FactEntry[] {
-  const seen = new Map<string, FactEntry>();
-  for (const spread of SPREADS) {
-    for (const entry of [...(spread.place ? [spread.place] : []), ...spread.learned, ...spread.thenNow, ...spread.deeper]) seen.set(entry.id, entry);
-  }
-  for (const card of ARCHIVE) for (const entry of [card.place, ...card.facts, ...card.more]) seen.set(entry.id, entry);
-  return [...seen.values()];
-}
-
 function guideBody(today: Date): string {
-  const facts = collectFacts();
+  const facts = guideFacts();
   const number = new Map(facts.map((f, i) => [f.id, i + 1]));
   const cite = (f: FactEntry): string => ` <a class="cite" href="#src-${number.get(f.id)}" aria-label="${esc(`${GUIDE.source} ${number.get(f.id)}`)}">${number.get(f.id)}</a>`;
   // Date-aware facts carry both wordings; a tiny script picks the right one on the day it is read.
