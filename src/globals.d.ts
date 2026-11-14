@@ -11,7 +11,11 @@ interface PohBoot {
   ready(onGo: () => void): void;
   /** No WebGL: a kind note and a link to the Field Guide. */
   fail(): void;
-  /** The page curls away. */
+  /** No graphics chip: the page's loops hold still so the game loads sooner. */
+  calm(): void;
+  /** After the switch, ms until the live world shows through the page. */
+  reveal: number;
+  /** Kept for older callers: the page now leaves on its own after the switch. */
   leave(): void;
   /** Removes the page at once. */
   hide(): void;

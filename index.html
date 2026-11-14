@@ -3,13 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#2a1d17" />
+    <meta name="theme-color" content="#17132a" />
     <meta
       name="description"
       content="Pieces of Home. A cozy game for 1 to 4 players about the machines left on the Moon and Mars. Left behind. Still shining."
     />
     <title>Pieces of Home</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="/loader/workshop.webp" as="image" type="image/webp" fetchpriority="high" />
     <link rel="preload" href="/fonts/kalam-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/kalam-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/zilla-slab-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin />
@@ -35,21 +36,22 @@
       }
       :root {
         --ink: #2b2622;
-        --pencil: #5d5650;
-        --paper: #f3e9d6;
+        --dad: #233f73;
+        --pencil: #6b6258;
+        --paper: #f6efe1;
         --clay: #b13f2c;
         --amber: #f2a541;
-        --warm: #ffe2ae;
         --hand: "Kalam", "Segoe Print", "Bradley Hand", ui-rounded, sans-serif;
         --slab: "Zilla Slab", "Rockwell", "Roboto Slab", Georgia, serif;
         --sans: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
+        --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
         color-scheme: dark;
       }
       html,
       body {
         height: 100%;
         margin: 0;
-        background: #2a1d17;
+        background: #17132a;
         overflow: hidden;
       }
       #stage {
@@ -59,15 +61,20 @@
         height: 100%;
         display: block;
       }
+
       /*
-       * The loading page, painted before any JavaScript, in the game's own look:
-       * the little home planet turning slowly under the night sky with Remi
-       * walking on top, letter in hand; the Moon and Mars in the sky with letters
-       * flying the dotted route out to them; the block-letter title. A paper card
-       * ticks through things that kept working as the game loads, then asks to
-       * turn on the light: the bulb in the title lights and its light fills the
-       * screen and becomes Dad's lamp in the 3D workshop. Every layer is its own
-       * element, so the browser moves each as one picture.
+       * The loading page: Dad's notebook, held open in his dark workshop.
+       *
+       * The workshop is a picture the game draws of itself (see
+       * scripts/render-backdrop.ts): the first frame of the title flight, with
+       * Dad's lamp dark. It is sized the way the 3D camera sees, keeping its
+       * full height on screen, so when the light is switched on the live
+       * workshop takes its place without a seam and the lamp clicks on in 3D.
+       *
+       * The notebook is the same book as in the game: leather boards, cream
+       * grid pages, Dad's navy ink. It opens as the page loads; Dad's sketch of
+       * his lamp draws itself with the real progress, a pencil ticks off
+       * "Things that kept working", and then a light switch waits.
        */
       #boot {
         position: fixed;
@@ -76,22 +83,13 @@
         overflow: hidden;
         color: var(--ink);
         font-family: var(--sans);
-        background:
-          radial-gradient(ellipse 58% 34% at 50% var(--top), rgba(255, 196, 128, 0.42), rgba(255, 170, 110, 0.12) 55%, transparent 75%),
-          linear-gradient(180deg, #18173a 0%, #26245a 34%, #433669 62%, #6e4c72 82%, #8a5c74 100%);
         -webkit-user-select: none;
         user-select: none;
-        /* Where the planet's top sits, and how big the planet is drawn. */
-        --top: 64vh;
-        --D: max(70vw, 80vh);
-        /* Where the pointer is, from -1 to 1: near layers shift more than far ones. */
+        /* The open spread's width; everything in the book is sized in em from it. */
+        --W: min(1010px, 88vw, 140vh);
         --mx: 0;
         --my: 0;
-        transition: opacity 1.2s ease;
-      }
-      #boot[data-state="leaving"] {
-        opacity: 0;
-        pointer-events: none;
+        --p: 0.02;
       }
       #boot[data-state="gone"] {
         display: none;
@@ -105,167 +103,412 @@
         white-space: nowrap;
         margin: 0;
       }
-      #boot .layer {
+
+      /* ---------- The workshop at night ---------- */
+      #boot .room {
         position: absolute;
         inset: 0;
-        pointer-events: none;
+        overflow: hidden;
+        background: #17132a /*poh:tiny*/ no-repeat center / auto 100%;
+        animation: ld-fade 1.1s ease both;
+        transition: opacity 0.45s ease 0.2s;
       }
-      #boot .far,
-      #boot .letters,
-      #boot .sparkles,
-      #boot .stars,
-      #boot .clouds,
-      #boot .planet,
-      #boot .shade,
-      #boot .remi,
-      #boot .fireflies,
-      #boot .title {
-        transition: translate 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-      }
-      #boot .stars,
-      #boot .sparkles {
-        translate: calc(var(--mx) * -4px) calc(var(--my) * -3px);
-      }
-      #boot .far,
-      #boot .letters {
-        translate: calc(var(--mx) * -10px) calc(var(--my) * -6px);
-      }
-      #boot .clouds {
-        translate: calc(var(--mx) * -18px) calc(var(--my) * -8px);
-      }
-      #boot .planet,
-      #boot .shade,
-      #boot .remi {
-        translate: calc(var(--mx) * -26px) calc(var(--my) * -10px);
-      }
-      #boot .fireflies {
-        translate: calc(var(--mx) * -44px) calc(var(--my) * -16px);
-      }
-      #boot .title {
-        translate: calc(var(--mx) * 8px) calc(var(--my) * 5px);
-      }
-      #boot .layer > svg {
-        width: 100%;
+      #boot .backdrop {
+        position: absolute;
+        top: 0;
+        left: 50%;
         height: 100%;
-        display: block;
+        width: auto;
+        aspect-ratio: 2.4;
+        translate: -50% 0;
+        /* The camera's eye is on the notebook: the room behind it is soft and dim. */
+        filter: blur(2.5px) brightness(0.74) saturate(0.92);
+        transform: scale(1.012);
+        transition:
+          filter 0.7s var(--ease),
+          transform 0.7s var(--ease);
       }
-
-      /* ---------- The sky: stars, the Moon and Mars, letters on their way ---------- */
-      /*
-       * Only small things move on their own (sparkles, letters, Remi, clouds,
-       * fireflies) and the planet turns as one picture: big drawings never
-       * repaint while the game loads behind them.
-       */
-      #boot .sparkles i {
+      #boot .night {
         position: absolute;
-        width: 18px;
-        height: 18px;
-        margin: -9px 0 0 -9px;
-        background: #fff6e0;
-        clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
-        animation: ld-sparkle 3.2s steps(16) var(--d) infinite;
-      }
-      #boot .far .route {
-        fill: none;
-        stroke: #fff6e0;
-        stroke-width: 4;
-        stroke-dasharray: 2 14;
-        opacity: 0.4;
-      }
-      #boot .clouds div {
-        position: absolute;
-        opacity: 0.32;
-        animation: ld-drift var(--t) steps(var(--n)) var(--d) infinite;
-      }
-      #boot .clouds svg {
-        width: 100%;
-        display: block;
-      }
-
-      /* ---------- The planet: it turns; the light on it does not ---------- */
-      #boot .planet {
-        /* The planet's middle sits 0.44 D under its top; the image is 1.6 D across, room for the balloon. */
-        position: absolute;
-        left: 50%;
-        top: calc(var(--top) - var(--D) * 0.36);
-        width: calc(var(--D) * 1.6);
-        height: calc(var(--D) * 1.6);
-        margin-left: calc(var(--D) * -0.8);
-        pointer-events: none;
-        animation: ld-turn 150s steps(1800) infinite;
-        will-change: transform;
-      }
-      #boot .shade {
-        position: absolute;
-        left: 50%;
-        top: calc(var(--top) - var(--D) * 0.06);
-        width: var(--D);
-        height: var(--D);
-        margin-left: calc(var(--D) / -2);
-        pointer-events: none;
-      }
-      #boot .shade {
-        clip-path: circle(43.6% at 50% 50%);
+        inset: 0;
         background:
-          radial-gradient(circle at 64% 18%, rgba(255, 226, 174, 0.3), rgba(255, 226, 174, 0) 34%),
-          radial-gradient(circle at 50% 50%, transparent 58%, rgba(24, 20, 50, 0.5) 92%);
+          radial-gradient(ellipse 70% 62% at 50% 52%, transparent 40%, rgba(12, 9, 26, 0.62) 100%),
+          linear-gradient(180deg, rgba(40, 46, 96, 0.28), transparent 45%);
+        transition: opacity 0.7s ease;
       }
-
-      /* ---------- Remi, walking on top with a letter ---------- */
-      #boot .remi {
-        position: absolute;
-        left: 50%;
-        width: calc(var(--D) * 0.112);
-        margin-left: calc(var(--D) * -0.056);
-        top: calc(var(--top) - var(--D) * 0.112 * 1.286 * 0.955);
-      }
-      #boot .remi svg {
-        width: 100%;
-        display: block;
-        overflow: visible;
-      }
-      #boot .remi .body {
-        animation: ld-step 0.42s steps(3) infinite alternate;
-      }
-      #boot .remi .leg,
-      #boot .remi .arm {
-        transform-box: fill-box;
-        transform-origin: 50% 8%;
-        animation: ld-swing 0.84s steps(6) infinite alternate;
-      }
-      #boot .remi .leg.back,
-      #boot .remi .arm.front {
-        animation-delay: -0.84s;
-      }
-      #boot .remi .arm.front {
-        animation-name: ld-carry;
-      }
-      #boot .fireflies i {
+      #boot .motes i {
         position: absolute;
         width: var(--s);
         height: var(--s);
         border-radius: 50%;
-        background: radial-gradient(circle, #fff3cc 0 30%, rgba(255, 210, 120, 0.5) 45%, rgba(255, 210, 120, 0) 70%);
+        background: radial-gradient(circle, #fff1cc 0 28%, rgba(255, 214, 150, 0.45) 46%, rgba(255, 214, 150, 0) 70%);
         opacity: 0;
-        animation: ld-firefly var(--t) steps(var(--n)) var(--d) infinite;
+        animation: ld-mote var(--t) linear var(--d) infinite;
       }
 
-      /* ---------- The title: block letters, like the 3D title ---------- */
-      #boot .title {
+      /* ---------- The notebook ---------- */
+      #boot .book {
         position: absolute;
         left: 50%;
-        top: 3.5vh;
-        width: min(520px, 62vw, 52vh);
-        transform: translateX(-50%);
-        text-align: center;
+        top: 50%;
+        width: var(--W);
+        height: calc(var(--W) * 0.62);
+        margin: calc(var(--W) * -0.31) 0 0 calc(var(--W) / -2);
+        font-size: calc(var(--W) * 0.0148);
+        perspective: 2400px;
+        animation: ld-rise 0.75s var(--ease) 0.15s both;
       }
-      #boot .title-art {
-        width: 100%;
+      #boot .book::before {
+        /* Its shadow in the room's dim light. */
+        content: "";
+        position: absolute;
+        left: 6%;
+        right: 6%;
+        bottom: -5%;
+        height: 14%;
+        border-radius: 50%;
+        background: radial-gradient(ellipse at 50% 50%, rgba(6, 4, 14, 0.6), transparent 70%);
+        filter: blur(6px);
+      }
+      #boot .float,
+      #boot .tilt,
+      #boot .spread,
+      #boot .leaf {
+        transform-style: preserve-3d;
+      }
+      #boot .float {
+        position: absolute;
+        inset: 0;
+        animation: ld-float 7s ease-in-out 1.8s infinite alternate;
+      }
+      #boot .tilt {
+        position: absolute;
+        inset: 0;
+        transform: rotateX(calc(var(--my) * -2.4deg)) rotateY(calc(var(--mx) * 3.2deg));
+        transition: transform 0.9s var(--ease);
+      }
+      /* The open book sits centered; closed, only its right half shows, so it moves half a page left. */
+      #boot .spread {
+        position: absolute;
+        inset: 0;
+        animation: ld-center-open 0.95s cubic-bezier(0.5, 0.02, 0.2, 1) 0.85s both;
+      }
+      #boot .board,
+      #boot .leaf .side {
+        background:
+          radial-gradient(ellipse 80% 50% at 30% 15%, rgba(255, 200, 150, 0.14), transparent 60%),
+          linear-gradient(165deg, #6e3828, #4e271d 65%, #3f1f17);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.14),
+          inset 0 -3px 8px rgba(0, 0, 0, 0.3);
+      }
+      #boot .board {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 50%;
+        border-radius: 0.3em 1em 1em 0.3em;
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.14),
+          0 2.4em 3.6em -1.8em rgba(6, 4, 14, 0.8),
+          0 1em 1.6em -0.9em rgba(6, 4, 14, 0.6);
+      }
+      #boot .board::after,
+      #boot .leaf .side::after {
+        content: "";
+        position: absolute;
+        inset: 0.32em;
+        border: 0.1em dashed rgba(240, 200, 150, 0.4);
+        border-radius: inherit;
+        pointer-events: none;
+      }
+      #boot .page {
+        position: absolute;
+        top: 0.8em;
+        bottom: 0.8em;
+        box-sizing: border-box;
+        overflow: hidden;
+        background-color: var(--paper);
+        background-image:
+          linear-gradient(90deg, rgba(43, 38, 34, 0.12), transparent 7%),
+          repeating-linear-gradient(0deg, rgba(70, 110, 140, 0.1) 0 1px, transparent 1px 1.5em),
+          repeating-linear-gradient(90deg, rgba(70, 110, 140, 0.1) 0 1px, transparent 1px 1.5em);
+        box-shadow:
+          0 1px 0 #efe6d3,
+          0 2px 0 #e2d6bd,
+          0 3px 0 #efe6d3,
+          0 4px 0 #d8cab0;
+      }
+      #boot .page.right {
+        left: 50%;
+        right: 0.8em;
+        border-radius: 0.15em 0.5em 0.5em 0.15em;
+        padding: 1.6em 2.3em 2.4em 3.3em;
+        /* Title, list and switch stack with even air between them: no empty middle. */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 1.25em;
+      }
+      #boot .page.left {
+        left: 0.8em;
+        right: 0;
+        border-radius: 0.5em 0.15em 0.15em 0.5em;
+        padding: 1.9em 2.4em 1.5em 2.3em;
+        background-image:
+          linear-gradient(270deg, rgba(43, 38, 34, 0.14), transparent 7%),
+          repeating-linear-gradient(0deg, rgba(70, 110, 140, 0.1) 0 1px, transparent 1px 1.5em),
+          repeating-linear-gradient(90deg, rgba(70, 110, 140, 0.1) 0 1px, transparent 1px 1.5em);
+      }
+      #boot .folio {
+        position: absolute;
+        bottom: 0.9em;
+        margin: 0;
+        font: 700 1.05em/1 var(--hand);
+        color: var(--pencil);
+      }
+      #boot .left .folio {
+        left: 1.4em;
+      }
+      #boot .right .folio {
+        right: 1.4em;
+      }
+      /* A ribbon bookmark hanging from the spine. */
+      #boot .ribbon {
+        position: absolute;
+        left: calc(50% + 0.9em);
+        top: calc(100% - 3.2em);
+        width: 1em;
+        height: 6.4em;
+        background: linear-gradient(90deg, #8c2f22, #b13f2c 40%, #9c3426);
+        clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 94%, 0 100%);
+        transform: translateZ(2px);
+        box-shadow: 0 0.2em 0.4em rgba(0, 0, 0, 0.3);
+      }
+
+      /* The front cover and, on its back, the left page: it swings open about the spine. */
+      #boot .leaf {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 50%;
+        transform-origin: left center;
+        animation: ld-open 0.95s cubic-bezier(0.5, 0.02, 0.2, 1) 0.85s both;
+      }
+      #boot .leaf .side {
+        position: absolute;
+        inset: 0;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+      }
+      #boot .leaf .front {
+        display: grid;
+        place-items: center;
+        border-radius: 0.3em 1em 1em 0.3em;
+      }
+      #boot .leaf .back {
+        transform: rotateY(180deg);
+        border-radius: 1em 0.3em 0.3em 1em;
+      }
+      #boot .emboss {
+        display: grid;
+        justify-items: center;
+        gap: 0.6em;
+        color: rgba(255, 233, 196, 0.62);
+        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+      }
+      #boot .emboss-lamp {
+        width: 9em;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.35));
+      }
+      #boot .emboss b {
+        font: 700 2.5em/1 var(--hand);
+      }
+      #boot .emboss small {
+        font: 700 0.85em/1 var(--slab);
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+      }
+      #boot .band {
+        position: absolute;
+        top: -0.2em;
+        bottom: -0.2em;
+        right: 2.2em;
+        width: 0.6em;
+        border-radius: 0.2em;
+        background: linear-gradient(90deg, #241713, #3a2620 50%, #241713);
+        box-shadow: 0 0 0.3em rgba(0, 0, 0, 0.45);
+      }
+
+      /* ---------- Left page: Dad's lamp ---------- */
+      #boot .ld-tag {
+        margin: 0;
+        color: var(--clay);
+        font: 700 0.8em/1 var(--slab);
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      #boot .left h2 {
+        display: inline-block;
+        margin: 0.15em 0 0;
+        color: var(--dad);
+        font: 700 2.5em/1.05 var(--hand);
+        background: linear-gradient(transparent 62%, rgba(242, 165, 65, 0.55) 62% 90%, transparent 90%) no-repeat;
+        background-size: 100% 100%;
+      }
+      #boot .left .note {
+        margin: 0.1em 0 0;
+        color: var(--pencil);
+        font: 400 1.15em/1.2 var(--hand);
+      }
+      #boot .sketch {
         display: block;
+        width: 100%;
+        height: 20.5em;
+        margin: 0.2em 0 0;
         overflow: visible;
       }
+      #boot .sketch .guides {
+        fill: none;
+        stroke: rgba(35, 63, 115, 0.16);
+        stroke-width: 1.4;
+        stroke-dasharray: 4 6;
+      }
+      #boot .sketch .s path {
+        fill: none;
+        stroke: var(--dad);
+        stroke-width: 3.6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 1;
+        stroke-dashoffset: calc(1 - var(--d, 0));
+        transition: stroke-dashoffset 0.55s var(--ease);
+      }
+      /* The boil: three wobbled copies of each stroke take turns. */
+      #boot .sketch .f {
+        animation: ld-boil 0.3s steps(1) infinite;
+      }
+      #boot .sketch .f1 {
+        animation-delay: -0.1s;
+      }
+      #boot .sketch .f2 {
+        animation-delay: -0.2s;
+      }
+      #boot .sketch .a {
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+      #boot .sketch .a.on {
+        opacity: 1;
+      }
+      #boot .sketch .lead {
+        fill: none;
+        stroke: rgba(35, 63, 115, 0.55);
+        stroke-width: 1.6;
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        transition: stroke-dashoffset 0.5s var(--ease) 0.1s;
+      }
+      #boot .sketch .a.on .lead {
+        stroke-dashoffset: 0;
+      }
+      #boot .sketch .dot {
+        fill: var(--dad);
+      }
+      #boot .sketch text {
+        fill: var(--dad);
+        font: 400 19px/1 var(--hand);
+      }
+      #boot .sketch .halo {
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      #boot .travel {
+        display: block;
+        width: 72%;
+        margin: 0.4em auto 0;
+        overflow: visible;
+      }
+      #boot .travel .ink {
+        fill: none;
+        stroke: var(--dad);
+        stroke-width: 2.4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      #boot .travel .dash {
+        stroke-dasharray: 1 9;
+      }
+      #boot .travel .faint {
+        opacity: 0.35;
+      }
+      #boot .travel .fill,
+      #boot .travel .ld-paper {
+        fill: #fffaf0;
+      }
+      #boot .travel .mars {
+        fill: #e3a26a;
+      }
+      #boot .travel .glow {
+        fill: #ffc973;
+        stroke: none;
+      }
+      #boot .travel .seal {
+        fill: #c0573e;
+        stroke: none;
+      }
+      #boot .travel .labels {
+        fill: var(--dad);
+        font: 400 16px/1 var(--hand);
+      }
+
+      /* ---------- Right page: the title, the list, the switch ---------- */
+      #boot .postmark {
+        position: absolute;
+        top: 1.2em;
+        right: 0.6em;
+        width: 9.5em;
+        rotate: 9deg;
+        opacity: 0;
+        animation: ld-stamp 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) 2.2s both;
+      }
+      #boot .postmark circle,
+      #boot .postmark .waves {
+        fill: none;
+        stroke: rgba(177, 63, 44, 0.62);
+        stroke-width: 2.2;
+      }
+      #boot .postmark text {
+        fill: rgba(177, 63, 44, 0.7);
+        font: 700 9.4px/1 var(--slab);
+        letter-spacing: 0.06em;
+      }
+      #boot .postmark .mid {
+        font-size: 12px;
+      }
+      #boot .postmark .mid.small {
+        font-size: 7.5px;
+      }
+      #boot .title {
+        position: relative;
+        width: 18.5em;
+        margin: 0 0 0 0.1em;
+      }
+      #boot .title-art {
+        display: block;
+        width: 100%;
+        overflow: visible;
+        filter: drop-shadow(0 0.18em 0 rgba(43, 38, 34, 0.18));
+      }
       #boot .title-art .blk {
-        animation: ld-drop 0.75s cubic-bezier(0.25, 1.5, 0.45, 1) calc(0.2s + var(--i) * 0.07s) both;
+        animation: ld-drop 0.7s cubic-bezier(0.25, 1.5, 0.45, 1) calc(1.55s + var(--i) * 0.07s) both;
       }
       #boot .title-art .back {
         fill: #9c6a43;
@@ -286,7 +529,7 @@
         stroke: var(--ink);
         stroke-width: 3.4;
         stroke-linejoin: round;
-        transition: fill 0.2s;
+        transition: fill 0.15s;
       }
       #boot .title-art .bulb-wire {
         fill: none;
@@ -301,139 +544,131 @@
         stroke-linejoin: round;
       }
       #boot .title-art .bulb-glow {
-        opacity: 0.3;
+        opacity: 0;
+        transition: opacity 0.2s ease;
       }
       #boot .kicker {
-        margin: 0.4rem 0 0;
-        color: #ffe2ae;
-        font: 700 clamp(0.72rem, 1.1vw, 0.92rem) / 1.2 var(--slab);
+        margin: -0.35em 0 0;
+        color: var(--clay);
+        font: 700 0.82em/1.2 var(--slab);
         letter-spacing: 0.2em;
         text-transform: uppercase;
-        opacity: 0;
-        animation: ld-fade 0.8s ease 1.4s forwards;
+        animation: ld-fade 0.6s ease 2.3s both;
       }
-
-      /* ---------- The card: what kept working, then the light ---------- */
-      #boot .card {
-        position: absolute;
-        left: 50%;
-        bottom: max(3.5vh, 16px);
-        width: min(440px, calc(100vw - 32px));
-        box-sizing: border-box;
-        padding: 22px 26px 20px;
-        background: #fbf6ec;
-        border: 3px solid var(--ink);
-        border-radius: 14px;
-        box-shadow: 0 6px 0 var(--ink), 0 18px 40px rgba(12, 8, 30, 0.45);
-        transform: translateX(-50%) rotate(-0.8deg);
-        text-align: center;
-        animation: ld-card 0.7s cubic-bezier(0.25, 1.4, 0.45, 1) 0.9s both;
+      #boot .log {
+        position: relative;
       }
-      #boot .card::before {
-        /* The pin. */
-        content: "";
-        position: absolute;
-        left: 50%;
-        top: -11px;
-        width: 18px;
-        height: 18px;
-        margin-left: -9px;
-        border-radius: 50%;
-        background: #c0573e;
-        border: 3px solid var(--ink);
-        box-shadow: inset -3px -3px 0 rgba(0, 0, 0, 0.18);
-      }
-      #boot .label {
+      #boot .log h2 {
         display: inline-block;
-        margin: 0 0 10px;
-        padding: 3px 10px;
-        border: 2px solid #b8433a;
-        border-radius: 4px;
-        color: #b8433a;
-        font: 700 0.74rem/1.2 var(--slab);
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        transform: rotate(-1.5deg);
+        margin: 0 0 0.35em;
+        color: var(--dad);
+        font: 700 1.45em/1.1 var(--hand);
+        background: linear-gradient(transparent 60%, rgba(242, 165, 65, 0.5) 60% 92%, transparent 92%) no-repeat;
       }
       #boot #kept {
         list-style: none;
         margin: 0;
         padding: 0;
         display: grid;
-        min-height: 2.2em;
+        gap: 0.32em;
       }
       #boot #kept li {
-        grid-area: 1 / 1;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-        font: 700 1.2rem/1.25 var(--hand);
-        color: var(--ink);
-        opacity: 0;
-        translate: 0 10px;
-        transition:
-          opacity 0.35s ease,
-          translate 0.35s ease;
-      }
-      #boot #kept li.now {
-        opacity: 1;
-        translate: 0 0;
-      }
-      #boot #kept .tick {
-        flex: none;
-        width: 22px;
-        height: 22px;
-        border: 2.5px solid var(--ink);
-        border-radius: 5px;
-        background: #fffdf6;
-        position: relative;
-      }
-      #boot #kept li.on .tick::after {
-        content: "";
-        position: absolute;
-        left: 5px;
-        top: -1px;
-        width: 7px;
-        height: 13px;
-        border-right: 3.5px solid #b8433a;
-        border-bottom: 3.5px solid #b8433a;
-        transform: rotate(40deg);
-      }
-      #boot .meter {
         display: flex;
         align-items: center;
-        gap: 12px;
-        margin-top: 14px;
-      }
-      #boot .track {
-        flex: 1;
-        height: 14px;
-        border: 2.5px solid var(--ink);
-        border-radius: 999px;
-        background: #efe4cf;
-        overflow: hidden;
-      }
-      #boot .track span {
-        display: block;
-        height: 100%;
-        width: calc(var(--p, 0.02) * 100%);
-        background: repeating-linear-gradient(-45deg, #f2a541 0 10px, #f7bd62 10px 20px);
-        border-right: 2.5px solid var(--ink);
-        transition: width 0.4s ease;
-        animation: ld-stripes 0.8s steps(6) infinite;
-      }
-      #boot .pct {
-        min-width: 3.2em;
-        font: 700 1rem/1 var(--slab);
+        gap: 0.55em;
         color: var(--pencil);
-        text-align: right;
+        font: 400 1.28em/1.3 var(--hand);
+        opacity: 0.55;
+        transition:
+          color 0.4s ease,
+          opacity 0.4s ease;
+      }
+      /* Pencil until it is done, then inked: the way pages fill in inside the game. */
+      #boot #kept li.on {
+        color: var(--dad);
+        opacity: 1;
+      }
+      #boot .box {
+        flex: none;
+        width: 1.35em;
+        height: 1.35em;
+        overflow: visible;
+      }
+      #boot .box .sq {
+        fill: #fffdf6;
+        stroke: var(--dad);
+        stroke-width: 2;
+        stroke-linejoin: round;
+      }
+      #boot .box .tick {
+        fill: none;
+        stroke: var(--clay);
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        transition: stroke-dashoffset 0.35s var(--ease) 0.15s;
+      }
+      #boot #kept li.on .tick {
+        stroke-dashoffset: 0;
+      }
+      /* The pencil moves down the list to each line it ticks. */
+      #boot .log .pencil {
+        position: absolute;
+        right: -0.6em;
+        top: calc(2.2em + var(--row, 0) * 2.02em);
+        width: 7.5em;
+        rotate: -24deg;
+        transform-origin: 0 50%;
+        transition: top 0.45s var(--ease);
+        filter: drop-shadow(0 0.25em 0.2em rgba(43, 38, 34, 0.25));
+        animation: ld-scribble 0.5s ease-in-out infinite alternate;
+      }
+      #boot .foot {
+        position: relative;
+        min-height: 5.4em;
+        display: grid;
+        align-items: end;
+      }
+      #boot .meter {
+        display: grid;
+        gap: 0.35em;
+      }
+      #boot .meter svg {
+        display: block;
+        width: 100%;
+        height: 1.2em;
+        overflow: visible;
+      }
+      #boot .meter .track {
+        fill: none;
+        stroke: rgba(35, 63, 115, 0.22);
+        stroke-width: 2.4;
+        stroke-dasharray: 2 7;
+        stroke-linecap: round;
+      }
+      #boot .meter .ld-done {
+        fill: none;
+        stroke: var(--dad);
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-dasharray: 1;
+        stroke-dashoffset: calc(1 - var(--p));
+        transition: stroke-dashoffset 0.45s var(--ease);
+      }
+      #boot .meter p {
+        margin: 0;
+        display: flex;
+        justify-content: space-between;
+        color: var(--pencil);
+        font: 400 1.05em/1 var(--hand);
       }
       #boot .slow {
         display: none;
-        margin: 10px 0 0;
+        margin: 0.5em 0 0;
         color: var(--pencil);
-        font-size: 0.9rem;
+        font: 400 1em/1.3 var(--hand);
       }
       #boot[data-slow] .slow {
         display: block;
@@ -442,77 +677,130 @@
       #boot .nogl {
         display: none;
       }
-      #boot[data-state="ready"] .loading,
-      #boot[data-state="leaving"] .loading,
-      #boot[data-state="nogl"] .loading {
+      #boot:is([data-state="ready"], [data-state="closing"], [data-state="leaving"], [data-state="nogl"]) .meter,
+      #boot:is([data-state="ready"], [data-state="closing"], [data-state="leaving"], [data-state="nogl"]) .slow {
         display: none;
       }
-      #boot[data-state="ready"] .ready,
-      #boot[data-state="leaving"] .ready {
-        display: block;
-        animation: ld-fade 0.4s ease both;
+      #boot:is([data-state="ready"], [data-state="closing"], [data-state="leaving"]) .ready {
+        display: grid;
+        gap: 0.6em;
+        animation: ld-fade 0.45s ease both;
       }
       #boot[data-state="nogl"] .nogl {
         display: block;
       }
-      #boot .line {
-        margin: 0 0 14px;
-        font: 400 1.12rem/1.35 var(--hand);
-        color: var(--pencil);
+      #boot .ready .line {
+        margin: 0;
+        color: var(--dad);
+        font: 400 1.12em/1.3 var(--hand);
       }
       #boot #light {
         display: inline-flex;
         align-items: center;
-        gap: 12px;
-        padding: 12px 26px 12px 18px;
-        border: 3px solid var(--ink);
-        border-radius: 14px;
-        background: var(--amber);
-        box-shadow: 0 5px 0 var(--ink);
+        gap: 0.9em;
+        width: fit-content;
+        margin: 0;
+        padding: 0.45em 1.4em 0.45em 0.55em;
+        border: 0.14em dashed rgba(35, 63, 115, 0.45);
+        border-radius: 0.9em;
+        background: rgba(255, 250, 238, 0.7);
         color: var(--ink);
-        font: 700 1.55rem/1 var(--hand);
+        font: inherit;
+        text-align: left;
         cursor: pointer;
-        opacity: 0.55;
+        opacity: 0.6;
         pointer-events: none;
         transition:
-          transform 0.12s ease,
-          box-shadow 0.12s ease,
-          background 0.15s ease;
+          background 0.2s ease,
+          border-color 0.2s ease,
+          transform 0.2s var(--ease);
       }
       #boot[data-prompt] #light {
         opacity: 1;
         pointer-events: auto;
-        animation: ld-invite 1.6s steps(8) infinite;
       }
-      #boot #light:hover {
-        background: #f7b555;
-      }
-      #boot #light:active,
-      #boot[data-on] #light {
-        transform: translateY(4px);
-        box-shadow: 0 1px 0 var(--ink);
-        animation: none;
+      #boot[data-prompt] #light:hover {
+        background: #fff6e2;
+        border-color: var(--dad);
+        transform: translateY(-0.12em) rotate(-0.6deg);
       }
       #boot #light:focus-visible {
-        outline: 3px solid #fff6e0;
-        outline-offset: 4px;
+        outline: none;
+        border-color: var(--dad);
+        box-shadow:
+          0 0 0 0.2em rgba(242, 165, 65, 0.85),
+          0 0 1.6em 0.3em rgba(255, 200, 120, 0.45);
       }
-      #boot #light .ico {
-        width: 30px;
-        height: 30px;
-        flex: none;
+      #boot .say {
+        display: grid;
+        gap: 0.3em;
       }
-      #boot .hint {
-        margin: 12px 0 0;
+      #boot .say b {
+        color: var(--dad);
+        font: 700 1.75em/1 var(--hand);
+      }
+      #boot .say small {
         color: var(--pencil);
-        font-size: 0.9rem;
+        font: 400 0.92em/1.2 var(--sans);
+      }
+      #boot .ld-switch {
+        flex: none;
+        width: 2.9em;
+        overflow: visible;
+        filter: drop-shadow(0 0.15em 0.12em rgba(43, 38, 34, 0.3));
+      }
+      #boot .ld-switch .plate {
+        fill: #efe5d0;
+        stroke: var(--ink);
+        stroke-width: 3;
+      }
+      #boot .ld-switch .plate-hi {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.6);
+        stroke-width: 1.5;
+      }
+      #boot .ld-switch .screw {
+        fill: #c9c0ae;
+        stroke: var(--ink);
+        stroke-width: 1.6;
+      }
+      #boot .ld-switch .slot {
+        stroke: var(--ink);
+        stroke-width: 1.4;
+      }
+      #boot .ld-switch .well {
+        fill: #3b302a;
+        stroke: var(--ink);
+        stroke-width: 2;
+      }
+      #boot .ld-switch .lever rect:first-child {
+        fill: #f7f0e1;
+        stroke: var(--ink);
+        stroke-width: 2.2;
+      }
+      #boot .ld-switch .lever-hi {
+        fill: rgba(43, 38, 34, 0.18);
+      }
+      #boot .ld-switch .lever {
+        transform-box: view-box;
+        transform-origin: 32px 48px;
+        transition: transform 0.12s cubic-bezier(0.3, 1.8, 0.5, 1);
+      }
+      /* The lever waits down and nudges, asking to be flipped. */
+      #boot[data-prompt]:not([data-on]) .ld-switch .lever {
+        animation: ld-nudge 1.8s ease-in-out 0.6s infinite;
+      }
+      #boot[data-on] .ld-switch .lever {
+        transform: scaleY(-1);
+        animation: none;
       }
       #boot .nogl p {
-        margin: 0 0 12px;
-        font: 400 1.1rem/1.4 var(--hand);
+        margin: 0 0 0.6em;
+        color: var(--dad);
+        font: 400 1.15em/1.35 var(--hand);
       }
       #boot .nogl a {
-        color: #b8433a;
+        color: var(--clay);
         font-weight: 700;
       }
 
@@ -520,117 +808,165 @@
       #boot[data-on] .title-art .bulb-glass {
         fill: #fff2c6;
       }
-      #boot[data-on] .title-art .bulb-glow {
+      #boot[data-on] .title-art .bulb-glow,
+      #boot[data-on] .sketch .halo {
         opacity: 1;
-        animation: none;
       }
-      #boot .flood {
+      #boot .warmth {
         position: absolute;
         inset: 0;
         pointer-events: none;
-        background: radial-gradient(circle at var(--bulb-x, 50%) var(--bulb-y, 30%), #fffaf0 0, #ffe2ae 18%, #f6b866 55%, #e99a4e 100%);
-        clip-path: circle(0 at var(--bulb-x, 50%) var(--bulb-y, 30%));
-        transition: clip-path 0.75s cubic-bezier(0.55, 0, 0.7, 0.4) 0.08s;
+        background: radial-gradient(circle at var(--wx, 70%) var(--wy, 75%), rgba(255, 214, 140, 0.55), rgba(255, 190, 110, 0.18) 30%, transparent 62%);
+        opacity: 0;
       }
-      #boot[data-on] .flood {
-        clip-path: circle(160vmax at var(--bulb-x, 50%) var(--bulb-y, 30%));
+      #boot[data-on] .warmth {
+        animation: ld-warmth 0.9s ease-out both;
+      }
+      /* The book closes... */
+      #boot:is([data-state="closing"], [data-state="leaving"]) .leaf {
+        animation: ld-close 0.6s cubic-bezier(0.55, 0, 0.35, 1) both;
+      }
+      #boot:is([data-state="closing"], [data-state="leaving"]) .spread {
+        animation: ld-center-close 0.6s cubic-bezier(0.55, 0, 0.35, 1) both;
+      }
+      #boot:is([data-state="closing"], [data-state="leaving"]) .float {
+        animation: none;
+      }
+      /* ...drops out of sight, and the room comes into focus: then it is the live world. */
+      #boot[data-state="leaving"] .book {
+        animation: ld-drop-away 0.6s cubic-bezier(0.55, 0, 0.8, 0.4) both;
+      }
+      #boot[data-state="leaving"] .backdrop {
+        filter: none;
+        transform: none;
+      }
+      #boot[data-state="leaving"] .night {
+        opacity: 0;
+      }
+      #boot[data-state="leaving"] .room {
+        opacity: 0;
+      }
+      #boot[data-state="leaving"] .motes {
+        display: none;
       }
 
-      /* ---------- Smaller and taller screens ---------- */
-      @media (max-aspect-ratio: 4/5) {
+      /* ---------- Small and tall screens: one page at a time ---------- */
+      @media (max-aspect-ratio: 1/1) {
         #boot {
-          --top: 63vh;
-          --D: max(124vw, 66vh);
+          --W: min(1020px, 184vw, 112vh);
         }
-        #boot .title {
-          width: min(86vw, 420px);
-          top: 6vh;
+        #boot .book {
+          margin-left: calc(var(--W) * -0.75);
+        }
+        #boot .leaf {
+          animation-name: ld-open-away;
+        }
+        #boot .spread {
+          animation: none;
+        }
+        #boot:is([data-state="closing"], [data-state="leaving"]) .leaf,
+        #boot:is([data-state="closing"], [data-state="leaving"]) .spread {
+          animation: none;
         }
       }
-      @media (max-height: 560px) and (min-aspect-ratio: 4/5) {
-        #boot {
-          --top: 64vh;
-        }
-        #boot .title {
-          width: min(330px, 52vh);
-          top: 3vh;
-        }
-        #boot .card {
-          padding: 14px 18px 12px;
-        }
-        #boot .line,
-        #boot .hint {
+      @media (max-height: 520px) and (min-aspect-ratio: 1/1) {
+        #boot .left .travel,
+        #boot .ready .line {
           display: none;
         }
       }
 
-      @keyframes ld-turn {
-        to {
-          transform: rotate(-360deg);
+      @keyframes ld-fade {
+        from {
+          opacity: 0;
         }
       }
-      @keyframes ld-sparkle {
-        0%,
-        100% {
-          transform: scale(0.35);
-          opacity: 0.3;
-        }
-        50% {
-          transform: scale(1);
-          opacity: 1;
+      @keyframes ld-rise {
+        from {
+          opacity: 0;
+          transform: translateY(4em) rotateX(14deg) scale(0.96);
         }
       }
       @keyframes ld-float {
-        to {
-          transform: translateY(-10px);
-        }
-      }
-      @keyframes ld-drift {
         from {
-          transform: translateX(-30vw);
+          transform: translateY(0) rotateZ(-0.25deg);
         }
         to {
-          transform: translateX(130vw);
+          transform: translateY(-0.5em) rotateZ(0.25deg);
         }
       }
-      @keyframes ld-step {
+      @keyframes ld-open {
         from {
-          transform: translateY(0);
+          transform: translateZ(1px) rotateY(0deg);
         }
         to {
-          transform: translateY(-4px);
+          transform: translateZ(1px) rotateY(-180deg);
         }
       }
-      @keyframes ld-swing {
+      @keyframes ld-open-away {
         from {
-          transform: rotate(24deg);
+          transform: translateZ(1px) rotateY(0deg);
         }
         to {
-          transform: rotate(-24deg);
+          transform: translateZ(1px) rotateY(-120deg);
+          opacity: 0;
         }
       }
-      @keyframes ld-carry {
+      @keyframes ld-close {
         from {
-          transform: rotate(-6deg);
+          transform: translateZ(1px) rotateY(-180deg);
         }
         to {
-          transform: rotate(-16deg);
+          transform: translateZ(1px) rotateY(0deg);
         }
       }
-      @keyframes ld-firefly {
+      @keyframes ld-center-open {
+        from {
+          transform: translateX(-25%);
+        }
+        to {
+          transform: translateX(0);
+        }
+      }
+      @keyframes ld-center-close {
+        from {
+          transform: translateX(0);
+        }
+        to {
+          transform: translateX(-25%);
+        }
+      }
+      @keyframes ld-drop-away {
+        from {
+          transform: none;
+        }
+        to {
+          transform: translateY(85vh) rotateX(24deg) rotateZ(-7deg) scale(0.9);
+        }
+      }
+      @keyframes ld-mote {
         0% {
           transform: translate(0, 0);
           opacity: 0;
         }
-        30% {
-          opacity: 0.9;
+        25% {
+          opacity: 0.85;
         }
-        70% {
-          opacity: 0.6;
+        75% {
+          opacity: 0.5;
         }
         100% {
-          transform: translate(18px, -140px);
+          transform: translate(var(--dx), -18vh);
           opacity: 0;
+        }
+      }
+      @keyframes ld-boil {
+        0% {
+          visibility: visible;
+        }
+        33.3%,
+        100% {
+          visibility: hidden;
         }
       }
       @keyframes ld-drop {
@@ -643,55 +979,53 @@
           opacity: 1;
         }
       }
-      @keyframes ld-fade {
+      @keyframes ld-stamp {
         from {
           opacity: 0;
+          scale: 1.6;
         }
         to {
           opacity: 1;
+          scale: 1;
         }
       }
-      @keyframes ld-card {
+      @keyframes ld-scribble {
         from {
-          translate: 0 60px;
-          opacity: 0;
+          transform: translate(0, 0) rotate(0deg);
         }
         to {
-          translate: 0 0;
-          opacity: 1;
+          transform: translate(-0.25em, 0.12em) rotate(-2deg);
         }
       }
-      @keyframes ld-stripes {
-        to {
-          background-position: 28px 0;
-        }
-      }
-      @keyframes ld-invite {
+      @keyframes ld-nudge {
         0%,
+        70%,
         100% {
-          transform: translateY(0);
+          transform: scaleY(1);
         }
-        50% {
-          transform: translateY(-3px);
+        80% {
+          transform: scaleY(0.82);
+        }
+      }
+      @keyframes ld-warmth {
+        0% {
+          opacity: 0;
+        }
+        25% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
         }
       }
       /*
        * With no graphics chip (the browser draws WebGL in software) every moving
-       * layer costs the game time to load, so the loops hold still: the planet,
-       * the clouds and the lights wait, and the title and card still come in.
+       * layer costs the game time to load, so the loops hold still.
        */
-      #boot[data-lowpower] .planet,
-      #boot[data-lowpower] .clouds div,
-      #boot[data-lowpower] .fireflies i,
-      #boot[data-lowpower] .sparkles i,
-      #boot[data-lowpower] .remi .body,
-      #boot[data-lowpower] .remi .leg,
-      #boot[data-lowpower] .remi .arm,
-      #boot[data-lowpower] .track span,
-      #boot[data-lowpower] #light {
+      #boot[data-lowpower] :is(.motes i, .sketch .f, .float, .pencil, .ld-switch .lever) {
         animation-play-state: paused;
       }
-      #boot[data-lowpower] .letters {
+      #boot[data-lowpower] .motes {
         display: none;
       }
       @media (prefers-reduced-motion: reduce) {
@@ -701,11 +1035,20 @@
           animation: none !important;
           transition: none !important;
         }
-        #boot .letters,
-        #boot .fireflies {
+        #boot .motes {
           display: none;
         }
-        #boot .kicker {
+        #boot .leaf {
+          transform: translateZ(1px) rotateY(-180deg);
+        }
+        #boot:is([data-state="closing"], [data-state="leaving"]) .book {
+          opacity: 0;
+        }
+        #boot .sketch .f1,
+        #boot .sketch .f2 {
+          display: none;
+        }
+        #boot .postmark {
           opacity: 1;
         }
       }
@@ -715,54 +1058,72 @@
     <canvas id="stage" aria-label="Pieces of Home game view"></canvas>
 
     <div id="boot" data-state="loading">
-      <div class="layer stars" aria-hidden="true"><!--poh:stars--></div>
-      <div class="layer sparkles" aria-hidden="true"><!--poh:sparkles--></div>
-      <div class="layer far" aria-hidden="true"><!--poh:far--></div>
-      <div class="layer letters" aria-hidden="true"><!--poh:letters--></div>
-      <div class="layer clouds" aria-hidden="true">
-        <div style="top: 14%; width: 15vw; --t: 95s; --n: 1140; --d: -20s"><!--poh:cloud1--></div>
-        <div style="top: 36%; width: 11vw; --t: 120s; --n: 1440; --d: -75s"><!--poh:cloud2--></div>
-        <div style="top: 48%; width: 19vw; --t: 80s; --n: 960; --d: -52s"><!--poh:cloud3--></div>
-      </div>
-      <!--poh:planet-->
-      <div class="shade" aria-hidden="true"></div>
-      <div class="remi" aria-hidden="true"><!--poh:remi--></div>
-      <div class="layer fireflies" aria-hidden="true"><!--poh:fireflies--></div>
-
-      <div class="title">
-        <!--poh:title-->
-        <p class="kicker"><!--poh:kicker--></p>
+      <div class="room" aria-hidden="true">
+        <img class="backdrop" src="/loader/workshop.webp" alt="" draggable="false" decoding="async" fetchpriority="high" />
+        <div class="night"></div>
+        <div class="motes"><!--poh:motes--></div>
       </div>
 
-      <div class="card">
-        <div class="loading">
-          <p class="label" id="kept-h"><!--poh:heading--></p>
-          <ol id="kept" aria-labelledby="kept-h"><!--poh:list--></ol>
-          <div class="meter" aria-hidden="true">
-            <div class="track"><span></span></div>
-            <span class="pct"><span id="pct">0</span>%</span>
+      <div class="book">
+        <div class="float">
+          <div class="tilt">
+            <div class="spread">
+              <div class="board" aria-hidden="true"></div>
+              <section class="page right">
+                <!--poh:postmark-->
+                <div class="title"><!--poh:title--></div>
+                <p class="kicker"><!--poh:kicker--></p>
+                <div class="log">
+                  <h2 id="kept-h"><!--poh:heading--></h2>
+                  <ol id="kept" aria-labelledby="kept-h"><!--poh:list--></ol>
+                  <!--poh:pencil-->
+                </div>
+                <div class="foot">
+                  <div class="meter" aria-hidden="true">
+                    <svg viewBox="0 0 400 20" preserveAspectRatio="none">
+                      <path class="track" d="M4 11 C 80 8, 160 13, 240 10 C 300 8, 350 12, 396 10" />
+                      <path class="ld-done" pathLength="1" d="M4 11 C 80 8, 160 13, 240 10 C 300 8, 350 12, 396 10" />
+                    </svg>
+                    <p><span><!--poh:loading--></span><span><span id="pct">0</span>%</span></p>
+                    <p class="slow"><!--poh:slow--></p>
+                  </div>
+                  <div class="ready">
+                    <p class="line"><!--poh:ready--></p>
+                    <button id="light" type="button">
+                      <!--poh:switch-->
+                      <span class="say"><b><!--poh:prompt--></b><small><!--poh:hint--></small></span>
+                    </button>
+                  </div>
+                  <div class="nogl" role="alert">
+                    <p><!--poh:nowebgl--></p>
+                    <a href="/field-guide/"><!--poh:nowebgl-link--></a>
+                  </div>
+                </div>
+                <p class="folio" aria-hidden="true">2</p>
+              </section>
+              <div class="leaf" aria-hidden="true">
+                <div class="side front">
+                  <span class="emboss"><!--poh:emboss--><b><!--poh:cover--></b><small><!--poh:cover-for--></small></span>
+                  <span class="band"></span>
+                </div>
+                <div class="side back">
+                  <section class="page left">
+                    <p class="ld-tag"><!--poh:tag--></p>
+                    <h2><!--poh:page--></h2>
+                    <p class="note"><!--poh:page-note--></p>
+                    <!--poh:sketch-->
+                    <!--poh:travel-->
+                    <p class="folio">1</p>
+                  </section>
+                </div>
+              </div>
+              <span class="ribbon" aria-hidden="true"></span>
+            </div>
           </div>
-          <p class="slow"><!--poh:slow--></p>
-        </div>
-        <div class="ready">
-          <p class="line"><!--poh:ready--></p>
-          <button id="light" type="button">
-            <svg class="ico" viewBox="0 0 32 32" aria-hidden="true">
-              <path d="M16 3 C 9 3, 6 8, 6 12 C 6 17, 11 19, 11 23 L 21 23 C 21 19, 26 17, 26 12 C 26 8, 23 3, 16 3 Z" fill="#fff2c6" stroke="#2b2622" stroke-width="2.4" stroke-linejoin="round" />
-              <path d="M12 26 L 20 26 M13 29 L 19 29" stroke="#2b2622" stroke-width="2.4" stroke-linecap="round" />
-              <path d="M13 17 C 14 13, 15 19, 16 15 C 17 11, 18 17, 19 14" fill="none" stroke="#b8433a" stroke-width="1.8" stroke-linecap="round" />
-            </svg>
-            <span class="say"><!--poh:prompt--></span>
-          </button>
-          <p class="hint"><!--poh:hint--></p>
-        </div>
-        <div class="nogl" role="alert">
-          <p><!--poh:nowebgl--></p>
-          <a href="/field-guide/"><!--poh:nowebgl-link--></a>
         </div>
       </div>
 
-      <div class="flood" aria-hidden="true"></div>
+      <div class="warmth" aria-hidden="true"></div>
       <progress id="boot-progress" class="sr" max="100" value="0" aria-label="Loading">0%</progress>
       <p id="boot-live" class="sr" role="status" aria-live="polite"></p>
     </div>
@@ -780,43 +1141,47 @@
         var live = document.getElementById("boot-live");
         var pct = document.getElementById("pct");
         var light = document.getElementById("light");
-        var fill = boot.querySelector(".track span");
+        var log = boot.querySelector(".log");
         var items = boot.querySelectorAll("#kept li");
+        var strokes = boot.querySelectorAll(".sketch .s");
+        var notes = boot.querySelectorAll(".sketch .a");
         var words = /*poh:milestones*/;
         var value = 0;
         var waiting = null;
         var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        if (items[0]) items[0].classList.add("now");
-        // Software WebGL means no graphics chip: hold the page's loops still so the game loads sooner.
-        try {
-          var gl = document.createElement("canvas").getContext("webgl");
-          var info = gl && gl.getExtension("WEBGL_debug_renderer_info");
-          var name = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : "";
-          if (/swiftshader|llvmpipe|softpipe|software|basic render/i.test(name)) boot.dataset.lowpower = "";
-          var lose = gl && gl.getExtension("WEBGL_lose_context");
-          if (lose) lose.loseContext();
-        } catch (e) {}
+        // The page's own choreography after the switch, in ms: the book closes, drops away, the room comes into focus.
+        var CLOSE = reduce ? 0 : 220;
+        var LEAVE = reduce ? 60 : 820;
+        var GONE = reduce ? 500 : 2100;
+        // Dad's sketch draws as the game loads: one stroke per fifth, his note once a stroke is done.
+        // The drawing starts once the cover is open, so the first strokes are seen being drawn.
+        var opened = reduce;
+        setTimeout(function () {
+          opened = true;
+          draw();
+        }, 1500);
+        function draw() {
+          var shown = opened ? value : 0;
+          for (var i = 0; i < strokes.length; i++) {
+            var d = Math.max(0, Math.min(1, shown * strokes.length - i));
+            strokes[i].style.setProperty("--d", d.toFixed(3));
+            if (notes[i]) notes[i].classList.toggle("on", d >= 0.98);
+          }
+        }
         function set(p) {
           value = Math.max(value, Math.min(1, p || 0));
           var n = Math.round(value * 100);
           bar.value = n;
           bar.textContent = n + "%";
           pct.textContent = n;
-          fill.style.setProperty("--p", value.toFixed(3));
+          boot.style.setProperty("--p", value.toFixed(3));
+          draw();
         }
         function milestone(i) {
           if (!items[i]) return;
-          for (var k = 0; k < items.length; k++) items[k].classList.toggle("now", k === i);
           items[i].classList.add("on");
+          log.style.setProperty("--row", String(Math.min(items.length - 1, i + 1)));
           if (words[i]) live.textContent = words[i];
-        }
-        function place() {
-          // The light opens from the bulb in the title, wherever it sits.
-          var glass = boot.querySelector(".title-art .bulb-glass");
-          if (!glass) return;
-          var box = glass.getBoundingClientRect();
-          boot.style.setProperty("--bulb-x", box.left + box.width / 2 + "px");
-          boot.style.setProperty("--bulb-y", box.top + box.height * 0.45 + "px");
         }
         // Any gamepad button turns on the light too.
         function pollPad() {
@@ -838,17 +1203,28 @@
           var cb = waiting;
           waiting = null;
           if (event) event.preventDefault();
-          place();
-          // The button presses, the bulb lights, then its light becomes the world.
+          // The light blooms from the switch, wherever it sits.
+          var box = light.getBoundingClientRect();
+          boot.style.setProperty("--wx", box.left + box.height * 0.5 + "px");
+          boot.style.setProperty("--wy", box.top + box.height * 0.5 + "px");
           boot.dataset.on = "";
-          setTimeout(cb, reduce ? 80 : 820);
+          // Still inside the press: the game unlocks sound and starts drawing the live workshop behind the page.
+          cb();
+          setTimeout(function () {
+            boot.dataset.state = "closing";
+          }, CLOSE);
+          setTimeout(function () {
+            boot.dataset.state = "leaving";
+          }, LEAVE);
+          setTimeout(function () {
+            boot.dataset.state = "gone";
+          }, GONE);
         }
         function ready(cb) {
           set(1);
-          for (var i = 0; i < items.length; i++) items[i].classList.add("on");
-          milestone(items.length - 1);
+          for (var i = 0; i < items.length; i++) milestone(i);
           boot.dataset.state = "ready";
-          live.textContent = light.querySelector(".say").textContent.trim();
+          live.textContent = light.querySelector(".say b").textContent.trim();
           setTimeout(function () {
             boot.dataset.prompt = "";
             waiting = cb;
@@ -857,14 +1233,13 @@
           }, reduce ? 200 : 700);
         }
         boot.addEventListener("pointerup", go);
-        // The layers lean with the pointer, near ones more than far ones.
+        // The book leans toward the pointer, a little, like something held.
         if (!reduce)
           window.addEventListener("pointermove", function (e) {
             boot.style.setProperty("--mx", ((e.clientX / window.innerWidth) * 2 - 1).toFixed(3));
             boot.style.setProperty("--my", ((e.clientY / window.innerHeight) * 2 - 1).toFixed(3));
           });
         window.addEventListener("keydown", go);
-        window.addEventListener("resize", place);
         light.addEventListener("click", function (e) {
           e.stopPropagation();
           go(e);
@@ -876,19 +1251,26 @@
           progress: set,
           milestone: milestone,
           ready: ready,
+          /** When, after the switch, the live world shows through: the game times Dad's lamp to it. */
+          reveal: reduce ? 100 : 1450,
           fail: function () {
             boot.dataset.state = "nogl";
           },
-          leave: function () {
-            boot.dataset.state = "leaving";
-            setTimeout(function () {
-              boot.dataset.state = "gone";
-            }, 1300);
+          /** No graphics chip: hold the page's loops still so the game loads sooner. */
+          calm: function () {
+            boot.dataset.lowpower = "";
+            var travel = boot.querySelector(".travel");
+            if (travel && travel.pauseAnimations) travel.pauseAnimations();
           },
+          leave: function () {},
           hide: function () {
             boot.dataset.state = "gone";
           },
         };
+        if (reduce) {
+          var travel = boot.querySelector(".travel");
+          if (travel && travel.pauseAnimations) travel.pauseAnimations();
+        }
         set(0.02);
       })();
     </script>

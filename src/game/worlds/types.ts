@@ -28,6 +28,8 @@ export interface Bookmark {
   player: { dir: Vector3; forward: Vector3 };
   /** Camera position and look target in world space. Null follows the player normally. */
   camera: { position: Vector3; target: Vector3; up?: Vector3 } | null;
+  /** For a story shot: where the camera glides to while the page is read. */
+  glide?: { position: Vector3; target: Vector3; up?: Vector3 };
 }
 
 /** A point in world space, for sounds. */
@@ -129,6 +131,11 @@ export interface FrameInfo {
   story?: boolean;
   /** The title is up: the flight from Dad's lamp, the menu, the flight down to Remi. */
   title?: boolean;
+  /**
+   * Dad's lamp during the title, 0 dark to 1 lit. The opening starts with it
+   * dark behind the loading page, and the player's light switch turns it on.
+   */
+  titleLamp?: number;
 }
 
 export interface World {

@@ -20,6 +20,7 @@ import { GROUND_PATCHES, type Site, HILL, HILL_TOP, HOME_RADIUS, MAILBOX, MEADOW
 import { buildGarden, buildMeadow, groundMatrix, pathDistance, planTrees, scatterNature, treeShade } from "./nature";
 import { buildPaths } from "./paths";
 import { presence } from "../../../net/presence";
+import { nextTask } from "../../core/yield";
 import { buildPlaces } from "./places";
 import { SHED, buildWorkshop, workshopMaterials } from "./workshop";
 import { buildGardenYard, buildHilltop, buildHouseYard, buildShedYard, buildSolarPanel } from "./yard";
@@ -58,7 +59,7 @@ const MAP_ICONS: Record<string, MapIcon> = {
   balloon: "balloon",
 };
 
-export function createHome(ctx: WorldContext): World {
+export async function createHome(ctx: WorldContext): Promise<World> {
   const { toon, quality } = ctx;
   const root = new Group();
   root.name = "world-home";
@@ -68,28 +69,39 @@ export function createHome(ctx: WorldContext): World {
   // ---- The planet ----
   // Trees are planned first so the grass can darken under each one.
   const trees = planTrees(quality.particles);
-  const shade = treeShade(trees);
+  // Each painted spot knows the cosine of its reach, so most vertices skip it with one dot product.
+  const reach = (radius: number): number => Math.cos(Math.min(Math.PI, radius / HOME_RADIUS));
+  const shade = treeShade(trees).map((spot) => ({ ...spot, cos: reach(spot.radius) }));
+  const ground = patches.map((patch) => ({ ...patch, cos: reach(patch.radius + 0.5) }));
+  const shedCos = reach(4.6);
+  const pondCos = reach(POND_RADIUS + 0.4);
   const planetGeometry = buildPlanetGeometry(terrain, Math.round((quality.terrainDetail * HOME_RADIUS) / 15), (dir, _r, normal, out) => {
     const n = fbm3(dir.x * 5, dir.y * 5, dir.z * 5, 2, 3);
     const fine = fbm3(dir.x * 19, dir.y * 19, dir.z * 19, 2, 5);
     out.copy(GRASS_A).lerp(GRASS_B, Math.max(0, Math.min(1, 0.5 + n * 1.4)));
     if (fine > 0.32) out.lerp(GRASS_WARM, Math.min(0.55, (fine - 0.32) * 2.5));
 
-    const shed = angleBetween(dir, shedDir) * HOME_RADIUS;
-    if (shed < 4.6) out.lerp(DIRT, Math.min(1, (4.6 - shed) / 1.2) * 0.85);
+    if (dir.dot(shedDir) > shedCos) {
+      const shed = angleBetween(dir, shedDir) * HOME_RADIUS;
+      if (shed < 4.6) out.lerp(DIRT, Math.min(1, (4.6 - shed) / 1.2) * 0.85);
+    }
 
     const path = pathDistance(dir);
     if (path < PATH_HALF_WIDTH + 0.7) out.lerp(WORN, 0.55 * Math.min(1, (PATH_HALF_WIDTH + 0.7 - path) / 0.6));
-    const pond = angleBetween(dir, POND) * HOME_RADIUS;
-    if (pond < POND_RADIUS + 0.4) out.lerp(MUD, Math.min(1, (POND_RADIUS + 0.4 - pond) / 0.6));
+    if (dir.dot(POND) > pondCos) {
+      const pond = angleBetween(dir, POND) * HOME_RADIUS;
+      if (pond < POND_RADIUS + 0.4) out.lerp(MUD, Math.min(1, (POND_RADIUS + 0.4 - pond) / 0.6));
+    }
     // Bare ground under the camp, the playground and the launch pad, soft at the edge.
-    for (const patch of patches) {
+    for (const patch of ground) {
+      if (dir.dot(patch.dir) <= patch.cos) continue;
       const d = angleBetween(dir, patch.dir) * HOME_RADIUS;
       if (d < patch.radius + 0.5) out.lerp(patch.color, patch.strength * Math.min(1, (patch.radius + 0.5 - d) / 0.9));
     }
 
     // Soft shade under trees, painted in so it shows even without shadow maps.
     for (const spot of shade) {
+      if (dir.dot(spot.dir) <= spot.cos) continue;
       const d = angleBetween(dir, spot.dir) * HOME_RADIUS;
       if (d < spot.radius) {
         const t = 1 - d / spot.radius;
@@ -104,6 +116,8 @@ export function createHome(ctx: WorldContext): World {
   // Little rim light on the ground: a bright edge round the whole planet reads as an outline.
   // The ground is cut into wedges so the far side of the world is skipped when it is out of sight.
   for (const wedge of planetMeshes(planetGeometry, toon.toon({ vertexColors: true, paint: 0.09, rim: 0.2, nearFade: false }))) root.add(wedge);
+  // The build is cut into slices, so the loading page keeps moving while the world comes together.
+  await nextTask();
 
   // ---- Buildings and props ----
   const b = new Batcher();
@@ -150,9 +164,11 @@ export function createHome(ctx: WorldContext): World {
     colliders.push(createColliderGroup(m, buildLampPost(b, { dir, forward: new Vector3(), origin: new Vector3(), matrix: m })));
   }
 
+  await nextTask();
   colliders.push(createColliderGroup(SITES.garden.matrix, buildGarden(b, SITES.garden)));
   colliders.push(...buildMeadow(b, terrain, quality.particles));
   colliders.push(...scatterNature(b, terrain, quality.particles, trees));
+  await nextTask();
 
   // The places to find round the far side: treehouse, pond, camp, weather station and more.
   const materials = workshopMaterials(toon);
@@ -163,7 +179,9 @@ export function createHome(ctx: WorldContext): World {
   // Footpaths: soft ribbons over the grass, with pebbles and the porch stepping stones.
   root.add(buildPaths(b, terrain, toon));
 
+  await nextTask();
   for (const mesh of b.build(materials, { castShadow: quality.shadowMap > 0, receiveShadow: true, sectors: SECTORS })) root.add(mesh);
+  await nextTask();
 
   // The shed's moving parts live in the shed's own frame.
   const shedFrame = new Group();
@@ -506,6 +524,7 @@ export function createHome(ctx: WorldContext): World {
   const spawnSide = new Vector3().crossVectors(spawnDir, toMailbox).normalize();
   const doorSpot = local(SITES.shed, 0.3, 0, 4.1).normalize();
   const storyOrbit = latLonToDir(-14, 26);
+  const storyOrbitEnd = latLonToDir(-8, 8);
   // Out of the way by the door, for the close-ups on the bench.
   const aside = inShed(-2.0, 1.3);
   const story: Record<string, Bookmark> = {
@@ -513,33 +532,48 @@ export function createHome(ctx: WorldContext): World {
     "story-home": {
       player: { dir: spawnDir, forward: toMailbox },
       camera: { position: storyOrbit.clone().multiplyScalar(HOME_RADIUS * 3.15), target: latLonToDir(18, 6).multiplyScalar(HOME_RADIUS * 0.3), up: headingToTangent(storyOrbit, 0) },
+      // A slow drift round the little world, coming a touch closer.
+      glide: { position: storyOrbitEnd.clone().multiplyScalar(HOME_RADIUS * 2.85), target: latLonToDir(18, 6).multiplyScalar(HOME_RADIUS * 0.3), up: headingToTangent(storyOrbitEnd, 0) },
     },
     // Dad's bench: the lamp, the little worlds, the robot in pieces.
     "story-bench": {
       player: { dir: aside, forward: shedForward },
       camera: { position: local(SITES.shed, 0.2, 2.25, 0.9), target: local(SITES.shed, 0.2, SHED.floor + 0.95, -1.95) },
+      // Along the bench, from the robot toward the lamp.
+      glide: { position: local(SITES.shed, -0.35, 2.05, 0.55), target: local(SITES.shed, -0.25, SHED.floor + 0.95, -1.95) },
     },
     // Remi at the workshop door.
     "story-door": {
       player: { dir: doorSpot, forward: shedForward },
       camera: { position: local(SITES.shed, 4.8, 2.3, 10.8), target: local(SITES.shed, 0.2, 1.3, 3.0) },
+      // In over Remi's shoulder, toward the open door.
+      glide: { position: local(SITES.shed, 3.0, 1.95, 8.6), target: local(SITES.shed, 0.25, 1.35, 3.0) },
     },
     // The little worlds under glass, where the letters go.
     "story-letters": {
       player: { dir: aside, forward: shedForward },
       camera: { position: local(SITES.shed, 1.15, SHED.floor + 1.62, -0.72), target: local(SITES.shed, 1.15, SHED.floor + 0.98, -2.0) },
+      // Down toward the glass, as if to look inside.
+      glide: { position: local(SITES.shed, 1.05, SHED.floor + 1.42, -1.12), target: local(SITES.shed, 1.1, SHED.floor + 0.95, -2.0) },
     },
     // Milo, still in pieces.
     "story-milo": {
       player: { dir: aside, forward: shedForward },
       camera: { position: local(SITES.shed, 0.45, SHED.floor + 1.7, -0.45), target: local(SITES.shed, -0.5, SHED.floor + 1.1, -2.0) },
+      // A slow arc round Milo.
+      glide: { position: local(SITES.shed, -0.25, SHED.floor + 1.6, -0.5), target: local(SITES.shed, -0.5, SHED.floor + 1.1, -2.0) },
     },
     // Remi where the game starts, facing the mailbox with the first letter in it.
     "story-go": {
       player: { dir: spawnDir, forward: toMailbox },
       camera: {
-        position: spawnGround.clone().addScaledVector(toMailbox, -3.8).addScaledVector(spawnDir, 2.1).addScaledVector(spawnSide, 1.9),
+        position: spawnGround.clone().addScaledVector(toMailbox, -5.4).addScaledVector(spawnDir, 3.1).addScaledVector(spawnSide, 2.5),
         target: terrain.pointAt(mailboxDir).addScaledVector(spawnDir, 0.75),
+      },
+      // A crane down behind Remi, toward the mailbox.
+      glide: {
+        position: spawnGround.clone().addScaledVector(toMailbox, -4.4).addScaledVector(spawnDir, 2.2).addScaledVector(spawnSide, 2.0),
+        target: terrain.pointAt(mailboxDir).addScaledVector(spawnDir, 0.7),
       },
     },
   };
@@ -957,7 +991,7 @@ export function createHome(ctx: WorldContext): World {
       // The lamp waits dark in a new story, then clicks on when Remi first walks in. During the
       // title and the short story it shines: that is the light the player just turned on.
       if (frame.title || frame.story) {
-        if (lampClick < 0) lampPower = 1;
+        if (lampClick < 0) lampPower = frame.story ? 1 : (frame.titleLamp ?? 1);
       } else if (lampWaits()) {
         if (lampClick < 0) lampPower = 0;
         if (inside && lampClick < 0) lampClick = 0;
@@ -979,7 +1013,7 @@ export function createHome(ctx: WorldContext): World {
         }
         if (lampClick > 5) lampClick = -1;
       }
-      for (const part of shop.lampGlow) part.visible = lampPower > 0;
+      for (const part of shop.lampGlow) part.visible = lampPower > 0.02;
       // Remi's museum shelf: a keepsake and a photo for every stamp so far.
       for (const item of shop.museum.items) item.object.visible = store.value.stamps.includes(item.stamp);
       // The bonus dome: the cloth slides off the first time Remi comes in after it opens.
@@ -1015,6 +1049,8 @@ export function createHome(ctx: WorldContext): World {
       }
       // The lamp breathes a little, like a real filament.
       lampLight.intensity = lampPower * (5.5 + (frame.reducedMotion ? 0 : Math.sin(frame.time * 3.1) * 0.2));
+      // Before the player's switch the workshop sits in cool moonlight, so the lamp coming on warms the whole room.
+      if (frame.title && lampPower < 1) fill.intensity *= 0.38 + 0.62 * lampPower;
       // The pins on Dad's globes light up one by one when the prologue's stamp comes.
       if (pinsLit() && pinGlow === 0 && pinPop < 0) pinPop = 0;
       if (pinPop >= 0) {

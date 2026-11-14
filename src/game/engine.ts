@@ -7,6 +7,7 @@ import {
   type LoadingManager,
   PCFShadowMap,
   PerspectiveCamera,
+  PointLight,
   Scene,
   Sphere,
   SRGBColorSpace,
@@ -23,6 +24,7 @@ import { EventBus, type GameEvents, type QualityTier } from "./core/events";
 import { Input } from "./core/input";
 import { FrameWatchdog, QUALITY, ResolutionGovernor, type QualitySettings, detectTier, lowerTier, readDeviceHints, readTierOverride, writeTierOverride } from "./core/quality";
 import { SAVE_KEY, StateStore, readStorage, writeStorage } from "./core/state";
+import { nextTask } from "./core/yield";
 import { Puffs } from "./render/particles";
 import { PostPipeline } from "./render/post";
 import { Sky } from "./render/sky";
@@ -239,6 +241,11 @@ export class Engine {
     this.resize();
   }
 
+  /** True when the browser draws WebGL in software, with no graphics chip. */
+  get softwareGpu(): boolean {
+    return /swiftshader|llvmpipe|softpipe|software|basic render/.test(readDeviceHints(this.renderer.getContext()).gpu);
+  }
+
   /** Settings: true or false forces reduced motion; null follows the system. */
   setReducedMotion(preference: boolean | null): void {
     this.motionPreference = preference;
@@ -264,14 +271,41 @@ export class Engine {
     this.title?.dispose();
     this.title = new TitleSequence(this.toon, intro, this.bus, this.reducedMotion);
     this.scene.add(this.title.root);
+    // The title brings its own light, so the stand-in goes (see endTitle).
+    this.spareLight.removeFromParent();
     this.mode = "title";
     this.world?.setPower(0.2);
     return true;
   }
 
+  /**
+   * A dark light that takes the title's place in the scene once the title is
+   * gone. Every shader is built for a number of lights, so one light fewer
+   * would recompile the whole world, a stall of half a second, just as play
+   * begins.
+   */
+  private readonly spareLight = new PointLight("#000000", 0, 1, 2);
+
+  private endTitle(): void {
+    if (!this.title) return;
+    this.title.dispose();
+    this.title = null;
+    this.scene.add(this.spareLight);
+  }
+
   /** Starts the flight. Until then the camera waits on the lamp, behind the loading page. */
   playTitle(): void {
     this.title?.play();
+  }
+
+  /** The opening waits with Dad's lamp dark (the loading page shows this same view). */
+  titleDark(): void {
+    this.title?.darkStart();
+  }
+
+  /** The player's switch: Dad's lamp flickers on in the workshop. */
+  titleLampOn(): void {
+    this.title?.switchOn();
   }
 
   /** Skips the flight and the falling letters. */
@@ -315,14 +349,41 @@ export class Engine {
     const first = this.storyView === null;
     if (!this.reducedMotion) await this.animateIris(this.post.iris, 1, first ? 0.45 : 0.32);
     if (token !== this.storyToken) return false;
-    if (this.title) this.title.root.visible = false;
+    this.title?.hide();
     this.player.teleport(mark.player.dir, mark.player.forward, world);
     this.follow.snap(this.player);
-    this.storyView = { position: mark.camera.position.clone(), target: mark.camera.target.clone(), up: (mark.camera.up ?? mark.camera.position).clone().normalize(), age: 0 };
+    this.storyView = { position: mark.camera.position.clone(), target: mark.camera.target.clone(), up: (mark.camera.up ?? mark.camera.position).clone().normalize(), to: null, age: 0 };
     this.placeStory(0);
     if (!this.reducedMotion) await this.animateIris(1, 0, 0.5);
     else this.post.iris = 0;
     return token === this.storyToken;
+  }
+
+  /**
+   * Cuts straight to a story shot, with no lamp-light close. The story's page
+   * turn covers the screen while it happens. False if there is no such shot.
+   */
+  storyCut(id: string): boolean {
+    const world = this.world;
+    const mark = world?.bookmarks[`story-${id}`];
+    if (!world || !mark?.camera) return false;
+    this.storyToken += 1;
+    this.irisToken += 1;
+    this.post.iris = 0;
+    this.title?.hide();
+    this.player.teleport(mark.player.dir, mark.player.forward, world);
+    this.follow.snap(this.player);
+    const up = (mark.camera.up ?? mark.camera.position).clone().normalize();
+    const glide = mark.glide;
+    this.storyView = {
+      position: mark.camera.position.clone(),
+      target: mark.camera.target.clone(),
+      up,
+      to: glide ? { position: glide.position.clone(), target: glide.target.clone(), up: (glide.up ?? glide.position).clone().normalize() } : null,
+      age: 0,
+    };
+    this.placeStory(0);
+    return true;
   }
 
   /** Ends the story: the camera stays where it is, ready to fly down to Remi. */
@@ -338,10 +399,22 @@ export class Engine {
     return this.storyView !== null;
   }
 
-  /** The story camera: a slow push in toward what the shot looks at, easing out. */
+  /**
+   * The story camera. A shot with a glide moves like a film camera over the
+   * page's reading time: it eases out of rest, travels, and settles. A shot
+   * without one pushes slowly in toward what it looks at.
+   */
   private placeStory(dt: number): void {
     const v = this.storyView!;
     v.age += dt;
+    if (v.to) {
+      const t = this.reducedMotion ? 0 : Math.min(1, v.age / STORY_GLIDE);
+      const k = 0.5 - 0.5 * Math.cos(Math.PI * t);
+      this.camera.position.lerpVectors(v.position, v.to.position, k);
+      this.camera.up.lerpVectors(v.up, v.to.up, k).normalize();
+      this.camera.lookAt(this.scratch.lerpVectors(v.target, v.to.target, k));
+      return;
+    }
     const k = this.reducedMotion ? 0 : 1 - Math.exp(-v.age / 7);
     const eye = this.scratch.copy(v.position).lerp(v.target, 0.09 * k);
     this.camera.position.copy(eye);
@@ -395,7 +468,7 @@ export class Engine {
    * one of the world's story shots, with the lamp light closing and opening
    * between them, and the camera drifting slowly in while the page is read.
    */
-  private storyView: { position: Vector3; target: Vector3; up: Vector3; age: number } | null = null;
+  private storyView: { position: Vector3; target: Vector3; up: Vector3; to: { position: Vector3; target: Vector3; up: Vector3 } | null; age: number } | null = null;
   private storyToken = 0;
   /**
    * The dive into one of Dad's domes on the way to its world: the camera swings
@@ -557,6 +630,8 @@ export class Engine {
     if (this.world) {
       this.scene.remove(this.world.root);
       this.world.dispose();
+      // A world may build in slices across several frames: until it is done, there is none to draw.
+      this.world = null;
     }
     const world = await factory(ctx);
     this.world = world;
@@ -612,20 +687,22 @@ export class Engine {
    * Starts compiling every shader the world could use, hidden things included
    * (carried props, story pieces), so nothing compiles the first time it shows.
    */
-  private prepareShaders(): Promise<void> {
+  private prepareShaders(scene: Scene = this.scene, camera: PerspectiveCamera = this.camera): Promise<void> {
     const hidden: { visible: boolean }[] = [];
-    this.scene.traverse((o) => {
+    scene.traverse((o) => {
       if (!o.visible) {
         hidden.push(o);
         o.visible = true;
       }
     });
+    // Compiled into the scene target, the way every frame is drawn (see PostPipeline.withSceneTarget).
+    let pending: Promise<unknown>;
     try {
-      this.renderer.compile(this.scene, this.camera);
+      pending = this.post.withSceneTarget(() => this.renderer.compileAsync(scene, camera));
     } finally {
       for (const o of hidden) o.visible = false;
     }
-    return this.renderer.compileAsync(this.scene, this.camera).then(
+    return pending.then(
       () => undefined,
       () => undefined,
     );
@@ -775,15 +852,15 @@ export class Engine {
    */
   async warm(): Promise<void> {
     try {
+      this.post.warmPasses();
       await this.prepareShaders();
-      // The trip's shaders too, so the first trip never stutters, but later and without
-      // holding up the light: nobody can travel in the first few seconds.
+      // The trip's shaders too, while the loading page is still up: compiled any later, they
+      // land in the middle of the title flight or the first trip and stall a frame.
       if (!this.reducedMotion) {
-        window.setTimeout(() => {
-          const trip = this.ensureTrip();
-          trip.begin("home", "tranquility");
-          void this.renderer.compileAsync(trip.scene, trip.camera).catch(() => undefined);
-        }, 4000);
+        await nextTask();
+        const trip = this.ensureTrip();
+        trip.begin("home", "tranquility");
+        await this.prepareShaders(trip.scene, trip.camera);
       }
     } catch {
       // Older drivers without parallel compile simply compile on first draw.
@@ -906,7 +983,7 @@ export class Engine {
     const riding = !shot && !titling && (world.ride?.(dt, input, this.player) ?? false);
     this.riding = riding;
     if (!riding) this.player.update(dt, input, this.follow.forward, this.follow.right, world);
-    world.update(dt, { player: this.player, carrying: this.store.value.carrying, time: this.elapsed, reducedMotion: this.reducedMotion, story: this.storyView !== null, title: titling });
+    world.update(dt, { player: this.player, carrying: this.store.value.carrying, time: this.elapsed, reducedMotion: this.reducedMotion, story: this.storyView !== null, title: titling, titleLamp: this.title?.lamp });
     this.interactions.update(dt, this.player.position, this.player.forward, input);
     // Which named place the player is in, for the place-name card.
     const zone = shot || titling || !world.zoneAt ? null : world.zoneAt(this.player.up);
@@ -952,8 +1029,7 @@ export class Engine {
       }
       this.title.update(dt, this.camera);
       if (this.title.phase === "done") {
-        this.title.dispose();
-        this.title = null;
+        this.endTitle();
         this.mode = "play";
         this.bus.emit("title:done", {});
       }
@@ -1091,6 +1167,25 @@ export class Engine {
       stats: () => ({ calls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, programs: this.renderer.info.programs?.length ?? 0 }),
       /** Names of the compiled shader programs, to catch ones that compile mid-play. */
       programs: () => (this.renderer.info.programs ?? []).map((p) => `${p.name}|${p.cacheKey}`),
+      /** Draws the world behind the loading page, for the script that renders the page's picture of it. */
+      unveil: () => {
+        this.veiled = false;
+      },
+      /** Every light and whether it counts (all its parents visible): a change in the count recompiles every shader. */
+      lights: () => {
+        const rows: string[] = [];
+        this.scene.traverse((o) => {
+          if (!(o as { isLight?: boolean }).isLight) return;
+          let on = true;
+          const path: string[] = [];
+          for (let p: import("three").Object3D | null = o; p; p = p.parent) {
+            on &&= p.visible;
+            path.push(p.name || p.type);
+          }
+          rows.push(`${on ? "on " : "off"} ${path.join(" < ")}`);
+        });
+        return rows;
+      },
       /** Meshes whose material matches a test, with their path in the scene, for debugging. */
       find: (test: (m: unknown) => boolean) => {
         const rows: string[] = [];
@@ -1192,6 +1287,9 @@ export class Engine {
     this.bus.clear();
   }
 }
+
+/** Seconds a story shot's camera takes to glide from its start to its end. */
+const STORY_GLIDE = 11;
 
 /** A breeze flag held over the shoulder, its stick leaning back. */
 function carriedFlag(flag: import("three").Group): import("three").Group {

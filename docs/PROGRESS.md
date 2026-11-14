@@ -6,7 +6,9 @@ There is no deadline. The full scope in the Game Bible gets built: P0, then P1, 
 - **Repo:** https://github.com/Vurios/pieces-of-home (public). No CI: the team asked for straight pushes to `main`. Run typecheck, tests and e2e locally before pushing.
 - **Team rule for this run:** the agent asks the team before starting each next phase prompt.
 
-**Now (2026-11-14):** Phase 07 is under way. Team feedback pass 3 and its second list are done: loader, 3D story, dome dives, rocket trips and free travel, the notebook and opened letters, an in-game Field Guide and About, Play together tiles, the night title flight, cuter voices, music and sounds, things in orbit round the Moon and Mars worlds, and a "Your adventure" card for new players (#81 to #93). README.md is current. **Next up:** the rest of Phase 07 (performance, accessibility, accuracy and licensing audits, bug bash, final polish, final deploy). The submission kit waits until the team asks for it.
+**Now (2026-11-14, later):** Team feedback pass 4 is done: the loading page is Dad's notebook again, in front of a picture of the real 3D workshop that the game renders of itself, and the light switch hands off to the live workshop with no seam while Dad's lamp flickers on in 3D (#94); the story before a new game is a storybook with page turns, camera glides, self-drawing doodles and words that ink in (#95); the opening no longer stutters (shaders compiled for the right target, a stable light count, a faster model kit, a world built in slices, #96). `CONTEXT_FOR_CLAUDE.md` gives a new Claude Code session (for example on the web) everything it needs. Screens: `docs/screens/loader/` and `docs/screens/story/`.
+
+**Earlier (2026-11-14):** Phase 07 is under way. Team feedback pass 3 and its second list are done: loader, 3D story, dome dives, rocket trips and free travel, the notebook and opened letters, an in-game Field Guide and About, Play together tiles, the night title flight, cuter voices, music and sounds, things in orbit round the Moon and Mars worlds, and a "Your adventure" card for new players (#81 to #93). README.md is current. **Next up:** the rest of Phase 07 (performance, accessibility, accuracy and licensing audits, bug bash, final polish, final deploy). The submission kit waits until the team asks for it.
 
 **Now (2026-11-13):** Phases 05 and 06 are built. Every chapter, the bonus and the Finale have full playthrough tests, plus one test from the title to the credits; a fresh play-tester played Chapter 1 with no hooks and its findings are fixed (#75). Co-op is in: private rooms with word codes, character select, shared story and Milo, travel together, late join, reconnect, friends with name tags and map dots, emotes and preset phrases, "hold it steady" roles at station games, a kind solo fallback, and tests for two, three and four players (#76 to #80). The game is English only (#70). **Next up:** ask the team before starting Phase 07 (polish, QA, final deploy, submission kit).
 
@@ -17,7 +19,7 @@ Phases 01 and 02 are done, plus a world and character pass (`DECISIONS.md` #21).
 Things a new session should know:
 
 - A plain visit plays the real intro. `?test`, `?shot` and `?skip` jump straight into play; add `?intro` to run the intro in tests.
-- Intro screenshots: `npx tsx scripts/screens-intro.ts phase03 [url] desktop [all|intro|notebook|guide]`. Loader timing: `npx tsx scripts/measure-loader.ts [url] [4g|3g]`.
+- Intro screenshots: `npx tsx scripts/screens-intro.ts phase03 [url] desktop [all|intro|notebook|guide]`. Loader and handoff: `npx tsx scripts/screens-loader.ts`; storybook: `npx tsx scripts/screens-story.ts` (both use Chrome with the GPU). Boot timing: `npx tsx scripts/perf-boot.ts http://localhost:5173 <outdir> gpu`. The loader's workshop picture: `npx tsx scripts/render-backdrop.ts` (rerun when the workshop or the title's first camera changes). Loader timing: `npx tsx scripts/measure-loader.ts [url] [4g|3g]`.
 - `npm run test` goes through `scripts/vitest.mjs` (Windows drive-letter fix, DECISIONS #27).
 - `npm run dev` runs Vite with the real Workers runtime on port 5173. `npm run typecheck` regenerates Worker types first.
 - Skills are git-ignored. After a fresh clone run `npx skills experimental_install` to restore them from `skills-lock.json` (`DECISIONS.md` #9).
@@ -210,6 +212,13 @@ Team feedback pass 3 (2026-11-14), done first as part of the polish:
 - [x] A short "what is happening and what to do" opening for new players (decision 93)
 - [x] Every panel and card in one game style: every panel is on the shared taped-paper sheet; the Field Guide, About, Play together and rocket icon were the outliers and are fixed (#89, #90)
 - [x] Gameplay flow: clearer and more exciting: "Your adventure" card, letters opened on delivery, dives into the domes, the rocket ride and free travel (#82 to #87, #93)
+
+Team feedback pass 4 (2026-11-14):
+
+- [x] Loading page: Dad's notebook in front of the game's own render of the workshop; seamless handoff to the live 3D lamp (#94)
+- [x] Story before a new game: storybook page turns, camera glides, doodles, inked words (#95)
+- [x] Opening lag: shader warm-up target, stable light count, kit caching, sliced world build (#96)
+- [x] `CONTEXT_FOR_CLAUDE.md` for new Claude Code sessions
 
 - [ ] Performance pass
 - [ ] Accessibility pass

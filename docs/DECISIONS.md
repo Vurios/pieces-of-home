@@ -960,3 +960,44 @@ Also fixed while testing it: skipping the story in the middle of a lamp-light cu
 **Why:** Team feedback, 2026-11-14: "there should be a short tutorial or an entry of whats happening and what to do or maybe an animation will do too for that". The story said what was happening; nothing yet said plainly what the player does.
 
 **Alternatives considered:** A playable tutorial level (the prologue already teaches one control at a time; a second one would slow the start), more story pages (the story is about feelings, not keys).
+
+## 94. The loading page is Dad's notebook again, in front of the real 3D workshop
+
+**Date:** 2026-11-14
+
+**Decision:** The 2.5D planet loader (#85) is replaced. The loading page is Dad's notebook once more (the idea from #34, which the team liked), now the same leather notebook as in the game, held open in his dark workshop. The workshop behind it is not a drawing: it is a picture the game renders of itself (`scripts/render-backdrop.ts`, 2592x1080 WebP, about 41 KB, plus a 142-byte blurred copy inlined for the first paint). It is the exact first frame of the title flight with Dad's lamp dark, sized the way the 3D camera sees (full height, sides cropped), so it lines up with the live view on any landscape screen.
+
+The notebook rises and swings open. Left page: Dad's sketch of his lamp draws itself with the real loading progress (five strokes in three boiling copies), his notes appear beside each finished part, and a letter flies a dotted route home, Moon, Mars. Right page: the block-letter title from the 3D title, the red postmark, "Things that kept working" written in pencil and inked as each loading milestone lands (each line still a checked fact), a pencil that moves down the list, then Dad's dedication and a wall light switch. The book leans a little toward the pointer.
+
+The switch is the handoff. Pressing it flips the lever, the notebook closes and drops out of frame, the room comes into focus, and the picture fades to the live world, which has been drawing the same view behind it since the press. Dad's lamp then flickers on in 3D (a quick on, off, on) and warms the room, and the camera pulls away into the title flight. Before the switch the workshop sits in cool moonlight (the fill light is dimmed while the title lamp is off), so the light coming on is a real lighting change, not a flat flash. Loader classes that clashed with the game's global CSS (`.tag`, `.switch`, `.done`, `.paper`) are prefixed `ld-`. The WebGL probe that the old loader made at startup (about 180 ms on the main thread) is gone; the game tells the page when it is drawing in software and the page holds its loops still.
+
+**Why:** Team feedback, 2026-11-14 (with a picture of the planet loader): it "does not match the game style design and 3d"; "why did u remove the book landing page i just needed the idea to be further improved". A real render of the game is the game's style by definition, and a notebook in front of it keeps the book idea and the in-game notebook's look.
+
+**Alternatives considered:** A live Three.js scene on the loader (needs the engine before anything shows, which is the wait the loader covers), the previous top-down notebook on a flat desk (did not look like the game), a looping video (large, and would not hand off to the live view).
+
+## 95. The story before a new game is a storybook with page turns and camera moves
+
+**Date:** 2026-11-14
+
+**Decision:** The short story (#86) keeps its six shots of the live world, with three changes. Each shot now has its own camera glide over the reading time (a drift round the planet, a slide along the bench, a push in over Remi's shoulder, down toward the domes, an arc round Milo, a crane down behind Remi), eased like a film camera. The words sit on a torn page of Dad's grid notebook taped over the bottom of the picture, beside one of Dad's ink doodles that draws itself (planet, lamp, door, letter and dome, Milo, mailbox), and they ink in word by word; a pencil line under them draws across as the page's reading time runs. Between pages a sheet of grid paper sweeps across the whole screen with a slight 3D turn, carrying the next page's doodle and number, and the shot changes while the paper covers it (`engine.storyCut`), instead of the lamp-light iris. The last shot is framed wider so Remi is not a giant head. Reduced motion cuts between pages with no glide and no sweep.
+
+**Why:** Team feedback, 2026-11-14: the story and opening animations should "use the game style and design and animation further improve it". A turning page is what a storybook does, and Dad's notebook paper is the game's own 2D language.
+
+**Alternatives considered:** Keeping the lamp-light iris between pages (the game's travel transition; reads as changing worlds, not turning pages), a book spread with the 3D shot as a photo inside it (the shot would be half the screen).
+
+## 96. Smoother opening: shaders, lights and world building
+
+**Date:** 2026-11-14
+
+**Decision:** Four fixes to the stutters players felt when the game opens, found by profiling the real intro on Chrome with a graphics chip (`scripts/perf-boot.ts`):
+
+1. Shaders were warmed up for the screen (sRGB output), but every scene draws into the post pipeline's linear target, so the real programs compiled the first time each thing showed: 6 to 9 hitches of 90 to 220 ms during the title flight. Warm-up now compiles inside the scene target (`PostPipeline.withSceneTarget`), the screen passes are compiled too, and the trip's shaders compile before the light is switched on instead of four seconds into the flight.
+2. When the title ended, its light left the scene, and a change in the number of lights recompiles every material: a stall of 0.5 to 0.95 s right as a new story or play began. The title is now hidden with its light kept at zero, and a dark stand-in light takes its place when it is disposed.
+3. The model kit cloned each source shape for every piece, and a clone of a sphere or cylinder first builds a whole default one: about 600 ms of the home world's 1.25 s build. Each shape's stripped arrays are now worked out once and shared. Ground painting skips far-away spots with one dot product.
+4. The home world builds in slices with a yield between them (`core/yield.ts`), so the loading page never freezes for a second.
+
+Measured on the RTX 4050 laptop (dev build): main-thread long tasks before the light went from 2.3 s to about 1 s, the title flight has no shader stalls, and the worst stall when a new story starts went from 957 ms to 77 ms. The one long task left in the title (about 120 ms) is the sound engine starting inside the press, while the notebook animation (on the compositor) hides it.
+
+**Why:** Team feedback, 2026-11-14: "optimize the game and make it smoother my game lags when opening the game".
+
+**Alternatives considered:** Lowering the quality tier at start (hides the cause and looks worse), a longer loading wait to compile everything (the cause was compiling the wrong programs, not compiling too late).

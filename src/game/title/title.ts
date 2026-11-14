@@ -314,6 +314,40 @@ export class TitleSequence {
     this.playing = true;
   }
 
+  private hidden = false;
+
+  /**
+   * Dad's lamp, 0 dark to 1 lit, for the world to show. The opening waits
+   * with it dark behind the loading page (the page's picture of the workshop
+   * is this very view), and the player's light switch turns it on: a quick
+   * flicker, then a steady warm glow.
+   */
+  lamp = 1;
+  private lampClick = -1;
+
+  /** Starts with Dad's lamp dark, waiting for the switch. */
+  darkStart(): void {
+    this.lamp = 0;
+    this.lampClick = -1;
+  }
+
+  /** The switch: Dad's lamp flickers on. */
+  switchOn(): void {
+    if (this.lamp >= 1) return;
+    this.lampClick = 0;
+  }
+
+  /**
+   * Puts the title out of sight for good. Its light stays in the scene at zero:
+   * taking a light away changes the light count every shader is built for, so
+   * the whole world would recompile, a long stall, at the next frame.
+   */
+  hide(): void {
+    this.hidden = true;
+    for (const child of this.root.children) if (child !== this.bulbLight) child.visible = false;
+    this.bulbLight.intensity = 0;
+  }
+
   /** Jumps to the finished title. */
   skip(): void {
     if (this.phase === "flight" || this.phase === "letters") {
@@ -388,6 +422,14 @@ export class TitleSequence {
     if (this.playing) this.time += dt;
     const reduced = this.reducedMotion;
 
+    if (this.lampClick >= 0) {
+      this.lampClick += dt;
+      const t = this.lampClick;
+      // On, a blink off, on again, then the filament settles to full.
+      this.lamp = reduced ? 1 : t < 0.06 ? 0.85 : t < 0.13 ? 0.12 : t < 0.2 ? 1 : t < 0.26 ? 0.6 : Math.min(1, 0.6 + (t - 0.26) * 2.5);
+      if (this.lamp >= 1) this.lampClick = -1;
+    }
+
     if (this.phase === "flight" || this.phase === "letters") {
       if (reduced && this.playing) this.skip();
       const t = Math.min(1, this.time / FLIGHT);
@@ -449,7 +491,7 @@ export class TitleSequence {
     const glow = this.warm * 0.55 + this.bright * 0.45;
     this.bulbGlow.material.opacity = glow * 0.75;
     this.filament.color.copy(FILAMENT_COLD).lerp(FILAMENT_HOT, glow);
-    this.bulbLight.intensity = glow * 9;
+    this.bulbLight.intensity = this.hidden ? 0 : glow * 9;
 
     // The chain: a spring back to rest after a pull, and a lazy sway.
     if (!this.dragging) {
@@ -477,10 +519,10 @@ export class TitleSequence {
         const d = Math.max(0, e * 1.4 - letter.index * 0.03);
         letter.mesh.position.copy(letter.rest).addScaledVector(new Vector3(0, 1, 0), d * d * 14);
       }
-      this.chain.visible = e < 0.3;
+      if (!this.hidden) this.chain.visible = e < 0.3;
       if (t >= 1) {
         this.phase = "done";
-        this.root.visible = false;
+        this.hide();
       }
     }
   }

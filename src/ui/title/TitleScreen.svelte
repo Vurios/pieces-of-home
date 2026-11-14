@@ -46,7 +46,8 @@
 
   function onkey(event: KeyboardEvent): void {
     if (flow.stage !== "title" || ready) return;
-    if (event.key === "Tab" || event.key === "Shift") return;
+    // A held key repeats: the press that turned on the light must not also skip the flight.
+    if (event.key === "Tab" || event.key === "Shift" || event.repeat) return;
     // Any key skips the flight.
     skip();
   }

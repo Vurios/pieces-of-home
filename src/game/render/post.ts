@@ -351,6 +351,41 @@ export class PostPipeline {
     this.reducedMotion = reduced;
   }
 
+  /**
+   * Runs `work` with the scene target bound. Shaders compiled for the screen
+   * write sRGB, while every scene is drawn into this linear target, so
+   * warming them up anywhere else compiles programs the game never uses and
+   * leaves the real ones to compile, with a stall, the first time they show.
+   */
+  withSceneTarget<T>(work: () => T): T {
+    const renderer = this.renderer;
+    const before = renderer.getRenderTarget();
+    renderer.setRenderTarget(this.sceneTarget);
+    try {
+      return work();
+    } finally {
+      renderer.setRenderTarget(before);
+    }
+  }
+
+  /** Compiles the screen passes (ink, grade, tilt-shift) by drawing them once. */
+  warmPasses(): void {
+    const renderer = this.renderer;
+    const before = renderer.getRenderTarget();
+    try {
+      this.quad.material = this.inkMaterial;
+      renderer.compile(this.quadScene, this.quadCamera);
+      if (this.tiltMaterial) {
+        this.quad.material = this.tiltMaterial;
+        renderer.setRenderTarget(null);
+        renderer.compile(this.quadScene, this.quadCamera);
+      }
+    } finally {
+      this.quad.material = this.inkMaterial;
+      renderer.setRenderTarget(before);
+    }
+  }
+
   setLook(look: LookSpec): void {
     this.lut?.dispose();
     this.lut = createGradeLut(look.grade);

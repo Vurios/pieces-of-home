@@ -57,7 +57,8 @@ export function blockTitle(): string {
   const cell = 10;
   const lines = ["PIECES", "OF", "HOME"];
   const faces = ["#FFF6E4", "#F7A93A", "#FFF6E4"];
-  const lineHeight = (GLYPH_ROWS + 1.4) * cell;
+  // A little more air between the lines than the 3D title, so the three words breathe on paper.
+  const lineHeight = (GLYPH_ROWS + 2.3) * cell;
   const widthOf = (word: string): number => [...word].reduce((s, ch) => s + width(ch), 0) + (word.length - 1);
   const maxW = Math.max(...lines.map(widthOf));
   const depth: [number, number] = [0.42 * cell, 0.52 * cell];

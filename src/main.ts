@@ -62,6 +62,8 @@ async function boot(): Promise<void> {
     return;
   }
   engineTask.done();
+  // No graphics chip (WebGL drawn in software): the loading page holds its loops still.
+  if (engine.softwareGpu) loader?.calm();
   if (import.meta.env.DEV || params.has("test")) {
     (window as unknown as { __poh: unknown }).__poh = { ...engine.debugApi(), flow: () => flow.stage };
   }
@@ -136,20 +138,29 @@ async function boot(): Promise<void> {
   // The camera waits on the lamp's glow behind the paper until the light is turned on.
   engine.veiled = Boolean(loader);
   engine.startTitle();
+  // Dad's lamp waits dark: the loading page shows this very view, and its light switch turns the lamp on.
+  if (loader) engine.titleDark();
   await engine.warm();
   engine.start();
   flow.setStage("waiting");
   loader?.ready(() => {
-    engine.veiled = false;
-    settings.apply();
-    loader.leave();
-    flow.setStage("title");
-    engine.playTitle();
     // Still inside the click, tap or key press: sound is allowed from here on.
-    void audio.unlock().then(() => {
-      audio.lampClick();
-      audio.setHum(1);
-    });
+    const sound = audio.unlock();
+    void sound.then(() => audio.ui("tick"));
+    settings.apply();
+    // The live workshop draws behind the page from now on. The page closes its notebook and
+    // fades its picture of this same view, then Dad's lamp clicks on in 3D and the camera pulls away.
+    engine.veiled = false;
+    flow.setStage("title");
+    const reveal = loader.reveal;
+    window.setTimeout(() => {
+      engine.titleLampOn();
+      void sound.then(() => {
+        audio.lampClick();
+        audio.setHum(1);
+      });
+    }, reveal + 150);
+    window.setTimeout(() => engine.playTitle(), reveal + 820);
   });
 }
 

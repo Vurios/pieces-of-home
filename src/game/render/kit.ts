@@ -40,36 +40,104 @@ function smooth(edge0: number, edge1: number, x: number): number {
 const lightPaint = new Color("#ffe8cc");
 const paint = new Color();
 
+/**
+ * What a source shape looks like once stripped to the kit's needs: plain
+ * position and normal arrays, an index, the optional paint shade and the base
+ * sway weight from each vertex's height. Worked out once per shape and shared
+ * by every piece cut from it. (Cloning the shape for each piece was the
+ * slowest part of building a world: a clone of a sphere or cylinder first
+ * builds a whole default one, then copies over it.)
+ */
+interface Base {
+  position: Float32Array;
+  normal: Float32Array;
+  index: BufferAttribute;
+  shade: Float32Array | null;
+  /** smooth(-0.5, 0.7, y) for each vertex: unit shapes run from about -0.5 (or -1) to 0.5 (or 1) in Y. */
+  rise: Float32Array;
+}
+const bases = new WeakMap<BufferGeometry, Base>();
+
+function baseOf(geometry: BufferGeometry): Base {
+  const known = bases.get(geometry);
+  if (known) return known;
+  const source = geometry.getAttribute("position");
+  const count = source.count;
+  const position = new Float32Array(count * 3);
+  for (let i = 0; i < count; i += 1) {
+    position[i * 3] = source.getX(i);
+    position[i * 3 + 1] = source.getY(i);
+    position[i * 3 + 2] = source.getZ(i);
+  }
+  let normals = geometry.getAttribute("normal");
+  if (!normals) {
+    const probe = new BufferGeometry();
+    probe.setAttribute("position", new BufferAttribute(position.slice(), 3));
+    if (geometry.index) probe.setIndex(geometry.index.clone());
+    probe.computeVertexNormals();
+    normals = probe.getAttribute("normal");
+  }
+  const normal = new Float32Array(count * 3);
+  for (let i = 0; i < count; i += 1) {
+    normal[i * 3] = normals.getX(i);
+    normal[i * 3 + 1] = normals.getY(i);
+    normal[i * 3 + 2] = normals.getZ(i);
+  }
+  let index: BufferAttribute;
+  if (geometry.index) {
+    const src = geometry.index;
+    const ids = new (count > 65535 ? Uint32Array : Uint16Array)(src.count);
+    for (let i = 0; i < src.count; i += 1) ids[i] = src.getX(i);
+    index = new BufferAttribute(ids, 1);
+  } else {
+    const ids = new (count > 65535 ? Uint32Array : Uint16Array)(count);
+    for (let i = 0; i < count; i += 1) ids[i] = i;
+    index = new BufferAttribute(ids, 1);
+  }
+  const shadeAttr = geometry.getAttribute("aShade");
+  let shade: Float32Array | null = null;
+  if (shadeAttr) {
+    shade = new Float32Array(count);
+    for (let i = 0; i < count; i += 1) shade[i] = shadeAttr.getX(i);
+  }
+  const rise = new Float32Array(count);
+  for (let i = 0; i < count; i += 1) rise[i] = smooth(-0.5, 0.7, position[i * 3 + 1]!);
+  const base: Base = { position, normal, index, shade, rise };
+  bases.set(geometry, base);
+  return base;
+}
+
 function normalize(geometry: BufferGeometry, color: Color, sway: number): BufferGeometry {
-  const g = geometry.clone();
-  // Optional per-vertex paint: above 0 lightens toward warm light, below 0 darkens (hair sheen and undersides).
-  const shade = g.getAttribute("aShade");
-  for (const name of Object.keys(g.attributes)) {
-    if (name !== "position" && name !== "normal") g.deleteAttribute(name);
-  }
-  if (!g.getAttribute("normal")) g.computeVertexNormals();
-  const position = g.getAttribute("position");
-  const count = position.count;
-  if (!g.index) {
-    const index = new (count > 65535 ? Uint32Array : Uint16Array)(count);
-    for (let i = 0; i < count; i += 1) index[i] = i;
-    g.setIndex(new BufferAttribute(index, 1));
-  }
+  const base = baseOf(geometry);
+  const count = base.rise.length;
+  const g = new BufferGeometry();
+  g.setAttribute("position", new BufferAttribute(base.position.slice(), 3));
+  g.setAttribute("normal", new BufferAttribute(base.normal.slice(), 3));
+  // The index is only read when pieces merge, so every piece of one shape can share it.
+  g.setIndex(base.index);
   const colors = new Float32Array(count * 3);
   const weights = new Float32Array(count);
-  for (let i = 0; i < count; i += 1) {
-    const s = shade ? shade.getX(i) : 0;
-    if (s > 0) paint.copy(color).lerp(lightPaint, s);
-    else paint.copy(color).multiplyScalar(1 + s * 0.6);
-    colors[i * 3] = paint.r;
-    colors[i * 3 + 1] = paint.g;
-    colors[i * 3 + 2] = paint.b;
-    // Unit shapes run from about -0.5 (or -1) to 0.5 (or 1) in Y.
-    weights[i] = sway > 0 ? sway * smooth(-0.5, 0.7, position.getY(i)) : 0;
+  // Optional per-vertex paint: above 0 lightens toward warm light, below 0 darkens (hair sheen and undersides).
+  const shade = base.shade;
+  if (shade) {
+    for (let i = 0; i < count; i += 1) {
+      const s = shade[i]!;
+      if (s > 0) paint.copy(color).lerp(lightPaint, s);
+      else paint.copy(color).multiplyScalar(1 + s * 0.6);
+      colors[i * 3] = paint.r;
+      colors[i * 3 + 1] = paint.g;
+      colors[i * 3 + 2] = paint.b;
+    }
+  } else {
+    for (let i = 0; i < count; i += 1) {
+      colors[i * 3] = color.r;
+      colors[i * 3 + 1] = color.g;
+      colors[i * 3 + 2] = color.b;
+    }
   }
+  if (sway > 0) for (let i = 0; i < count; i += 1) weights[i] = sway * base.rise[i]!;
   g.setAttribute("color", new BufferAttribute(colors, 3));
   g.setAttribute("aSway", new BufferAttribute(weights, 1));
-  g.morphAttributes = {};
   return g;
 }
 

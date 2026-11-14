@@ -107,4 +107,4 @@ Most music and sound is still made in code at runtime with the Web Audio API. Th
 
 ## Technique reference
 
-We studied the open techniques behind tiny-planet games (toon shading, outline post-processing, boiling-line loaders). All code and assets here are our own. Nothing is copied from any other game.
+We studied the open techniques behind tiny-planet games (toon shading, outline post-processing, boiling-line loaders). All code and assets here are our own. Nothing is copied from any other game. The loading page's picture of Dad's workshop (`public/loader/workshop.webp`) is a frame the game renders of itself (`scripts/render-backdrop.ts`).
