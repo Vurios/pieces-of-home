@@ -133,6 +133,9 @@ describe("quality tiers", () => {
   it("picks high for a strong laptop and medium for an unknown one", () => {
     expect(detectTier({ memory: 16, cores: 12, mobile: false, gpu: "angle (nvidia, nvidia geforce rtx 4050)", minSide: 900 })).toBe("high");
     expect(detectTier({ memory: undefined, cores: 4, mobile: false, gpu: "", minSide: 900 })).toBe("medium");
+    // Graphics built into the processor start on Medium, even with plenty of memory and cores.
+    expect(detectTier({ memory: 8, cores: 8, mobile: false, gpu: "angle (intel, intel(r) iris(r) xe graphics (0x00009a49) direct3d11 vs_5_0 ps_5_0, d3d11)", minSide: 900 })).toBe("medium");
+    expect(detectTier({ memory: 8, cores: 16, mobile: false, gpu: "angle (amd, amd radeon(tm) graphics (0x00001638) direct3d11 vs_5_0 ps_5_0, d3d11)", minSide: 900 })).toBe("medium");
   });
 
   it("drops one tier after a few slow seconds, never below low", () => {

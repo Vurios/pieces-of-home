@@ -74,7 +74,13 @@ export interface DeviceHints {
 
 const SOFTWARE_GPU = /swiftshader|llvmpipe|software|basic render/;
 const WEAK_GPU = /mali-4|mali-t|adreno \(tm\) [2-5]\d\d|powervr|intel\(r\) hd graphics [2-5]\d{3}|hd graphics 4\d\d|uhd graphics 6\d\d/;
-const STRONG_GPU = /rtx|gtx|radeon rx|radeon pro|apple m\d|apple gpu|arc\(tm\)|iris\(r\) xe|geforce/;
+const STRONG_GPU = /rtx|gtx|radeon rx|radeon pro|apple m\d|apple gpu|arc\(tm\)|geforce/;
+/**
+ * Graphics built into a laptop's processor: a mid laptop. High (MSAA 4, big
+ * shadows, up to twice the pixels) drops below 60 fps on these, and the
+ * watchdog then has to step down in the middle of play, so they start on Medium.
+ */
+const MID_GPU = /iris\(r\) xe|intel\(r\) (uhd|iris)|intel\(r\) graphics|radeon\(tm\) graphics|radeon graphics|radeon vega/;
 
 /**
  * Picks a starting tier from what the device tells us. We chose simple hints
@@ -93,6 +99,7 @@ export function detectTier(hints: DeviceHints): QualityTier {
   }
 
   if (STRONG_GPU.test(hints.gpu)) return "high";
+  if (MID_GPU.test(hints.gpu)) return "medium";
   if ((hints.memory ?? 8) >= 8 && (hints.cores ?? 4) >= 8) return "high";
   return "medium";
 }

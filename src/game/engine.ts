@@ -1108,7 +1108,9 @@ export class Engine {
       this.saveTimer -= dt;
       if (this.saveTimer <= 0) writeStorage(SAVE_KEY, this.store.serialize());
     }
-    if (this.autoQuality && !this.bookmark && this.mode === "play" && !this.paused) {
+    // Resolution follows the frame rate in the title and the story too, where a slow
+    // device first meets the game; changing it costs no shaders, unlike a tier change.
+    if (this.autoQuality && !this.bookmark && !this.paused && !this.veiled && !this.tripping) {
       if (this.governor.update(dt) !== null) this.pendingScale = true;
     }
     if (this.autoQuality && !this.bookmark && this.mode === "play" && this.quality.tier !== "low" && this.watchdog.update(dt)) {
@@ -1167,6 +1169,22 @@ export class Engine {
       stats: () => ({ calls: this.renderer.info.render.calls, triangles: this.renderer.info.render.triangles, programs: this.renderer.info.programs?.length ?? 0 }),
       /** Names of the compiled shader programs, to catch ones that compile mid-play. */
       programs: () => (this.renderer.info.programs ?? []).map((p) => `${p.name}|${p.cacheKey}`),
+      /** How many objects the scene holds, and how many recompute their own matrix every frame. */
+      census: () => {
+        let objects = 0;
+        let auto = 0;
+        let meshes = 0;
+        let visible = 0;
+        this.scene.traverse((o) => {
+          objects += 1;
+          if (o.matrixAutoUpdate) auto += 1;
+          if ((o as Mesh).isMesh) {
+            meshes += 1;
+            if (o.visible) visible += 1;
+          }
+        });
+        return { objects, auto, meshes, visible };
+      },
       /** Draws the world behind the loading page, for the script that renders the page's picture of it. */
       unveil: () => {
         this.veiled = false;

@@ -1001,3 +1001,13 @@ Measured on the RTX 4050 laptop (dev build): main-thread long tasks before the l
 **Why:** Team feedback, 2026-11-14: "optimize the game and make it smoother my game lags when opening the game".
 
 **Alternatives considered:** Lowering the quality tier at start (hides the cause and looks worse), a longer loading wait to compile everything (the cause was compiling the wrong programs, not compiling too late).
+
+## 97. Laptop graphics start on Medium; resolution adapts in the opening too
+
+**Date:** 2026-11-14
+
+**Decision:** Graphics built into a laptop's processor (Intel Iris Xe, UHD and Iris, AMD Radeon Graphics and Vega) now start on the Medium tier. Before, Iris Xe was on the "strong" list, and most of these machines also have 8 or more threads and 8 GB, so they started on High (MSAA 4, 2048 shadows, up to twice the pixels) and only stepped down after four slow seconds of play, with a stall while every shader rebuilt for the new tier. The resolution governor, which costs no shader work, now also runs during the title flight and the story (not while the loading page covers the world, a trip is on screen or a panel is open), so a slow device eases its resolution in the opening instead of stuttering through it. `scripts/perf-play.ts` profiles the frame loop while walking.
+
+**Why:** Team feedback, 2026-11-14: "optimize the game and make it smoother". The Game Bible's target is 60 fps on a mid laptop, and a mid laptop usually has built-in graphics.
+
+**Alternatives considered:** A GPU benchmark at startup (adds wait and download), dropping the tier during the title (a tier change rebuilds every shader, the stutter this pass removes).
